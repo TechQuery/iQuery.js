@@ -10,7 +10,7 @@
 
 1. 基础知识 ——《[jQuery API 文档](http://www.jquery123.com/api/)》
 2. 独立使用 ——（HTML 源码基本结构示例如下）
-```
+```html
 <!DocType HTML>
 <html><head>
     <meta http-equiv="X-UA-Compatible" content="IE=Edge, Chrome=1" />
@@ -21,3 +21,7 @@
 ```
 3. 嵌入使用 ——（典型应用实例项目如下）
 > 文件级**前端脚本加载器** [EasyImport.js](http://git.oschina.net/Tech_Query/EasyImport.js)
+
+### 协作开发
+
+本项目提炼于其发起人的**日常开发实战**，其本人会**持续更新**，同时欢迎广大 **Web 开发爱好者**在 **OSChina 社区**与其交流、提交 **Pull Request**！~
