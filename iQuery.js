@@ -1,11 +1,47 @@
-//  JSON.format()  v0.3
+/* ---------- ECMAScript 5  Patch ---------- */
 (function (BOM) {
+
+    BOM.iRegExp = function (iString, Special_Char, Mode) {
+        var iChar = ['/', '.'];
+        if (Special_Char instanceof Array)
+            iChar = iChar.concat(Special_Char);
+        var iRegExp_Compiled = / /;
+
+        for (var i = 0; i < iChar.length; i++)
+            iString = iString.replace(
+                RegExp("([^\\\\])\\" + iChar[i], 'g'),  "$1\\" + iChar[i]
+            );
+        iRegExp_Compiled.compile(iString, Mode);
+
+        return iRegExp_Compiled;
+    };
+
+    if (! ''.trim) {
+        var Blank_Char = BOM.iRegExp('(^\\s*)|(\\s*$)', 'g');
+
+        String.prototype.trim = function () {
+            return this.replace(Blank_Char, '');
+        };
+    }
 
     if (! ''.repeat)
         String.prototype.repeat = function (Times) {
             return  (new Array(Times + 1)).join(this);
         };
 
+    if ( BOM.navigator.userAgent.match(/Gecko/) )
+        Object.defineProperty(HTMLElement, 'innerText', {
+            set:    function (iText) {
+                this.textContent = iText;
+            },
+            get:    function () {
+                var TextRange = this.ownerDocument.createRange();
+                TextRange.selectNodeContents(this);
+                return TextRange.toString();
+            }
+        });
+
+//  JSON.format()  v0.3
     var iValue;
 
     function JSON_ValueOut(iObject) {
@@ -92,7 +128,7 @@
 })(self);
 
 
-
+// ---------->  iQuery.js  <---------- //
 (function (BOM, DOM) {
     
 /* ---------- Inner Members ---------- */
@@ -120,12 +156,13 @@
     }
 
     var _Browser_ = {
-            ie:        IE_Ver,
-            ff:        FF_Ver,
-            modern:    !  old_IE,
-            mobile:    !! is_Mobile,
-            pad:       !! is_Pad,
-            phone:     !! is_Phone
+            msie:             IE_Ver,
+            ff:               FF_Ver,
+            modern:           !  old_IE,
+            mobile:           !! is_Mobile,
+            pad:              !! is_Pad,
+            phone:            !! is_Phone,
+            versionNumber:    IE_Ver || FF_Ver
         },
         BOM_Type = {
             'Window':       true,
@@ -174,7 +211,7 @@
     }
 
     /* ----- DOM Style ----- */
-    var IE_CSS_Filter = (_Browser_.ie < 9);
+    var IE_CSS_Filter = (_Browser_.msie < 9);
 
     function Get_Style(iElement, iName) {
         var iScale = 1;
@@ -276,7 +313,7 @@
                 IE_CSS_Filter ? 'setAttribute' : 'setProperty'
             ](
                 iName,
-                (_Browser_.ie != 9) ? iValue : iValue.toString(),
+                (_Browser_.msie != 9) ? iValue : iValue.toString(),
                 'important'
             );
         else  return [
@@ -476,7 +513,18 @@
                     break;
             }
         },
-        now:          _Time_.now
+        now:          _Time_.now,
+        contains:     function (iParent, iChild) {
+            if (! iChild)  return false;
+
+            if ($.browser.modern)
+                return  !!(iParent.compareDocumentPosition(iChild) & 16);
+            else
+                return  (iParent !== iChild) && iParent.contains(iChild);
+        },
+        trim:         function () {
+            return  arguments[0].trim();
+        }
     });
 
     _Extend_(BOM.$.fn, {
@@ -510,13 +558,116 @@
                     Event_Bind(this, iType, iCallback);
                 });
         },
+        ready:    function () {
+            if (BOM.iQuery.type(this[0]) == 'Document')
+                return  this.bind('DOMContentLoaded', arguments[0]);
+
+            throw 'The Ready Method is only used for Document Object !';
+        },
+        hover:    function (iElement, iEnter, iLeave) {
+            this.bind('mouseover', function () {
+                if ( BOM.iQuery.contains(this, arguments[0].relatedTarget) )
+                    return false;
+                iEnter.apply(this, arguments);
+            });
+            this.bind('mouseout', function () {
+                if ( BOM.iQuery.contains(this, arguments[0].relatedTarget) )
+                    return false;
+                (iLeave || iEnter).apply(this, arguments);
+            });
+
+            return iElement;
+        },
         appendTo:    function (iTarget) {
             iTarget = BOM.iQuery(iTarget)[0];
 
             return  this.each(function () {
                     iTarget.appendChild(this);
                 });
+        },
+        text:        function (iText) {
+            return  this.each(function () {
+                    this.innerText = iText;
+                });
         }
     });
+
+
+/* ---------- jQuery+ v1.1 ---------- */
+
+    /* ----- CSS 规则添加  v0.5 ----- */
+
+    var Code_Indent = (! IE_CSS_Filter) ? '' : ' '.repeat(4);
+
+    function CSS_Rule2Text(iRule) {
+        var Rule_Text = [''],  Rule_Block,  _Rule_Block_;
+
+        for (var iSelector in iRule) {
+            Rule_Block = iSelector + ' {';
+            _Rule_Block_ = [ ];
+
+            for (var iAttribute in iRule[iSelector])
+                _Rule_Block_.push(
+                    Set_Style(null, iAttribute, iRule[iSelector][iAttribute])
+                        .replace(/^(\w)/m,  Code_Indent + '$1')
+                );
+
+            Rule_Text.push(
+                [Rule_Block, _Rule_Block_.join(";\n"), '}'].join("\n")
+            );
+        }
+        Rule_Text.push('');
+
+        return Rule_Text.join("\n");
+    }
+
+    $.cssRule = function () {
+        var iRule = arguments[arguments.length - 1],
+            iMedia = (typeof arguments[0] == 'string') && arguments[0];
+
+        var CSS_Text = CSS_Rule2Text(iRule);
+        if (iMedia)  CSS_Text = [
+                '@media ' + iMedia + ' {',
+                CSS_Text.replace(/\n/m, "\n    "),
+                '}'
+            ].join("\n");
+
+        this(DOM).ready(function () {
+            var $_Style = this('<style />', {
+                    type:       'text/css',
+                    'class':    'jQuery_CSS-Rule'
+                });
+            if (IE_CSS_Filter)
+                $_Style[0].styleSheet.cssText = CSS_Text;
+            else  $_Style.text(CSS_Text);
+
+            $_Style.appendTo('body');
+        });
+    };
+
+    /* ----- jQuery 选择符合法性判断  v0.1 ----- */
+
+    $.is_Selector = function (iString) {
+        if (! iString)  return false;
+
+        iString = $.trim(
+            iString.replace(/([^\.])(\.|#|\[|:){1,2}[^\.#\[:\s>\+~]+/, '$1')
+        );
+        if (! iString)  return true;
+
+        if ($('<' + iString + ' />')[0] instanceof HTMLUnknownElement)
+            return false;
+        return true;
+    };
+
+    /* ----- jQuery 对象 所在页面 URL 路径  v0.1 ----- */
+
+    $.fn.PagePath = function () {
+        var _PP = this[0].baseURI ? this[0].baseURI : document.URL;
+        _PP = _PP.split('/');
+        if (_PP.length > 3) _PP.pop();
+        _PP.push('');
+        return _PP.join('/');
+    };
 
 })(self, self.document);
