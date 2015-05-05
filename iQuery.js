@@ -170,7 +170,7 @@
             'global':       true
         },
         DOM_Type = {
-            sets:    {
+            sets:       {
                 Array:             true,
                 HTMLCollection:    true,
                 NodeList:          true,
@@ -180,6 +180,10 @@
             element:    {
                 Document:    true,
                 Element:     true,
+                Window:      true
+            },
+            root:       {
+                Document:    true,
                 Window:      true
             }
         };
@@ -199,7 +203,7 @@
         var iType = Object.prototype.toString.call(iVar)
                         .split(' ')[1].slice(0, -1);
 
-        if (iVar)
+        if (iVar) {
             if (
                 BOM_Type[iType] ||
                 ((iVar == iVar.document) && (iVar.document != iVar))
@@ -207,6 +211,8 @@
                 return 'Window';
             else if (iVar.defaultView || iVar.documentElement)
                 return 'Document';
+        } else if (isNaN(iVar) && (iVar !== iVar))
+            return 'NaN';
 
         return iType.replace(/HTML(\w+?Element)$/, '$1');
     }
@@ -215,6 +221,8 @@
     var IE_CSS_Filter = (_Browser_.msie < 9);
 
     function Get_Style(iElement, iName) {
+        if (_Type_(iElement) in DOM_Type.root)  return null;
+
         var iScale = 1;
 
         if (IE_CSS_Filter)
@@ -274,6 +282,8 @@
     }
 
     function Set_Style(iElement, iName, iValue) {
+        if (_Type_(iElement) in DOM_Type.root)  return false;
+
         if (IE_CSS_Filter) {
             var iString = '',  iWrapper,  iScale = 1,  iConvert;
             if (typeof iValue == 'string')
@@ -367,7 +377,7 @@
             }
         } else  iType = iType.toLowerCase();
 
-        if (BOM.UA.Modern) {
+        if (_Browser_.modern) {
             iElement.addEventListener(iType, CB_Fix || iCallback, false);
             return iElement;
         }
@@ -411,6 +421,24 @@
         return iElement;
     }
 
+    var AttrName = {
+            'class':    'className',
+            'for':      'htmlFor'
+        };
+
+    function Get_Attribute(iElement, iName) {
+        return  (_Type_(iElement) in DOM_Type.root) ?
+            null : iElement.getAttribute(_Browser_.modern ? iName : AttrName[iName]);
+    }
+
+    function Set_Attribute(iElement, iName, iValue) {
+        return  (_Type_(iElement) in DOM_Type.root) ?
+            false : iElement.setAttribute(
+                _Browser_.modern ? iName : AttrName[iName],
+                iValue
+            );
+    }
+
     function DOM_Create(TagName, AttrList) {
         var iNew;
 
@@ -426,8 +454,6 @@
             var iValue = AttrList[AK];
             try {
                 switch (AK) {
-                    case 'class':    if (! _Browser_.modern)
-                        iNew.className = iValue;  break;
                     case 'text':     {
                         if (TagName == 'style') {
                             if (! _Browser_.modern)
@@ -445,7 +471,7 @@
                     }
                     default:         {
                         if (! AK.match(/^on\w+/))
-                            iNew.setAttribute(AK, iValue);
+                            Set_Attribute(iNew, AK, iValue);
                         else
                             Event_Bind(iNew, AK.slice(2), iValue);
                     }
@@ -483,12 +509,13 @@
 
         /* ----- Constructor ----- */
         this.length = 0;
+        this.context = DOM;
 
         if (! iArgs[0]) return;
 
         if (_Type_(iArgs[0]) == 'String') {
             if ((iArgs[0][0] != '<') && (_Type_(iArgs[1]) != 'Object')) {
-                this.context = iArgs[1] || DOM;
+                this.context = iArgs[1] || this.context;
                 this.add(
                     this.context.querySelectorAll(iArgs[0])
                 );
@@ -503,28 +530,30 @@
     BOM.$.fn = BOM.$.prototype;
 
     _Extend_(BOM.$, {
-        browser:      _Browser_,
-        type:         _Type_,
-        extend:       _Extend_,
-        makeArray:    function () {
+        browser:          _Browser_,
+        type:             _Type_,
+        isPlainObject:    function () {
+            return  (arguments[0].constructor === Object);
+        },
+        extend:           _Extend_,
+        makeArray:        function () {
             return  this.extend([ ], arguments[0]);
         },
-        inArray:      function () {
+        inArray:          function () {
             for (var i = 0;  i < arguments[0].length;  i++)
                 if (arguments[1] === arguments[0][i])
                     return i;
 
             return -1;
         },
-        each:         function (ArrObj) {
+        each:             function (ArrObj) {
             for (var i = 0, iReturn;  i < ArrObj.length;  i++) {
                 iReturn = arguments[1].call(ArrObj[i], i, ArrObj[i]);
                 if ((this.type(iReturn) != 'Undefined') && (! iReturn))
                     break;
             }
         },
-        now:          _Time_.now,
-        contains:     function (iParent, iChild) {
+        contains:         function (iParent, iChild) {
             if (! iChild)  return false;
 
             if ($.browser.modern)
@@ -532,20 +561,52 @@
             else
                 return  (iParent !== iChild) && iParent.contains(iChild);
         },
-        trim:         function () {
+        trim:             function () {
             return  arguments[0].trim();
         }
     });
 
+    _Extend_(BOM.$, _Time_);
+
+    _Extend_(BOM.$, {
+        URL_Args:    function (Args_Str) {
+            Args_Str = (Args_Str || BOM.location.search).match(/^[^\?]*\?([^\s]+)$/)[1];
+
+            var iArgs = Args_Str.split('&'),
+                _Args_ = {
+                    toString:    function () {
+                        return  BOM.JSON.format(this);
+                    }
+                };
+
+            for (var i = 0; i < iArgs.length; i++) {
+                iArgs[i] = iArgs[i].split('=');
+                iArgs[i][1] = BOM.decodeURIComponent( iArgs[i][1] );
+                try {
+                    iArgs[i][1] = BOM.JSON.parse(iArgs[i][1]);
+                } catch (iError) { }
+                _Args_[ iArgs[i][0] ] = iArgs[i][1];
+            }
+
+            return  iArgs.length ? _Args_ : null;
+        }
+    });
+
     _Extend_(BOM.$.fn, {
-        add:         function () {
+        splice:         [ ].splice,
+        add:            function () {
             var iArgs = BOM.iQuery.makeArray(arguments);
             var iArgType = BOM.iQuery.type(iArgs[0]);
 
-            if (iArgType in DOM_Type.sets)
+            if (iArgType == 'String') {
+                iArgs[0] = BOM.iQuery(iArgs[0], iArgs[1]);
+                iArgType = 'iQuery';
+            }
+            if (iArgType in DOM_Type.sets) {
                 for (var i = 0;  i < iArgs[0].length;  i++)
-                    [ ].push.call(this, iArgs[0][i]);
-            else if (
+                    if ( iArgs[0][i] )
+                        [ ].push.call(this, iArgs[0][i]);
+            } else if (
                 (iArgs[0] instanceof HTMLElement) ||
                 (iArgType in DOM_Type.element)
             )
@@ -553,7 +614,9 @@
 
             return this;
         },
-        eq:          function () {
+        jquery:         '1.9.1',
+        iquery:         '1.0',
+        eq:             function () {
             var $_This = this;
 
             return  BOM.iQuery.extend(
@@ -561,7 +624,7 @@
                     {prevObject:  $_This}
                 );
         },
-        slice:       function () {
+        slice:          function () {
             var $_This = this;
 
             return  BOM.iQuery.extend(
@@ -569,15 +632,15 @@
                     {prevObject:  $_This}
                 );
         },
-        each:        function () {
+        each:           function () {
             BOM.iQuery.each(this, arguments[0]);
 
             return this;
         },
-        is:          function (iSelector) {
+        is:             function (iSelector) {
             return  (BOM.iQuery.inArray(BOM.iQuery(iSelector), this[0]) > -1);
         },
-        filter:      function () {
+        filter:         function () {
             var $_This = this,
                 $_Filter = BOM.iQuery(arguments[0]),
                 $_Result = [ ];
@@ -587,14 +650,31 @@
                     if (BOM.iQuery.inArray($_Filter, $_This[i]) > -1)
                         $_Result.push( $_This[i] );
 
-            return  BOM.iQuery.extend(
-                    BOM.iQuery($_Result),
-                    {prevObject:  $_This}
-                );
+            return  BOM.iQuery.extend(BOM.iQuery($_Result), {
+                    prevObject:    $_This
+                });
         },
-        parent:      function () {
-            var $_This = this,
-                $_Result = [ ];
+        attr:           function (iName, iValue) {
+            if (_Type_(iValue) == 'Undefined') {
+                if (_Type_(iName) == 'String')
+                    return  Get_Attribute(this[0], iName);
+                else if (_Type_(iName.length) == 'Number') {
+                    var iAttribute = { };
+                    for (var i = 0;  i < iName.length;  i++)
+                        iAttribute[iName[i]] = Get_Attribute(this[0], iName[i]);
+                    return iAttribute;
+                } else if (_Type_(iName) == 'Object')
+                    for (var i = 0;  i < this.length;  i++)
+                        for (var iKey in iName)
+                            Set_Attribute(this[i], iKey, iName[iKey]);
+            } else
+                for (var i = 0;  i < this.length;  i++)
+                    Set_Attribute(this[i], iName, iValue);
+
+            return this;
+        },
+        parent:         function () {
+            var $_This = this,  $_Result = [ ];
 
             for (var i = 0;  i < $_This.length;  i++)
                 if (BOM.iQuery.inArray($_Result, $_This[i].parentNode) == -1)
@@ -608,69 +688,97 @@
                     prevObject:    $_This
                 });
         },
-        parents:     function () {
-            var $_This = this,
-                $_Result = [ ];
+        parents:        function () {
+            var $_This = this,  _UID_ = BOM.iQuery.now();
 
-            this.each(function () {
-                Back_Track.call(this, 'parentNode', function () {
-                    if (BOM.iQuery.inArray($_Result, this) == -1)
-                        $_Result.push(this);
-                });
-            });
+            for (var i = 0;  i < $_This.length;  i++)
+                BOM.iQuery( Back_Track.call($_This[i], 'parentNode') )
+                    .attr('iQuery', _UID_);
 
-            $_Result = BOM.iQuery($_Result);
+            var $_Result = BOM.iQuery('*[iQuery="' + _UID_ + '"]');
             if ( arguments[0] )
                 $_Result = $_Result.filter(arguments[0]);
-
-            return  BOM.iQuery.extend($_Result, {
-                    prevObject:    $_This
-                });
-        },
-        siblings:    function () {
-            var $_This = this,
-                $_Result = [ ];
-
-            this.parent().each(function () {
-                $_Result.concat(this.children);
-            });
-
-            $_Result = BOM.iQuery($_Result);
-            if ( arguments[0] )
-                $_Result = $_Result.filter(arguments[0]);
-
-            return  BOM.iQuery.extend($_Result, {
-                    prevObject:    $_This
-                });
-        },
-        find:        function () {
-            var $_This = this;
 
             return  BOM.iQuery.extend(
-                    BOM.iQuery(arguments[0], arguments[1]),
+                    [ ].reverse.call($_Result),
                     {prevObject:  $_This}
                 );
         },
-        attr:        function (iName, iValue) {
-            if (_Type_(iValue) == 'Undefined') {
-                if (_Type_(iName) == 'String')
-                    return this[0].getAttribute(iName);
-                else if (_Type_(iName.length) == 'Number') {
-                    var iAttribute = { };
-                    for (var i = 0;  i < iName.length;  i++)
-                        iAttribute[iName[i]] = this[0].getAttribute(iName[i]);
-                    return iAttribute;
-                } else if (_Type_(iName) == 'Object')
-                    for (var i = 0;  i < this.length;  i++)
-                        for (var iKey in iName)
-                            this[i].setAttribute(iKey, iName[iKey]);
-            } else
-                for (var i = 0;  i < this.length;  i++)
-                    this[i].setAttribute(iName, iValue);
+        children:       function () {
+            var $_This = this,  $_Result = [ ];
 
-            return this;
+            for (var i = 0;  i < $_This.length;  i++)
+                $_Result = $_Result.concat(
+                    BOM.iQuery.makeArray( $_This[i].children )
+                );
+
+            $_Result = BOM.iQuery($_Result);
+            if ( arguments[0] )
+                $_Result = $_Result.filter(arguments[0]);
+
+            return  BOM.iQuery.extend($_Result, {
+                    prevObject:    $_This
+                });
         },
-        css:         function (iName, iValue) {
+        contents:       function () {
+            var $_This = this,  $_Result = [ ],
+                Type_Filter = parseInt(arguments[0]);
+
+            for (var i = 0;  i < $_This.length;  i++)
+                $_Result = $_Result.concat(BOM.iQuery.makeArray(
+                    ($_This[i].tagName.toLowerCase() != 'iframe') ?
+                        $_This[i].childNodes : $_This[i].contentWindow.document
+                ));
+
+            if (BOM.iQuery.type(Type_Filter) == 'Number')
+                for (var i = 0;  i < $_Result.length;  i++)
+                    if ($_Result[i].nodeType != Type_Filter)
+                        $_Result[i] = null;
+
+            return  BOM.iQuery.extend(BOM.iQuery($_Result), {
+                    prevObject:    $_This
+                });
+        },
+        siblings:       function () {
+            var _UID_ = BOM.iQuery.now();
+            var $_This = this.attr('iQuery', _UID_);
+
+            var $_Result = this.parent().children();
+            for (var i = 0;  i < $_Result.length;  i++)
+                if (Get_Attribute($_Result[i], 'iQuery') == _UID_)
+                    $_Result[i] = null;
+
+            $_Result = BOM.iQuery($_Result);
+            if ( arguments[0] )
+                $_Result = $_Result.filter(arguments[0]);
+
+            return  BOM.iQuery.extend($_Result, {
+                    prevObject:    $_This
+                });
+        },
+        find:           function () {
+            var $_This = this,  $_Result = [ ];
+
+            for (var i = 0;  i < $_This.length;  i++)
+                $_Result = $_Result.concat( BOM.iQuery(arguments[0], $_This[i]) );
+
+            return  BOM.iQuery.extend(BOM.iQuery($_Result), {
+                    prevObject:    $_This
+                });
+        },
+        text:           function (iText) {
+            for (var i = 0;  i < this.length;  i++)
+                this[i].innerText = iText;
+
+            return  this;
+        },
+        html:           function (iHTML) {
+            for (var i = 0;  i < this.length;  i++)
+                this[i].innerHTML = iHTML;
+
+            return  this;
+        },
+        css:            function (iName, iValue) {
             if (_Type_(iValue) == 'Undefined') {
                 if (_Type_(iName) == 'String')
                     return Get_Style(this[0], iName);
@@ -689,12 +797,38 @@
 
             return this;
         },
-        bind:        function (iType, iCallback) {
-            return  this.each(function () {
-                    Event_Bind(this, iType, iCallback);
-                });
+        addClass:       function (new_Class) {
+            new_Class = new_Class.split(' ');
+
+            for (var i = 0, old_Class;  i < this.length;  i++) {
+                old_Class = Get_Attribute(this[i], 'class').replace(/\s+/g, ' ').split(' ');
+                for (var j = 0;  j < new_Class.length;  j++)
+                    if (BOM.iQuery.inArray(old_Class, new_Class[j]) == -1)
+                        old_Class.push( new_Class[j] );
+                Set_Attribute(this[i], 'class', old_Class.join(' '));
+            }
+
+            return this;
         },
-        on:          function (iType, iFilter, iCallback) {
+        removeClass:    function (iClass) {
+            iClass = / /.compile(
+                '\s+(' + iClass.replace(/\s+/g, '|') + ')\s+',  'g'
+            );
+
+            for (var i = 0;  i < this.length;  i++)
+                Set_Attribute(
+                    this[i],  'class',  Get_Attribute(this[i], 'class').replace(iClass, ' ')
+                );
+
+            return this;
+        },
+        bind:           function (iType, iCallback) {
+            for (var i = 0;  i < this.length;  i++)
+                Event_Bind(this[i], iType, iCallback);
+
+            return  this;
+        },
+        on:             function (iType, iFilter, iCallback) {
             if (BOM.iQuery.type(iFilter) != 'String')
                 return  this.bind.apply(this, arguments);
             else
@@ -703,13 +837,13 @@
                             iCallback.apply(this, arguments);
                     });
         },
-        ready:       function () {
+        ready:          function () {
             if (BOM.iQuery.type(this[0]) == 'Document')
                 return  this.bind('DOMContentLoaded', arguments[0]);
 
             throw 'The Ready Method is only used for Document Object !';
         },
-        hover:       function (iElement, iEnter, iLeave) {
+        hover:          function (iEnter, iLeave) {
             this.bind('mouseover', function () {
                 if ( BOM.iQuery.contains(this, arguments[0].relatedTarget) )
                     return false;
@@ -721,32 +855,61 @@
                 (iLeave || iEnter).apply(this, arguments);
             });
 
-            return iElement;
+            return this;
         },
-        append:      function () {
-            var $_Child = BOM.iQuery(arguments[0]);
+        append:         function () {
+            var $_Child = BOM.iQuery(arguments[0], arguments[1]);
 
             for (var i = 0;  i < $_Child.length;  i++)
                 this[0].appendChild( $_Child[i] );
 
             return this;
         },
-        appendTo:    function (iTarget) {
-            iTarget = BOM.iQuery(iTarget)[0];
+        appendTo:       function () {
+            $_Target = BOM.iQuery(arguments[0], arguments[1]);
 
-            return  this.each(function () {
-                    iTarget.appendChild(this);
+            for (var i = 0;  i < this.length;  i++)
+                $_Target[0].appendChild( this[i] );
+
+            return  this;
+        },
+        before:         function () {
+            var $_Brother = BOM.iQuery(arguments[0], arguments[1]);
+
+            for (var i = 0;  i < $_Brother.length;  i++)
+                this[0].parentNode.insertBefore($_Brother[i], this[0]);
+
+            return this;
+        },
+        clone:          function () {
+            var $_This = this,  $_Result = [ ];
+
+            for (var i = 0;  i < $_This.length;  i++)
+                $_Result.push( $_This[i].cloneNode(arguments[0]) );
+
+            return  BOM.iQuery.extend(BOM.iQuery($_Result), {
+                    prevObject:    $_This
                 });
         },
-        text:        function (iText) {
-            return  this.each(function () {
-                    this.innerText = iText;
-                });
+        addBack:        function () {
+            var $_This = this,
+                _UID_ = BOM.iQuery.now();
+
+            var $_Result = BOM.iQuery(
+                    BOM.iQuery.makeArray($_This).concat(
+                        BOM.iQuery.makeArray($_This.prevObject)
+                    )
+                ).attr('iQuery', _UID_);
+
+            return  BOM.iQuery.extend(
+                    BOM.iQuery('*[iQuery="' + _UID_ + '"]'),
+                    {prevObject:  $_This}
+                );
         }
     });
 
 
-/* ---------- jQuery+ v1.1 ---------- */
+/* ---------- jQuery+ v1.2 ---------- */
 
     /* ----- CSS 规则添加  v0.5 ----- */
 
@@ -792,7 +955,7 @@
                 });
             if (IE_CSS_Filter)
                 $_Style[0].styleSheet.cssText = CSS_Text;
-            else  $_Style.text(CSS_Text);
+            else  $_Style.html(CSS_Text);
 
             $_Style.appendTo('body');
         });
@@ -896,6 +1059,50 @@
             return  this.each(Set_zIndex);
         else
             return  this.css('z-index',  Number(new_Index) || 'auto');
+    };
+
+    /* ----- Form 元素 无刷新提交（iframe 版） v0.2 ----- */
+
+    $.fn.post = function () {
+        var iArgs = $.makeArray(arguments);
+        var $_Form = this.is('form') ? this : this.find('form').eq(0),
+            iAttribute = $.isPlainObject(iArgs[0]) ? iArgs.shift() : { },
+            iCallback = ($.type(iArgs[0]) == 'Function') ? iArgs.shift() : null;
+
+        var iTarget = $_Form.attr('target'),
+            $_iFrame = [ ];
+        if (! iTarget) {
+            iTarget = 'iFrame_' + $.now();
+            $_Form.attr('target', iTarget);
+        } else
+            $_iFrame = $('iframe[name="' + iTarget + '"]');
+        iAttribute = $.extend({
+            frameBorder:          0,
+            allowTransparency:    true
+        }, iAttribute);
+        if (! $_iFrame.length)
+            $_iFrame = $('<iframe />', $.extend(iAttribute, {name:  iTarget}));
+        else {
+            var iAttr = { };
+            $.each(iAttribute, function (iKey, iValue) {
+                if (iKey in $.fn)
+                    $_iFrame[iKey](iValue);
+                else
+                    iAttr[iKey] = iValue;
+            });
+            $_iFrame.attr(iAttr);
+        }
+        $_iFrame.appendTo( $_Form.parent() ).on('load', function () {
+            try {
+                var $_Content = $(this).contents();
+                iCallback.call(
+                    $_Form[0],  $_Content.find('body').text(),  $_Content
+                );
+            } catch (iError) { }
+        });
+        $_Form[0].submit();
+
+        return $_iFrame;
     };
 
 })(self, self.document);
