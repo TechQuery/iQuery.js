@@ -22,7 +22,8 @@
         String.prototype.trim = function () {
             return this.replace(Blank_Char, '');
         };
-    } else if (! ''.repeat)
+    }
+    if (! ''.repeat)
         String.prototype.repeat = function (Times) {
             return  (new Array(Times + 1)).join(this);
         };
@@ -132,6 +133,28 @@
         return JSON_ValueIn(iJSON[0], iJSON[1]);
     };
 
+    BOM.new_Window_Fix = function (Fix_More) {
+        if (! this)  return false;
+
+        var _Window_ = this.opener,
+            This_DOM = this.document;
+
+        try {
+            if (_Window_ && (this.location.href == 'about:blank'))
+                This_DOM.domain = _Window_.document.domain;
+
+            if (! (_Window_ || this).$.browser.modern)
+                This_DOM.head = This_DOM.documentElement.firstChild;
+        } catch (iError) {
+            return false;
+        }
+        if (Fix_More)
+            Fix_More.call(this);
+        return true;
+    };
+
+    BOM.new_Window_Fix();
+
 })(self);
 
 
@@ -193,6 +216,13 @@
                 Document:    true,
                 Window:      true
             }
+        },
+        Data_Type = {
+            String:     true,
+            Number:     true,
+            Boolean:    true,
+            Object:     true,
+            Null:       true
         };
     _Extend_(DOM_Type.element, (function () {
         var iType = { },  _Name_;
@@ -207,8 +237,12 @@
     })());
 
     function _Type_(iVar) {
-        var iType = Object.prototype.toString.call(iVar)
+        var iType = typeof iVar;
+        if (iType == 'object')
+            iType = Object.prototype.toString.call(iVar)
                         .split(' ')[1].slice(0, -1);
+        else
+            iType = iType[0].toUpperCase() + iType.slice(1);
 
         if (iVar) {
             if (
@@ -218,10 +252,15 @@
                 return 'Window';
             else if (iVar.defaultView || iVar.documentElement)
                 return 'Document';
+            else if (
+                iType.match(/HTML\w+?Element$/) ||
+                (typeof iVar.tagName == 'string')
+            )
+                return 'Element';
         } else if (isNaN(iVar) && (iVar !== iVar))
             return 'NaN';
 
-        return iType.replace(/HTML(\w+?Element)$/, '$1');
+        return iType;
     }
 
     //  Get first, set all.
@@ -262,111 +301,109 @@
         return iHex;
     }
 
-    _Extend_(_Get_Set_, {
-        Style:    {
-            RGB_Hex:      function (iRed, iGreen, iBlue) {
-                var iArgs = _Extend_([ ], arguments);
+    function RGB_Hex(iRed, iGreen, iBlue) {
+        var iArgs = _Extend_([ ], arguments);
 
-                if ((iArgs.length == 1) && (typeof iArgs[0] == 'string'))
-                    iArgs = iArgs[0].replace(/rgb\(([^\)]+)\)/i, '$1').replace(/,\s*/g, ',').split(',');
+        if ((iArgs.length == 1) && (typeof iArgs[0] == 'string'))
+            iArgs = iArgs[0].replace(/rgb\(([^\)]+)\)/i, '$1').replace(/,\s*/g, ',').split(',');
 
-                for (var i = 0; i < 3; i++)
-                    iArgs[i] = toHexInt(iArgs[i], 2);
-                return iArgs.join('');
-            },
-            PX_Needed:    {
-                width:              true,
-                'min-width':        true,
-                'max-width':        true,
-                height:             true,
-                'min-height':       true,
-                'max-height':       true,
-                'border-radius':    true,
-                margin:             true,
-                padding:            true,
-                top:                true,
-                left:               true
-            },
-            get:          function (iElement, iName) {
-                if (_Type_(iElement) in DOM_Type.root)  return null;
+        for (var i = 0; i < 3; i++)
+            iArgs[i] = toHexInt(iArgs[i], 2);
+        return iArgs.join('');
+    }
 
-                var iScale = 1;
+    _Get_Set_.Style = {
+        PX_Needed:    {
+            width:              true,
+            'min-width':        true,
+            'max-width':        true,
+            height:             true,
+            'min-height':       true,
+            'max-height':       true,
+            'border-radius':    true,
+            margin:             true,
+            padding:            true,
+            top:                true,
+            left:               true
+        },
+        get:          function (iElement, iName) {
+            if (_Type_(iElement) in DOM_Type.root)  return null;
 
-                if (IE_CSS_Filter)
-                    switch (iName) {
-                        case 'opacity':    {
-                            iName = 'filter';
-                            iScale = 100;
-                        }
-                    }
+            var iScale = 1;
 
-                var iStyle = IE_CSS_Filter ?
-                        iElement.currentStyle.getAttribute(iName) :
-                        DOM.defaultView.getComputedStyle(iElement, null).getPropertyValue(iName);
-
-                if (_Type_(iStyle) == 'Number')
-                    return iStyle;
-
-                var iNumber = iStyle.match(/(\d+(\.\d+)?)(px$)?/i);
-                iNumber = iNumber ? Number(iNumber[1]) : NaN;
-
-                return  isNaN(iNumber) ? iStyle : (iNumber / iScale);
-            },
-            set:          function (iElement, iName, iValue) {
-                if (_Type_(iElement) in DOM_Type.root)  return false;
-
-                if (IE_CSS_Filter) {
-                    var iString = '',  iWrapper,  iScale = 1,  iConvert;
-                    if (typeof iValue == 'string')
-                        var iRGBA = iValue.match(/\s*rgba\(([^\)]+),\s*(\d\.\d+)\)/i);
-
-                    if (iName == 'opacity') {
+            if (IE_CSS_Filter)
+                switch (iName) {
+                    case 'opacity':    {
                         iName = 'filter';
-                        iWrapper = 'progid:DXImageTransform.Microsoft.Alpha(opacity={n})';
                         iScale = 100;
-                    } else if (!! iRGBA) {
-                        iString = iValue.replace(iRGBA[0], '');
-                        if (iString)
-                            iString += arguments.callee(arguments[0], iName, iString);
-                        if (iName != 'background')
-                            iString += arguments.callee(
-                                arguments[0],
-                                (iName.indexOf('-color') > -1) ? iName : (iName + '-color'),
-                                'rgb(' + iRGBA[1] + ')'
-                            );
-                        iName = 'filter';
-                        iWrapper = 'progid:DXImageTransform.Microsoft.Gradient(startColorStr=#{n},endColorStr=#{n})';
-                        iConvert = function (iAlpha, iRGB) {
-                            return  toHexInt(parseFloat(iAlpha) * 256, 2) + this.RGB_Hex(iRGB);
-                        };
                     }
                 }
 
-                if ((! isNaN( Number(iValue) )) && this.PX_Needed[iName])
-                    iValue += 'px';
-                if (iWrapper)
-                    iValue = iWrapper.replace(/\{n\}/g,  iConvert ?
-                          iConvert(iRGBA[2], iRGBA[1]) :
-                          (iValue * iScale)
-                    );
+            var iStyle = IE_CSS_Filter ?
+                    iElement.currentStyle.getAttribute(iName) :
+                    DOM.defaultView.getComputedStyle(iElement, null).getPropertyValue(iName);
 
-                if (iElement)
-                    iElement.style[
-                        IE_CSS_Filter ? 'setAttribute' : 'setProperty'
-                    ](
-                        iName,
-                        (_Browser_.msie != 9) ? iValue : iValue.toString(),
-                        'important'
-                    );
-                else  return [
-                        iString ? (iString + ";\n") : ''
-                    ].concat([
-                        iName,  ':',  Code_Indent,  iValue
-                    ]).join('');
+            if (_Type_(iStyle) == 'Number')
+                return iStyle;
+
+            var iNumber = iStyle.match(/(\d+(\.\d+)?)(px$)?/i);
+            iNumber = iNumber ? Number(iNumber[1]) : NaN;
+
+            return  isNaN(iNumber) ? iStyle : (iNumber / iScale);
+        },
+        set:          function (iElement, iName, iValue) {
+            if (_Type_(iElement) in DOM_Type.root)  return false;
+
+            if (IE_CSS_Filter) {
+                var iString = '',  iWrapper,  iScale = 1,  iConvert;
+                if (typeof iValue == 'string')
+                    var iRGBA = iValue.match(/\s*rgba\(([^\)]+),\s*(\d\.\d+)\)/i);
+
+                if (iName == 'opacity') {
+                    iName = 'filter';
+                    iWrapper = 'progid:DXImageTransform.Microsoft.Alpha(opacity={n})';
+                    iScale = 100;
+                } else if (!! iRGBA) {
+                    iString = iValue.replace(iRGBA[0], '');
+                    if (iString)
+                        iString += arguments.callee(arguments[0], iName, iString);
+                    if (iName != 'background')
+                        iString += arguments.callee(
+                            arguments[0],
+                            (iName.indexOf('-color') > -1) ? iName : (iName + '-color'),
+                            'rgb(' + iRGBA[1] + ')'
+                        );
+                    iName = 'filter';
+                    iWrapper = 'progid:DXImageTransform.Microsoft.Gradient(startColorStr=#{n},endColorStr=#{n})';
+                    iConvert = function (iAlpha, iRGB) {
+                        return  toHexInt(parseFloat(iAlpha) * 256, 2) + RGB_Hex(iRGB);
+                    };
+                }
             }
-        }
-    });
 
+            if ((! isNaN( Number(iValue) )) && this.PX_Needed[iName])
+                iValue += 'px';
+            if (iWrapper)
+                iValue = iWrapper.replace(/\{n\}/g,  iConvert ?
+                      iConvert(iRGBA[2], iRGBA[1]) :
+                      (iValue * iScale)
+                );
+
+            if (iElement)
+                iElement.style[
+                    IE_CSS_Filter ? 'setAttribute' : 'setProperty'
+                ](
+                    iName,
+                    (_Browser_.msie != 9) ? iValue : iValue.toString(),
+                    'important'
+                );
+            else  return [
+                    iString ? (iString + ";\n") : ''
+                ].concat([
+                    iName,  ':',  Code_Indent,  iValue
+                ]).join('');
+        }
+    };
 
     /* ----- DOM Event ----- */
     var _Time_ = {
@@ -399,16 +436,8 @@
         var CB_Fix,
             This_DOM = (_Type_(iElement) == 'Document') ?
                 iElement : (iElement.ownerDocument || iElement.document);
-        if (iType == 'DOMContentLoaded') {
-            CB_Fix = function () {
-                This_DOM.isReady = true;
-                iCallback.call(This_DOM,  arguments[0] || BOM.event);
-            };
-            if (This_DOM && This_DOM.isReady) {
-                CB_Fix();
-                return;
-            }
-        } else  iType = iType.toLowerCase();
+        if (iType.indexOf('DOM') != 0)
+            iType = iType.toLowerCase();
 
         if (_Browser_.modern) {
             iElement.addEventListener(iType, CB_Fix || iCallback, false);
@@ -421,7 +450,7 @@
                 _Time_.every(0.01, function () {
                     try {
                         This_DOM.documentElement.doScroll('left');
-                        CB_Fix();
+                        iCallback.call(This_DOM, BOM.event);
                         return false;
                     } catch (Err) {
                         return;
@@ -453,26 +482,52 @@
         });
         return iElement;
     }
+    /* ----- DOM Ready ----- */
+    var DOM_Ready_Handler = [ ],
+        DOM_Ready_Timer;
 
-    _Extend_(_Get_Set_, {
-        Attribute:    {
-            AttrName:    {
-                'class':    'className',
-                'for':      'htmlFor'
-            },
-            get:         function (iElement, iName) {
-                return  (_Type_(iElement) in DOM_Type.root) ?
-                    null : iElement.getAttribute(_Browser_.modern ? iName : this.AttrName[iName]);
-            },
-            set:         function (iElement, iName, iValue) {
-                return  (_Type_(iElement) in DOM_Type.root) ?
-                    false : iElement.setAttribute(
-                        _Browser_.modern ? iName : this.AttrName[iName],
-                        iValue
-                    );
-            }
+    function DOM_Ready_Event() {
+        if (DOM.isReady) return;
+
+        var _DOM_Ready_ = (DOM.readyState == 'complete') &&
+                DOM.body  &&  DOM.body.lastChild  &&  DOM.getElementById;
+
+        if ((this !== DOM) && (! _DOM_Ready_))
+            return;
+
+        DOM.isReady = true;
+        BOM.clearTimeout( DOM_Ready_Timer );
+        console.log(this, arguments);
+
+        for (var i = 0;  i < DOM_Ready_Handler.length;  i++)
+            DOM_Ready_Handler[i].apply(DOM, arguments);
+
+        return false;
+    }
+
+    DOM_Ready_Timer = _Time_.every(0.5, DOM_Ready_Event);
+    Event_Bind(DOM, 'DOMContentLoaded', DOM_Ready_Event);
+    Event_Bind(BOM, 'load', DOM_Ready_Event);
+
+
+
+    _Get_Set_.Attribute = {
+        AttrName:    {
+            'class':    'className',
+            'for':      'htmlFor'
+        },
+        get:         function (iElement, iName) {
+            return  (_Type_(iElement) in DOM_Type.root) ?
+                null : iElement.getAttribute(_Browser_.modern ? iName : this.AttrName[iName]);
+        },
+        set:         function (iElement, iName, iValue) {
+            return  (_Type_(iElement) in DOM_Type.root) ?
+                false : iElement.setAttribute(
+                    _Browser_.modern ? iName : this.AttrName[iName],
+                    iValue
+                );
         }
-    });
+    };
 
     function DOM_Create(TagName, AttrList) {
         var iNew;
@@ -517,21 +572,20 @@
         return iNew;
     }
 
-    _Extend_(_Get_Set_, {
-        Data:    {
-            _Data_:    [ ],
-            set:       function (iElement, iName, iValue) {
-                if (_Type_(iElement.dataIndex) != 'Number')
-                    iElement.dataIndex = this._Data_.push({ }) - 1;
 
-                this._Data_[iElement.dataIndex][iName] = iValue;
-            },
-            get:       function (iElement, iName) {
-                return  _Operator_('Attribute', iElement,  'data-' + iName) ||
-                        this._Data_[iElement.dataIndex][iName];
-            }
+    _Get_Set_.Data = {
+        _Data_:    [ ],
+        set:       function (iElement, iName, iValue) {
+            if (_Type_(iElement.dataIndex) != 'Number')
+                iElement.dataIndex = this._Data_.push({ }) - 1;
+
+            this._Data_[iElement.dataIndex][iName] = iValue;
+        },
+        get:       function (iElement, iName) {
+            return  _Operator_('Attribute', [iElement],  'data-' + iName) ||
+                    this._Data_[iElement.dataIndex][iName];
         }
-    });
+    };
 
     function Back_Track(iName, iCallback) {
         var iResult = [ ];
@@ -617,7 +671,8 @@
 
             if ( $.isPlainObject(iObject) )
                 for (var iName in iObject)
-                    iParameter.push(iName + '=' + iObject[iName]);
+                    if ($.type(iObject[iName]) in Data_Type)
+                        iParameter.push(iName + '=' + iObject[iName]);
             else if (iObject instanceof $)
                 for (var i = 0;  i < iObject.length;  i++)
                     iParameter.push(iObject[i].name + '=' + iObject[i].value);
@@ -625,9 +680,10 @@
             return iParameter.join('&');
         },
         paramJSON:        function (Args_Str) {
-            Args_Str = (Args_Str || BOM.location.search).match(/^[^\?]*\?([^\s]+)$/)[1];
+            Args_Str = (Args_Str || BOM.location.search).match(/^[^\?]*\?([^\s]+)$/);
+            if (! Args_Str) return;
 
-            var iArgs = Args_Str.split('&'),
+            var iArgs = Args_Str[1].split('&'),
                 _Args_ = {
                     toString:    function () {
                         return  BOM.JSON.format(this);
@@ -666,10 +722,7 @@
                 for (var i = 0;  i < iArgs[0].length;  i++)
                     if ( iArgs[0][i] )
                         [ ].push.call(this, iArgs[0][i]);
-            } else if (
-                (iArgs[0] instanceof HTMLElement) ||
-                (iArgType in DOM_Type.element)
-            )
+            } else if (iArgType in DOM_Type.element)
                 [ ].push.call(this, iArgs[0]);
 
             return this;
@@ -713,10 +766,12 @@
             return  $.extend($($_Result), {prevObject:  $_This});
         },
         attr:           function () {
-            return  _Operator_('Attribute', this, arguments[0], arguments[1]) || this;
+            var iResult = _Operator_('Attribute', this, arguments[0], arguments[1]);
+            return  (typeof iResult == 'undefined') ? this : iResult;
         },
         data:           function () {
-            return  _Operator_('Data', this, arguments[0], arguments[1]) || this;
+            var iResult = _Operator_('Data', this, arguments[0], arguments[1]);
+            return  (typeof iResult == 'undefined') ? this : iResult;
         },
         parent:         function () {
             var $_This = this,  $_Result = [ ];
@@ -814,13 +869,17 @@
             return  this;
         },
         css:            function (iName, iValue) {
-            return  _Operator_('Style', this, arguments[0], arguments[1]) || this;
+            var iResult = _Operator_('Style', this, arguments[0], arguments[1]);
+            return  (typeof iResult == 'undefined') ? this : iResult;
         },
         addClass:       function (new_Class) {
             new_Class = new_Class.split(' ');
 
             for (var i = 0, old_Class;  i < this.length;  i++) {
-                old_Class = _Operator_('Attribute', [this[i]], 'class').replace(/\s+/g, ' ').split(' ');
+                old_Class = _Operator_('Attribute', [this[i]], 'class');
+                if (! old_Class) continue;
+
+                old_Class = old_Class.replace(/\s+/g, ' ').split(' ');
                 for (var j = 0;  j < new_Class.length;  j++)
                     if ($.inArray(old_Class, new_Class[j]) == -1)
                         old_Class.push( new_Class[j] );
@@ -856,11 +915,16 @@
                             iCallback.apply(this, arguments);
                     });
         },
-        ready:          function () {
-            if ($.type(this[0]) == 'Document')
-                return  this.bind('DOMContentLoaded', arguments[0]);
+        ready:          function (iCallback) {
+            if ($.type(this[0]) != 'Document')
+                throw 'The Ready Method is only used for Document Object !';
 
-            throw 'The Ready Method is only used for Document Object !';
+            if (! DOM.isReady)
+                DOM_Ready_Handler.push(iCallback);
+            else
+                iCallback.call(this[0], BOM.event);
+
+            return this;
         },
         hover:          function (iEnter, iLeave) {
             return  this.bind('mouseover', function () {
@@ -1273,13 +1337,12 @@
                     return iResponse;
                 },
                 timeOut:        function (TimeOut_Seconds, TimeOut_Callback) {
-                    $.extend(this, {
-                        timeout:      TimeOut_Seconds * 1000,
-                        ontimeout:    function () {
-                            this.onreadystatechange = null;
-                            this.abort();
-                            TimeOut_Callback.call(this);
-                        }
+                    var iXHR = this;
+
+                    $.wait(TimeOut_Seconds, function () {
+                        iXHR.onreadystatechange = null;
+                        iXHR.abort();
+                        TimeOut_Callback.call(iXHR);
                     });
                 },
                 retry:    function (Wait_Seconds) {
