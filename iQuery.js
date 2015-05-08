@@ -1,14 +1,14 @@
 //
-//                >>>  EasyImport.js  <<<
+//                >>>  iQuery.js  <<<
 //
 //
-//      [Version]    v0.9  (2015-5-8)  Stable
+//      [Version]    v1.0  (2015-5-8)  Stable
 //
-//      [Usage]      Only for loading JavaScript files in Single-Page Web,
-//                   no Inherit support for Frames.
+//      [Usage]      A Light-weight jQuery Compatible API
+//                   with IE 8+ compatibility.
 //
 //
-//              (C)2013-2015    SCU FYclub-RDD
+//            (C)2015    shiy2008@gmail.com
 //
 
 
