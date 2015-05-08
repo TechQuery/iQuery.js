@@ -1,3 +1,17 @@
+//
+//                >>>  EasyImport.js  <<<
+//
+//
+//      [Version]    v0.9  (2015-5-8)  Stable
+//
+//      [Usage]      Only for loading JavaScript files in Single-Page Web,
+//                   no Inherit support for Frames.
+//
+//
+//              (C)2013-2015    SCU FYclub-RDD
+//
+
+
 /* ---------- ECMAScript 5  Patch ---------- */
 (function (BOM) {
 
@@ -161,7 +175,7 @@
 // ---------->  iQuery.js  <---------- //
 (function (BOM, DOM) {
     
-/* ---------- Inner Members ---------- */
+/* ---------- UA Check ---------- */
     var UA = navigator.userAgent;
     var is_Trident = UA.match(/MSIE (\d+)|Trident[^\)]+rv:(\d+)/i),
         is_Gecko = UA.match(/; rv:(\d+)[^\/]+Gecko\/\d+/),
@@ -175,6 +189,18 @@
             is_Pad || is_Phone || UA.match(/Mobile/i)
         ) && (! UA.match(/ PC /));
 
+    var _Browser_ = {
+            msie:             IE_Ver,
+            ff:               FF_Ver,
+            modern:           !  old_IE,
+            mobile:           !! is_Mobile,
+            pad:              !! is_Pad,
+            phone:            !! is_Phone,
+            versionNumber:    IE_Ver || FF_Ver
+        };
+
+
+/* ----- Object Base ----- */
     function _Extend_(iTarget, iSource) {
         iTarget = iTarget || { };
 
@@ -185,16 +211,7 @@
         return iTarget;
     }
 
-    var _Browser_ = {
-            msie:             IE_Ver,
-            ff:               FF_Ver,
-            modern:           !  old_IE,
-            mobile:           !! is_Mobile,
-            pad:              !! is_Pad,
-            phone:            !! is_Phone,
-            versionNumber:    IE_Ver || FF_Ver
-        },
-        BOM_Type = {
+    var BOM_Type = {
             'Window':       true,
             'DOMWindow':    true,
             'global':       true
@@ -257,13 +274,40 @@
                 (typeof iVar.tagName == 'string')
             )
                 return 'Element';
+            else if (
+                (_Browser_.msie < 9) &&
+                (iType == 'Object') &&
+                (typeof iVar.length == 'number')
+            )  try {
+                iVar.item();
+                try {
+                    iVar.namedItem();
+                    return 'HTMLCollection';
+                } catch (iError) {
+                    return 'NodeList';
+                }
+            } catch (iError) { }
         } else if (isNaN(iVar) && (iVar !== iVar))
             return 'NaN';
 
         return iType;
     }
 
-    //  Get first, set all.
+    function Back_Track(iName, iCallback) {
+        var iResult = [ ];
+
+        for (var _This_ = this, _Next_, i = 0;  _This_[iName];  _This_ = _Next_, i++) {
+            _Next_ = _This_[iName];
+            iResult.push(_Next_);
+            if ( iCallback )
+                iCallback.call(_Next_, i, _Next_);
+        }
+
+        return iResult;
+    }
+
+
+/* ----- DOM Info Operator - Get first, set all. ----- */
     var _Get_Set_ = { };
 
     function _Operator_(iType, iElement, iName, iValue) {
@@ -287,6 +331,7 @@
 
         return iResult;
     }
+
 
     /* ----- DOM Style ----- */
     var IE_CSS_Filter = (_Browser_.msie < 9);
@@ -405,7 +450,51 @@
         }
     };
 
-    /* ----- DOM Event ----- */
+    /* ----- DOM Attribute ----- */
+    _Get_Set_.Attribute = {
+        alias:    {
+            'class':    'className',
+            'for':      'htmlFor'
+        },
+        get:      function (iElement, iName) {
+            return  (_Type_(iElement) in DOM_Type.root) ?
+                null : iElement.getAttribute(_Browser_.modern ? iName : this.AttrName[iName]);
+        },
+        set:      function (iElement, iName, iValue) {
+            if (_Type_(iElement) in DOM_Type.root)
+                return false;
+
+            if ((! _Browser_.modern) && this.alias[iName])
+                iElement[ this.alias[iName] ] = iValue;
+            else
+                iElement.setAttribute(iName, iValue);
+        }
+    };
+
+    /* ----- DOM Data ----- */
+    _Get_Set_.Data = {
+        _Data_:    [ ],
+        set:       function (iElement, iName, iValue) {
+            if (_Type_(iElement.dataIndex) != 'Number')
+                iElement.dataIndex = this._Data_.push({ }) - 1;
+
+            this._Data_[iElement.dataIndex][iName] = iValue;
+        },
+        get:       function (iElement, iName) {
+            if (_Type_(iElement.dataIndex) != 'Number')
+                iElement.dataIndex = this._Data_.push({ }) - 1;
+
+            var iData = this._Data_[iElement.dataIndex][iName];
+
+            if (iData)
+                return iData;
+            else  try {
+                return  _Operator_('Attribute', [iElement],  'data-' + iName);
+            } catch (iError) { }
+        }
+    };
+
+/* ----- DOM Event ----- */
     var _Time_ = {
         _Root_:    BOM,
         now:       Date.now,
@@ -441,9 +530,9 @@
 
         if (_Browser_.modern) {
             iElement.addEventListener(iType, CB_Fix || iCallback, false);
-            return iElement;
+            return;
         }
-        //  IE 8- 事件补丁
+        //  IE 8- Event Object Patch
         if (iType == 'DOMContentLoaded') {
             if (BOM !== BOM.top)  iType = 'load';
             else {
@@ -469,6 +558,7 @@
                 return;
 
             iCallback.call(iElement, _Extend_(BOM.event, {
+                W3C_Type:         iType,
                 target:           BOM.event.srcElement,
                 which:            (iType.slice(0, 3) == 'key') ?
                     BOM.event.keyCode  :  [0, 1, 3, 0, 2, 0, 0, 0][BOM.event.button],
@@ -480,11 +570,44 @@
                 })[iType]
             }));
         });
-        return iElement;
     }
+
+    function Event_Switch(iElement, iType, iCallback) {
+        var Event_Data = _Operator_('Data', [iElement], 'event');
+        if (! Event_Data)
+            Event_Data = { };
+
+        if (! Event_Data[iType]) {
+            Event_Data[iType] = [ ];
+            Event_Bind(iElement, iType, function (iEvent) {
+                var iHandler = _Operator_('Data', [iElement], 'event')[
+                        iEvent.W3C_Type || iEvent.type
+                    ],
+                    iReturn;
+
+                for (var i = 0, _Return_;  i < iHandler.length;  i++) {
+                    _Return_ = iHandler[i].apply(this, arguments);
+                    if (typeof _Return_ == 'undefined')
+                        iReturn = _Return_;
+                }
+
+                return iReturn;
+            });
+        }
+
+        if (iCallback)
+            Event_Data[iType].push( iCallback );
+        else
+            Event_Data[iType] = null;
+
+        _Operator_('Data', [iElement], 'event', Event_Data);
+    }
+
+
     /* ----- DOM Ready ----- */
-    var DOM_Ready_Handler = [ ],
-        DOM_Ready_Timer;
+    _Operator_('Data', [DOM], 'event', {
+        ready:    [ ],
+    });
 
     function DOM_Ready_Event() {
         if (DOM.isReady) return;
@@ -496,49 +619,44 @@
             return;
 
         DOM.isReady = true;
-        BOM.clearTimeout( DOM_Ready_Timer );
+        BOM.clearTimeout(
+            _Operator_('Data', [DOM], 'Ready_Timer')
+        );
+        console.info('[DOM Ready Event]');
         console.log(this, arguments);
 
-        for (var i = 0;  i < DOM_Ready_Handler.length;  i++)
-            DOM_Ready_Handler[i].apply(DOM, arguments);
+        var iHandler = _Operator_('Data', [DOM], 'event').ready;
+        for (var i = 0;  i < iHandler.length;  i++)
+            iHandler[i].apply(DOM, arguments);
 
         return false;
     }
 
-    DOM_Ready_Timer = _Time_.every(0.5, DOM_Ready_Event);
+    _Operator_(
+        'Data',  [DOM],  'Ready_Timer',  _Time_.every(0.5, DOM_Ready_Event)
+    );
     Event_Bind(DOM, 'DOMContentLoaded', DOM_Ready_Event);
     Event_Bind(BOM, 'load', DOM_Ready_Event);
 
 
 
-    _Get_Set_.Attribute = {
-        AttrName:    {
-            'class':    'className',
-            'for':      'htmlFor'
-        },
-        get:         function (iElement, iName) {
-            return  (_Type_(iElement) in DOM_Type.root) ?
-                null : iElement.getAttribute(_Browser_.modern ? iName : this.AttrName[iName]);
-        },
-        set:         function (iElement, iName, iValue) {
-            return  (_Type_(iElement) in DOM_Type.root) ?
-                false : iElement.setAttribute(
-                    _Browser_.modern ? iName : this.AttrName[iName],
-                    iValue
-                );
-        }
-    };
-
+/* ----- DOM Constructor ----- */
     function DOM_Create(TagName, AttrList) {
         var iNew;
 
         if (TagName[0] == '<') {
-            iNew = DOM.createElement('div');
-            iNew.innerHTML = TagName;
-            return (iNew.childNodes.length == 1) ?
-                iNew.childNodes[0] : iNew.childNodes;
+            if (! TagName.match(/^<style[^\w]+/i)) {
+                iNew = DOM.createElement('div');
+                iNew.innerHTML = TagName;
+                if (iNew.children.length > 1)
+                    return iNew.children;
+                else
+                    iNew = iNew.children[0];
+            } else
+                TagName = 'style';
         }
-        iNew = DOM.createElement(TagName);
+        if (! iNew)
+            iNew = DOM.createElement(TagName);
 
         if (AttrList)  for (var AK in AttrList) {
             var iValue = AttrList[AK];
@@ -570,34 +688,6 @@
         }
 
         return iNew;
-    }
-
-
-    _Get_Set_.Data = {
-        _Data_:    [ ],
-        set:       function (iElement, iName, iValue) {
-            if (_Type_(iElement.dataIndex) != 'Number')
-                iElement.dataIndex = this._Data_.push({ }) - 1;
-
-            this._Data_[iElement.dataIndex][iName] = iValue;
-        },
-        get:       function (iElement, iName) {
-            return  _Operator_('Attribute', [iElement],  'data-' + iName) ||
-                    this._Data_[iElement.dataIndex][iName];
-        }
-    };
-
-    function Back_Track(iName, iCallback) {
-        var iResult = [ ];
-
-        for (var _This_ = this, _Next_, i = 0;  _This_[iName];  _This_ = _Next_, i++) {
-            _Next_ = _This_[iName];
-            iResult.push(_Next_);
-            if ( iCallback )
-                iCallback.call(_Next_, i, _Next_);
-        }
-
-        return iResult;
     }
 
 
@@ -902,7 +992,13 @@
         },
         bind:           function (iType, iCallback) {
             for (var i = 0;  i < this.length;  i++)
-                Event_Bind(this[i], iType, iCallback);
+                Event_Switch(this[i], iType, iCallback);
+
+            return  this;
+        },
+        unbind:         function (iType) {
+            for (var i = 0;  i < this.length;  i++)
+                Event_Switch(this[i], iType);
 
             return  this;
         },
@@ -919,9 +1015,11 @@
             if ($.type(this[0]) != 'Document')
                 throw 'The Ready Method is only used for Document Object !';
 
-            if (! DOM.isReady)
-                DOM_Ready_Handler.push(iCallback);
-            else
+            if (! DOM.isReady) {
+                var iEvent = this.data('event');
+                iEvent.ready.push(iCallback);
+                this.data('event', iEvent);
+            } else
                 iCallback.call(this[0], BOM.event);
 
             return this;
@@ -992,6 +1090,7 @@
         }
     });
 
+    $.fn.off = $.fn.unbind;
 
 /* ---------- jQuery+ v1.2 ---------- */
 
