@@ -1,15 +1,13 @@
-//
-//                >>>  iQuery.js  <<<
-//
-//
-//      [Version]    v1.0  (2015-5-8)  Stable
-//
-//      [Usage]      A Light-weight jQuery Compatible API
-//                   with IE 8+ compatibility.
-//
-//
-//            (C)2015    shiy2008@gmail.com
-//
+self.onerror = function () {
+    this.alert([
+        arguments[0],  "\n\n",
+        arguments[1],  ' in ',  arguments[2]
+    ].join(''));
+
+    this.prompt('[Debug]', this.navigator.userAgent);
+
+    return true;
+};
 
 
 /* ---------- ECMAScript 5  Patch ---------- */
@@ -211,13 +209,20 @@
         return iTarget;
     }
 
-    var BOM_Type = {
+    var Data_Type = {
+            String:     true,
+            Number:     true,
+            Boolean:    true,
+            Object:     true,
+            Null:       true
+        },
+        BOM_Type = {
             'Window':       true,
             'DOMWindow':    true,
             'global':       true
         },
         DOM_Type = {
-            sets:       {
+            set:        {
                 Array:             true,
                 HTMLCollection:    true,
                 NodeList:          true,
@@ -234,13 +239,12 @@
                 Window:      true
             }
         },
-        Data_Type = {
-            String:     true,
-            Number:     true,
-            Boolean:    true,
-            Object:     true,
-            Null:       true
-        };
+        DOM_Event = [
+            'keydown',  'keypress',  'keyup',
+            'mousedown',  'mouseup',  'mousemove',
+            'click',  'dblclick',  'scroll',
+            'select',  'focus',  'blur',  'change',  'submit',  'reset'
+        ];
     _Extend_(DOM_Type.element, (function () {
         var iType = { },  _Name_;
 
@@ -388,7 +392,7 @@
                     iElement.currentStyle.getAttribute(iName) :
                     DOM.defaultView.getComputedStyle(iElement, null).getPropertyValue(iName);
 
-            if (_Type_(iStyle) == 'Number')
+            if ((_Type_(iStyle) == 'Number') || (! iStyle))
                 return iStyle;
 
             var iNumber = iStyle.match(/(\d+(\.\d+)?)(px$)?/i);
@@ -449,6 +453,24 @@
                 ]).join('');
         }
     };
+
+    var inVisible = {
+            display:       'none',
+            visibility:    'hidden',
+            width:         0
+        };
+
+    function is_Visible(iElement) {
+        var iStyle = _Operator_('Style', [iElement], [
+                'display',  'visibility',  'width'
+            ]);
+
+        for (var iKey in iStyle)
+            if (iStyle[iKey] == inVisible[iKey])
+                return false;
+        return true;
+    }
+
 
     /* ----- DOM Attribute ----- */
     _Get_Set_.Attribute = {
@@ -551,11 +573,17 @@
         if ((_Type_(iElement) != 'Window') && (iType == 'load'))
             iType = 'readystatechange';
         iElement.attachEvent('on' + iType, function () {
-            if (
-                (iType == 'readystatechange') &&
-                (! iElement.readyState.match(/loaded|complete/))
-            )
-                return;
+            var Loaded;
+
+            switch (iType) {
+                case 'readystatechange':    
+                    Loaded = iElement.readyState.match(/loaded|complete/);  break;
+                case 'load':
+                    Loaded = (iElement.readyState == 'loaded');  break;
+                default:
+                    Loaded = true;
+            }
+            if (! Loaded)  return;
 
             iCallback.call(iElement, _Extend_(BOM.event, {
                 W3C_Type:         iType,
@@ -691,6 +719,118 @@
     }
 
 
+/* ----- HTTP Client ----- */
+    if (_Browser_.msie < 9)
+        var IE_DOMParser = (function (MS_Version) {
+                for (var i = 0; i < MS_Version.length; i++)  try {
+                    new ActiveXObject( MS_Version[i] );
+                    return MS_Version[i];
+                } catch (iError) { }
+            })([
+                'MSXML2.DOMDocument.6.0',
+                'MSXML2.DOMDocument.5.0',
+                'MSXML2.DOMDocument.4.0',
+                'MSXML2.DOMDocument.3.0',
+                'MSXML2.DOMDocument',
+                'Microsoft.XMLDOM'
+            ]);
+
+    function XML_Parse(iString) {
+        iString = iString.trim();
+        if ((iString[0] != '<') || (iString[iString.length - 1] != '>'))
+            throw 'Illegal XML Format...';
+
+        var iXML;
+
+        if (DOMParser) {
+            iXML = (new DOMParser()).parseFromString(iString, 'text/xml');
+            var iError = iXML.getElementsByTagName('parsererror');
+            if (iError.length) {
+                throw  new SyntaxError(1, 'Incorrect XML Syntax !');
+                console.log(iError[0]);
+            }
+        } else {
+            iXML = new ActiveXObject( IE_DOMParser );
+            iXML.async = false;
+            iXML.loadXML(iString);
+            if (iXML.parseError.errorCode) {
+                throw  new SyntaxError(iXML.parseError, 'Incorrect XML Syntax !');
+                console.log(iXML.parseError.reason);
+            }
+        }
+        return iXML;
+    }
+
+    function X_Domain(Target_URL) {
+        var iLocation = BOM.location;
+        Target_URL = Target_URL.match(/^(\w+?(s)?:)?\/\/([\w\d:]+@)?([^\/\:\@]+)(:(\d+))?/);
+
+        if (! Target_URL)  return false;
+        if (Target_URL[1] && (Target_URL[1] != iLocation.protocol))  return true;
+        if (Target_URL[4] && (Target_URL[4] != iLocation.hostname))  return true;
+        var iPort = iLocation.port || (
+                (iLocation.protocol == 'http:') && 80
+            ) || (
+                (iLocation.protocol == 'https:') && 443
+            );
+        if (Target_URL[6] && (Target_URL[6] != iPort))  return true;
+    }
+
+    function iAJAX(This_Call, X_Domain) {
+        var iXDR = (X_Domain && (_Browser_.msie < 10));
+        var iXHR = new BOM[iXDR ? 'XDomainRequest' : 'XMLHttpRequest']();
+
+        var _Open_ = iXHR.open;
+        iXHR.open = function () {
+            var _This_ = this;
+
+            _This_[
+                X_Domain ? 'onload' : 'onreadystatechange'
+            ] = function () {
+                if (! (X_Domain || (_This_.readyState == 4)))  return;
+
+                iXHR.onready.call(iXHR, iXHR.responseAny());
+                iXHR = null;
+            };
+            _Open_.apply(_This_, arguments);
+        };
+        if (iXDR)
+            iXHR.setRequestHeader = function () {
+                console.warn("IE 8/9 XDR doesn't support Changing HTTP Headers...");
+            };
+
+        return  _Extend_(iXHR, {
+                responseAny:    function () {
+                    var iResponse = this.responseText.trim();
+
+                    try {
+                        iResponse = BOM.JSON.parse(iResponse);
+                    } catch (iError) {
+                        try {
+                            iResponse = XML_Parse(iResponse);
+                        } catch (iError) { }
+                    }
+
+                    return iResponse;
+                },
+                timeOut:        function (TimeOut_Seconds, TimeOut_Callback) {
+                    var iXHR = this;
+
+                    _Time_.wait(TimeOut_Seconds, function () {
+                        iXHR.onreadystatechange = null;
+                        iXHR.abort();
+                        TimeOut_Callback.call(iXHR);
+                    });
+                },
+                retry:    function (Wait_Seconds) {
+                    _Time_.wait(Wait_Seconds, function () {
+                        This_Call.callee.apply(BOM, This_Call);
+                    });
+                }
+            });
+    }
+
+
 /* ---------- jQuery API ---------- */
     BOM.iQuery = function () {
         /* ----- Global Wrapper ----- */
@@ -711,9 +851,11 @@
         if (_Type_(iArgs[0]) == 'String') {
             if ((iArgs[0][0] != '<') && (_Type_(iArgs[1]) != 'Object')) {
                 this.context = iArgs[1] || this.context;
-                this.add(
-                    this.context.querySelectorAll(iArgs[0])
-                );
+                try {
+                    this.add(
+                        this.context.querySelectorAll(iArgs[0])
+                    );
+                } catch (iError) { }
                 this.selector = iArgs[0];
             } else
                 this.add( DOM_Create(iArgs[0], iArgs[1]) );
@@ -724,11 +866,19 @@
     var $ = BOM.iQuery;
     $.fn = $.prototype;
 
+
+
+    /* ----- iQuery Static Method ----- */
     _Extend_($, {
         browser:          _Browser_,
         type:             _Type_,
         isPlainObject:    function () {
             return  (arguments[0].constructor === Object);
+        },
+        isEmptyObject:    function () {
+            for (var iKey in arguments[0])
+                return false;
+            return true;
         },
         extend:           _Extend_,
         makeArray:        function () {
@@ -756,6 +906,7 @@
             return  arguments[0].trim();
         },
         parseJSON:        BOM.JSON.parse,
+        parseXML:         XML_Parse,
         param:            function (iObject) {
             var iParameter = [ ];
 
@@ -798,6 +949,38 @@
 
     _Extend_($, _Time_);
 
+    
+    
+    /* ----- HTTP Client ----- */
+    function iHTTP(iURL, iData, iCallback) {
+        iURL = iURL.split('?')[0] + '?' + $.param(
+            $.extend($.paramJSON(iURL), {_:  $.now()})
+        );
+
+        var HTTP_Client = iAJAX(
+                arguments,
+                iCallback.name || X_Domain(iURL)
+            );
+        HTTP_Client.onready = iCallback;
+        HTTP_Client.open(iData ? 'POST' : 'GET', iURL, true);
+//        HTTP_Client.setRequestHeader('If-Modified-Since', 0);
+        HTTP_Client.send(
+            (typeof iData == 'string') ? iData : BOM.JSON.stringify(JSON)
+        );
+
+        return HTTP_Client;
+    }
+
+    _Extend_($, {
+        get:     function () {
+            return  iHTTP(arguments[0], null, arguments[1]);
+        },
+        post:    function () {
+            return  iHTTP(arguments[0], arguments[1], arguments[2]);
+        }
+    });
+
+    /* ----- iQuery Instance Method ----- */
     _Extend_($.fn, {
         splice:         [ ].splice,
         add:            function () {
@@ -808,7 +991,7 @@
                 iArgs[0] = $(iArgs[0], iArgs[1]);
                 iArgType = 'iQuery';
             }
-            if (iArgType in DOM_Type.sets) {
+            if (iArgType in DOM_Type.set) {
                 for (var i = 0;  i < iArgs[0].length;  i++)
                     if ( iArgs[0][i] )
                         [ ].push.call(this, iArgs[0][i]);
@@ -827,6 +1010,27 @@
                     {prevObject:  $_This}
                 );
         },
+        index:          function (iTarget) {
+            if (! iTarget)
+                return
+                    Back_Track.call(
+                        this[0],
+                        ($.browser.msie < 9) ? 'prevSibling' : 'prevElementSibling'
+                    ).length;
+
+            var iType = $.type(iTarget);
+            switch (true) {
+                case (iType == 'String'):
+                    return  $.inArray($(iTarget), this[0]);
+                case (iType in DOM_Type.set):    {
+                    iTarget = iTarget[0];
+                    iType = $.type(iTarget);
+                }
+                case (iType in DOM_Type.element):
+                    return  $.inArray(this, iTarget);
+            }
+            return -1;
+        },
         slice:          function () {
             var $_This = this;
 
@@ -843,15 +1047,21 @@
         is:             function (iSelector) {
             return  ($.inArray($(iSelector), this[0]) > -1);
         },
-        filter:         function () {
+        filter:         function (iSelector) {
             var $_This = this,
-                $_Filter = $(arguments[0]),
+                $_Filter = $(iSelector),
+                iVisible = iSelector && iSelector.trim().match(/(\s?):visible$/),
                 $_Result = [ ];
+
+            if (iVisible)  iVisible = iVisible[1] ? 2 : 1;
 
             if ( $_Filter.length )
                 for (var i = 0;  i < $_This.length;  i++)
-                    if ($.inArray($_Filter, $_This[i]) > -1)
+                    if ($.inArray($_Filter, $_This[i]) > -1) {
+                        if (iVisible && (! is_Visible($_This[i])))
+                            continue;
                         $_Result.push( $_This[i] );
+                    }
 
             return  $.extend($($_Result), {prevObject:  $_This});
         },
@@ -962,6 +1172,32 @@
             var iResult = _Operator_('Style', this, arguments[0], arguments[1]);
             return  (typeof iResult == 'undefined') ? this : iResult;
         },
+        width:          function () {
+            switch ( $.type(this[0]) ) {
+                case 'Document':    return  Math.max(
+                        DOM.documentElement.scrollWidth,
+                        DOM.body.scrollWidth
+                    );  break;
+                case 'Window':      return  BOM.innerWidth || Math.max(
+                        DOM.documentElement.clientWidth,
+                        DOM.body.clientWidth
+                    );  break;
+                default:            return  this.css('width', arguments[0]);
+            }
+        },
+        height:         function () {
+            switch ( $.type(this[0]) ) {
+                case 'Document':    return  Math.max(
+                        DOM.documentElement.scrollHeight,
+                        DOM.body.scrollHeight
+                    );  break;
+                case 'Window':      return  BOM.innerHeight || Math.max(
+                        DOM.documentElement.clientHeight,
+                        DOM.body.clientHeight
+                    );  break;
+                default:            return  this.css('height', arguments[0]);
+            }
+        },
         addClass:       function (new_Class) {
             new_Class = new_Class.split(' ');
 
@@ -989,6 +1225,9 @@
                 );
 
             return this;
+        },
+        hasClass:       function () {
+            return  ($.inArray(this.attr('class').split(' '), arguments[0]) > -1);
         },
         bind:           function (iType, iCallback) {
             for (var i = 0;  i < this.length;  i++)
@@ -1090,13 +1329,18 @@
         }
     });
 
+    /* ----- Event ShortCut ----- */
     $.fn.off = $.fn.unbind;
+
+    for (var i = 0;  i < DOM_Event.length;  i++)
+        $.fn[ DOM_Event[i] ] = new Function(
+            "return  this.bind('" + DOM_Event[i] + "', arguments[0]);"
+        );
+
 
 /* ---------- jQuery+ v1.2 ---------- */
 
     /* ----- CSS 规则添加  v0.5 ----- */
-
-    var Code_Indent = (! IE_CSS_Filter) ? '' : ' '.repeat(4);
 
     function CSS_Rule2Text(iRule) {
         var Rule_Text = [''],  Rule_Block,  _Rule_Block_;
@@ -1339,144 +1583,173 @@
 })(self.iQuery);
 
 
-/* ----- HTTP 客户端 ----- */
+
+/* ----- 模态框/遮罩层（全局） v0.2 ----- */
 (function (BOM, DOM, $) {
 
-    if ($.browser.msie < 9)
-        var IE_DOMParser = (function (MS_Version) {
-                for (var i = 0; i < MS_Version.length; i++)  try {
-                    new ActiveXObject( MS_Version[i] );
-                    return MS_Version[i];
-                } catch (iError) { }
-            })([
-                'MSXML2.DOMDocument.6.0',
-                'MSXML2.DOMDocument.5.0',
-                'MSXML2.DOMDocument.4.0',
-                'MSXML2.DOMDocument.3.0',
-                'MSXML2.DOMDocument',
-                'Microsoft.XMLDOM'
-            ]);
+    BOM.iShadowCover = {
+        DOM:      $('<div id="iSC"><div /></div>')[0],
+        open:     function (iContent, closeCB) {
+            this.locked = ($.type(iContent) == 'Window');
 
-    function XML_Parse(iString) {
-        iString = iString.trim();
-        if ((iString[0] != '<') || (iString[iString.length - 1] != '>'))
-            throw 'Illegal XML Format...';
+            if (! this.locked)
+                $(this.DOM.firstChild).append(iContent);
+            else
+                this.Content = iContent;
 
-        var iXML;
+            this.DOM.style.height = BOM.innerHeight || DOM.body.clientHeight;
+            this.DOM.style.display = 'table';
+            this.closed = false;
+            this.onclose = closeCB;
 
-        if (DOMParser) {
-            iXML = (new DOMParser()).parseFromString(iString, 'text/xml');
-            var iError = iXML.getElementsByTagName('parsererror');
-            if (iError.length) {
-                throw  new SyntaxError(1, 'Incorrect XML Syntax !');
-                console.log(iError[0]);
-            }
-        } else {
-            iXML = new ActiveXObject( IE_DOMParser );
-            iXML.async = false;
-            iXML.loadXML(iString);
-            if (iXML.parseError.errorCode) {
-                throw  new SyntaxError(iXML.parseError, 'Incorrect XML Syntax !');
-                console.log(iXML.parseError.reason);
-            }
+            return iContent;
+        },
+        close:    function () {
+            this.DOM.style.display = 'none';
+            this.DOM.firstChild.innerHTML = '';
+            this.closed = true;
+            if (this.onclose)
+                this.onclose.call(this.DOM);
         }
-        return iXML;
-    }
+    };
 
-    function X_Domain(Target_URL) {
-        var iLocation = BOM.location;
-        Target_URL = Target_URL.match(/^(\w+?(s)?:)?\/\/([\w\d:]+@)?([^\/\:\@]+)(:(\d+))?/);
+    $(DOM).ready(function () {
+        $(this.body.firstElementChild || this.body.firstChild).before(BOM.iShadowCover.DOM);
+    }).bind('keydown', function () {
+        if (BOM.iShadowCover.closed) return;
 
-        if (! Target_URL)  return false;
-        if (Target_URL[1] && (Target_URL[1] != iLocation.protocol))  return true;
-        if (Target_URL[4] && (Target_URL[4] != iLocation.hostname))  return true;
-        var iPort = iLocation.port || (
-                (iLocation.protocol == 'http:') && 80
-            ) || (
-                (iLocation.protocol == 'https:') && 443
-            );
-        if (Target_URL[6] && (Target_URL[6] != iPort))  return true;
-    }
+        if (! BOM.iShadowCover.locked) {
+            if (arguments[0].which == 27)
+                BOM.iShadowCover.close();
+        } else
+            BOM.iShadowCover.Content.focus();
+    });
 
-    function iAJAX(This_Call, X_Domain) {
-        var iXDR = (X_Domain && ($.browser.msie < 10));
-        var iXHR = new BOM[iXDR ? 'XDomainRequest' : 'XMLHttpRequest']();
+    $(BOM.iShadowCover.DOM).bind('click', function () {
+        if (! BOM.iShadowCover.locked) {
+            if (arguments[0].target.parentNode === this)
+                BOM.iShadowCover.close();
+        } else
+            BOM.iShadowCover.Content.focus();
+    });
 
-        var _Open_ = iXHR.open;
-        iXHR.open = function () {
-            var _This_ = this;
+    $.cssRule({
+        '#iSC': {
+            position:      'fixed',
+            'z-index':     2000000010,
+            top:           0,
+            left:          0,
+            width:         '100%',
+            height:        '100%',
+            background:    'rgba(0, 0, 0, 0.7)',
+            display:       'none'
+        },
+        '#iSC > *': {
+            display:             'table-cell',
+            'vertical-align':    'middle',
+            'text-align':        'center'
+        }
+    });
 
-            _This_[
-                X_Domain ? 'onload' : 'onreadystatechange'
-            ] = function () {
-                if (! (X_Domain || (_This_.readyState == 4)))  return;
-
-                iXHR.onready.call(iXHR, iXHR.responseAny());
-                iXHR = null;
-            };
-            _Open_.apply(_This_, arguments);
+    function iOpen(iURL, Scale, iCallback) {
+        Scale = (Scale > 0) ? Scale : 3;
+        var Size = {
+            height:    BOM.screen.height / Scale,
+            width:     BOM.screen.width / Scale
         };
-        if (iXDR)
-            iXHR.setRequestHeader = function () {
-                console.warn("IE 8/9 XDR doesn't support Changing HTTP Headers...");
-            };
+        var Top = (BOM.screen.height - Size.height) / 2,
+            Left = (BOM.screen.width - Size.width) / 2;
 
-        return  $.extend(iXHR, {
-                responseAny:    function () {
-                    var iResponse = this.responseText.trim();
+        BOM.alert("请留意本网页浏览器的“弹出窗口拦截”提示，当被禁止时请点选【允许】，然后可能需要重做之前的操作。");
+        var new_Window = BOM.open(iURL, '_blank', [
+            'top=' + Top,               'left=' + Left,
+            'height=' + Size.height,    'width=' + Size.width,
+            'resizable=no,menubar=no,toolbar=no,location=no,status=no,scrollbars=no'
+        ].join(','));
 
-                    try {
-                        iResponse = BOM.JSON.parse(iResponse);
-                    } catch (iError) {
-                        try {
-                            iResponse = XML_Parse(iResponse);
-                        } catch (iError) { }
-                    }
+        BOM.new_Window_Fix.call(new_Window, function () {
+            $('link[rel~="shortcut"], link[rel~="icon"], link[rel~="bookmark"]')
+                .add('<base target="_self" />')
+                .appendTo(this.document.head);
 
-                    return iResponse;
-                },
-                timeOut:        function (TimeOut_Seconds, TimeOut_Callback) {
-                    var iXHR = this;
+            $(this.document).bind('keydown', function (iEvent) {
+                var iKeyCode = iEvent.which;
 
-                    $.wait(TimeOut_Seconds, function () {
-                        iXHR.onreadystatechange = null;
-                        iXHR.abort();
-                        TimeOut_Callback.call(iXHR);
-                    });
-                },
-                retry:    function (Wait_Seconds) {
-                    $.wait(Wait_Seconds, function () {
-                        This_Call.callee.apply(BOM, This_Call);
-                    });
+                if (
+                    (iKeyCode == 122) ||                       //  F11
+                    (iKeyCode == 116) ||                       //  (Ctrl + )F5
+                    (iEvent.ctrlKey && (iKeyCode == 82)) ||    //  Ctrl + R
+                    (iEvent.ctrlKey && (iKeyCode == 78)) ||    //  Ctrl + N
+                    (iEvent.shiftKey && (iKeyCode == 121))     //  Shift + F10
+                )
+                    return false;
+            }).bind('contextmenu', function () {
+                return false;
+            }).bind('mousedown', function () {
+                if (arguments[0].which == 3)
+                    return false;
+            });
+        });
+
+        if (iCallback)
+            $.every(0.2, function () {
+                if (new_Window.closed) {
+                    iCallback.call(BOM, new_Window);
+                    return false;
                 }
             });
+        return new_Window;
     }
 
-    function iHTTP(iURL, iData, iCallback) {
-        iURL = iURL.split('?')[0] + '?' + $.param(
-            $.extend($.paramJSON(iURL), {_:  $.now()})
-        );
+    var old_MD = BOM.showModalDialog;
 
-        var HTTP_Client = iAJAX(
-                arguments,
-                iCallback.name || X_Domain(iURL)
+    BOM.showModalDialog = function (iContent, iScale, CloseBack) {
+        if (! arguments.length)
+            throw 'A URL Argument is needed unless...';
+        if ($.type(iScale) == 'Function') {
+            CloseBack = iScale;
+            iScale = null;
+        } else if ($.type(CloseBack) == 'String')
+            return old_MD.apply(BOM, arguments);
+
+        if ($.type(iContent) == 'String') {
+            if (! iContent.match(/^(\w+:)?\/\/[\w\d\.:@]+/)) {
+                var iTitle = iContent;
+                iContent = 'about:blank';
+            }
+            iContent = BOM.iShadowCover.open(
+                iOpen(iContent, iScale, CloseBack)
             );
-        HTTP_Client.onready = iCallback;
-        HTTP_Client.open(iData ? 'POST' : 'GET', iURL, true);
-//        HTTP_Client.setRequestHeader('If-Modified-Since', 0);
-        HTTP_Client.send(
-            (typeof iData == 'string') ? iData : BOM.JSON.stringify(JSON)
-        );
+            $.every(0.2, function () {
+                if (iContent.closed) {
+                    BOM.iShadowCover.close();
+                    return false;
+                }
+            });
+            $(BOM).bind('unload', function () {
+                iContent.close();
+            });
+            BOM.new_Window_Fix.call(iContent, function () {
+                this.iTime = {
+                    _Root_:    this,
+                    now:       $.now,
+                    every:     $.every,
+                    wait:      $.wait
+                };
 
-        return HTTP_Client;
-    };
+                this.iTime.every(0.2, function () {
+                    if (! this.opener) {
+                        this.close();
+                        return false;
+                    }
+                });
+                if (iTitle)
+                    $(this.document.head).append('title', {text:  iTitle});
+            });
+        } else
+            BOM.iShadowCover.open(iContent, CloseBack);
 
-    $.get = function () {
-        return  iHTTP(arguments[0], null, arguments[1]);
-    };
-
-    $.post = function () {
-        return  iHTTP(arguments[0], arguments[1], arguments[2]);
+        return iContent;
     };
 
 })(self, self.document, self.iQuery);
