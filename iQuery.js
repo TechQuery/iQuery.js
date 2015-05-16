@@ -12,6 +12,23 @@
 //
 
 
+/* ---------- Debug Module ---------- */
+if (! console) {
+    function _Notice_() {
+        var iString = [ ];
+
+        for (var i = 0;  i < arguments;  i++)
+            iString.push( arguments[i].toString() );
+
+        self.status = iString.join(' ');
+    }
+    var console = {
+            log:      _Notice_,
+            info:     _Notice_,
+            warn:     _Notice_,
+            error:    _Notice_
+        };
+}
 self.onerror = function () {
     this.alert([
         arguments[0],
@@ -28,11 +45,14 @@ self.onerror = function () {
 /* ---------- ECMAScript 5  Patch ---------- */
 (function (BOM) {
 
-    BOM.iRegExp = function (iString, Special_Char, Mode) {
-        var iChar = ['/', '.'];
+    BOM.iRegExp = function (iString, Mode, Special_Char) {
+        var iRegExp_Compiled = / /,
+            iChar = ['/', '.'];
+
         if (Special_Char instanceof Array)
             iChar = iChar.concat(Special_Char);
-        var iRegExp_Compiled = / /;
+        else if (Special_Char === null)
+            iChar.length = 0;
 
         for (var i = 0; i < iChar.length; i++)
             iString = iString.replace(
@@ -1350,7 +1370,7 @@ self.onerror = function () {
             return this;
         },
         removeClass:    function (iClass) {
-            iClass = / /.compile(
+            iClass = BOM.iRegExp(
                 '\s+(' + iClass.replace(/\s+/g, '|') + ')\s+',  'g'
             );
 
@@ -1780,175 +1800,3 @@ self.onerror = function () {
     $.fx = {interval:  1000 / FPS};
 
 })(self.iQuery);
-
-
-
-/* ----- 模态框/遮罩层（全局） v0.2 ----- */
-(function (BOM, DOM, $) {
-
-    BOM.iShadowCover = {
-        DOM:      $('<div id="iSC"><div /></div>')[0],
-        open:     function (iContent, closeCB) {
-            this.locked = ($.type(iContent) == 'Window');
-
-            if (! this.locked)
-                $(this.DOM.firstChild).append(iContent);
-            else
-                this.Content = iContent;
-
-            this.DOM.style.height = BOM.innerHeight || DOM.body.clientHeight;
-            this.DOM.style.display = 'table';
-            this.closed = false;
-            this.onclose = closeCB;
-
-            return iContent;
-        },
-        close:    function () {
-            this.DOM.style.display = 'none';
-            this.DOM.firstChild.innerHTML = '';
-            this.closed = true;
-            if (this.onclose)
-                this.onclose.call(this.DOM);
-        }
-    };
-
-    $(DOM).ready(function () {
-        $(this.body.firstElementChild || this.body.firstChild).before(BOM.iShadowCover.DOM);
-    }).bind('keydown', function () {
-        if (BOM.iShadowCover.closed) return;
-
-        if (! BOM.iShadowCover.locked) {
-            if (arguments[0].which == 27)
-                BOM.iShadowCover.close();
-        } else
-            BOM.iShadowCover.Content.focus();
-    });
-
-    $(BOM.iShadowCover.DOM).bind('click', function () {
-        if (! BOM.iShadowCover.locked) {
-            if (arguments[0].target.parentNode === this)
-                BOM.iShadowCover.close();
-        } else
-            BOM.iShadowCover.Content.focus();
-    });
-
-    $.cssRule({
-        '#iSC': {
-            position:      'fixed',
-            'z-index':     2000000010,
-            top:           0,
-            left:          0,
-            width:         '100%',
-            height:        '100%',
-            background:    'rgba(0, 0, 0, 0.7)',
-            display:       'none'
-        },
-        '#iSC > *': {
-            display:             'table-cell',
-            'vertical-align':    'middle',
-            'text-align':        'center'
-        }
-    });
-
-    function iOpen(iURL, Scale, iCallback) {
-        Scale = (Scale > 0) ? Scale : 3;
-        var Size = {
-            height:    BOM.screen.height / Scale,
-            width:     BOM.screen.width / Scale
-        };
-        var Top = (BOM.screen.height - Size.height) / 2,
-            Left = (BOM.screen.width - Size.width) / 2;
-
-        BOM.alert("请留意本网页浏览器的“弹出窗口拦截”提示，当被禁止时请点选【允许】，然后可能需要重做之前的操作。");
-        var new_Window = BOM.open(iURL, '_blank', [
-            'top=' + Top,               'left=' + Left,
-            'height=' + Size.height,    'width=' + Size.width,
-            'resizable=no,menubar=no,toolbar=no,location=no,status=no,scrollbars=no'
-        ].join(','));
-
-        BOM.new_Window_Fix.call(new_Window, function () {
-            $('link[rel~="shortcut"], link[rel~="icon"], link[rel~="bookmark"]')
-                .add('<base target="_self" />')
-                .appendTo(this.document.head);
-
-            $(this.document).bind('keydown', function (iEvent) {
-                var iKeyCode = iEvent.which;
-
-                if (
-                    (iKeyCode == 122) ||                       //  F11
-                    (iKeyCode == 116) ||                       //  (Ctrl + )F5
-                    (iEvent.ctrlKey && (iKeyCode == 82)) ||    //  Ctrl + R
-                    (iEvent.ctrlKey && (iKeyCode == 78)) ||    //  Ctrl + N
-                    (iEvent.shiftKey && (iKeyCode == 121))     //  Shift + F10
-                )
-                    return false;
-            }).bind('contextmenu', function () {
-                return false;
-            }).bind('mousedown', function () {
-                if (arguments[0].which == 3)
-                    return false;
-            });
-        });
-
-        if (iCallback)
-            $.every(0.2, function () {
-                if (new_Window.closed) {
-                    iCallback.call(BOM, new_Window);
-                    return false;
-                }
-            });
-        return new_Window;
-    }
-
-    var old_MD = BOM.showModalDialog;
-
-    BOM.showModalDialog = function (iContent, iScale, CloseBack) {
-        if (! arguments.length)
-            throw 'A URL Argument is needed unless...';
-        if ($.type(iScale) == 'Function') {
-            CloseBack = iScale;
-            iScale = null;
-        } else if ($.type(CloseBack) == 'String')
-            return old_MD.apply(BOM, arguments);
-
-        if ($.type(iContent) == 'String') {
-            if (! iContent.match(/^(\w+:)?\/\/[\w\d\.:@]+/)) {
-                var iTitle = iContent;
-                iContent = 'about:blank';
-            }
-            iContent = BOM.iShadowCover.open(
-                iOpen(iContent, iScale, CloseBack)
-            );
-            $.every(0.2, function () {
-                if (iContent.closed) {
-                    BOM.iShadowCover.close();
-                    return false;
-                }
-            });
-            $(BOM).bind('unload', function () {
-                iContent.close();
-            });
-            BOM.new_Window_Fix.call(iContent, function () {
-                this.iTime = {
-                    _Root_:    this,
-                    now:       $.now,
-                    every:     $.every,
-                    wait:      $.wait
-                };
-
-                this.iTime.every(0.2, function () {
-                    if (! this.opener) {
-                        this.close();
-                        return false;
-                    }
-                });
-                if (iTitle)
-                    $(this.document.head).append('title', {text:  iTitle});
-            });
-        } else
-            BOM.iShadowCover.open(iContent, CloseBack);
-
-        return iContent;
-    };
-
-})(self, self.document, self.iQuery);
