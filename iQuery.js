@@ -2,7 +2,7 @@
 //                >>>  iQuery.js  <<<
 //
 //
-//      [Version]    v1.0  (2015-5-15)  Stable
+//      [Version]    v1.0  (2015-5-18)  Stable
 //
 //      [Usage]      A Light-weight jQuery Compatible API
 //                   with IE 8+ compatibility.
@@ -220,6 +220,8 @@ self.onerror = function () {
     var is_Mobile = (
             is_Pad || is_Phone || UA.match(/Mobile/i)
         ) && (! UA.match(/ PC /));
+    var is_iOS = is_Mobile && UA.match(/iTouch|iPhone|iPad|iWatch; CPU[^\)]+OS (\d)_/i),
+        is_Android = UA.match(/(Android |Silk\/)(\d+\.\d+)/i);
 
     var _Browser_ = {
             msie:             IE_Ver,
@@ -228,6 +230,8 @@ self.onerror = function () {
             mobile:           !! is_Mobile,
             pad:              !! is_Pad,
             phone:            !! is_Phone,
+            ios:              is_iOS && is_iOS[1],
+            android:          is_Android && is_Android[2],
             versionNumber:    IE_Ver || FF_Ver
         };
 
@@ -1036,7 +1040,7 @@ self.onerror = function () {
         },
         paramJSON:        function (Args_Str) {
             Args_Str = (Args_Str || BOM.location.search).match(/^[^\?]*\?([^\s]+)$/);
-            if (! Args_Str) return;
+            if (! Args_Str)  return { };
 
             var iArgs = Args_Str[1].split('&'),
                 _Args_ = {
@@ -1045,16 +1049,20 @@ self.onerror = function () {
                     }
                 };
 
-            for (var i = 0; i < iArgs.length; i++) {
+            for (var i = 0, iValue; i < iArgs.length; i++) {
                 iArgs[i] = iArgs[i].split('=');
-                iArgs[i][1] = BOM.decodeURIComponent( iArgs[i][1] );
+
+                iValue = BOM.decodeURIComponent(
+                    iArgs[i].slice(1).join('=')
+                );
                 try {
-                    iArgs[i][1] = BOM.JSON.parse(iArgs[i][1]);
+                    iValue = BOM.JSON.parse(iValue);
                 } catch (iError) { }
-                _Args_[ iArgs[i][0] ] = iArgs[i][1];
+
+                _Args_[ iArgs[i][0] ] = iValue;
             }
 
-            return  iArgs.length ? _Args_ : null;
+            return  iArgs.length ? _Args_ : { };
         },
         data:             function (iElement, iName, iValue) {
             if (iValue  &&  (iName in _Get_Set_.Data._Name_))
@@ -1279,12 +1287,19 @@ self.onerror = function () {
             return  $.extend($($_Result), {prevObject:  $_This});
         },
         text:           function (iText) {
-            for (var i = 0;  i < this.length;  i++)
-                this[i].innerText = iText;
+            var iResult = [ ];
 
-            return  this;
+            for (var i = 0;  i < this.length;  i++)
+                if (! iText)
+                    iResult.push( this[i].innerText );
+                else
+                    this[i].innerText = iText;
+
+            return  iResult.length ? iResult.join('') : this;
         },
         html:           function (iHTML) {
+            if (! iHTML)  return this[0].innerHTML;
+
             for (var i = 0;  i < this.length;  i++)
                 this[i].innerHTML = iHTML;
 
