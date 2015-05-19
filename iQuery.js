@@ -220,7 +220,7 @@ self.onerror = function () {
     var is_Mobile = (
             is_Pad || is_Phone || UA.match(/Mobile/i)
         ) && (! UA.match(/ PC /));
-    var is_iOS = is_Mobile && UA.match(/iTouch|iPhone|iPad|iWatch; CPU[^\)]+OS (\d)_/i),
+    var is_iOS = is_Mobile && UA.match(/(iTouch|iPhone|iPad|iWatch);[^\)]+CPU[^\)]+OS (\d)_/i),
         is_Android = UA.match(/(Android |Silk\/)(\d+\.\d+)/i);
 
     var _Browser_ = {
@@ -230,7 +230,7 @@ self.onerror = function () {
             mobile:           !! is_Mobile,
             pad:              !! is_Pad,
             phone:            !! is_Phone,
-            ios:              is_iOS && is_iOS[1],
+            ios:              is_iOS && is_iOS[2],
             android:          is_Android && is_Android[2],
             versionNumber:    IE_Ver || FF_Ver
         };
@@ -670,8 +670,8 @@ self.onerror = function () {
                         Loaded;
 
                     switch (iEvent.type) {
-                        case 'readystatechange':    
-                            Loaded = iElement.readyState.match(/loaded|complete/);  break;
+                        case 'readystatechange':    ;
+//                            Loaded = iElement.readyState.match(/loaded|complete/);  break;
                         case 'load':
                             Loaded = (iElement.readyState == 'loaded');  break;
                         case 'propertychange':
@@ -1028,11 +1028,11 @@ self.onerror = function () {
         param:            function (iObject) {
             var iParameter = [ ];
 
-            if ( $.isPlainObject(iObject) )
+            if ( $.isPlainObject(iObject) ) {
                 for (var iName in iObject)
                     if ($.type(iObject[iName]) in Type_Info.Data)
                         iParameter.push(iName + '=' + iObject[iName]);
-            else if (iObject instanceof $)
+            } else if (iObject instanceof $)
                 for (var i = 0;  i < iObject.length;  i++)
                     iParameter.push(iObject[i].name + '=' + iObject[i].value);
 
