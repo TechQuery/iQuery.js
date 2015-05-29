@@ -2,7 +2,7 @@
 //                >>>  iQuery.js  <<<
 //
 //
-//      [Version]    v1.0  (2015-5-27)  Stable
+//      [Version]    v1.0  (2015-5-29)  Stable
 //
 //      [Usage]      A Light-weight jQuery Compatible API
 //                   with IE 8+ compatibility.
@@ -101,88 +101,11 @@ self.onerror = function () {
             }
         });
 
-//  JSON.format()  v0.3
-    var iValue;
+//  JSON Extension  v0.4
 
-    function JSON_ValueOut(iObject) {
-        var This_Func = arguments.callee;
-        var Recursive = (This_Func === This_Func.caller),
-            iStruct;
-        if (! Recursive)  iValue = [ ];
-
-        if (iObject instanceof Array) {
-            iStruct = [ ];
-            for (var i = 0; i < iObject.length; i++)
-                iStruct.push(
-                    This_Func(iObject[i])
-                );
-        } else if ((!! iObject) && (typeof iObject == 'object')) {
-            iStruct = { };
-            for (var iKey in iObject) {
-                if ((iKey == 'toString') && (typeof iObject[iKey] == 'function'))
-                    continue;
-                iStruct[iKey] = This_Func(iObject[iKey]);
-            }
-        } else {
-            iStruct = '';
-            iValue.push(iObject);
-        }
-
-        if (Recursive)
-            return iStruct;
-        else
-            return [iStruct, iValue];
-    }
-
-    function JSON_ValueIn(iString, iValue) {
-        for (var i = 0; i < iValue.length; i++) {
-            if (typeof iValue[i] == 'string')
-                iValue[i] = iValue[i].replace(/"/g, "\\\"");
-            iString = iString.replace('""', '"' + iValue[i] + '"');
-        }
-        return iString;
-    }
-
-    BOM.JSON.format = function (iJSON) {
-        iJSON = JSON_ValueOut(iJSON);
-        iJSON[0] = JSON.stringify(iJSON[0]);
-
-        var iStart = {'"': 0,  '[': 0,  '{': 0},
-            iEnd = {']': 0,  '}': 0};
-
-        for (var i = 0, iLevel = 0, Indent; i < iJSON[0].length; i++) {
-            switch (iJSON[0][i]) {
-                case '{':    ;
-                case '[':    {
-                    if (! (iJSON[0][i + 1] in iStart)) continue;
-                    iLevel++ ;
-                }  break;
-                case ',':    break;
-                case '"':    if (iJSON[0][i + 1] == ':') {
-                    iJSON[0] = iJSON[0].slice(0, ++i + 1) + '    ' + iJSON[0].slice(i + 1);
-                    i += 4;
-                    continue;
-                }
-                case ']':    ;
-                case '}':    {
-                    if (! (iJSON[0][i + 1] in iEnd)) continue;
-                    iLevel-- ;
-                }  break;
-                case "\\":    {
-                    i++;  continue;
-                }  break; 
-                default:     continue;
-            }
-            if (iLevel < 0) try {
-                debug();
-            } catch (iError) {
-                break;
-            }
-            Indent = "\n" + '    '.repeat(iLevel);
-            iJSON[0] = iJSON[0].slice(0, i + 1) + Indent + iJSON[0].slice(i + 1);
-            i += Indent.length;
-        }
-        return JSON_ValueIn(iJSON[0], iJSON[1]);
+    BOM.JSON.format = function () {
+        return  this.stringify(arguments[0], null, 4)
+            .replace(/(\s+"[^"]+":) ([^\s]+)/g, '$1    $2');
     };
 
     BOM.JSON.parseAll = function (iJSON) {
@@ -194,6 +117,8 @@ self.onerror = function () {
                 return iValue;
             });
     };
+
+//  New Window Fix  v0.3
 
     BOM.new_Window_Fix = function (Fix_More) {
         if (! this)  return false;
@@ -1872,175 +1797,3 @@ self.onerror = function () {
     $.fx = {interval:  1000 / FPS};
 
 })(self.iQuery);
-
-
-
-/* ----- 模态框/遮罩层（全局） v0.3 ----- */
-(function (BOM, DOM, $) {
-
-    BOM.iShadowCover = {
-        $_DOM:      $('<div id="iSC"><div /></div>'),
-        open:     function (iContent, closeCB) {
-            this.locked = ($.type(iContent) == 'Window');
-
-            if (! this.locked)
-                $(this.$_DOM[0].firstChild).append(iContent);
-            else
-                this.Content = iContent;
-
-            this.$_DOM.height( $(BOM).height() ).css('display', 'table');
-            this.closed = false;
-            this.onclose = closeCB;
-
-            return iContent;
-        },
-        close:    function () {
-            this.$_DOM.hide().attr('class', '');
-            $(this.$_DOM[0].firstChild).empty();
-            this.closed = true;
-            if (this.onclose)
-                this.onclose.call(this.$_DOM[0]);
-        }
-    };
-
-    $(DOM).ready(function () {
-        $(this.body.firstElementChild || this.body.firstChild)
-            .before(BOM.iShadowCover.$_DOM);
-    }).keydown(function () {
-        if (BOM.iShadowCover.closed) return;
-
-        if (! BOM.iShadowCover.locked) {
-            if (arguments[0].which == 27)
-                BOM.iShadowCover.close();
-        } else
-            BOM.iShadowCover.Content.focus();
-    });
-
-    BOM.iShadowCover.$_DOM.click(function () {
-        if (! BOM.iShadowCover.locked) {
-            if (arguments[0].target.parentNode === this)
-                BOM.iShadowCover.close();
-        } else
-            BOM.iShadowCover.Content.focus();
-    });
-
-    $.cssRule({
-        '#iSC': {
-            position:      'fixed',
-            'z-index':     2000000010,
-            top:           0,
-            left:          0,
-            width:         '100%',
-            height:        '100%',
-            background:    'rgba(0, 0, 0, 0.7)',
-            display:       'none'
-        },
-        '#iSC > *': {
-            display:             'table-cell',
-            'vertical-align':    'middle',
-            'text-align':        'center'
-        }
-    });
-
-    function iOpen(iURL, Scale, iCallback) {
-        Scale = (Scale > 0) ? Scale : 3;
-        var Size = {
-            height:    BOM.screen.height / Scale,
-            width:     BOM.screen.width / Scale
-        };
-        var Top = (BOM.screen.height - Size.height) / 2,
-            Left = (BOM.screen.width - Size.width) / 2;
-
-        BOM.alert("请留意本网页浏览器的“弹出窗口拦截”提示，当被禁止时请点选【允许】，然后可能需要重做之前的操作。");
-        var new_Window = BOM.open(iURL, '_blank', [
-            'top=' + Top,               'left=' + Left,
-            'height=' + Size.height,    'width=' + Size.width,
-            'resizable=no,menubar=no,toolbar=no,location=no,status=no,scrollbars=no'
-        ].join(','));
-
-        BOM.new_Window_Fix.call(new_Window, function () {
-            $('link[rel~="shortcut"], link[rel~="icon"], link[rel~="bookmark"]')
-                .add('<base target="_self" />')
-                .appendTo(this.document.head);
-
-            $(this.document).keydown(function (iEvent) {
-                var iKeyCode = iEvent.which;
-
-                if (
-                    (iKeyCode == 122) ||                       //  F11
-                    (iKeyCode == 116) ||                       //  (Ctrl + )F5
-                    (iEvent.ctrlKey && (iKeyCode == 82)) ||    //  Ctrl + R
-                    (iEvent.ctrlKey && (iKeyCode == 78)) ||    //  Ctrl + N
-                    (iEvent.shiftKey && (iKeyCode == 121))     //  Shift + F10
-                )
-                    return false;
-            }).bind('contextmenu', function () {
-                return false;
-            }).mousedown(function () {
-                if (arguments[0].which == 3)
-                    return false;
-            });
-        });
-
-        if (iCallback)
-            $.every(0.2, function () {
-                if (new_Window.closed) {
-                    iCallback.call(BOM, new_Window);
-                    return false;
-                }
-            });
-        return new_Window;
-    }
-
-    var old_MD = BOM.showModalDialog;
-
-    BOM.showModalDialog = function (iContent, iScale, CloseBack) {
-        if (! arguments.length)
-            throw 'A URL Argument is needed unless...';
-        if ($.type(iScale) == 'Function') {
-            CloseBack = iScale;
-            iScale = null;
-        } else if ($.type(CloseBack) == 'String')
-            return old_MD.apply(BOM, arguments);
-
-        if ($.type(iContent) == 'String') {
-            if (! iContent.match(/^(\w+:)?\/\/[\w\d\.:@]+/)) {
-                var iTitle = iContent;
-                iContent = 'about:blank';
-            }
-            iContent = BOM.iShadowCover.open(
-                iOpen(iContent, iScale, CloseBack)
-            );
-            $.every(0.2, function () {
-                if (iContent.closed) {
-                    BOM.iShadowCover.close();
-                    return false;
-                }
-            });
-            $(BOM).bind('unload', function () {
-                iContent.close();
-            });
-            BOM.new_Window_Fix.call(iContent, function () {
-                this.iTime = {
-                    _Root_:    this,
-                    now:       $.now,
-                    every:     $.every,
-                    wait:      $.wait
-                };
-
-                this.iTime.every(0.2, function () {
-                    if (! this.opener) {
-                        this.close();
-                        return false;
-                    }
-                });
-                if (iTitle)
-                    $(this.document.head).append('title', {text:  iTitle});
-            });
-        } else
-            BOM.iShadowCover.open(iContent, CloseBack);
-
-        return iContent;
-    };
-
-})(self, self.document, self.iQuery);
