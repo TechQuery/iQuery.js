@@ -2,7 +2,7 @@
 //                >>>  iQuery.js  <<<
 //
 //
-//      [Version]    v1.0  (2015-5-29)  Stable
+//      [Version]    v1.0  (2015-5-30)  Stable
 //
 //      [Usage]      A Light-weight jQuery Compatible API
 //                   with IE 8+ compatibility.
@@ -1013,30 +1013,32 @@ self.onerror = function () {
             return iParameter.join('&');
         },
         paramJSON:        function (Args_Str) {
-            Args_Str = (Args_Str || BOM.location.search).match(/^[^\?]*\?([^\s]+)$/);
+            Args_Str = (Args_Str || BOM.location.search).match(/[^\?&\s]+/g);
             if (! Args_Str)  return { };
 
-            var iArgs = Args_Str[1].split('&'),
-                _Args_ = {
+            if ( Args_Str[0].match(/^w+:\/\//) )
+                Args_Str = Args_Str.slice(1);
+
+            var _Args_ = {
                     toString:    function () {
                         return  BOM.JSON.format(this);
                     }
                 };
 
-            for (var i = 0, iValue; i < iArgs.length; i++) {
-                iArgs[i] = iArgs[i].split('=');
+            for (var i = 0, iValue; i < Args_Str.length; i++) {
+                Args_Str[i] = Args_Str[i].split('=');
 
                 iValue = BOM.decodeURIComponent(
-                    iArgs[i].slice(1).join('=')
+                    Args_Str[i].slice(1).join('=')
                 );
                 try {
                     iValue = BOM.JSON.parse(iValue);
                 } catch (iError) { }
 
-                _Args_[ iArgs[i][0] ] = iValue;
+                _Args_[ Args_Str[i][0] ] = iValue;
             }
 
-            return  iArgs.length ? _Args_ : { };
+            return  Args_Str.length ? _Args_ : { };
         },
         data:             function (iElement, iName, iValue) {
             if (iValue  &&  (iName in _Get_Set_.Data._Name_))
@@ -1089,7 +1091,9 @@ self.onerror = function () {
             if (iArgType == 'String') {
                 iArgs[0] = $(iArgs[0], iArgs[1]);
                 iArgType = 'iQuery';
-            }
+            } else if (typeof iArgs[0].length == 'number')
+                iArgType = 'Array';
+
             if (iArgType in Type_Info.DOM.set) {
                 for (var i = 0;  i < iArgs[0].length;  i++)
                     if ( iArgs[0][i] )
@@ -1243,7 +1247,7 @@ self.onerror = function () {
 
             var $_Result = this.parent().children();
             for (var i = 0;  i < $_Result.length;  i++)
-                if (Get_Attribute($_Result[i], 'iQuery') == _UID_)
+                if (_Operator_('Attribute', [$_Result[i]], 'iQuery') == _UID_)
                     $_Result[i] = null;
 
             $_Result = $($_Result);
