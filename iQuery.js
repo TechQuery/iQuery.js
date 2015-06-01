@@ -2,7 +2,7 @@
 //                >>>  iQuery.js  <<<
 //
 //
-//      [Version]    v1.0  (2015-5-30)  Stable
+//      [Version]    v1.0  (2015-6-1)  Stable
 //
 //      [Usage]      A Light-weight jQuery Compatible API
 //                   with IE 8+ compatibility.
@@ -972,6 +972,9 @@ self.onerror = function () {
                 return false;
             return true;
         },
+        isData:           function () {
+            return  (this.type(arguments[0]) in Type_Info.Data);
+        },
         extend:           _Extend_,
         makeArray:        function () {
             return  this.extend([ ], arguments[0]);
@@ -980,11 +983,14 @@ self.onerror = function () {
             return  [ ].indexOf.call(arguments[0], arguments[1]);
         },
         each:             function (ArrObj) {
-            for (var i = 0, iReturn;  i < ArrObj.length;  i++) {
-                iReturn = arguments[1].call(ArrObj[i], i, ArrObj[i]);
-                if ((this.type(iReturn) != 'Undefined') && (! iReturn))
-                    break;
-            }
+            if (ArrObj)
+                for (var i = 0, iReturn;  i < ArrObj.length;  i++) {
+                    iReturn = arguments[1].call(ArrObj[i], i, ArrObj[i]);
+                    if ((this.type(iReturn) != 'Undefined') && (! iReturn))
+                        break;
+                }
+
+            return ArrObj;
         },
         contains:         function (iParent, iChild) {
             if (! iChild)  return false;
@@ -1004,7 +1010,7 @@ self.onerror = function () {
 
             if ( $.isPlainObject(iObject) ) {
                 for (var iName in iObject)
-                    if ($.type(iObject[iName]) in Type_Info.Data)
+                    if ( $.isData(iObject[iName]) )
                         iParameter.push(iName + '=' + iObject[iName]);
             } else if (iObject instanceof $)
                 for (var i = 0;  i < iObject.length;  i++)
@@ -1268,7 +1274,7 @@ self.onerror = function () {
             var iResult = [ ];
 
             for (var i = 0;  i < this.length;  i++)
-                if (! iText)
+                if (! $.isData(iText))
                     iResult.push( this[i].innerText );
                 else
                     this[i].innerText = iText;
@@ -1276,7 +1282,8 @@ self.onerror = function () {
             return  iResult.length ? iResult.join('') : this;
         },
         html:           function (iHTML) {
-            if (! iHTML)  return this[0].innerHTML;
+            if (! $.isData(iHTML))
+                return this[0].innerHTML;
 
             for (var i = 0;  i < this.length;  i++)
                 this[i].innerHTML = iHTML;
@@ -1500,7 +1507,7 @@ self.onerror = function () {
                 );
         },
         val:            function () {
-            if (! arguments[0])
+            if (! $.isData(arguments[0]))
                 return  this[0].value;
             else
                 return  this.attr('value', arguments[0]);
@@ -1700,7 +1707,7 @@ self.onerror = function () {
     }
 
     $.fn.zIndex = function (new_Index) {
-        if (! new_Index)
+        if (! $.isData(new_Index))
             return  Get_zIndex(this.eq(0));
         else if (new_Index == '+')
             return  this.each(Set_zIndex);
