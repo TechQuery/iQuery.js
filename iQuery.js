@@ -2,7 +2,7 @@
 //                >>>  iQuery.js  <<<
 //
 //
-//      [Version]    v1.0  (2015-6-8)  Stable
+//      [Version]    v1.0  (2015-6-9)  Stable
 //
 //      [Usage]      A Light-weight jQuery Compatible API
 //                   with IE 8+ compatibility.
@@ -63,13 +63,25 @@ self.onerror = function () {
         return iRegExp_Compiled;
     };
 
-    if (! ''.trim) {
+    if (! ''.trim)
         var Blank_Char = BOM.iRegExp('(^\\s*)|(\\s*$)', 'g');
+    else
+        var _Trim_ = ''.trim;
 
-        String.prototype.trim = function () {
-            return this.replace(Blank_Char, '');
-        };
-    }
+    String.prototype.trim = function (iChar) {
+        if (! iChar)
+            return  Blank_Char ? this.replace(Blank_Char, '') : _Trim_.call(this);
+        else {
+            for (var i = 0, a = 0, b;  i < iChar.length;  i++) {
+                if ((this[0] == iChar[i]) && (! a))
+                    a = 1;
+                if ((this[this.length - 1] == iChar[i]) && (! b))
+                    b = -1;
+            }
+            return this.slice(a, b);
+        }
+    };
+
     if (! ''.repeat)
         String.prototype.repeat = function (Times) {
             return  (new Array(Times + 1)).join(this);
@@ -88,18 +100,6 @@ self.onerror = function () {
         Date.now = function () {
             return  (new Date()).getTime();
         };
-
-    if ( BOM.navigator.userAgent.match(/; rv:(\d+)[^\/]+Gecko\/\d+/) )
-        Object.defineProperty(HTMLElement, 'innerText', {
-            set:    function (iText) {
-                this.textContent = iText;
-            },
-            get:    function () {
-                var TextRange = this.ownerDocument.createRange();
-                TextRange.selectNodeContents(this);
-                return TextRange.toString();
-            }
-        });
 
 //  JSON Extension  v0.4
 
@@ -151,29 +151,34 @@ self.onerror = function () {
     
 /* ---------- UA Check ---------- */
     var UA = navigator.userAgent;
+
     var is_Trident = UA.match(/MSIE (\d+)|Trident[^\)]+rv:(\d+)/i),
         is_Gecko = UA.match(/; rv:(\d+)[^\/]+Gecko\/\d+/),
-        is_Webkit = UA.match(/Webkit/i);
+        is_Webkit = UA.match(/AppleWebkit\/(\d+\.\d+)/i);
     var IE_Ver = is_Trident ? Number(is_Trident[1] || is_Trident[2]) : NaN,
-        FF_Ver = is_Gecko ? Number(is_Gecko[1]) : NaN;
+        FF_Ver = is_Gecko ? Number(is_Gecko[1]) : NaN,
+        WK_Ver = is_Webkit ? parseFloat(is_Webkit[1]) : NaN;
+
     var is_Pad = UA.match(/Tablet|Pad|Book|Android 3/i),
         is_Phone = UA.match(/Phone|Touch|Android 2|Symbian/i);
     var is_Mobile = (
             is_Pad || is_Phone || UA.match(/Mobile/i)
         ) && (! UA.match(/ PC /));
-    var is_iOS = is_Mobile && UA.match(/(iTouch|iPhone|iPad|iWatch);[^\)]+CPU[^\)]+OS (\d)_/i),
+
+    var is_iOS = UA.match(/(iTouch|iPhone|iPad|iWatch);[^\)]+CPU[^\)]+OS (\d+_\d+)_/i),
         is_Android = UA.match(/(Android |Silk\/)(\d+\.\d+)/i);
 
     var _Browser_ = {
             msie:             IE_Ver,
             ff:               FF_Ver,
+            webkit:           WK_Ver,
             modern:           !  (IE_Ver < 9),
             mobile:           !! is_Mobile,
             pad:              !! is_Pad,
             phone:            !! is_Phone,
-            ios:              is_iOS && is_iOS[2],
-            android:          is_Android && is_Android[2],
-            versionNumber:    IE_Ver || FF_Ver
+            ios:              is_iOS  ?  parseFloat( is_iOS[2].replace('_', '.') )  :  NaN,
+            android:          is_Android ? parseFloat(is_Android[2]) : NaN,
+            versionNumber:    IE_Ver || FF_Ver || WK_Ver
         };
 
 
@@ -324,6 +329,25 @@ self.onerror = function () {
         return iResult;
     }
 
+    /* ----- DOM innerText ----- */
+    _Get_Set_.innerText = {
+        set:    _Browser_.ff ?
+            function (iElement, iText) {
+                iElement.textContent = iText;
+            } :
+            function (iElement, iText) {
+                iElement.innerText = iText;
+            },
+        get:    _Browser_.ff ?
+            function (iElement) {
+                var TextRange = iElement.ownerDocument.createRange();
+                TextRange.selectNodeContents(iElement);
+                return TextRange.toString();
+            } :
+            function (iElement) {
+                return iElement.innerText;
+            }
+    };
 
     /* ----- DOM Style ----- */
     var IE_CSS_Filter = (_Browser_.msie < 9);
@@ -769,7 +793,7 @@ self.onerror = function () {
                             else
                                 iNew.appendChild( DOM.createTextNode(iValue) );
                         } else
-                            iNew.innerText = iValue;
+                            _Get_Set_.innerText.set(iNew, iValue);
                     }  break;
                     case 'html':
                         iNew.innerHTML = iValue;  break;
@@ -996,7 +1020,9 @@ self.onerror = function () {
             if ( $.isPlainObject(iObject) ) {
                 for (var iName in iObject)
                     if ( $.isData(iObject[iName]) )
-                        iParameter.push(iName + '=' + iObject[iName]);
+                        iParameter.push(
+                            iName + '=' + BOM.JSON.stringify(iObject[iName]).trim('"')
+                        );
             } else if (iObject instanceof $)
                 for (var i = 0;  i < iObject.length;  i++)
                     iParameter.push(iObject[i].name + '=' + iObject[i].value);
@@ -1278,9 +1304,9 @@ self.onerror = function () {
 
             for (var i = 0;  i < this.length;  i++)
                 if (! $.isData(iText))
-                    iResult.push( this[i].innerText );
+                    iResult.push( _Get_Set_.innerText.get(this[i]) );
                 else
-                    this[i].innerText = iText;
+                    _Get_Set_.innerText.set(this[i], iText);
 
             return  iResult.length ? iResult.join('') : this;
         },
@@ -1746,12 +1772,11 @@ self.onerror = function () {
         return Rule_Text.join("\n");
     }
 
-    $.cssRule = function () {
-        var _Args_ = $.makeArray(arguments);
-
-        var iMedia = (typeof _Args_[0] == 'string') && _Args_.shift();
-        var iRule = _Args_.shift();
-        var iCallback = _Args_[0];
+    $.cssRule = function (iMedia, iRule) {
+        if (typeof iMedia != 'string') {
+            iRule = iMedia;
+            iMedia = null;
+        }
 
         var CSS_Text = CSS_Rule2Text(iRule);
         if (iMedia)  CSS_Text = [
@@ -1760,22 +1785,19 @@ self.onerror = function () {
                 '}'
             ].join("\n");
 
-        this(DOM).ready(function () {
-            var $_Style = $('<style />', {
-                    type:       'text/css',
-                    'class':    'jQuery_CSS-Rule'
-                });
+        var $_Style = $('<style />', {
+                type:       'text/css',
+                'class':    'jQuery_CSS-Rule'
+            });
 
-            if (IE_CSS_Filter)
-                $_Style[0].styleSheet.cssText = CSS_Text;
-            else
-                $_Style.html(CSS_Text);
+        if (IE_CSS_Filter)
+            $_Style[0].styleSheet.cssText = CSS_Text;
+        else
+            $_Style.html(CSS_Text);
 
-            $_Style.appendTo('body');
+        $_Style.appendTo('body');
 
-            if (iCallback)
-                iCallback($_Style[0].sheet, $_Style);
-        });
+        return $_Style[0].sheet;
     };
 
     $.fn.cssRule = function (iRule, iCallback) {
@@ -1789,10 +1811,10 @@ self.onerror = function () {
                     delete iRule[iSelector];
                 }
 
-                $.cssRule(iRule, function () {
-                    if (iCallback)
-                        iCallback.apply($_This[0], arguments);
-                });
+                var iSheet = $.cssRule(iRule);
+
+                if (iCallback)
+                    iCallback.call(this, iSheet);
             });
     };
 
