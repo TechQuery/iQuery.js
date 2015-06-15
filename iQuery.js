@@ -2,7 +2,7 @@
 //                >>>  iQuery.js  <<<
 //
 //
-//      [Version]    v1.0  (2015-6-9)  Stable
+//      [Version]    v1.0  (2015-6-12)  Stable
 //
 //      [Usage]      A Light-weight jQuery Compatible API
 //                   with IE 8+ compatibility.
@@ -148,7 +148,7 @@ self.onerror = function () {
 
 // ---------->  iQuery.js  <---------- //
 (function (BOM, DOM) {
-    
+
 /* ---------- UA Check ---------- */
     var UA = navigator.userAgent;
 
@@ -183,6 +183,20 @@ self.onerror = function () {
 
 
 /* ----- Object Base ----- */
+    function _Each_(Arr_Obj, iEvery) {
+        if (! Arr_Obj)  return;
+
+        if (typeof Arr_Obj.length == 'number') {
+            for (var i = 0;  i < Arr_Obj.length;  i++)
+                if (iEvery.call(Arr_Obj[i], i, Arr_Obj[i]) === false)
+                    break;
+        } else  for (var iKey in Arr_Obj)
+            if (iEvery.call(Arr_Obj[iKey], iKey, Arr_Obj[iKey]) === false)
+                break;
+
+        return Arr_Obj;
+    }
+
     function _Extend_(iTarget) {
         iTarget = iTarget || (
             (arguments[1] instanceof Array)  ?  [ ]  :  { }
@@ -984,22 +998,13 @@ self.onerror = function () {
         isData:           function () {
             return  (this.type(arguments[0]) in Type_Info.Data);
         },
+        each:             _Each_,
         extend:           _Extend_,
         makeArray:        function () {
             return  this.extend([ ], arguments[0]);
         },
         inArray:          function () {
-            return  [ ].indexOf.call(arguments[0], arguments[1]);
-        },
-        each:             function (ArrObj) {
-            if (ArrObj)
-                for (var i = 0, iReturn;  i < ArrObj.length;  i++) {
-                    iReturn = arguments[1].call(ArrObj[i], i, ArrObj[i]);
-                    if ((this.type(iReturn) != 'Undefined') && (! iReturn))
-                        break;
-                }
-
-            return ArrObj;
+            return  Array.prototype.indexOf.call(arguments[0], arguments[1]);
         },
         contains:         function (iParent, iChild) {
             if (! iChild)  return false;
@@ -1015,15 +1020,20 @@ self.onerror = function () {
         parseJSON:        BOM.JSON.parse,
         parseXML:         XML_Parse,
         param:            function (iObject) {
-            var iParameter = [ ];
+            var iParameter = [ ],  iValue;
 
-            if ( $.isPlainObject(iObject) ) {
-                for (var iName in iObject)
-                    if ( $.isData(iObject[iName]) )
-                        iParameter.push(
-                            iName + '=' + BOM.JSON.stringify(iObject[iName]).trim('"')
-                        );
-            } else if (iObject instanceof $)
+            if ( $.isPlainObject(iObject) )
+                for (var iName in iObject) {
+                    iValue = iObject[iName];
+
+                    if ( $.isPlainObject(iValue) )
+                        iValue = BOM.JSON.stringify(iValue);
+                    else if (! $.isData(iValue))
+                        continue;
+
+                    iParameter.push(iName + '=' + iValue);
+                }
+            else if (iObject instanceof $)
                 for (var i = 0;  i < iObject.length;  i++)
                     iParameter.push(iObject[i].name + '=' + iObject[i].value);
 
@@ -1070,8 +1080,8 @@ self.onerror = function () {
 
     _Extend_($, _Time_);
 
-    
-    
+
+
     /* ----- HTTP Client ----- */
     function iHTTP(iURL, iData, iCallback) {
         var HTTP_Client = iAJAX(
@@ -1334,7 +1344,11 @@ self.onerror = function () {
         show:           function () {
             for (var i = 0, $_This;  i < this.length;  i++) {
                 $_This = $(this[i]);
-                $_This.css('display',  $_This.data('display') || 'origin');
+                $_This.css({
+                    display:       $_This.data('display') || 'origin',
+                    visibility:    'visible',
+                    opacity:       1
+                });
             }
             return this;
         },
@@ -1458,8 +1472,17 @@ self.onerror = function () {
                 return  this.bind.apply(this, arguments);
             else
                 return  this.bind(iType, function () {
-                        if ( $(arguments[0].target).is(iFilter) )
-                            iCallback.apply(this, arguments);
+                        var $_Filter = $(iFilter, this),
+                            $_Target = $(arguments[0].target);
+
+                        var $_Patch = $_Target.parents();
+                        Array.prototype.unshift.call($_Patch, $_Target[0]);
+
+                        for (var i = 0;  i < $_Patch.length;  i++)
+                            if ($_Patch[i] === this)
+                                break;
+                            else if ($.inArray($_Filter, $_Patch[i]) > -1)
+                                iCallback.apply($_Patch[i], arguments);
                     });
         },
         ready:          function (iCallback) {
@@ -1690,7 +1713,7 @@ self.onerror = function () {
                         swipeTop:     Touch_Start.pY - iTouch.pageY
                     };
 
-                if (iSwipe.swipeLeft || iSwipe.swipeTop)
+                if (Math.max(Math.abs(iSwipe.swipeLeft), Math.abs(iSwipe.swipeTop)) > 20)
                     iCallback.call(this,  $.extend(iEvent, iSwipe));
             });
         }
@@ -1740,7 +1763,7 @@ self.onerror = function () {
                     iFailback
                 );
             else
-                iPromise.oncomplete = function(){    				
+                iPromise.oncomplete = function(){
                     iCallback.call(this,  BufferToString( arguments[0].target.result ));
                 };
         } catch (iError) {
@@ -1753,20 +1776,20 @@ self.onerror = function () {
     function CSS_Rule2Text(iRule) {
         var Rule_Text = [''],  Rule_Block,  _Rule_Block_;
 
-        for (var iSelector in iRule) {
+        $.each(iRule,  function (iSelector) {
             Rule_Block = iSelector + ' {';
             _Rule_Block_ = [ ];
 
-            for (var iAttribute in iRule[iSelector])
+            for (var iAttribute in this)
                 _Rule_Block_.push(
-                    _Operator_('Style', [null], iAttribute, iRule[iSelector][iAttribute])
+                    _Operator_('Style', [null], iAttribute, this[iAttribute])
                         .replace(/^(\w)/m,  Code_Indent + '$1')
                 );
 
             Rule_Text.push(
                 [Rule_Block, _Rule_Block_.join(";\n"), '}'].join("\n")
             );
-        }
+        });
         Rule_Text.push('');
 
         return Rule_Text.join("\n");
@@ -2015,8 +2038,8 @@ self.onerror = function () {
 
         $_This.data('animate', 1);
 
-        for (var iStyle in CSS_Final)  (function (iName) {
-            var iKeyFrame = KeyFrame($_This.css(iName), CSS_Final[iName], During_Second);
+        $.each(CSS_Final,  function (iName) {
+            var iKeyFrame = KeyFrame($_This.css(iName), this, During_Second);
 
             $.every(1 / FPS,  function () {
                 if ($_This.data('animate') && iKeyFrame.length)
@@ -2026,7 +2049,7 @@ self.onerror = function () {
                     return false;
                 }
             });
-        })(iStyle);
+        });
 
         return $_This;
     };
@@ -2046,7 +2069,13 @@ self.onerror = function () {
 
     var Animate_End = 'webkitAnimationEnd mozAnimationEnd MSAnimationEnd oanimationend animationend';
 
-    $.fn.cssAnimate = function (iType, iCallback, iDuring, iLoop) {
+    $.fn.cssAnimate = function (iType) {
+        var _Args_ = $.makeArray(arguments).slice(1);
+
+        var iDuring = (! isNaN(parseFloat(_Args_[0]))) && _Args_.shift();
+        var iCallback = (typeof _Args_[0] == 'function') && _Args_.shift();
+        var iLoop = _Args_[0];
+
         var iClass = 'animated ' + iType + (iLoop ? ' infinite' : '');
 
         this.bind(Animate_End,  function () {
@@ -2056,8 +2085,18 @@ self.onerror = function () {
                 iCallback.apply(this, arguments);
         });
 
-        if (iDuring)
-            this.css('animation-duration',  (iDuring / 1000) + 's');
+        if (iDuring) {
+            iDuring = (iDuring / 1000) + 's';
+            this.cssRule({
+                ' ': {
+                       '-moz-animation-duration':    iDuring,
+                    '-webkit-animation-duration':    iDuring,
+                         '-o-animation-duration':    iDuring,
+                        '-ms-animation-duration':    iDuring,
+                            'animation-duration':    iDuring,
+                }
+            });
+        }
 
         return  this.removeClass('animated').addClass(iClass);
     };
