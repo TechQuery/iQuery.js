@@ -2,7 +2,7 @@
 //                >>>  iQuery.js  <<<
 //
 //
-//      [Version]    v1.0  (2015-6-12)  Stable
+//      [Version]    v1.0  (2015-6-16)  Stable
 //
 //      [Usage]      A Light-weight jQuery Compatible API
 //                   with IE 8+ compatibility.
@@ -12,38 +12,25 @@
 //
 
 
-/* ---------- Debug Module ---------- */
-if (! console) {
-    function _Notice_() {
-        var iString = [ ];
+/* ---------- ECMAScript 5  Patch ---------- */
+(function (BOM) {
 
-        for (var i = 0;  i < arguments;  i++)
-            iString.push( arguments[i].toString() );
+    if (! console) {
+        function _Notice_() {
+            var iString = [ ];
 
-        self.status = iString.join(' ');
-    }
-    var console = {
+            for (var i = 0;  i < arguments;  i++)
+                iString.push( arguments[i].toString() );
+
+            BOM.status = iString.join(' ');
+        }
+        BOM.console = {
             log:      _Notice_,
             info:     _Notice_,
             warn:     _Notice_,
             error:    _Notice_
         };
-}
-self.onerror = function () {
-    this.alert([
-        arguments[0],
-        arguments[1],
-        'Line:  ' + arguments[2]
-    ].join("\n\n"));
-
-    this.prompt('[Debug]', this.navigator.userAgent);
-
-    return true;
-};
-
-
-/* ---------- ECMAScript 5  Patch ---------- */
-(function (BOM) {
+    }
 
     BOM.iRegExp = function (iString, Mode, Special_Char) {
         var iRegExp_Compiled = / /,
@@ -324,7 +311,7 @@ self.onerror = function () {
         if (! iName) {
             for (var i = 0;  i < iElement.length;  i++)
                 _Get_Set_[iType].clear(iElement[i]);
-        } else if (_Type_(iValue) == 'Undefined') {
+        } else if (iElement.length && (iValue === undefined)) {
             if (_Type_(iName) == 'String')
                 return  _Get_Set_[iType].get(iElement[0], iName);
             else if (_Type_(iName.length) == 'Number') {
@@ -336,9 +323,10 @@ self.onerror = function () {
                 for (var i = 0;  i < iElement.length;  i++)
                     for (var iKey in iName)
                         iResult = _Get_Set_[iType].set(iElement[i], iKey, iName[iKey]);
-        } else
+        } else {
             for (var i = 0;  i < iElement.length;  i++)
                 iResult = _Get_Set_[iType].set(iElement[i], iName, iValue);
+        }
 
         return iResult;
     }
@@ -900,7 +888,8 @@ self.onerror = function () {
             ] = function () {
                 if (! (X_Domain || (_This_.readyState == 4)))  return;
 
-                iXHR.onready.call(iXHR, iXHR.responseAny());
+                if (typeof iXHR.onready == 'function')
+                    iXHR.onready.call(iXHR, iXHR.responseAny());
                 iXHR = null;
             };
             _Open_.apply(_This_, arguments);
@@ -987,8 +976,8 @@ self.onerror = function () {
     _Extend_($, {
         browser:          _Browser_,
         type:             _Type_,
-        isPlainObject:    function () {
-            return  (arguments[0].constructor === Object);
+        isPlainObject:    function (iValue) {
+            return  iValue && (iValue.constructor === Object);
         },
         isEmptyObject:    function () {
             for (var iKey in arguments[0])
@@ -1084,10 +1073,8 @@ self.onerror = function () {
 
     /* ----- HTTP Client ----- */
     function iHTTP(iURL, iData, iCallback) {
-        var HTTP_Client = iAJAX(
-                arguments,
-                iCallback.name || X_Domain(iURL)
-            );
+        var HTTP_Client = iAJAX(arguments, X_Domain(iURL));
+
         HTTP_Client.onready = iCallback;
         HTTP_Client.open(iData ? 'POST' : 'GET', iURL, true);
         if (iData)
@@ -1095,7 +1082,7 @@ self.onerror = function () {
 //        HTTP_Client.setRequestHeader('If-Modified-Since', 0);
         HTTP_Client.send(
             (typeof iData == 'string') ?
-                iData : BOM.encodeURI( $.param(iData || { }) )
+                iData : BOM.encodeURIComponent( $.param(iData || { }) )
         );
 
         return HTTP_Client;
@@ -1543,11 +1530,12 @@ self.onerror = function () {
             return this;
         },
         prepend:        function () {
-            if (! this[0].children.length)
-                $.fn.append.apply(this, arguments);
-            else
-                $.fn.before.apply($(this[0].children[0]), arguments);
-
+            if (this.length) {
+                if (! this[0].children.length)
+                    $.fn.append.apply(this, arguments);
+                else
+                    $.fn.before.apply($(this[0].children[0]), arguments);
+            }
             return this;
         },
         prependTo:      function () {
@@ -1719,7 +1707,36 @@ self.onerror = function () {
         }
     });
 
-/* ---------- jQuery+ v1.3 ---------- */
+/* ---------- jQuery+  v1.4 ---------- */
+
+    /* ----- 远程 Console  v0.1 ----- */
+
+    //  Thank for raphealguo --- http://rapheal.sinaapp.com/2014/11/06/javascript-error-monitor/
+
+    var Console_URL = $('head link[rel="console"]').attr('href');
+
+    BOM.onerror = function (iMessage, iURL, iLine, iColumn, iError){
+        $.wait(0,  function () {
+            var iData = {
+                    message:    iMessage,
+                    url:        iURL,
+                    line:       iLine,
+                    column:     iColumn  ||  (BOM.event && BOM.event.errorCharacter)  ||  0
+                };
+
+            if (iError && iError.stack)
+                iData.stack = (iError.stack || iError.stacktrace).toString();
+
+            if (Console_URL) {
+                if (iData.stack)
+                    $.post(Console_URL, iData);
+                else
+                    $.get(Console_URL, iData);
+            }
+        });
+
+        return true;
+    };
 
     /* ----- Hash 算法集合（浏览器原生） v0.1 ----- */
 
