@@ -2,7 +2,7 @@
 //                >>>  iQuery.js  <<<
 //
 //
-//      [Version]    v1.0  (2015-6-16)  Stable
+//      [Version]    v1.0  (2015-6-18)  Stable
 //
 //      [Usage]      A Light-weight jQuery Compatible API
 //                   with IE 8+ compatibility.
@@ -303,32 +303,45 @@
 
 
 /* ----- DOM Info Operator - Get first, set all. ----- */
-    var _Get_Set_ = { };
+    var _Get_Set_ = {
+            Get_Name_Type:    {
+                'String':    true,
+                'Array':     true
+            }
+        };
 
     function _Operator_(iType, iElement, iName, iValue) {
-        var iResult;
-
         if (! iName) {
             for (var i = 0;  i < iElement.length;  i++)
                 _Get_Set_[iType].clear(iElement[i]);
-        } else if (iElement.length && (iValue === undefined)) {
-            if (_Type_(iName) == 'String')
+            return iElement;
+        }
+        if ((iValue === undefined) && (_Type_(iName) in _Get_Set_.Get_Name_Type)) {
+            if (! iElement.length)
+                return;
+            else if (typeof iName == 'string')
                 return  _Get_Set_[iType].get(iElement[0], iName);
-            else if (_Type_(iName.length) == 'Number') {
+            else {
                 var iData = { };
                 for (var i = 0;  i < iName.length;  i++)
                     iData[iName[i]] = _Get_Set_[iType].get(iElement[0], iName[i]);
                 return iData;
-            } else if (_Type_(iName) == 'Object')
-                for (var i = 0;  i < iElement.length;  i++)
-                    for (var iKey in iName)
-                        iResult = _Get_Set_[iType].set(iElement[i], iKey, iName[iKey]);
+            }
         } else {
-            for (var i = 0;  i < iElement.length;  i++)
-                iResult = _Get_Set_[iType].set(iElement[i], iName, iValue);
-        }
+            var iResult;
 
-        return iResult;
+            if (typeof iName == 'string') {
+                iResult = { };
+                iResult[iName] = iValue;
+                iName = iResult;
+                iResult = undefined;
+            }
+            for (var i = 0;  i < iElement.length;  i++)
+                for (var iKey in iName)
+                    iResult = _Get_Set_[iType].set(iElement[i], iKey, iName[iKey]);
+
+            return  iResult || iElement;
+        }
     }
 
     /* ----- DOM innerText ----- */
@@ -1082,7 +1095,7 @@
 //        HTTP_Client.setRequestHeader('If-Modified-Since', 0);
         HTTP_Client.send(
             (typeof iData == 'string') ?
-                iData : BOM.encodeURIComponent( $.param(iData || { }) )
+                iData : BOM.encodeURI( $.param(iData || { }) )
         );
 
         return HTTP_Client;
@@ -1206,12 +1219,10 @@
             return  $.extend($($_Result), {prevObject:  this});
         },
         attr:           function () {
-            var iResult = _Operator_('Attribute', this, arguments[0], arguments[1]);
-            return  (typeof iResult == 'undefined') ? this : iResult;
+            return  _Operator_('Attribute', this, arguments[0], arguments[1]);
         },
         data:           function () {
-            var iResult = _Operator_('Data', this, arguments[0], arguments[1]);
-            return  (typeof iResult == 'undefined') ? this : iResult;
+            return  _Operator_('Data', this, arguments[0], arguments[1]);
         },
         parent:         function () {
             var $_Result = [ ];
@@ -1316,9 +1327,8 @@
 
             return  this;
         },
-        css:            function (iName, iValue) {
-            var iResult = _Operator_('Style', this, arguments[0], arguments[1]);
-            return  (typeof iResult == 'undefined') ? this : iResult;
+        css:            function () {
+            return  _Operator_('Style', this, arguments[0], arguments[1]);
         },
         hide:           function () {
             for (var i = 0, $_This;  i < this.length;  i++) {
