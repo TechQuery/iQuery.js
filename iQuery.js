@@ -2,7 +2,7 @@
 //                >>>  iQuery.js  <<<
 //
 //
-//      [Version]    v1.0  (2015-6-18)  Stable
+//      [Version]    v1.0  (2015-6-19)  Stable
 //
 //      [Usage]      A Light-weight jQuery Compatible API
 //                   with IE 8+ compatibility.
@@ -169,7 +169,7 @@
         };
 
 
-/* ----- Object Base ----- */
+/* ---------- Object Base ---------- */
     function _Each_(Arr_Obj, iEvery) {
         if (! Arr_Obj)  return;
 
@@ -302,7 +302,7 @@
     }
 
 
-/* ----- DOM Info Operator - Get first, set all. ----- */
+/* ---------- DOM Info Operator - Get first, set all. ---------- */
     var _Get_Set_ = {
             Get_Name_Type:    {
                 'String':    true,
@@ -499,7 +499,6 @@
         return true;
     }
 
-
     /* ----- DOM Attribute ----- */
     _Get_Set_.Attribute = {
         alias:    {
@@ -555,7 +554,7 @@
         }
     };
 
-/* ----- DOM Event ----- */
+/* ---------- DOM Event ---------- */
     var _Time_ = {
             _Root_:     BOM,
             now:        Date.now,
@@ -593,12 +592,22 @@
     if (! _Browser_.modern) {
         _Get_Set_.Data._Name_.event_ie = true;
 
+        function HTMLEvents() {
+            this.bubbles = true;
+            this.eventPhase = 3;
+            this.view = BOM;
+        }
+        HTMLEvents.prototype.preventDefault = function () {
+            BOM.event.returnValue = false;
+            this.defaultPrevented = true;
+        };
+        HTMLEvents.prototype.stopPropagation = function () {
+            BOM.event.cancelBubble = true;
+        };
+
         function IE_Event_Handler(iElement, iCallback) {
             return  function () {
-                    var iEvent = _Extend_(
-                            new (function HTMLEvent () {})(),
-                            BOM.event
-                        ),
+                    var iEvent = _Extend_(new HTMLEvents(), BOM.event),
                         Loaded;
 
                     switch (iEvent.type) {
@@ -614,17 +623,22 @@
                     }
                     if (! Loaded)  return;
 
-                    iCallback.call(iElement, _Extend_(iEvent, {
-                        target:           iEvent.srcElement,
-                        which:            (iEvent.type.slice(0, 3) == 'key') ?
-                            iEvent.keyCode  :  [0, 1, 3, 0, 2, 0, 0, 0][iEvent.button],
-                        relatedTarget:    ({
-                            mouseover:     iEvent.fromElement,
-                            mouseout:      iEvent.toElement,
-                            mouseenter:    iEvent.fromElement || iEvent.toElement,
-                            mouseleave:    iEvent.toElement || iEvent.fromElement
-                        })[iEvent.type]
-                    }));
+                    var iReturn = iCallback.call(iElement,  _Extend_(iEvent, {
+                            target:             iEvent.srcElement,
+                            which:              (iEvent.type.slice(0, 3) == 'key') ?
+                                iEvent.keyCode  :  [0, 1, 3, 0, 2, 0, 0, 0][iEvent.button],
+                            relatedTarget:      ({
+                                mouseover:     iEvent.fromElement,
+                                mouseout:      iEvent.toElement,
+                                mouseenter:    iEvent.fromElement || iEvent.toElement,
+                                mouseleave:    iEvent.toElement || iEvent.fromElement
+                            })[iEvent.type]
+                        }));
+
+                    if (iReturn === false) {
+                        iEvent.preventDefault();
+                        iEvent.stopPropagation();
+                    }
                 };
         }
     }
@@ -738,7 +752,6 @@
         _Operator_('Data', [iElement], 'event', Event_Data);
     }
 
-
     /* ----- DOM Ready ----- */
     _Operator_('Data', [DOM], 'event', {
         ready:    [ ],
@@ -779,7 +792,7 @@
 
 
 
-/* ----- DOM Constructor ----- */
+/* ---------- DOM Constructor ---------- */
     function DOM_Create(TagName, AttrList) {
         var iNew;
 
@@ -813,7 +826,7 @@
                     case 'html':
                         iNew.innerHTML = iValue;  break;
                     case 'style':    if (_Type_(iValue) == 'Object') {
-                        _Type_(iNew, iValue);
+                        _Operator_('Style', [iNew], iValue);
                         break;
                     }
                     default:         {
@@ -830,7 +843,7 @@
     }
 
 
-/* ----- AJAX Module ----- */
+/* ---------- XML Module ---------- */
     if (_Browser_.msie < 9)
         var IE_DOMParser = (function (MS_Version) {
                 for (var i = 0; i < MS_Version.length; i++)  try {
@@ -873,76 +886,6 @@
         return iXML;
     }
 
-    function X_Domain(Target_URL) {
-        var iLocation = BOM.location;
-        Target_URL = Target_URL.match(/^(\w+?(s)?:)?\/\/([\w\d:]+@)?([^\/\:\@]+)(:(\d+))?/);
-
-        if (! Target_URL)  return false;
-        if (Target_URL[1] && (Target_URL[1] != iLocation.protocol))  return true;
-        if (Target_URL[4] && (Target_URL[4] != iLocation.hostname))  return true;
-        var iPort = iLocation.port || (
-                (iLocation.protocol == 'http:') && 80
-            ) || (
-                (iLocation.protocol == 'https:') && 443
-            );
-        if (Target_URL[6] && (Target_URL[6] != iPort))  return true;
-    }
-
-    function iAJAX(This_Call, X_Domain) {
-        var iXDR = (X_Domain && (_Browser_.msie < 10));
-        var iXHR = new BOM[iXDR ? 'XDomainRequest' : 'XMLHttpRequest']();
-
-        var _Open_ = iXHR.open;
-        iXHR.open = function () {
-            var _This_ = this;
-
-            _This_[
-                X_Domain ? 'onload' : 'onreadystatechange'
-            ] = function () {
-                if (! (X_Domain || (_This_.readyState == 4)))  return;
-
-                if (typeof iXHR.onready == 'function')
-                    iXHR.onready.call(iXHR, iXHR.responseAny());
-                iXHR = null;
-            };
-            _Open_.apply(_This_, arguments);
-        };
-        if (iXDR)
-            iXHR.setRequestHeader = function () {
-                console.warn("IE 8/9 XDR doesn't support Changing HTTP Headers...");
-            };
-
-        return  _Extend_(iXHR, {
-                responseAny:    function () {
-                    var iResponse = this.responseText.trim();
-
-                    try {
-                        iResponse = BOM.JSON.parseAll(iResponse);
-                    } catch (iError) {
-                        try {
-                            iResponse = XML_Parse(iResponse);
-                        } catch (iError) { }
-                    }
-
-                    return iResponse;
-                },
-                timeOut:        function (TimeOut_Seconds, TimeOut_Callback) {
-                    var iXHR = this;
-
-                    _Time_.wait(TimeOut_Seconds, function () {
-                        iXHR.onreadystatechange = null;
-                        iXHR.abort();
-                        TimeOut_Callback.call(iXHR);
-                    });
-                },
-                retry:    function (Wait_Seconds) {
-                    _Time_.wait(Wait_Seconds, function () {
-                        This_Call.callee.apply(BOM, This_Call);
-                    });
-                }
-            });
-    }
-
 
 /* ---------- jQuery API ---------- */
     BOM.iQuery = function () {
@@ -961,7 +904,7 @@
 
         if (! iArgs[0]) return;
 
-        if (_Type_(iArgs[0]) == 'String') {
+        if (typeof iArgs[0] == 'string') {
             if ((iArgs[0][0] != '<') && (_Type_(iArgs[1]) != 'Object')) {
                 this.context = iArgs[1] || this.context;
                 try {
@@ -983,7 +926,6 @@
         BOM.jQuery = BOM.iQuery;
         BOM.$ = $;
     }
-
 
     /* ----- iQuery Static Method ----- */
     _Extend_($, {
@@ -1082,9 +1024,77 @@
 
     _Extend_($, _Time_);
 
-
-
     /* ----- HTTP Client ----- */
+    function X_Domain(Target_URL) {
+        var iLocation = BOM.location;
+        Target_URL = Target_URL.match(/^(\w+?(s)?:)?\/\/([\w\d:]+@)?([^\/\:\@]+)(:(\d+))?/);
+
+        if (! Target_URL)  return false;
+        if (Target_URL[1] && (Target_URL[1] != iLocation.protocol))  return true;
+        if (Target_URL[4] && (Target_URL[4] != iLocation.hostname))  return true;
+        var iPort = iLocation.port || (
+                (iLocation.protocol == 'http:') && 80
+            ) || (
+                (iLocation.protocol == 'https:') && 443
+            );
+        if (Target_URL[6] && (Target_URL[6] != iPort))  return true;
+    }
+
+    function iAJAX(This_Call, X_Domain) {
+        var iXDR = (X_Domain && (_Browser_.msie < 10));
+        var iXHR = new BOM[iXDR ? 'XDomainRequest' : 'XMLHttpRequest']();
+
+        var _Open_ = iXHR.open;
+        iXHR.open = function () {
+            var _This_ = this;
+
+            _This_[
+                X_Domain ? 'onload' : 'onreadystatechange'
+            ] = function () {
+                if (! (X_Domain || (_This_.readyState == 4)))  return;
+
+                if (typeof iXHR.onready == 'function')
+                    iXHR.onready.call(iXHR, iXHR.responseAny());
+                iXHR = null;
+            };
+            _Open_.apply(_This_, arguments);
+        };
+        if (iXDR)
+            iXHR.setRequestHeader = function () {
+                console.warn("IE 8/9 XDR doesn't support Changing HTTP Headers...");
+            };
+
+        return  _Extend_(iXHR, {
+                responseAny:    function () {
+                    var iResponse = this.responseText.trim();
+
+                    try {
+                        iResponse = BOM.JSON.parseAll(iResponse);
+                    } catch (iError) {
+                        try {
+                            iResponse = XML_Parse(iResponse);
+                        } catch (iError) { }
+                    }
+
+                    return iResponse;
+                },
+                timeOut:        function (TimeOut_Seconds, TimeOut_Callback) {
+                    var iXHR = this;
+
+                    _Time_.wait(TimeOut_Seconds, function () {
+                        iXHR.onreadystatechange = null;
+                        iXHR.abort();
+                        TimeOut_Callback.call(iXHR);
+                    });
+                },
+                retry:    function (Wait_Seconds) {
+                    _Time_.wait(Wait_Seconds, function () {
+                        This_Call.callee.apply(BOM, This_Call);
+                    });
+                }
+            });
+    }
+
     function iHTTP(iURL, iData, iCallback) {
         var HTTP_Client = iAJAX(arguments, X_Domain(iURL));
 
@@ -1129,8 +1139,8 @@
                 iArgs[0] = $(iArgs[0], iArgs[1]);
                 iArgType = 'iQuery';
             } else if (
-                (typeof iArgs[0].length == 'number') &&
-                (! ($.type(iArgs[0]) in Type_Info.DOM.element))
+                ($.type(iArgs[0].length) == 'Number') &&
+                (! (iArgType in Type_Info.DOM.element))
             )
                 iArgType = 'Array';
 
@@ -1465,7 +1475,7 @@
             return  this;
         },
         on:             function (iType, iFilter, iCallback) {
-            if ($.type(iFilter) != 'String')
+            if (typeof iFilter != 'string')
                 return  this.bind.apply(this, arguments);
             else
                 return  this.bind(iType, function () {
@@ -1680,7 +1690,6 @@
         if (! (iName in no_ShortCut))
             $.fn[iName] = Event_Method(iName);
     }
-
 
     /* ----- Touch Events ----- */
     $.extend($.fn, {
@@ -2001,7 +2010,7 @@
         var iArgs = $.makeArray(arguments);
         var $_Form = this.is('form') ? this : this.find('form').eq(0),
             iAttribute = $.isPlainObject(iArgs[0]) ? iArgs.shift() : { },
-            iCallback = ($.type(iArgs[0]) == 'Function') ? iArgs.shift() : null;
+            iCallback = (typeof iArgs[0] == 'function') ? iArgs.shift() : null;
 
         var iTarget = $_Form.attr('target'),
             $_iFrame = [ ];
@@ -2081,10 +2090,6 @@
         return $_This;
     };
 
-    $.fn.stop = function () {
-        return  this.data('animate', 0);
-    };
-
     $.fx = {interval:  1000 / FPS};
 
     /* ----- CSS 3 Animation ----- */
@@ -2127,7 +2132,8 @@
 
         return  this.removeClass('animated').addClass(iClass);
     };
-    //  Animation ShortCut
+
+    /* ----- Animation ShortCut ----- */
     var CSS_Animation = [
             'fadeIn', 'fadeOut'
         ];
@@ -2141,4 +2147,435 @@
     for (var i = 0;  i < CSS_Animation.length;  i++)
         $.fn[ CSS_Animation[i] ] = iAnimate( CSS_Animation[i] );
 
+    $.fn.stop = function () {
+        return  this.data('animate', 0).removeClass('animated');
+    };
+
 })(self.iQuery);
+
+
+
+/* ----- 模态框/遮罩层（全局） v0.3 ----- */
+(function (BOM, DOM, $) {
+
+    BOM.iShadowCover = {
+        $_DOM:    $('<div id="iSC"><div /></div>'),
+        closed:    true,
+        open:      function (iContent, closeCB) {
+            this.locked = ($.type(iContent) == 'Window');
+
+            if (! this.locked) {
+                if (! this.closed)  this.close();
+                $(this.$_DOM[0].firstChild).append(iContent);
+            } else
+                this.Content = iContent;
+
+            this.$_DOM.height( $(BOM).height() ).css('display', 'table');
+            this.closed = false;
+            this.onclose = closeCB;
+
+            return iContent;
+        },
+        close:     function () {
+            this.$_DOM.hide().attr('class', '');
+            $(this.$_DOM[0].firstChild).empty();
+            this.closed = true;
+            if (this.onclose)
+                this.onclose.call(this.$_DOM[0]);
+        }
+    };
+
+    $(DOM).ready(function () {
+        $(this.body.firstElementChild || this.body.firstChild)
+            .before(BOM.iShadowCover.$_DOM);
+
+        $.cssRule({
+            '#iSC': {
+                position:      'fixed',
+                'z-index':     2000000010,
+                top:           0,
+                left:          0,
+                width:         '100%',
+                height:        '100%',
+                background:    'rgba(0, 0, 0, 0.7)',
+                display:       'none'
+            },
+            '#iSC > *': {
+                display:             'table-cell',
+                'vertical-align':    'middle',
+                'text-align':        'center'
+            }
+        });
+    }).keydown(function () {
+        if (BOM.iShadowCover.closed) return;
+
+        if (! BOM.iShadowCover.locked) {
+            if (arguments[0].which == 27)
+                BOM.iShadowCover.close();
+        } else
+            BOM.iShadowCover.Content.focus();
+    });
+
+    BOM.iShadowCover.$_DOM.click(function () {
+        if (! BOM.iShadowCover.locked) {
+            if (arguments[0].target.parentNode === this)
+                BOM.iShadowCover.close();
+        } else
+            BOM.iShadowCover.Content.focus();
+    });
+
+    function iOpen(iURL, Scale, iCallback) {
+        Scale = (Scale > 0) ? Scale : 3;
+        var Size = {
+            height:    BOM.screen.height / Scale,
+            width:     BOM.screen.width / Scale
+        };
+        var Top = (BOM.screen.height - Size.height) / 2,
+            Left = (BOM.screen.width - Size.width) / 2;
+
+        BOM.alert("请留意本网页浏览器的“弹出窗口拦截”提示，当被禁止时请点选【允许】，然后可能需要重做之前的操作。");
+        var new_Window = BOM.open(iURL, '_blank', [
+            'top=' + Top,               'left=' + Left,
+            'height=' + Size.height,    'width=' + Size.width,
+            'resizable=no,menubar=no,toolbar=no,location=no,status=no,scrollbars=no'
+        ].join(','));
+
+        BOM.new_Window_Fix.call(new_Window, function () {
+            $('link[rel~="shortcut"], link[rel~="icon"], link[rel~="bookmark"]')
+                .add('<base target="_self" />')
+                .appendTo(this.document.head);
+
+            $(this.document).keydown(function (iEvent) {
+                var iKeyCode = iEvent.which;
+
+                if (
+                    (iKeyCode == 122) ||                       //  F11
+                    (iKeyCode == 116) ||                       //  (Ctrl + )F5
+                    (iEvent.ctrlKey && (iKeyCode == 82)) ||    //  Ctrl + R
+                    (iEvent.ctrlKey && (iKeyCode == 78)) ||    //  Ctrl + N
+                    (iEvent.shiftKey && (iKeyCode == 121))     //  Shift + F10
+                )
+                    return false;
+            }).bind('contextmenu', function () {
+                return false;
+            }).mousedown(function () {
+                if (arguments[0].which == 3)
+                    return false;
+            });
+        });
+
+        if (iCallback)
+            $.every(0.2, function () {
+                if (new_Window.closed) {
+                    iCallback.call(BOM, new_Window);
+                    return false;
+                }
+            });
+        return new_Window;
+    }
+
+    var old_MD = BOM.showModalDialog;
+
+    BOM.showModalDialog = function (iContent, iScale, CloseBack) {
+        if (! arguments.length)
+            throw 'A URL Argument is needed unless...';
+        if (typeof iScale == 'function') {
+            CloseBack = iScale;
+            iScale = null;
+        } else if (typeof CloseBack == 'string')
+            return old_MD.apply(BOM, arguments);
+
+        if (typeof iContent == 'string') {
+            if (! iContent.match(/^(\w+:)?\/\/[\w\d\.:@]+/)) {
+                var iTitle = iContent;
+                iContent = 'about:blank';
+            }
+            iContent = BOM.iShadowCover.open(
+                iOpen(iContent, iScale, CloseBack)
+            );
+            $.every(0.2, function () {
+                if (iContent.closed) {
+                    BOM.iShadowCover.close();
+                    return false;
+                }
+            });
+            $(BOM).bind('unload', function () {
+                iContent.close();
+            });
+            BOM.new_Window_Fix.call(iContent, function () {
+                this.iTime = {
+                    _Root_:    this,
+                    now:       $.now,
+                    every:     $.every,
+                    wait:      $.wait
+                };
+
+                this.iTime.every(0.2, function () {
+                    if (! this.opener) {
+                        this.close();
+                        return false;
+                    }
+                });
+                if (iTitle)
+                    $(this.document.head).append('title', {text:  iTitle});
+            });
+        } else
+            BOM.iShadowCover.open(iContent, CloseBack);
+
+        return iContent;
+    };
+
+})(self, self.document, self.iQuery);
+
+
+//
+//                >>>  EasyImport.js  <<<
+//
+//
+//      [Version]    v0.9  (2015-6-16)  Stable
+//
+//      [Usage]      Only for loading JavaScript files in Single-Page Web,
+//                   no Inherit support for Frames.
+//
+//
+//              (C)2013-2015    SCU FYclub-RDD
+//
+
+
+(function (BOM, DOM, $) {
+
+/* ----------- Basic Data ----------- */
+    var UA = navigator.userAgent,
+        RE_FileName = BOM.iRegExp('^[^\\?]*?\\/?([^\\/\\?]+)(\\?.+)?$', undefined, null);
+
+    var Root_Path = (function ($_Script) {
+            for (var i = 0, iPath;  i < $_Script.length;  i++) {
+                iPath = $_Script[i].src.match(
+                    /(.+)[^\/]*EasyImport[^\/]*\.js[^\/]*$/i
+                );
+                if (iPath)  return iPath[1];
+            }
+        })( $('head > script') ),
+        Load_Times = 0;
+
+    var $_Head = $('head').append('meta', {
+            'http-equiv':    'Window-Target',
+            content:         '_top'
+        }),
+        $_Title = $('head title');
+
+
+
+/* ----------- Standard Mode Meta Patches ----------- */
+    if ($.browser.mobile) {
+        if ($.browser.modern) {
+            var is_WeChat = UA.match(/MicroMessenger/i),
+                is_UCWeb = UA.match(/UCBrowser|UCWeb/i);
+            $_Title.before('meta', {
+                name:       "viewport",
+                content:    [
+                    'width' + '=' + (
+                        ($.browser.mobile && (is_WeChat || is_UCWeb))  ?  320  :  'device-width'
+                    ),
+                    'initial-scale=1.0',
+                    'minimum-scale=1.0',
+                    'maximum-scale=1.0',
+                    'user-scalable=no',
+                    'target-densitydpi=medium-dpi'
+                ].join(',')
+            });
+        } else
+            $_Title.before(
+                $('meta', {
+                    name:       'MobileOptimized',
+                    content:    320
+                }).add('meta', {
+                    name:       'HandheldFriendly',
+                    content:    'true'
+                })
+            );
+    }
+    if ($.browser.msie)
+        $_Head.append('meta', {
+            'http-equiv':    'X-UA-Compatible',
+            content:         'IE=Edge, Chrome=1'
+        });
+
+
+/* ---------- Loading Queue ---------- */
+    var UA_Rule = {
+            old_PC:    ! $.browser.modern,
+            Mobile:    $.browser.mobile,
+            Phone:     $.browser.phone,
+            Pad:       $.browser.pad
+        };
+
+    function iQueue() {
+        this.length = 0;
+    }
+    $.extend(iQueue.prototype, {
+        push:        [ ].push,
+        shift:       [ ].shift,
+        splice:      [ ].splice,
+        slice:       [ ].slice,
+        newGroup:    function () {
+            var _Length_;
+
+            if ((! this.length) || this.slice(-1)[0].length) {
+                _Length_ = this.push($.extend([ ],  {
+                    loaded:    0
+                }));
+                this.lastGroup = this.slice(-1)[0];
+            }
+            return _Length_;
+        },
+        add:         function (iFileName) {
+            if (! iFileName.match(/^http(s)?:\/\//))
+                iFileName = Root_Path + iFileName;
+            this[this.length - 1].push( iFileName );
+        }
+    });
+
+    function Make_Queue(iList) {
+        for (var i = 0; i < iList.length; i++)
+            if (! (iList[i] instanceof Array))
+                iList[i] = [iList[i]];
+
+        var _Queue_ = new iQueue();
+        for (var i = 0; i < iList.length; i++) {
+            _Queue_.newGroup();
+            for (var j = 0, _Item_; j < iList[i].length; j++) {
+                _Item_ = iList[i][j];
+                if (typeof _Item_ == 'string')
+                    _Queue_.add(_Item_);
+                else {
+                    var no_Break = true;
+                    for (RI in UA_Rule)  if (UA_Rule[RI]) {
+                        if (_Item_[RI] === false)
+                            no_Break = false;
+                        else if (_Item_[RI])
+                            _Queue_.add(_Item_[RI]);
+                        break;
+                    }
+                }
+                if (no_Break && (! _Queue_.lastGroup[j]) && _Item_.new_PC)
+                    _Queue_.add(_Item_.new_PC);
+            }
+        }
+        return _Queue_;
+    }
+
+
+/* ---------- DOM Load-Engine ---------- */
+    function DOM_Load(iOrder, iFinal) {
+        if (! iOrder[0]) {
+            iFinal();
+            return;
+        }
+
+        var This_Call = arguments;
+
+        if ((! iOrder[1]) && (this !== DOM)) {
+            $(DOM).ready(function () {
+                This_Call.callee.apply(this, This_Call);
+            });
+            return;
+        }
+
+        var This_Group = 0;
+
+        function _Next_() {
+            if ( iOrder[0][++This_Group] )  return;
+
+            $(this).data('Load_During', $.end(
+                this.src.match(RE_FileName)[1]
+            ));
+            iOrder.shift();
+            This_Call.callee.apply(this, This_Call);
+        }
+
+        for (var i = 0, iScript;  i < iOrder[0].length;  i++) {
+            iScript = iOrder[0][i];
+
+            if (typeof iScript == 'function') {
+                iScript();
+                _Next_.call(iScript);
+                continue;
+            }
+            $_Head.append('script', {
+                type:       'text/javascript',
+                charset:    'UTF-8',
+                'class':    'EasyImport',
+                src:        iScript,
+                onload:     _Next_
+            });
+            $.start( iScript.match(RE_FileName)[1] );
+        }
+    }
+
+// ----------- Open API ----------- //
+    $(DOM).ready(function () {
+        $.cssRule({
+            '#iSC.EasyImport': {
+                background:    'darkgray'
+            },
+            '#iSC.EasyImport h1': {
+                color:    'white'
+            }
+        });
+        var $_Cover = $('#iSC').addClass('EasyImport');
+        BOM.showModalDialog($('<h1>Loading...</h1>'),  1);
+        $_Cover.find('h1').cssAnimate('fadeIn', 2000, true);
+    });
+
+
+    function Load_End() {
+        if ( Load_Times++ )  return;
+
+        var iTimer = $.browser.modern && BOM.performance.timing;
+
+        var Async_Time = (! iTimer) ? $.end('DOM_Ready') : (
+                (iTimer.domContentLoadedEventEnd - iTimer.navigationStart) / 1000
+            ),
+            Sync_Time = $(DOM).data('Load_During');
+        $('head > script.EasyImport').each(function () {
+            Sync_Time += $(this).data('Load_During');
+        });
+        console.info([
+            '[ EasyImport.js ]  Time Statistics',
+            '  Async Sum:    ' + Async_Time.toFixed(3) + ' s',
+            '  Sync Sum:     ' + Sync_Time.toFixed(3) + ' s',
+            '  Saving:       ' + (
+                ((Sync_Time - Async_Time) / Sync_Time) * 100
+            ).toFixed(2) + ' %'
+        ].join("\n\n"));
+
+        BOM.iShadowCover.close();
+
+        $(DOM.body).trigger('load');
+    }
+
+
+    BOM.ImportJS = function () {
+        var Func_Args = $.makeArray(arguments),
+            JS_List,  CallBack;
+
+        Root_Path = (typeof Func_Args[0] == 'string') ?
+            Func_Args.shift() : Root_Path;
+        if (Func_Args[0] instanceof Array)
+            JS_List = Func_Args.shift();
+        else
+            throw "Format of Importing List isn't currect !";
+        CallBack = (typeof Func_Args[0] == 'function') ?
+            Func_Args.shift() : null;
+
+
+        var JS_Item = Make_Queue(JS_List);
+        if (CallBack)  JS_Item.push([CallBack]);
+
+        if (! JS_Item[0].length)  return;
+
+        DOM_Load(JS_Item, Load_End);
+    };
+
+})(self, self.document, self.iQuery);
