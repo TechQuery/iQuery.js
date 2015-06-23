@@ -2,7 +2,7 @@
 //                >>>  iQuery.js  <<<
 //
 //
-//      [Version]    v1.0  (2015-6-19)  Stable
+//      [Version]    v1.0  (2015-6-23)  Stable
 //
 //      [Usage]      A Light-weight jQuery Compatible API
 //                   with IE 8+ compatibility.
@@ -1696,33 +1696,48 @@
         swipe:    function (iCallback) {
             var Touch_Start;
 
-            this.bind('touchstart MSPointerDown',  function (iEvent) {
-                try {
-                    var iTouch = iEvent.changedTouches[0];
-                } catch (iError) {
-                    var iTouch = iEvent.touches[0];
-                }
+            this.bind(
+                $.browser.mobile ? 'touchstart MSPointerDown' : 'mousedown',
+                function (iTouch) {
+                    if ($.browser.mobile) {
+                        try {
+                            iTouch = iTouch.changedTouches[0];
+                        } catch (iError) {
+                            iTouch = iTouch.touches[0];
+                        }
+                    }
 
-                Touch_Start = {
-                    pX:    iTouch.pageX,
-                    pY:    iTouch.pageY
-                };
-            }).bind('touchmove MSPointerEnd',  function () {
-                arguments[0].preventDefault();
-            }).bind('touchend touchcancel MSPointerUp',  function (iEvent) {
-                try {
-                    var iTouch = iEvent.changedTouches[0];
-                } catch (iError) {
-                    var iTouch = iEvent.touches[0];
-                }
-                var iSwipe = {
-                        swipeLeft:    Touch_Start.pX - iTouch.pageX,
-                        swipeTop:     Touch_Start.pY - iTouch.pageY
+                    Touch_Start = {
+                        pX:    iTouch.pageX,
+                        pY:    iTouch.pageY
                     };
+                }
+            ).bind(
+                $.browser.mobile ? 'touchmove MSPointerEnd' : 'mousemove',
+                function () {
+                    arguments[0].preventDefault();
+                }
+            ).bind(
+                $.browser.mobile ? 'touchend touchcancel MSPointerUp' : 'mouseup',
+                function (iEvent) {
+                    var iTouch = iEvent;
 
-                if (Math.max(Math.abs(iSwipe.swipeLeft), Math.abs(iSwipe.swipeTop)) > 20)
-                    iCallback.call(this,  $.extend(iEvent, iSwipe));
-            });
+                    if ($.browser.mobile)
+                        try {
+                            iTouch = iTouch.changedTouches[0];
+                        } catch (iError) {
+                            iTouch = iTouch.touches[0];
+                        }
+
+                    var iSwipe = {
+                            swipeLeft:    Touch_Start.pX - iTouch.pageX,
+                            swipeTop:     Touch_Start.pY - iTouch.pageY
+                        };
+
+                    if (Math.max(Math.abs(iSwipe.swipeLeft), Math.abs(iSwipe.swipeTop)) > 20)
+                        iCallback.call(this,  $.extend(iEvent, iSwipe));
+                }
+            );
         }
     });
 
@@ -2152,430 +2167,3 @@
     };
 
 })(self.iQuery);
-
-
-
-/* ----- 模态框/遮罩层（全局） v0.3 ----- */
-(function (BOM, DOM, $) {
-
-    BOM.iShadowCover = {
-        $_DOM:    $('<div id="iSC"><div /></div>'),
-        closed:    true,
-        open:      function (iContent, closeCB) {
-            this.locked = ($.type(iContent) == 'Window');
-
-            if (! this.locked) {
-                if (! this.closed)  this.close();
-                $(this.$_DOM[0].firstChild).append(iContent);
-            } else
-                this.Content = iContent;
-
-            this.$_DOM.height( $(BOM).height() ).css('display', 'table');
-            this.closed = false;
-            this.onclose = closeCB;
-
-            return iContent;
-        },
-        close:     function () {
-            this.$_DOM.hide().attr('class', '');
-            $(this.$_DOM[0].firstChild).empty();
-            this.closed = true;
-            if (this.onclose)
-                this.onclose.call(this.$_DOM[0]);
-        }
-    };
-
-    $(DOM).ready(function () {
-        $(this.body.firstElementChild || this.body.firstChild)
-            .before(BOM.iShadowCover.$_DOM);
-
-        $.cssRule({
-            '#iSC': {
-                position:      'fixed',
-                'z-index':     2000000010,
-                top:           0,
-                left:          0,
-                width:         '100%',
-                height:        '100%',
-                background:    'rgba(0, 0, 0, 0.7)',
-                display:       'none'
-            },
-            '#iSC > *': {
-                display:             'table-cell',
-                'vertical-align':    'middle',
-                'text-align':        'center'
-            }
-        });
-    }).keydown(function () {
-        if (BOM.iShadowCover.closed) return;
-
-        if (! BOM.iShadowCover.locked) {
-            if (arguments[0].which == 27)
-                BOM.iShadowCover.close();
-        } else
-            BOM.iShadowCover.Content.focus();
-    });
-
-    BOM.iShadowCover.$_DOM.click(function () {
-        if (! BOM.iShadowCover.locked) {
-            if (arguments[0].target.parentNode === this)
-                BOM.iShadowCover.close();
-        } else
-            BOM.iShadowCover.Content.focus();
-    });
-
-    function iOpen(iURL, Scale, iCallback) {
-        Scale = (Scale > 0) ? Scale : 3;
-        var Size = {
-            height:    BOM.screen.height / Scale,
-            width:     BOM.screen.width / Scale
-        };
-        var Top = (BOM.screen.height - Size.height) / 2,
-            Left = (BOM.screen.width - Size.width) / 2;
-
-        BOM.alert("请留意本网页浏览器的“弹出窗口拦截”提示，当被禁止时请点选【允许】，然后可能需要重做之前的操作。");
-        var new_Window = BOM.open(iURL, '_blank', [
-            'top=' + Top,               'left=' + Left,
-            'height=' + Size.height,    'width=' + Size.width,
-            'resizable=no,menubar=no,toolbar=no,location=no,status=no,scrollbars=no'
-        ].join(','));
-
-        BOM.new_Window_Fix.call(new_Window, function () {
-            $('link[rel~="shortcut"], link[rel~="icon"], link[rel~="bookmark"]')
-                .add('<base target="_self" />')
-                .appendTo(this.document.head);
-
-            $(this.document).keydown(function (iEvent) {
-                var iKeyCode = iEvent.which;
-
-                if (
-                    (iKeyCode == 122) ||                       //  F11
-                    (iKeyCode == 116) ||                       //  (Ctrl + )F5
-                    (iEvent.ctrlKey && (iKeyCode == 82)) ||    //  Ctrl + R
-                    (iEvent.ctrlKey && (iKeyCode == 78)) ||    //  Ctrl + N
-                    (iEvent.shiftKey && (iKeyCode == 121))     //  Shift + F10
-                )
-                    return false;
-            }).bind('contextmenu', function () {
-                return false;
-            }).mousedown(function () {
-                if (arguments[0].which == 3)
-                    return false;
-            });
-        });
-
-        if (iCallback)
-            $.every(0.2, function () {
-                if (new_Window.closed) {
-                    iCallback.call(BOM, new_Window);
-                    return false;
-                }
-            });
-        return new_Window;
-    }
-
-    var old_MD = BOM.showModalDialog;
-
-    BOM.showModalDialog = function (iContent, iScale, CloseBack) {
-        if (! arguments.length)
-            throw 'A URL Argument is needed unless...';
-        if (typeof iScale == 'function') {
-            CloseBack = iScale;
-            iScale = null;
-        } else if (typeof CloseBack == 'string')
-            return old_MD.apply(BOM, arguments);
-
-        if (typeof iContent == 'string') {
-            if (! iContent.match(/^(\w+:)?\/\/[\w\d\.:@]+/)) {
-                var iTitle = iContent;
-                iContent = 'about:blank';
-            }
-            iContent = BOM.iShadowCover.open(
-                iOpen(iContent, iScale, CloseBack)
-            );
-            $.every(0.2, function () {
-                if (iContent.closed) {
-                    BOM.iShadowCover.close();
-                    return false;
-                }
-            });
-            $(BOM).bind('unload', function () {
-                iContent.close();
-            });
-            BOM.new_Window_Fix.call(iContent, function () {
-                this.iTime = {
-                    _Root_:    this,
-                    now:       $.now,
-                    every:     $.every,
-                    wait:      $.wait
-                };
-
-                this.iTime.every(0.2, function () {
-                    if (! this.opener) {
-                        this.close();
-                        return false;
-                    }
-                });
-                if (iTitle)
-                    $(this.document.head).append('title', {text:  iTitle});
-            });
-        } else
-            BOM.iShadowCover.open(iContent, CloseBack);
-
-        return iContent;
-    };
-
-})(self, self.document, self.iQuery);
-
-
-//
-//                >>>  EasyImport.js  <<<
-//
-//
-//      [Version]    v0.9  (2015-6-16)  Stable
-//
-//      [Usage]      Only for loading JavaScript files in Single-Page Web,
-//                   no Inherit support for Frames.
-//
-//
-//              (C)2013-2015    SCU FYclub-RDD
-//
-
-
-(function (BOM, DOM, $) {
-
-/* ----------- Basic Data ----------- */
-    var UA = navigator.userAgent,
-        RE_FileName = BOM.iRegExp('^[^\\?]*?\\/?([^\\/\\?]+)(\\?.+)?$', undefined, null);
-
-    var Root_Path = (function ($_Script) {
-            for (var i = 0, iPath;  i < $_Script.length;  i++) {
-                iPath = $_Script[i].src.match(
-                    /(.+)[^\/]*EasyImport[^\/]*\.js[^\/]*$/i
-                );
-                if (iPath)  return iPath[1];
-            }
-        })( $('head > script') ),
-        Load_Times = 0;
-
-    var $_Head = $('head').append('meta', {
-            'http-equiv':    'Window-Target',
-            content:         '_top'
-        }),
-        $_Title = $('head title');
-
-
-
-/* ----------- Standard Mode Meta Patches ----------- */
-    if ($.browser.mobile) {
-        if ($.browser.modern) {
-            var is_WeChat = UA.match(/MicroMessenger/i),
-                is_UCWeb = UA.match(/UCBrowser|UCWeb/i);
-            $_Title.before('meta', {
-                name:       "viewport",
-                content:    [
-                    'width' + '=' + (
-                        ($.browser.mobile && (is_WeChat || is_UCWeb))  ?  320  :  'device-width'
-                    ),
-                    'initial-scale=1.0',
-                    'minimum-scale=1.0',
-                    'maximum-scale=1.0',
-                    'user-scalable=no',
-                    'target-densitydpi=medium-dpi'
-                ].join(',')
-            });
-        } else
-            $_Title.before(
-                $('meta', {
-                    name:       'MobileOptimized',
-                    content:    320
-                }).add('meta', {
-                    name:       'HandheldFriendly',
-                    content:    'true'
-                })
-            );
-    }
-    if ($.browser.msie)
-        $_Head.append('meta', {
-            'http-equiv':    'X-UA-Compatible',
-            content:         'IE=Edge, Chrome=1'
-        });
-
-
-/* ---------- Loading Queue ---------- */
-    var UA_Rule = {
-            old_PC:    ! $.browser.modern,
-            Mobile:    $.browser.mobile,
-            Phone:     $.browser.phone,
-            Pad:       $.browser.pad
-        };
-
-    function iQueue() {
-        this.length = 0;
-    }
-    $.extend(iQueue.prototype, {
-        push:        [ ].push,
-        shift:       [ ].shift,
-        splice:      [ ].splice,
-        slice:       [ ].slice,
-        newGroup:    function () {
-            var _Length_;
-
-            if ((! this.length) || this.slice(-1)[0].length) {
-                _Length_ = this.push($.extend([ ],  {
-                    loaded:    0
-                }));
-                this.lastGroup = this.slice(-1)[0];
-            }
-            return _Length_;
-        },
-        add:         function (iFileName) {
-            if (! iFileName.match(/^http(s)?:\/\//))
-                iFileName = Root_Path + iFileName;
-            this[this.length - 1].push( iFileName );
-        }
-    });
-
-    function Make_Queue(iList) {
-        for (var i = 0; i < iList.length; i++)
-            if (! (iList[i] instanceof Array))
-                iList[i] = [iList[i]];
-
-        var _Queue_ = new iQueue();
-        for (var i = 0; i < iList.length; i++) {
-            _Queue_.newGroup();
-            for (var j = 0, _Item_; j < iList[i].length; j++) {
-                _Item_ = iList[i][j];
-                if (typeof _Item_ == 'string')
-                    _Queue_.add(_Item_);
-                else {
-                    var no_Break = true;
-                    for (RI in UA_Rule)  if (UA_Rule[RI]) {
-                        if (_Item_[RI] === false)
-                            no_Break = false;
-                        else if (_Item_[RI])
-                            _Queue_.add(_Item_[RI]);
-                        break;
-                    }
-                }
-                if (no_Break && (! _Queue_.lastGroup[j]) && _Item_.new_PC)
-                    _Queue_.add(_Item_.new_PC);
-            }
-        }
-        return _Queue_;
-    }
-
-
-/* ---------- DOM Load-Engine ---------- */
-    function DOM_Load(iOrder, iFinal) {
-        if (! iOrder[0]) {
-            iFinal();
-            return;
-        }
-
-        var This_Call = arguments;
-
-        if ((! iOrder[1]) && (this !== DOM)) {
-            $(DOM).ready(function () {
-                This_Call.callee.apply(this, This_Call);
-            });
-            return;
-        }
-
-        var This_Group = 0;
-
-        function _Next_() {
-            if ( iOrder[0][++This_Group] )  return;
-
-            $(this).data('Load_During', $.end(
-                this.src.match(RE_FileName)[1]
-            ));
-            iOrder.shift();
-            This_Call.callee.apply(this, This_Call);
-        }
-
-        for (var i = 0, iScript;  i < iOrder[0].length;  i++) {
-            iScript = iOrder[0][i];
-
-            if (typeof iScript == 'function') {
-                iScript();
-                _Next_.call(iScript);
-                continue;
-            }
-            $_Head.append('script', {
-                type:       'text/javascript',
-                charset:    'UTF-8',
-                'class':    'EasyImport',
-                src:        iScript,
-                onload:     _Next_
-            });
-            $.start( iScript.match(RE_FileName)[1] );
-        }
-    }
-
-// ----------- Open API ----------- //
-    $(DOM).ready(function () {
-        $.cssRule({
-            '#iSC.EasyImport': {
-                background:    'darkgray'
-            },
-            '#iSC.EasyImport h1': {
-                color:    'white'
-            }
-        });
-        var $_Cover = $('#iSC').addClass('EasyImport');
-        BOM.showModalDialog($('<h1>Loading...</h1>'),  1);
-        $_Cover.find('h1').cssAnimate('fadeIn', 2000, true);
-    });
-
-
-    function Load_End() {
-        if ( Load_Times++ )  return;
-
-        var iTimer = $.browser.modern && BOM.performance.timing;
-
-        var Async_Time = (! iTimer) ? $.end('DOM_Ready') : (
-                (iTimer.domContentLoadedEventEnd - iTimer.navigationStart) / 1000
-            ),
-            Sync_Time = $(DOM).data('Load_During');
-        $('head > script.EasyImport').each(function () {
-            Sync_Time += $(this).data('Load_During');
-        });
-        console.info([
-            '[ EasyImport.js ]  Time Statistics',
-            '  Async Sum:    ' + Async_Time.toFixed(3) + ' s',
-            '  Sync Sum:     ' + Sync_Time.toFixed(3) + ' s',
-            '  Saving:       ' + (
-                ((Sync_Time - Async_Time) / Sync_Time) * 100
-            ).toFixed(2) + ' %'
-        ].join("\n\n"));
-
-        BOM.iShadowCover.close();
-
-        $(DOM.body).trigger('load');
-    }
-
-
-    BOM.ImportJS = function () {
-        var Func_Args = $.makeArray(arguments),
-            JS_List,  CallBack;
-
-        Root_Path = (typeof Func_Args[0] == 'string') ?
-            Func_Args.shift() : Root_Path;
-        if (Func_Args[0] instanceof Array)
-            JS_List = Func_Args.shift();
-        else
-            throw "Format of Importing List isn't currect !";
-        CallBack = (typeof Func_Args[0] == 'function') ?
-            Func_Args.shift() : null;
-
-
-        var JS_Item = Make_Queue(JS_List);
-        if (CallBack)  JS_Item.push([CallBack]);
-
-        if (! JS_Item[0].length)  return;
-
-        DOM_Load(JS_Item, Load_End);
-    };
-
-})(self, self.document, self.iQuery);
