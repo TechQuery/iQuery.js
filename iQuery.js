@@ -2,7 +2,7 @@
 //                >>>  iQuery.js  <<<
 //
 //
-//      [Version]    v1.0  (2015-6-23)  Stable
+//      [Version]    v1.0  (2015-6-24)  Stable
 //
 //      [Usage]      A Light-weight jQuery Compatible API
 //                   with IE 8+ compatibility.
@@ -482,23 +482,6 @@
         }
     };
 
-    var inVisible = {
-            display:       'none',
-            visibility:    'hidden',
-            width:         0
-        };
-
-    function is_Visible(iElement) {
-        var iStyle = _Operator_('Style', [iElement], [
-                'display',  'visibility',  'width'
-            ]);
-
-        for (var iKey in iStyle)
-            if (iStyle[iKey] == inVisible[iKey])
-                return false;
-        return true;
-    }
-
     /* ----- DOM Attribute ----- */
     _Get_Set_.Attribute = {
         alias:    {
@@ -843,6 +826,59 @@
     }
 
 
+/* ---------- DOM Selector ---------- */
+    var iPseudo = {
+            ':visible':    {
+                attribute:    {
+                    display:       'none',
+                    visibility:    'hidden',
+                    width:         0,
+                    height:        0,
+                    opacity:       0
+                },
+                filter:       function (iElement) {
+                    var iStyle = _Operator_('Style', [iElement], [
+                            'display',  'visibility',  'width',  'height',  'opacity'
+                        ]);
+
+                    for (var iKey in iStyle)
+                        if (iStyle[iKey] === this.attribute[iKey])
+                            return false;
+                    return true;
+                }
+            }
+        };
+
+    _Each_(iPseudo,  function (iKey) {
+        this.regexp = BOM.iRegExp('(.*?)' + iKey + "[>\\+~\\s]*(.*)",  undefined,  null);
+    });
+
+    function DOM_Search(iRoot, iSelector) {
+        try {
+            return  _Extend_([ ],  iRoot.querySelectorAll(iSelector || '*'));
+        } catch (iError) {
+            var _Selector_;
+            for (var _Pseudo_ in iPseudo) {
+                _Selector_ = iSelector.match(iPseudo[_Pseudo_].regexp);
+                if (_Selector_.length > 1)  break;
+            }
+            var Set_0 = arguments.callee(iRoot, _Selector_[1]),
+                Set_1 = [ ];
+            for (var i = 0;  i < Set_0.length;  i++)
+                if ( iPseudo[_Pseudo_].filter(Set_0[i]) ) {
+                    if (_Selector_[2])
+                        Set_1 = Set_1.concat( arguments.callee(Set_0[i], _Selector_[2]) );
+                    else
+                        Set_1.push(Set_0[i]);
+                }
+            for (var i = Set_1.length - 1;  i > 0;  i--)
+                if (Set_1.indexOf(Set_1[i]) < i)
+                    Set_1[i] = null;
+                
+            return Set_1;
+        }
+    }
+
 /* ---------- XML Module ---------- */
     if (_Browser_.msie < 9)
         var IE_DOMParser = (function (MS_Version) {
@@ -908,9 +944,7 @@
             if ((iArgs[0][0] != '<') && (_Type_(iArgs[1]) != 'Object')) {
                 this.context = iArgs[1] || this.context;
                 try {
-                    this.add(
-                        this.context.querySelectorAll(iArgs[0])
-                    );
+                    this.add( DOM_Search(this.context, iArgs[0]) );
                 } catch (iError) { }
                 this.selector = iArgs[0];
             } else
@@ -1102,7 +1136,6 @@
         HTTP_Client.open(iData ? 'POST' : 'GET', iURL, true);
         if (iData)
             HTTP_Client.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
-//        HTTP_Client.setRequestHeader('If-Modified-Since', 0);
         HTTP_Client.send(
             (typeof iData == 'string') ?
                 iData : BOM.encodeURI( $.param(iData || { }) )
@@ -1203,18 +1236,13 @@
         },
         filter:         function (iSelector) {
             var $_Filter = $(iSelector),
-                iVisible = iSelector && iSelector.trim().match(/(\s?):visible$/),
                 $_Result = [ ];
 
-            if (iVisible)  iVisible = iVisible[1] ? 2 : 1;
-
-            if ( $_Filter.length )
+            if ( $_Filter.length ) {
                 for (var i = 0;  i < this.length;  i++)
-                    if ($.inArray($_Filter, this[i]) > -1) {
-                        if (iVisible && (! is_Visible(this[i])))
-                            continue;
+                    if ($.inArray($_Filter, this[i]) > -1)
                         $_Result.push( this[i] );
-                    }
+            }
 
             return  $.extend($($_Result), {prevObject:  this});
         },
@@ -2003,9 +2031,8 @@
     function Set_zIndex() {
         var $_This = $(this),  _Index_ = 0;
 
-        $_This.siblings().addBack().each(function () {
-            if ( is_Visible(this) )
-                _Index_ = Math.max(_Index_, Get_zIndex( $(this) ));
+        $_This.siblings().addBack().filter(':visible').each(function () {
+            _Index_ = Math.max(_Index_, Get_zIndex( $(this) ));
         });
         $_This.css('z-index', ++_Index_);
     }
