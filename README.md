@@ -34,6 +34,7 @@
 - 更智能的 $.get()、$.post()：自动 发起跨域请求、转换响应内容为 JSON 或 XML
 - 新增 **表单无刷新提交方法** —— $.fn.post()（基于 iframe，可无需服务器支持即可**跨域提交**）
 - 新增基于**现代浏览器 Crypto API** 的哈希方法 —— $.dataHash()
+- jQuery :button **伪类选择符** 还支持 submit、reset、image 类型的按钮
 - .attr()、.data() 有与 .css() 一致的“**数组取值为对象、对象批量赋值**”能力
 - .css() 封装了老版 IE 的 CSS Filter
 - .css() 取值时，会把 纯数字值、像素值 直接返回为 Number 类型
@@ -47,7 +48,7 @@
 - 封装了**触屏手势事件**，为桌面端、移动端提供一致的操作体验
 
 ### 【未实现的 jQuery（最新版）特性】
-- **jQuery 扩展伪类选择符**：只支持 常用且“难以用 **CSS 标准选择符** 或 jQuery API 实现其功能”的（如 :visible）
+- **jQuery 扩展伪类选择符**：只支持 常用且“难以用 **CSS 标准选择符** 或 jQuery API 实现其功能”的 —— :visible、:button、:header、:input
 - 构造 DOM 元素时的第二参数中不能调用与键名同名的实例方法，仅能设置 DOM 属性
 - 没有 $.noConflict()（但不会占用 jQuery 变量）
 - 不支持 浏览器**内置类型**（构造函数）相应的 $.isXXX() 方法（但 $.type() 均能返回与构造函数名一致的“类型名”）
