@@ -829,28 +829,54 @@
 /* ---------- DOM Selector ---------- */
     var iPseudo = {
             ':visible':    {
-                attribute:    {
-                    display:       'none',
-                    visibility:    'hidden',
-                    width:         0,
-                    height:        0,
-                    opacity:       0
+                feature:    {
+                    display:    'none',
+                    width:      0,
+                    height:     0
                 },
-                filter:       function (iElement) {
+                filter:     function (iElement) {
                     var iStyle = _Operator_('Style', [iElement], [
                             'display',  'visibility',  'width',  'height',  'opacity'
                         ]);
 
                     for (var iKey in iStyle)
-                        if (iStyle[iKey] === this.attribute[iKey])
+                        if (iStyle[iKey] === this.feature[iKey])
                             return false;
                     return true;
+                }
+            },
+            ':button':     {
+                feature:    {
+                    Tag:     ['input', 'button'],
+                    Type:    ['button', 'submit', 'reset', 'image']
+                },
+                filter:     function (iElement) {
+                    var iTag = iElement.tagName.toLowerCase();
+
+                    if ((this.feature.Tag.indexOf(iTag) == -1) || (
+                        (iTag == 'input') &&
+                        (this.feature.Type.indexOf(iElement.type.toLowerCase()) == -1)
+                    ))
+                        return false;
+
+                    return true;
+                }
+            },
+            ':header':     {
+                filter:    function () {
+                    return  (arguments[0] instanceof HTMLHeadingElement);
+                }
+            },
+            ':input':      {
+                feature:    ['input', 'textarea', 'select', 'button'],
+                filter:     function () {
+                    return  (this.feature.indexOf( arguments[0].tagName.toLowerCase() ) > -1);
                 }
             }
         };
 
     _Each_(iPseudo,  function (iKey) {
-        this.regexp = BOM.iRegExp('(.*?)' + iKey + "[>\\+~\\s]*(.*)",  undefined,  null);
+        this.regexp = BOM.iRegExp('(.*?)' + iKey + "([>\\+~\\s]*.*)",  undefined,  null);
     });
 
     function DOM_Search(iRoot, iSelector) {
@@ -860,14 +886,19 @@
             var _Selector_;
             for (var _Pseudo_ in iPseudo) {
                 _Selector_ = iSelector.match(iPseudo[_Pseudo_].regexp);
-                if (_Selector_.length > 1)  break;
+                if (_Selector_ && (_Selector_.length > 1))
+                    break;
             }
-            var Set_0 = arguments.callee(iRoot, _Selector_[1]),
+            var Set_0 = arguments.callee(
+                    iRoot,  _Selector_[1] + (_Selector_[1].match(/[>\+~]\s*$/) ? '*' : '')
+                ),
                 Set_1 = [ ];
             for (var i = 0;  i < Set_0.length;  i++)
                 if ( iPseudo[_Pseudo_].filter(Set_0[i]) ) {
                     if (_Selector_[2])
-                        Set_1 = Set_1.concat( arguments.callee(Set_0[i], _Selector_[2]) );
+                        Set_1 = Set_1.concat(
+                            arguments.callee(Set_0[i],  '*' + _Selector_[2])
+                        );
                     else
                         Set_1.push(Set_0[i]);
                 }
