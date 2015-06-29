@@ -600,7 +600,7 @@
 
         function IE_Event_Handler(iElement, iCallback) {
             return  function () {
-                    var iEvent = _Extend_(new HTMLEvents(), BOM.event),
+                    var iEvent = _Extend_(new HTMLEvents(),  BOM.event),
                         Loaded;
 
                     switch (iEvent.type) {
@@ -1056,9 +1056,6 @@
             Args_Str = (Args_Str || BOM.location.search).match(/[^\/\?&\s]+/g);
             if (! Args_Str)  return { };
 
-            if ( Args_Str[0].match(/^w+:\/\//) )
-                Args_Str = Args_Str.slice(1);
-
             var _Args_ = {
                     toString:    function () {
                         return  BOM.JSON.format(this);
@@ -1092,111 +1089,6 @@
     });
 
     _Extend_($, _Time_);
-
-    /* ----- HTTP Client ----- */
-    function X_Domain(Target_URL) {
-        var iLocation = BOM.location;
-        Target_URL = Target_URL.match(/^(\w+?(s)?:)?\/\/([\w\d:]+@)?([^\/\:\@]+)(:(\d+))?/);
-
-        if (! Target_URL)  return false;
-        if (Target_URL[1] && (Target_URL[1] != iLocation.protocol))  return true;
-        if (Target_URL[4] && (Target_URL[4] != iLocation.hostname))  return true;
-        var iPort = iLocation.port || (
-                (iLocation.protocol == 'http:') && 80
-            ) || (
-                (iLocation.protocol == 'https:') && 443
-            );
-        if (Target_URL[6] && (Target_URL[6] != iPort))  return true;
-    }
-
-    if (_Browser_.msie < 10)
-        BOM.XDomainRequest.prototype.setRequestHeader = function () {
-            console.warn("IE 8/9 XDR doesn't support Changing HTTP Headers...");
-        };
-
-    function iAJAX(This_Call, X_Domain) {
-        var iXHR = new BOM[
-                (X_Domain && (_Browser_.msie < 10)) ? 'XDomainRequest' : 'XMLHttpRequest'
-            ]();
-
-        var _Open_ = iXHR.open;
-        iXHR.open = function () {
-            var _This_ = this;
-
-            _This_[
-                X_Domain ? 'onload' : 'onreadystatechange'
-            ] = function () {
-                if (! (X_Domain || (_This_.readyState == 4)))  return;
-
-                if (typeof iXHR.onready == 'function')
-                    iXHR.onready.call(iXHR, iXHR.responseAny());
-                iXHR = null;
-            };
-            _Open_.apply(_This_, arguments);
-        };
-
-        return  _Extend_(iXHR, {
-                responseAny:    function () {
-                    var iResponse = this.responseText.trim();
-
-                    try {
-                        iResponse = BOM.JSON.parseAll(iResponse);
-                    } catch (iError) {
-                        try {
-                            iResponse = XML_Parse(iResponse);
-                        } catch (iError) { }
-                    }
-
-                    return iResponse;
-                },
-                timeOut:        function (TimeOut_Seconds, TimeOut_Callback) {
-                    var iXHR = this;
-
-                    _Time_.wait(TimeOut_Seconds, function () {
-                        iXHR.onreadystatechange = null;
-                        iXHR.abort();
-                        TimeOut_Callback.call(iXHR);
-                    });
-                },
-                retry:    function (Wait_Seconds) {
-                    _Time_.wait(Wait_Seconds, function () {
-                        This_Call.callee.apply(BOM, This_Call);
-                    });
-                }
-            });
-    }
-
-    function iHTTP(iURL, iData, iCallback) {
-        var HTTP_Client = iAJAX(arguments, X_Domain(iURL));
-
-        HTTP_Client.onready = iCallback;
-        HTTP_Client.open(iData ? 'POST' : 'GET', iURL, true);
-        if (iData)
-            HTTP_Client.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
-        HTTP_Client.send(
-            (typeof iData == 'string') ?
-                iData : BOM.encodeURI( $.param(iData || { }) )
-        );
-
-        return HTTP_Client;
-    }
-
-    _Extend_($, {
-        get:     function (iURL, iData, iCallback) {
-            if (typeof iData == 'function') {
-                iCallback = iData;
-                iData = { };
-            }
-            iURL = iURL.split('?', 2);
-            iURL = iURL[0] + '?' + $.param($.extend(
-                iURL[1] && $.paramJSON(iURL[1]),
-                iData,
-                {_:  $.now()}
-            ));
-            return  iHTTP(iURL, null, iCallback);
-        },
-        post:    iHTTP
-    });
 
     /* ----- iQuery Instance Method ----- */
     _Extend_($.fn, {
@@ -1715,6 +1607,135 @@
             return iValue;
         }
     });
+
+    /* ----- HTTP Client ----- */
+    function X_Domain(Target_URL) {
+        var iLocation = BOM.location;
+        Target_URL = Target_URL.match(/^(\w+?(s)?:)?\/\/([\w\d:]+@)?([^\/\:\@]+)(:(\d+))?/);
+
+        if (! Target_URL)  return false;
+        if (Target_URL[1] && (Target_URL[1] != iLocation.protocol))  return true;
+        if (Target_URL[4] && (Target_URL[4] != iLocation.hostname))  return true;
+        var iPort = iLocation.port || (
+                (iLocation.protocol == 'http:') && 80
+            ) || (
+                (iLocation.protocol == 'https:') && 443
+            );
+        if (Target_URL[6] && (Target_URL[6] != iPort))  return true;
+    }
+
+    if ($.browser.msie < 10)
+        BOM.XDomainRequest.prototype.setRequestHeader = function () {
+            console.warn("IE 8/9 XDR doesn't support Changing HTTP Headers...");
+        };
+
+    function iAJAX(This_Call, X_Domain) {
+        var iXHR = new BOM[
+                (X_Domain && ($.browser.msie < 10)) ? 'XDomainRequest' : 'XMLHttpRequest'
+            ]();
+
+        var _Open_ = iXHR.open;
+        iXHR.open = function () {
+            var _This_ = this;
+
+            _This_[
+                X_Domain ? 'onload' : 'onreadystatechange'
+            ] = function () {
+                if (! (X_Domain || (_This_.readyState == 4)))  return;
+
+                if (typeof iXHR.onready == 'function')
+                    iXHR.onready.call(iXHR, iXHR.responseAny());
+                iXHR = null;
+            };
+            _Open_.apply(_This_, arguments);
+        };
+
+        return  $.extend(iXHR, {
+                responseAny:    function () {
+                    var iResponse = this.responseText.trim();
+
+                    try {
+                        iResponse = BOM.JSON.parseAll(iResponse);
+                    } catch (iError) {
+                        try {
+                            iResponse = XML_Parse(iResponse);
+                        } catch (iError) { }
+                    }
+
+                    return iResponse;
+                },
+                timeOut:        function (TimeOut_Seconds, TimeOut_Callback) {
+                    var iXHR = this;
+
+                    $.wait(TimeOut_Seconds, function () {
+                        iXHR.onreadystatechange = null;
+                        iXHR.abort();
+                        TimeOut_Callback.call(iXHR);
+                    });
+                },
+                retry:    function (Wait_Seconds) {
+                    $.wait(Wait_Seconds, function () {
+                        This_Call.callee.apply(BOM, This_Call);
+                    });
+                }
+            });
+    }
+
+    function iHTTP(iURL, iData, iCallback) {
+        var HTTP_Client = iAJAX(arguments, X_Domain(iURL));
+
+        HTTP_Client.onready = iCallback;
+        HTTP_Client.open(iData ? 'POST' : 'GET', iURL, true);
+        if (iData)
+            HTTP_Client.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
+        HTTP_Client.send(
+            (typeof iData == 'string') ?
+                iData : BOM.encodeURI( $.param(iData || { }) )
+        );
+
+        return HTTP_Client;
+    }
+
+    $.extend($, {
+        JSONP:    { },
+        get:      function (iURL, iData, iCallback) {
+            iURL = iURL.split('?');
+            iURL[1] = iURL.slice(1).join('?');
+            iURL.length = 2;
+
+            if (typeof iData == 'function') {
+                iCallback = iData;
+                iData = { };
+            }
+
+            var iArgs = $.paramJSON(iURL[1]),
+                iJSONP;
+            for (var iName in iArgs)
+                if (iArgs[iName] == '?') {
+                    iJSONP = '_' + $.uid();
+                    this.JSONP[iJSONP] = iCallback;
+                    iArgs[iName] = 'iQuery.JSONP.' + iJSONP;
+                    break;
+                }
+
+            iURL = iURL[0] + '?' + $.param(
+                $.extend(iArgs,  iData,  {_: $.now()})
+            );
+            if (! iJSONP)
+                return  iHTTP(iURL, null, iCallback);
+
+            $('<script />', {
+                src:       iURL,
+                onload:    function () {
+                    delete $.JSONP[iJSONP];
+                    $(this).remove();
+                }
+            }).appendTo(DOM.head);
+        },
+        post:     iHTTP
+    });
+
+    $.getJSON = $.get;
 
     /* ----- Event ShortCut ----- */
     $.fn.off = $.fn.unbind;
