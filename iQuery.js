@@ -2,7 +2,7 @@
 //                >>>  iQuery.js  <<<
 //
 //
-//      [Version]    v1.0  (2015-6-26)  Stable
+//      [Version]    v1.0  (2015-6-29)  Stable
 //
 //      [Usage]      A Light-weight jQuery Compatible API
 //                   with IE 8+ compatibility.
@@ -340,8 +340,8 @@
     };
 
     /* ----- DOM Style ----- */
-    var IE_CSS_Filter = (_Browser_.msie < 9);
-    var Code_Indent = (! IE_CSS_Filter) ? '' : ' '.repeat(4);
+    var IE_CSS_Filter = (! _Browser_.modern),
+        Code_Indent = _Browser_.modern ? '' : ' '.repeat(4);
 
     function toHexInt(iDec, iLength) {
         var iHex = parseInt( Number(iDec).toFixed(0) ).toString(16);
@@ -392,8 +392,7 @@
             if ((_Type_(iStyle) == 'Number') || (! iStyle))
                 return iStyle;
 
-            var iNumber = iStyle.match(/(\d+(\.\d+)?)(px$)?/i);
-            iNumber = iNumber ? Number(iNumber[1]) : NaN;
+            var iNumber = parseFloat(iStyle);
 
             return  isNaN(iNumber) ? iStyle : (iNumber / iScale);
         },
@@ -558,10 +557,8 @@
             }
         };
 
-    /* ----- W3C Event Method Wrapper ----- */
+    /* ----- W3C Event Object Wrapper ----- */
     if (! _Browser_.modern) {
-        _Get_Set_.Data._Name_.event_ie = true;
-
         BOM.HTMLEvents = function () {
             _Extend_(this, DOM.createEventObject());
             this.bubbles = true;
@@ -653,7 +650,7 @@
                     _Operator_('Attribute',  [this],  'on' + iType,  _Time_.now());
             }
 
-            //  Patch to W3C DOM Event
+            //  Patch to W3C DOM Event Type
             if (iCallback && (iType == 'DOMContentLoaded')) {
                 if (BOM !== BOM.top)  iType = 'load';
                 else {
@@ -672,18 +669,10 @@
             if ((_Type_(this) != 'Window') && (iType == 'load'))
                 iType = 'readystatechange';
 
-            if (! iType)  return;
-
-            //  Event Handler Patch
-            var _Handler_ = _Operator_('Data', [this], 'event_ie');
-
-            if (! _Handler_) {
-                _Handler_ = IE_Event_Handler(this, iCallback);
-                _Operator_('Data', [this], 'event_ie', _Handler_);
-            }
-            this[
-                (iCallback ? 'at' : 'de') + 'tachEvent'
-            ]('on' + iType,  _Handler_);
+            if (iType)
+                this[(iCallback ? 'at' : 'de') + 'tachEvent'](
+                    'on' + iType,  IE_Event_Handler(this, iCallback)
+                );
         }
 
         var IE_Event_Method = {
@@ -1120,9 +1109,15 @@
         if (Target_URL[6] && (Target_URL[6] != iPort))  return true;
     }
 
+    if (_Browser_.msie < 10)
+        BOM.XDomainRequest.prototype.setRequestHeader = function () {
+            console.warn("IE 8/9 XDR doesn't support Changing HTTP Headers...");
+        };
+
     function iAJAX(This_Call, X_Domain) {
-        var iXDR = (X_Domain && (_Browser_.msie < 10));
-        var iXHR = new BOM[iXDR ? 'XDomainRequest' : 'XMLHttpRequest']();
+        var iXHR = new BOM[
+                (X_Domain && (_Browser_.msie < 10)) ? 'XDomainRequest' : 'XMLHttpRequest'
+            ]();
 
         var _Open_ = iXHR.open;
         iXHR.open = function () {
@@ -1139,10 +1134,6 @@
             };
             _Open_.apply(_This_, arguments);
         };
-        if (iXDR)
-            iXHR.setRequestHeader = function () {
-                console.warn("IE 8/9 XDR doesn't support Changing HTTP Headers...");
-            };
 
         return  _Extend_(iXHR, {
                 responseAny:    function () {
@@ -1925,10 +1916,10 @@
                 'class':    'jQuery_CSS-Rule'
             });
 
-        if (IE_CSS_Filter)
-            $_Style[0].styleSheet.cssText = CSS_Text;
-        else
+        if ($.browser.modern)
             $_Style.html(CSS_Text);
+        else
+            $_Style[0].styleSheet.cssText = CSS_Text;
 
         $_Style.appendTo('body');
 
