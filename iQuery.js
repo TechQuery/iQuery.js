@@ -2,7 +2,7 @@
 //                >>>  iQuery.js  <<<
 //
 //
-//      [Version]    v1.0  (2015-7-5)  Stable
+//      [Version]    v1.0  (2015-7-8)  Stable
 //
 //      [Usage]      A Light-weight jQuery Compatible API
 //                   with IE 8+ compatibility.
@@ -765,26 +765,6 @@
         }
     }
 
-    function Event_Switch(iElement, iType, iCallback) {
-        var Event_Data = _Operator_('Data', [iElement], '_event_');
-        if (! Event_Data)
-            Event_Data = { };
-
-        if (! Event_Data[iType]) {
-            Event_Data[iType] = [ ];
-            iElement.addEventListener(iType, Proxy_Handler);
-        }
-
-        if (iCallback)
-            Event_Data[iType].push( iCallback );
-        else {
-            Event_Data[iType] = null;
-            iElement.removeEventListener(iType, Proxy_Handler);
-        }
-
-        _Operator_('Data', [iElement], '_event_', Event_Data);
-    }
-
     /* ----- DOM Ready ----- */
     _Operator_('Data', [DOM], '_event_', {
         ready:    [ ],
@@ -813,6 +793,8 @@
         for (var i = 0;  i < iHandler.length;  i++)
             iHandler[i].apply(DOM, arguments);
 
+        DOM.removeEventListener('DOMContentLoaded', DOM_Ready_Event);
+        BOM.removeEventListener('load', DOM_Ready_Event);
         return false;
     }
 
@@ -929,12 +911,14 @@
             '(.*?)' + _Pseudo_ + "([>\\+~\\s]*.*)",  undefined,  null
         );
 
+    var _Concat_ = Array.prototype.concat;
+
     function DOM_Search(iRoot, iSelector) {
         var _Self_ = arguments.callee,  iSet = [ ];
 
         _Each_(iSelector.split(/\s*,\s*/),  function () {
             try {
-                iSet = iSet.concat( _Extend_([ ],  iRoot.querySelectorAll(arguments[1] || '*')) );
+                iSet = _Concat_.apply(iSet,  iRoot.querySelectorAll(arguments[1] || '*'));
             } catch (iError) {
                 var _Selector_;
                 for (var _Pseudo_ in iPseudo) {
@@ -1276,9 +1260,7 @@
             var $_Result = [ ];
 
             for (var i = 0;  i < this.length;  i++)
-                $_Result = $_Result.concat(
-                    $.makeArray( this[i].children )
-                );
+                $_Result = _Concat_.apply($_Result, this[i].children);
 
             $_Result = $($_Result);
             if ( arguments[0] )
@@ -1291,10 +1273,10 @@
                 Type_Filter = parseInt(arguments[0]);
 
             for (var i = 0;  i < this.length;  i++)
-                $_Result = $_Result.concat($.makeArray(
+                $_Result = $_Result.concat(
                     (this[i].tagName.toLowerCase() != 'iframe') ?
-                        this[i].childNodes : this[i].contentWindow.document
-                ));
+                        $.makeArray(this[i].childNodes) : this[i].contentWindow.document
+                );
 
             if ($.type(Type_Filter) == 'Number')
                 for (var i = 0;  i < $_Result.length;  i++)
@@ -1322,7 +1304,7 @@
             var $_Result = [ ];
 
             for (var i = 0;  i < this.length;  i++)
-                $_Result = [ ].concat.apply($_Result,  $(arguments[0], this[i]));
+                $_Result = _Concat_.apply($_Result,  $(arguments[0], this[i]));
 
             return  $.extend($($_Result), {prevObject:  this});
         },
@@ -1456,20 +1438,42 @@
         bind:           function (iType, iCallback) {
             iType = iType.split(/\s+/);
 
-            for (var i = 0;  i < this.length;  i++)
-                for (var j = 0;  j < iType.length;  j++)
-                    Event_Switch(this[i], iType[j], iCallback);
+            return  this.each(function () {
+                    var $_This = $(this);
 
-            return  this;
+                    for (var i = 0, Event_Data;  i < iType.length;  i++) {
+                        Event_Data = $_This.data('_event_') || { };
+
+                        if (! Event_Data[iType[i]]) {
+                            Event_Data[iType[i]] = [ ];
+                            this.addEventListener(iType[i], Proxy_Handler);
+                        }
+                        Event_Data[iType[i]].push(iCallback);
+
+                        $_This.data('_event_', Event_Data);
+                    }
+                });
         },
-        unbind:         function (iType) {
+        unbind:         function (iType, iCallback) {
             iType = iType.split(/\s+/);
 
-            for (var i = 0;  i < this.length;  i++)
-                for (var j = 0;  j < iType.length;  j++)
-                    Event_Switch(this[i], iType[j]);
+            return  this.each(function () {
+                    var $_This = $(this);
 
-            return  this;
+                    for (var i = 0, Event_Data, This_Event;  i < iType.length;  i++) {
+                        Event_Data = $_This.data('_event_') || { };
+                        This_Event = Event_Data[iType[i]];
+
+                        if (iCallback)
+                            This_Event.splice(This_Event.indexOf(iCallback), 1);
+                        if ((! iCallback) || (! This_Event.length))
+                            Event_Data[iType[i]] = null;
+                        if (! Event_Data[iType[i]])
+                            this.removeEventListener(iType[i], Proxy_Handler);
+
+                        $_This.data('_event_', Event_Data);
+                    }
+                });
         },
         on:             function (iType, iFilter, iCallback) {
             if (typeof iFilter != 'string')
@@ -1494,6 +1498,18 @@
 
                         return iReturn;
                     });
+        },
+        one:            function () {
+            var iArgs = $.makeArray(arguments);
+            var iCallback = iArgs[iArgs.length - 1];
+
+            iArgs.splice(-1,  1,  function () {
+                $.fn.unbind.apply($(this), iArgs);
+
+                return  iCallback.apply(this, arguments);
+            });
+
+            return  this.on.apply(this, iArgs);
         },
         ready:          function (iCallback) {
             if ($.type(this[0]) != 'Document')
@@ -1584,7 +1600,8 @@
         },
         detach:         function () {
             for (var i = 0;  i < this.length;  i++)
-                this[i].parentNode.removeChild(this[i]);
+                if (this[i].parentNode)
+                    this[i].parentNode.removeChild(this[i]);
 
             return this;
         },
@@ -1603,9 +1620,7 @@
             var _UID_ = $.uid();
 
             var $_Result = $(
-                    $.makeArray(this).concat(
-                        $.makeArray(this.prevObject)
-                    )
+                    _Concat_.apply($.makeArray(this), this.prevObject)
                 ).attr('iQuery', _UID_);
 
             return  $.extend(
