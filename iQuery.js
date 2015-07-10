@@ -2,7 +2,7 @@
 //                >>>  iQuery.js  <<<
 //
 //
-//      [Version]    v1.0  (2015-7-8)  Stable
+//      [Version]    v1.0  (2015-7-10)  Stable
 //
 //      [Usage]      A Light-weight jQuery Compatible API
 //                   with IE 8+ compatibility.
@@ -229,6 +229,7 @@
                 'DOMNodeRemoved',  'DOMNodeRemovedFromDocument',
                 'DOMSubtreeModified'
             ),
+            Target:       _inKey_('_top', '_parent', '_self', '_blank'),
             Float:        _inKey_('absolute', 'fixed')
         };
 
@@ -877,16 +878,13 @@
                 }
             },
             ':button':     {
-                feature:    {
-                    Tag:     _inKey_('input', 'button'),
-                    Type:    _inKey_('button', 'image', 'submit', 'reset')
-                },
+                feature:    _inKey_('button', 'image', 'submit', 'reset'),
                 filter:     function (iElement) {
                     var iTag = iElement.tagName.toLowerCase();
 
-                    if ((iTag in this.feature.Tag) || (
+                    if ((iTag == 'button') || (
                         (iTag == 'input') &&
-                        (iElement.type.toLowerCase() in this.feature.Type)
+                        (iElement.type.toLowerCase() in this.feature)
                     ))
                         return true;
                     else
@@ -1754,32 +1752,62 @@
             });
     }
 
+    function ECDS_Post(iCallback) {
+        var $_Button = this.find(':button').attr('disabled', true),
+            iTarget = this.attr('target');
+        if ((! iTarget) || (iTarget in Type_Info.Target)) {
+            iTarget = 'iFrame_' + $.uid();
+            this.attr('target', iTarget);
+        }
+
+        var $_iFrame = $('iframe[name="' + iTarget + '"]');
+        if (! $_iFrame.length)
+            $_iFrame = $('<iframe />', {
+                frameBorder:          0,
+                allowTransparency:    true,
+                name:                 iTarget
+            });
+
+        var $_This = this;
+        $_iFrame.hide().appendTo( this.parent() ).on('load', function () {
+            $_Button.prop('disabled', false);
+            try {
+                var $_Content = $(this).contents();
+                iCallback.call(
+                    $_This[0],  $_Content.find('body').text(),  $_Content
+                );
+            } catch (iError) { }
+        });
+        this.submit();
+    }
+
     function iHTTP(iURL, iData, iCallback) {
-        var HTTP_Client = iAJAX(arguments, X_Domain(iURL));
-
-        HTTP_Client.onready = iCallback;
-        HTTP_Client.open(iData ? 'POST' : 'GET',  iURL,  true);
-        HTTP_Client.withCredentials = true;
-
         if ($.type(iData) == 'Element') {
-            var iDOM = iData;
+            var $_Form = $(iData);
             iData = { };
 
-            if (iDOM.tagName.toLowerCase() == 'form') {
+            if ($_Form[0].tagName.toLowerCase() == 'form') {
                 if (! ($.browser.msie < 10))
-                    iData = new FormData(iDOM);
-                else {
-                    var _Data_ = $(iDOM).serializeArray();
+                    iData = new FormData($_Form[0]);
+                else if (! $_Form.find('input[type="file"]').length) {
+                    var _Data_ = $_Form.serializeArray();
                     for (var i = 0;  i < _Data_.length;  i++)
                         iData[_Data_[i].name] = _Data_[i].value;
+                } else {
+                    ECDS_Post.call($_Form, iCallback);
+                    return;
                 }
             }
         }
         if ( $.isPlainObject(iData) )
             iData = BOM.encodeURI( $.param(iData || { }) );
+
+        var HTTP_Client = iAJAX(arguments, X_Domain(iURL));
+        HTTP_Client.onready = iCallback;
+        HTTP_Client.open(iData ? 'POST' : 'GET',  iURL,  true);
+        HTTP_Client.withCredentials = true;
         if (typeof iData == 'string')
             HTTP_Client.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
-
         HTTP_Client.send(iData);
 
         return HTTP_Client;
@@ -1906,7 +1934,7 @@
     if ($.browser.mobile)  $.fn.click = $.fn.tap;
 
 
-/* ---------- jQuery+  v1.8 ---------- */
+/* ---------- jQuery+  v1.9 ---------- */
 
     /* ----- 远程 Console  v0.1 ----- */
 
@@ -2240,66 +2268,24 @@
             return  this.css('z-index',  Number(new_Index) || 'auto');
     };
 
-    /* ----- Form 元素 无刷新提交（iframe 版） v0.3 ----- */
-    $.fn.post = function () {
+    /* ----- Form 元素 无刷新提交  v0.4 ----- */
+    $.fn.post = function (iCallback) {
         var $_Form = this.is('form') ? this : this.find('form').eq(0);
-        if (! $_Form.length)  return $_Form;
+        if (! $_Form.length)  return this;
 
-        var $_Button = $_Form.find(':button'),
-            iArgs = $.makeArray(arguments);
-        var iAttribute = $.isPlainObject(iArgs[0]) ? iArgs.shift() : { },
-            iCallback = (typeof iArgs[0] == 'function') ? iArgs.shift() : null;
+        var $_Button = $_Form.find(':button').attr('disabled', true);
+        $_Form.submit(function () {
+            $_Button.attr('disabled', true);
+            arguments[0].preventDefault();
 
-        if (! ($.browser.msie < 10))
-            return  $_Form.submit(function () {
-                    arguments[0].preventDefault();
-
-                    $_Button.attr('disabled', true);
-
-                    $.post(this.action,  this,  function () {
-                        $_Button.prop('disabled', false);
-                        iCallback.call($_Form[0], arguments[0]);
-                    });
-                });
-
-        var iTarget = $_Form.submit(function () {
-                $_Button.attr('disabled', true);
-            }).attr('target'),
-            $_iFrame = [ ];
-        if (! iTarget) {
-            iTarget = 'iFrame_' + $.uid();
-            $_Form.attr('target', iTarget);
-        } else
-            $_iFrame = $('iframe[name="' + iTarget + '"]');
-        iAttribute = $.extend({
-            frameBorder:          0,
-            allowTransparency:    true
-        }, iAttribute);
-        if (! $_iFrame.length)
-            $_iFrame = $('<iframe />', $.extend(iAttribute, {name:  iTarget}));
-        else {
-            var iAttr = { };
-            $.each(iAttribute, function (iKey, iValue) {
-                if (iKey in $.fn)
-                    $_iFrame[iKey](iValue);
-                else
-                    iAttr[iKey] = iValue;
-            });
-            $_iFrame.attr(iAttr);
-        }
-
-        $_iFrame.hide().appendTo( $_Form.parent() )
-            .on('load', function () {
+            $.post(this.action,  this,  function () {
                 $_Button.prop('disabled', false);
-                try {
-                    var $_Content = $(this).contents();
-                    iCallback.call(
-                        $_Form[0],  $_Content.find('body').text(),  $_Content
-                    );
-                } catch (iError) { }
+                iCallback.call($_Form[0], arguments[0]);
             });
+        });
+        $_Button.prop('disabled', false);
 
-        return $_Form;
+        return this;
     };
 
 })(self, self.document);
