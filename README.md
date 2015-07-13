@@ -30,12 +30,11 @@
 - 新增 **纯数据类型判断方法** —— $.isData()
 - $.trim() 可**去除指定的非空白符**（借鉴 PHP）
 - 新增 **URL 参数对象化方法**（$.param() 的逆方法）—— $.paramJSON()，其返回值自带的 .toString() 有 **JSON 格式化（美化）输出**能力
-- 新增 **唯一串号生成器** —— $.uid()
-- 更智能的 $.get()、$.post()：自动 发起跨域请求、转换响应内容为 JSON 或 XML
-- 新增 **表单无刷新提交方法** —— $.fn.post()（基于 iframe，可无需服务器支持即可**跨域提交**）
+- 新增 **唯一串号生成器** —— $.guid()
+- 更智能的 $.get()、$.post()：支持 form 元素、FormData 对象的请求数据形式，整合 XHR、XDR、JSONP、iframe **自适应 跨域请求**，**自动转换响应内容**为 JSON 或 XML 对象实例
+- 封装了**表单元素无刷新提交**，并可直接绑定响应回调 —— $.fn.post()（基于上一点的智能方法 构建）
 - 新增基于**现代浏览器 Crypto API** 的哈希方法 —— $.dataHash()
 - jQuery :button **伪类选择符** 还支持 submit、reset、image 类型的按钮
-- .attr()、.data() 有与 .css() 一致的“**数组取值为对象、对象批量赋值**”能力
 - .css() 封装了老版 IE 的 CSS Filter
 - .css() 取值时，会把 纯数字值、像素值 直接返回为 Number 类型
 - .css() 赋值一律默认 important 优先级，确保赋值的有效性
@@ -45,7 +44,7 @@
 - 新增 **选择符合法性判断方法** —— $.is_Selector()
 - 新增 **DOM 元素集合父元素交集方法** —— $.sameParents()
 - 封装 **Animate.css** 为 $.fn.cssAnimate()，其调用参数 兼容 $.fn.animate()
-- 封装了**触屏手势事件**，为桌面端、移动端提供一致的操作体验
+- 封装了**触屏单指手势事件**（tap、press、swipe），并为桌面端、移动端提供一致的操作体验
 
 ### 【未实现的 jQuery（最新版）特性】
 - **jQuery 扩展伪类选择符**：只支持 常用且“难以用 **CSS 标准选择符** 或 jQuery API 实现其功能”的 —— :visible、:button、:header、:input
