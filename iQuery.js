@@ -2,7 +2,7 @@
 //                >>>  iQuery.js  <<<
 //
 //
-//      [Version]    v1.0  (2015-7-13)  Stable
+//      [Version]    v1.0  (2015-7-15)  Stable
 //
 //      [Usage]      A Light-weight jQuery Compatible API
 //                   with IE 8+ compatibility.
@@ -229,8 +229,7 @@
                 'DOMNodeRemoved',  'DOMNodeRemovedFromDocument',
                 'DOMSubtreeModified'
             ),
-            Target:       _inKey_('_top', '_parent', '_self', '_blank'),
-            Float:        _inKey_('absolute', 'fixed')
+            Target:       _inKey_('_top', '_parent', '_self', '_blank')
         };
 
     function _Type_(iVar) {
@@ -593,162 +592,6 @@
             }
         };
 
-    /* ----- W3C Event Object Wrapper ----- */
-    if (! _Browser_.modern) {
-        BOM.HTMLEvents = function () {
-            _Extend_(this, DOM.createEventObject());
-            this.bubbles = true;
-            this.eventPhase = 3;
-            this.view = BOM;
-        };
-
-        _Extend_(BOM.HTMLEvents.prototype, {
-            initEvent:          function () {
-                _Extend_(this, {
-                    type:          arguments[0],
-                    bubbles:       !! arguments[1],
-                    cancelable:    !! arguments[2]
-                });
-            },
-            preventDefault:     function () {
-                BOM.event.returnValue = false;
-                this.defaultPrevented = true;
-            },
-            stopPropagation:    function () {
-                BOM.event.cancelBubble = true;
-            }
-        });
-
-        BOM.CustomEvent = function () { };
-        BOM.CustomEvent.prototype = new BOM.HTMLEvents();
-        BOM.CustomEvent.prototype.initCustomEvent = function () {
-            _Extend_(this, {
-                type:          arguments[0],
-                bubbles:       !! arguments[1],
-                cancelable:    !! arguments[2],
-                detail:        arguments[3]
-            });
-        };
-
-        DOM.createEvent = function () {
-            return  new BOM[arguments[0]]();
-        };
-
-        function IE_Event_Handler(iElement, iCallback) {
-            return  function () {
-                    var iEvent = _Extend_(new HTMLEvents(),  BOM.event),
-                        Loaded;
-
-                    switch (iEvent.type) {
-                        case 'readystatechange':    ;
-//                            Loaded = iElement.readyState.match(/loaded|complete/);  break;
-                        case 'load':
-                            Loaded = (iElement.readyState == 'loaded');  break;
-                        case 'propertychange':
-                            if ( _Operator_('Data', [iElement], 'custom-event') )
-                                iEvent.type = iEvent.propertyName.replace(/^on/i, '');
-                        default:
-                            Loaded = true;
-                    }
-                    if (! Loaded)  return;
-
-                    iCallback.call(iElement,  _Extend_(iEvent, {
-                        target:             iEvent.srcElement,
-                        which:              (iEvent.type.slice(0, 3) == 'key') ?
-                            iEvent.keyCode  :  [0, 1, 3, 0, 2, 0, 0, 0][iEvent.button],
-                        relatedTarget:      ({
-                            mouseover:     iEvent.fromElement,
-                            mouseout:      iEvent.toElement,
-                            mouseenter:    iEvent.fromElement || iEvent.toElement,
-                            mouseleave:    iEvent.toElement || iEvent.fromElement
-                        })[iEvent.type]
-                    }));
-                };
-        }
-
-        function IE_Event_Type(iType) {
-            if (! (iType in Type_Info.DOM_Event)) {
-                if (! _Operator_('Data', [this], 'custom-event')) {
-                    _Operator_('Data', [this], 'custom-event', true);
-                    return 'propertychange';
-                } else
-                    return '';
-            } else if ((_Type_(this) != 'Window') && (iType == 'load'))
-                return 'readystatechange';
-
-            return iType;
-        }
-
-        var IE_Event_Method = {
-                addEventListener:       function (iType, iCallback) {
-                    //  Custom DOM Event
-                    if (! (iType in Type_Info.DOM_Event))
-                        if (! _Operator_('Attribute',  [this],  'on' + iType))
-                            _Operator_('Attribute',  [this],  'on' + iType,  _Time_.now());
-
-                    iType = IE_Event_Type.call(this, iType);
-
-                    //  DOM Content Loading
-                    var This_DOM = (_Type_(this) == 'Document') ?
-                            this : (this.ownerDocument || this.document);
-                    if (iCallback && (iType == 'DOMContentLoaded')) {
-                        if (BOM !== BOM.top)  iType = 'load';
-                        else {
-                            _Time_.every(0.01, function () {
-                                try {
-                                    This_DOM.documentElement.doScroll('left');
-                                    iCallback.call(This_DOM, BOM.event);
-                                    return false;
-                                } catch (iError) {
-                                    return;
-                                }
-                            });
-                            return;
-                        }
-                    }
-                    if (! iType) return;
-
-                    var iHandler = _Operator_('Data', [this], 'ie-handler') || {
-                            user:     [ ],
-                            proxy:    [ ]
-                        };
-                    iHandler.user.push(iCallback);
-                    iHandler.proxy.push( IE_Event_Handler(this, iCallback) );
-                    _Operator_('Data', [this], 'ie-handler', iHandler);
-                    this.attachEvent(
-                        'on' + iType,  iHandler.proxy.slice(-1)
-                    );
-                },
-                removeEventListener:    function (iType, iCallback) {
-                    iType = IE_Event_Type.call(this, iType);
-
-                    if (! iType) return;
-
-                    var iHandler = _Operator_('Data', [this], 'ie-handler');
-                    iHandler = iHandler.proxy[ iHandler.user.indexOf(iCallback) ];
-                    if (iHandler)
-                        this.detachEvent('on' + iType,  iHandler);
-                },
-                dispatchEvent:          function (iEvent) {
-                    var iOffset = DOM_Offset.call([this]);
-
-                    _Extend_(iEvent, {
-                        clientX:    iOffset.left,
-                        clientY:    iOffset.top
-                    });
-
-                    if (iEvent.type in this.constructor.prototype)
-                        this.fireEvent('on' + iEvent.type,  iEvent);
-                    else
-                        _Operator_('Attribute', this, iEvent.type, _Time_.now());
-                }
-            };
-
-        _Extend_(Element.prototype, IE_Event_Method);
-        _Extend_(DOM, IE_Event_Method);
-        _Extend_(BOM, IE_Event_Method);
-    }
-
     /* ----- Event Proxy Layer ----- */
     function Event_Trigger(iType, iName, iData) {
         _Operator_('Data', this, '_trigger_', iData);
@@ -782,47 +625,6 @@
             iEvent.stopPropagation();
         }
     }
-
-    /* ----- DOM Ready ----- */
-    _Operator_('Data', [DOM], '_event_', {
-        ready:    [ ],
-    });
-    _Time_.start('DOM_Ready');
-
-    function DOM_Ready_Event() {
-        if (DOM.isReady) return;
-
-        var _DOM_Ready_ = (DOM.readyState == 'complete') &&
-                DOM.body  &&  DOM.body.lastChild  &&  DOM.getElementById;
-
-        if ((this !== DOM) && (! _DOM_Ready_))
-            return;
-
-        DOM.isReady = true;
-        BOM.clearTimeout(
-            _Operator_('Data', [DOM], 'Ready_Timer')
-        );
-        _Operator_('Data', [DOM], 'Load_During', _Time_.end('DOM_Ready'));
-        _Operator_('Data', [DOM], 'Ready_Event', arguments[0]);
-        console.info('[DOM Ready Event]');
-        console.log(this, arguments);
-
-        var iHandler = _Operator_('Data', [DOM], '_event_').ready;
-        for (var i = 0;  i < iHandler.length;  i++)
-            iHandler[i].apply(DOM, arguments);
-
-        DOM.removeEventListener('DOMContentLoaded', DOM_Ready_Event);
-        BOM.removeEventListener('load', DOM_Ready_Event);
-        return false;
-    }
-
-    _Operator_(
-        'Data',  [DOM],  'Ready_Timer',  _Time_.every(0.5, DOM_Ready_Event)
-    );
-    DOM.addEventListener('DOMContentLoaded', DOM_Ready_Event);
-    BOM.addEventListener('load', DOM_Ready_Event);
-
-
 
 /* ---------- DOM Traversal ---------- */
     function _Parents_() {
@@ -981,6 +783,7 @@
 
         return iSet;
     }
+
 
 /* ---------- XML Module ---------- */
     if (_Browser_.msie < 9)
@@ -1580,36 +1383,6 @@
 
             return  this.on.apply(this, iArgs);
         },
-        ready:              function (iCallback) {
-            if ($.type(this[0]) != 'Document')
-                throw 'The Ready Method is only used for Document Object !';
-
-            if (! DOM.isReady) {
-                var iEvent = this.data('_event_');
-                iEvent.ready.push(iCallback);
-                this.data('_event_', iEvent);
-            } else
-                iCallback.call(this[0],  $.data(DOM, 'Ready_Event'));
-
-            return this;
-        },
-        hover:              function (iEnter, iLeave) {
-            return  this.bind('mouseover', function () {
-                    if (
-                        $.contains(this, arguments[0].relatedTarget) ||
-                        ($(arguments[0].target).css('position') in Type_Info.Float)
-                    )
-                        return false;
-                    iEnter.apply(this, arguments);
-                }).bind('mouseout', function () {
-                    if (
-                        $.contains(this, arguments[0].relatedTarget) ||
-                        ($(arguments[0].target).css('position') in Type_Info.Float)
-                    )
-                        return false;
-                    (iLeave || iEnter).apply(this, arguments);
-                });
-        },
         trigger:            function (iType, iData) {
             if (typeof iType != 'string') {
                 var iEvent = iType;
@@ -1894,7 +1667,7 @@
         function Load_Back(iHTML) {
             $('<iframe />', {
                 style:    'display: none'
-            }).on('load',  function () {
+            }).one('load',  function () {
                 var $_iFrame = $(this),
                     _DOM_ = this.contentWindow.document;
 
@@ -1928,52 +1701,6 @@
 
         return this;
     };
-
-
-    /* ----- Touch Events (Single Finger) ----- */
-    function get_Touch(iEvent) {
-        if (! iEvent.timeStamp)
-            iEvent.timeStamp = $.now();
-
-        if (! $.browser.mobile)  return iEvent;
-
-        try {
-            return iEvent.changedTouches[0];
-        } catch (iError) {
-            return iEvent.touches[0];
-        }
-    }
-
-    var Touch_Data;
-
-    $(DOM).bind(
-        $.browser.mobile ? 'touchstart MSPointerDown' : 'mousedown',
-        function (iEvent) {
-            var iTouch = get_Touch(iEvent);
-
-            Touch_Data = {
-                pX:      iTouch.pageX,
-                pY:      iTouch.pageY,
-                time:    iEvent.timeStamp
-            };
-        }
-    ).bind(
-        $.browser.mobile ? 'touchend touchcancel MSPointerUp' : 'mouseup',
-        function (iEvent) {
-            if (! Touch_Data)  return;
-
-            var iTouch = get_Touch(iEvent);
-
-            var swipeLeft = Touch_Data.pX - iTouch.pageX,
-                swipeTop = Touch_Data.pY - iTouch.pageY,
-                iTime = iEvent.timeStamp - Touch_Data.time;
-
-            if (Math.max(Math.abs(swipeLeft), Math.abs(swipeTop)) > 20)
-                $(iEvent.target).trigger('swipe',  [swipeLeft, swipeTop]);
-            else
-                $(iEvent.target).trigger((iTime > 300) ? 'press' : 'tap');
-        }
-    );
 
     /* ----- Event ShortCut ----- */
     $.fn.off = $.fn.unbind;
@@ -2010,7 +1737,6 @@
             $.fn[iName] = Event_Method(iName);
 
     if ($.browser.mobile)  $.fn.click = $.fn.tap;
-
 
 /* ---------- jQuery+  v1.8 ---------- */
 
@@ -2310,6 +2036,8 @@
 
     /* ----- Form 元素 无刷新提交  v0.4 ----- */
     $.fn.post = function (iCallback) {
+        if (! this.length)  return this;
+
         var $_Form = (
                 (this[0].tagName.toLowerCase() == 'form') ?
                     this : this.find('form')
@@ -2317,9 +2045,10 @@
         if (! $_Form.length)  return this;
 
         var $_Button = $_Form.find(':button').attr('disabled', true);
-        $_Form.submit(function () {
+        $_Form.submit(function (iEvent) {
+            iEvent.preventDefault();
+            iEvent.stopPropagation();
             $_Button.attr('disabled', true);
-            arguments[0].preventDefault();
 
             $.post(this.action,  this,  function () {
                 $_Button.prop('disabled', false);
@@ -2332,6 +2061,338 @@
     };
 
 })(self, self.document);
+
+
+ 
+/* ----- W3C Event Shim ----- */
+(function (BOM, DOM, $) {
+
+    if ( $.browser.modern )  return;
+
+    BOM.HTMLEvents = function () {
+        $.extend(this, DOM.createEventObject());
+        this.bubbles = true;
+        this.eventPhase = 3;
+        this.view = BOM;
+    };
+
+    $.extend(BOM.HTMLEvents.prototype, {
+        initEvent:          function () {
+            $.extend(this, {
+                type:          arguments[0],
+                bubbles:       !! arguments[1],
+                cancelable:    !! arguments[2]
+            });
+        },
+        preventDefault:     function () {
+            BOM.event.returnValue = false;
+            this.defaultPrevented = true;
+        },
+        stopPropagation:    function () {
+            BOM.event.cancelBubble = true;
+        }
+    });
+
+    BOM.CustomEvent = function () { };
+    BOM.CustomEvent.prototype = new BOM.HTMLEvents();
+    BOM.CustomEvent.prototype.initCustomEvent = function () {
+        $.extend(this, {
+            type:          arguments[0],
+            bubbles:       !! arguments[1],
+            cancelable:    !! arguments[2],
+            detail:        arguments[3]
+        });
+    };
+
+    DOM.createEvent = function () {
+        return  new BOM[arguments[0]]();
+    };
+
+    function IE_Event_Handler(iElement, iCallback) {
+        return  function () {
+                var iEvent = $.extend(new HTMLEvents(),  BOM.event),
+                    Loaded;
+
+                switch (iEvent.type) {
+                    case 'readystatechange':    ;
+//                            Loaded = iElement.readyState.match(/loaded|complete/);  break;
+                    case 'load':
+                        Loaded = (iElement.readyState == 'loaded');  break;
+                    case 'propertychange':
+                        if ( $(iElement).data('custom-event') )
+                            iEvent.type = iEvent.propertyName.replace(/^on/i, '');
+                    default:
+                        Loaded = true;
+                }
+                if (! Loaded)  return;
+
+                iCallback.call(iElement,  $.extend(iEvent, {
+                    target:             iEvent.srcElement,
+                    which:              (iEvent.type.slice(0, 3) == 'key') ?
+                        iEvent.keyCode  :  [0, 1, 3, 0, 2, 0, 0, 0][iEvent.button],
+                    relatedTarget:      ({
+                        mouseover:     iEvent.fromElement,
+                        mouseout:      iEvent.toElement,
+                        mouseenter:    iEvent.fromElement || iEvent.toElement,
+                        mouseleave:    iEvent.toElement || iEvent.fromElement
+                    })[iEvent.type]
+                }));
+            };
+    }
+
+    function IE_Event_Type(iType) {
+        var $_This = $(this);
+
+        if (! (('on' + iType) in this.constructor.prototype)) {
+            if (! $_This.data('custom-event')) {
+                $_This.data('custom-event', true);
+                return 'propertychange';
+            } else
+                return '';
+        } else if (($.type(this) != 'Window') && (iType == 'load'))
+            return 'readystatechange';
+
+        return iType;
+    }
+
+    var IE_Event_Method = {
+            addEventListener:       function (iType, iCallback) {
+                var $_This = $(this);
+
+                //  Custom DOM Event
+                var _Type_ = 'on' + iType;
+                if (! (_Type_ in this.constructor.prototype))
+                    if (! $_This.attr(_Type_))
+                        $_This.attr(_Type_, $.now());
+
+                iType = IE_Event_Type.call(this, iType);
+
+                //  DOM Content Loading
+                var This_DOM = ($.type(this) == 'Document') ?
+                        this : (this.ownerDocument || this.document);
+                if (iCallback && (iType == 'DOMContentLoaded')) {
+                    if (BOM !== BOM.top)  iType = 'load';
+                    else {
+                        $.every(0.01, function () {
+                            try {
+                                This_DOM.documentElement.doScroll('left');
+                                iCallback.call(This_DOM, BOM.event);
+                                return false;
+                            } catch (iError) {
+                                return;
+                            }
+                        });
+                        return;
+                    }
+                }
+                if (! iType) return;
+
+                var iHandler = $_This.data('ie-handler') || {
+                        user:     [ ],
+                        proxy:    [ ]
+                    };
+                iHandler.user.push(iCallback);
+                iHandler.proxy.push( IE_Event_Handler(this, iCallback) );
+                $_This.data('ie-handler', iHandler);
+                this.attachEvent(
+                    'on' + iType,  iHandler.proxy.slice(-1)
+                );
+            },
+            removeEventListener:    function (iType, iCallback) {
+                iType = IE_Event_Type.call(this, iType);
+
+                if (! iType) return;
+
+                var iHandler = $(this).data('ie-handler');
+                iHandler = iHandler.proxy[ iHandler.user.indexOf(iCallback) ];
+                if (iHandler)
+                    this.detachEvent('on' + iType,  iHandler);
+            },
+            dispatchEvent:          function (iEvent) {
+                var $_This = $(this);
+                var iType = 'on' + iEvent.type,
+                    iOffset = $_This.offset();
+
+                $.extend(iEvent, {
+                    clientX:    iOffset.left,
+                    clientY:    iOffset.top
+                });
+
+                if (iType in this.constructor.prototype)
+                    this.fireEvent(iType, iEvent);
+                else
+                    $_This.attr(iType, $.now());
+            }
+        };
+
+    $.extend(Element.prototype, IE_Event_Method);
+    $.extend(DOM, IE_Event_Method);
+    $.extend(BOM, IE_Event_Method);
+
+})(self, self.document, self.iQuery);
+
+
+
+/* ---------- Complex Events ---------- */
+(function (BOM, DOM, $) {
+
+    /* ----- DOM Ready ----- */
+    var $_DOM = $(DOM);
+    $.start('DOM_Ready');
+
+    function DOM_Ready_Event() {
+        if (DOM.isReady) return;
+
+        var _DOM_Ready_ = (DOM.readyState == 'complete') &&
+                DOM.body  &&  DOM.body.lastChild  &&  DOM.getElementById;
+
+        if ((this !== DOM) && (! _DOM_Ready_))
+            return;
+
+        DOM.isReady = true;
+        BOM.clearTimeout( $_DOM.data('Ready_Timer') );
+        $_DOM.data('Load_During', $.end('DOM_Ready'))
+            .data('Ready_Event', arguments[0]);
+        console.info('[DOM Ready Event]');
+        console.log(this, arguments);
+
+        $_DOM.trigger('ready');
+
+        return false;
+    }
+
+    $_DOM.data('Ready_Timer',  $.every(0.5, DOM_Ready_Event));
+    $_DOM.one('DOMContentLoaded', DOM_Ready_Event);
+    $(BOM).one('load', DOM_Ready_Event);
+
+    $.fn.ready = function (iCallback) {
+        if ($.type(this[0]) != 'Document')
+            throw 'The Ready Method is only used for Document Object !';
+
+        if (! DOM.isReady)
+            $_DOM.one('ready', iCallback);
+        else
+            iCallback.call(this[0],  $.data(DOM, 'Ready_Event'));
+
+        return this;
+    };
+
+    /* ----- Mouse Hover ----- */
+    var _Float_ = {
+            absolute:    true,
+            fixed:       true
+        };
+
+    $.fn.hover = function (iEnter, iLeave) {
+        return  this.bind('mouseover', function () {
+                if (
+                    $.contains(this, arguments[0].relatedTarget) ||
+                    ($(arguments[0].target).css('position') in _Float_)
+                )
+                    return false;
+                iEnter.apply(this, arguments);
+            }).bind('mouseout', function () {
+                if (
+                    $.contains(this, arguments[0].relatedTarget) ||
+                    ($(arguments[0].target).css('position') in _Float_)
+                )
+                    return false;
+                (iLeave || iEnter).apply(this, arguments);
+            });
+    };
+
+    /* ----- Single Finger Touch ----- */
+    function get_Touch(iEvent) {
+        if (! iEvent.timeStamp)
+            iEvent.timeStamp = $.now();
+
+        if (! $.browser.mobile)  return iEvent;
+
+        try {
+            return iEvent.changedTouches[0];
+        } catch (iError) {
+            return iEvent.touches[0];
+        }
+    }
+
+    var Touch_Data;
+
+    $(DOM).bind(
+        $.browser.mobile ? 'touchstart MSPointerDown' : 'mousedown',
+        function (iEvent) {
+            var iTouch = get_Touch(iEvent);
+
+            Touch_Data = {
+                pX:      iTouch.pageX,
+                pY:      iTouch.pageY,
+                time:    iEvent.timeStamp
+            };
+        }
+    ).bind(
+        $.browser.mobile ? 'touchend touchcancel MSPointerUp' : 'mouseup',
+        function (iEvent) {
+            if (! Touch_Data)  return;
+
+            var iTouch = get_Touch(iEvent);
+
+            var swipeLeft = Touch_Data.pX - iTouch.pageX,
+                swipeTop = Touch_Data.pY - iTouch.pageY,
+                iTime = iEvent.timeStamp - Touch_Data.time;
+
+            if (Math.max(Math.abs(swipeLeft), Math.abs(swipeTop)) > 20)
+                $(iEvent.target).trigger('swipe',  [swipeLeft, swipeTop]);
+            else
+                $(iEvent.target).trigger((iTime > 300) ? 'press' : 'tap');
+        }
+    );
+
+})(self, self.document, self.iQuery);
+
+
+
+/* ---------- History API Shim ---------- */
+(function (BOM, DOM, $) {
+
+    if (! ($.browser.msie < 10))  return;
+
+    var _State_ = [
+            [null, DOM.title, DOM.URL]
+        ],
+        _Pushing_ = false,
+        $_BOM = $(BOM);
+
+    function File_Name(iURL) {
+        return  iURL.split('?')[0].split('/').slice(-1)[0].split('.')[0];
+    }
+
+    BOM.history.pushState = function (iState, iTitle, iURL) {
+        for (var iKey in iState)
+            if (! $.isData(iState[iKey]))
+                throw ReferenceError("The History State can't be Complex Object !");
+
+        if (typeof iTitle != 'string')
+            throw TypeError("The History State needs a Title String !");
+
+        DOM.title = iTitle;
+        _Pushing_ = true;
+        BOM.location.hash = '_' + (_State_.push(arguments) - 1);
+    };
+
+    $_BOM.on('hashchange',  function () {
+        if (_Pushing_) {
+            _Pushing_ = false;
+            return;
+        }
+
+        var iState = _State_[ BOM.location.hash.slice(2) ];
+        BOM.history.state = iState[0];
+        DOM.title = iState[1];
+
+        $_BOM.trigger('popstate');
+    });
+
+})(self, self.document, self.iQuery);
+
 
 
 /* ----- DOM/CSS 动画 ----- */
