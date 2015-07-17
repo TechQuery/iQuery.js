@@ -2,7 +2,7 @@
 //                >>>  iQuery.js  <<<
 //
 //
-//      [Version]    v1.0  (2015-7-15)  Stable
+//      [Version]    v1.0  (2015-7-17)  Stable
 //
 //      [Usage]      A Light-weight jQuery Compatible API
 //                   with IE 8+ compatibility.
@@ -328,13 +328,20 @@
 
     /* ----- DOM innerText ----- */
     _Get_Set_.innerText = {
-        set:    _Browser_.ff ?
-            function (iElement, iText) {
-                iElement.textContent = iText;
-            } :
-            function (iElement, iText) {
-                iElement.innerText = iText;
-            },
+        set:    function (iElement, iText) {
+            switch ( iElement.tagName.toLowerCase() ) {
+                case 'style':     if (! _Browser_.modern) {
+                    iElement.styleSheet.cssText = iText;
+                    return;
+                }
+                case 'script':    if (! _Browser_.modern) {
+                    iElement.text = iText;
+                    return;
+                }
+                default:          iElement.appendChild( DOM.createTextNode(iText) );
+            }
+            iElement[_Browser_.ff ? 'textContent' : 'innerText'] = iText;
+        },
         get:    _Browser_.ff ?
             function (iElement) {
                 var TextRange = iElement.ownerDocument.createRange();
@@ -602,7 +609,7 @@
                 'init' + (
                     (iType == 'HTMLEvents') ? 'Event' : iType
                 )
-            ](iName, true, true);
+            ](iName, true, true, 0);
             this[i].dispatchEvent(iEvent);
         }
 
@@ -645,35 +652,31 @@
 
 /* ---------- DOM Constructor ---------- */
     function DOM_Create(TagName, AttrList) {
-        var iNew;
+        var iNew,
+            IE_Scope = TagName.match(
+                /^[^<]*<\s*(head|meta|title|link|style|script|noscript|(!--[^>]*--))[^>]*>/i
+            );
+        IE_Scope = (! _Browser_.modern) && IE_Scope;
 
-        if (TagName[0] == '<') {
-            if (! TagName.match(/^<style[^\w]+/i)) {
-                iNew = DOM.createElement('div');
-                iNew.innerHTML = TagName;
-                if (iNew.children.length > 1)
-                    return iNew.children;
-                else
-                    iNew = iNew.children[0];
-            } else
-                TagName = 'style';
-        }
-        if (! iNew)
+        if (TagName.indexOf('<') > -1) {
+            iNew = DOM.createElement('div');
+            iNew.innerHTML = (IE_Scope ? '<i />' : '') + TagName;
+
+            iNew = _Extend_([ ],  iNew.children);
+            if (IE_Scope)  iNew.shift();
+
+            if (iNew.length > 1)
+                return iNew;
+            else
+                iNew = iNew[0];
+        } else
             iNew = DOM.createElement(TagName);
 
         if (AttrList)  for (var AK in AttrList) {
             var iValue = AttrList[AK];
             try {
                 switch (AK) {
-                    case 'text':     {
-                        if (TagName == 'style') {
-                            if (! _Browser_.modern)
-                                iNew.styleSheet.cssText = iValue;
-                            else
-                                iNew.appendChild( DOM.createTextNode(iValue) );
-                        } else
-                            _Get_Set_.innerText.set(iNew, iValue);
-                    }  break;
+                    case 'text':     _Get_Set_.innerText.set(iNew, iValue);  break;
                     case 'html':
                         iNew.innerHTML = iValue;  break;
                     case 'style':    if (_Type_(iValue) == 'Object') {
@@ -687,7 +690,9 @@
                             iNew.addEventListener(AK.slice(2), iValue);
                     }
                 }
-            } catch (iError) { }
+            } catch (iError) {
+                console.error(iError);
+            }
         }
 
         return iNew;
@@ -946,6 +951,10 @@
             }
 
             return  Args_Str.length ? _Args_ : { };
+        },
+        fileName:         function File_Name() {
+            return  (arguments[0] || BOM.location.pathname)
+                    .split('?')[0].split('/').slice(-1)[0];
         },
         data:             function (iElement, iName, iValue) {
             return  _Operator_('Data', [iElement], iName, iValue);
@@ -1653,55 +1662,6 @@
 
     $.getJSON = $.get;
 
-    $.fn.load = function (iURL, iData, iCallback) {
-        var $_This = this;
-
-        iURL = iURL.split(/\s+/);
-        iURL[1] = iURL.slice(1).join(' ');
-        iURL.length = 2;
-        if (typeof iData == 'function') {
-            iCallback = iData;
-            iData = null;
-        }
-
-        function Load_Back(iHTML) {
-            $('<iframe />', {
-                style:    'display: none'
-            }).one('load',  function () {
-                var $_iFrame = $(this),
-                    _DOM_ = this.contentWindow.document;
-
-                $.every(0.04,  function () {
-                    if (! (_DOM_.body && _DOM_.body.childNodes.length))
-                        return;
-
-                    var $_Content = $(iURL[1] || 'body > *',  _DOM_);
-                    if (! $_Content.length)
-                        $_Content = _DOM_.body.childNodes;
-                    $_This.empty().append(
-                        $('head style', _DOM_).add($_Content)
-                    );
-
-                    if (typeof iCallback == 'function')
-                        for (var i = 0;  i < $_This.length;  i++)
-                            iCallback.apply($_This[i], arguments);
-
-                    $_iFrame.remove();
-                    return false;
-                });
-                _DOM_.write(iHTML);
-                _DOM_.close();
-            }).appendTo(DOM.body);
-        }
-
-        if (! iData)
-            $.get(iURL[0], Load_Back);
-        else
-            $.post(iURL[0], iData, Load_Back);
-
-        return this;
-    };
-
     /* ----- Event ShortCut ----- */
     $.fn.off = $.fn.unbind;
 
@@ -2361,10 +2321,6 @@
         _Pushing_ = false,
         $_BOM = $(BOM);
 
-    function File_Name(iURL) {
-        return  iURL.split('?')[0].split('/').slice(-1)[0].split('.')[0];
-    }
-
     BOM.history.pushState = function (iState, iTitle, iURL) {
         for (var iKey in iState)
             if (! $.isData(iState[iKey]))
@@ -2378,6 +2334,11 @@
         BOM.location.hash = '_' + (_State_.push(arguments) - 1);
     };
 
+    BOM.history.replaceState = function () {
+        _State_ = [ ];
+        this.pushState.apply(this, arguments);
+    };
+
     $_BOM.on('hashchange',  function () {
         if (_Pushing_) {
             _Pushing_ = false;
@@ -2385,6 +2346,8 @@
         }
 
         var iState = _State_[ BOM.location.hash.slice(2) ];
+        if (! iState)  return;
+
         BOM.history.state = iState[0];
         DOM.title = iState[1];
 
@@ -2395,7 +2358,7 @@
 
 
 
-/* ----- DOM/CSS 动画 ----- */
+/* ---------- DOM/CSS Animation ---------- */
 (function ($) {
 
     var FPS = 20;
@@ -2496,3 +2459,73 @@
     };
 
 })(self.iQuery);
+
+
+
+/* ---------- Smart HTML Loading ---------- */
+(function (DOM, $) {
+
+    $.fn.load = function (iURL, iData, iCallback) {
+        var $_This = this;
+
+        iURL = iURL.split(/\s+/);
+        iURL[1] = iURL.slice(1).join(' ');
+        iURL.length = 2;
+        if (typeof iData == 'function') {
+            iCallback = iData;
+            iData = null;
+        }
+
+        function Append_Back() {
+            $_This.children().fadeOut();
+            $(arguments[0]).appendTo( $_This.empty() ).fadeIn();
+
+            if (typeof iCallback == 'function')
+                for (var i = 0;  i < $_This.length;  i++)
+                    iCallback.apply($_This[i], arguments);
+        }
+
+        function Load_Back(iHTML) {
+            if (! iHTML.match(/<\s*(html|head|body)[^>]*>/i)) {
+                Append_Back.apply(this, arguments);
+                return;
+            }
+
+            var _Context_ = [this, $.makeArray(arguments)];
+
+            $('<iframe />', {
+                style:    'display: none'
+            }).one('load',  function () {
+                var $_iFrame = $(this),
+                    _DOM_ = this.contentWindow.document;
+
+                $.every(0.04,  function () {
+                    if (! (_DOM_.body && _DOM_.body.childNodes.length))
+                        return;
+
+                    var $_Content = $(iURL[1] || 'body > *',  _DOM_);
+                    if (! $_Content.length)
+                        $_Content = _DOM_.body.childNodes;
+
+                    Append_Back.apply(
+                        _Context_[0],
+                        _Context_[1].splice(0,  1,  $('head style', _DOM_).add($_Content))
+                    );
+
+                    $_iFrame.remove();
+                    return false;
+                });
+                _DOM_.write(iHTML);
+                _DOM_.close();
+            }).appendTo(DOM.body);
+        }
+
+        if (! iData)
+            $.get(iURL[0], Load_Back);
+        else
+            $.post(iURL[0], iData, Load_Back);
+
+        return this;
+    };
+
+})(self.document, self.iQuery);
