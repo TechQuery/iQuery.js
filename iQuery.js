@@ -2,7 +2,7 @@
 //                >>>  iQuery.js  <<<
 //
 //
-//      [Version]    v1.0  (2015-7-17)  Stable
+//      [Version]    v1.0  (2015-7-19)  Stable
 //
 //      [Usage]      A Light-weight jQuery Compatible API
 //                   with IE 8+ compatibility.
@@ -234,40 +234,48 @@
 
     function _Type_(iVar) {
         var iType = typeof iVar;
-        if (iType == 'object')
-            iType = Object.prototype.toString.call(iVar)
-                        .match(/\[object\s+([^\]]+)\]/i)[1];
-        else
-            iType = iType[0].toUpperCase() + iType.slice(1);
 
-        if (iVar) {
-            if (
-                Type_Info.BOM[iType] ||
-                ((iVar == iVar.document) && (iVar.document != iVar))
-            )
-                return 'Window';
-            else if (iVar.defaultView || iVar.documentElement)
-                return 'Document';
-            else if (
-                iType.match(/HTML\w+?Element$/) ||
-                (typeof iVar.tagName == 'string')
-            )
-                return 'Element';
-            else if (
-                (_Browser_.msie < 9) &&
-                (iType == 'Object') &&
-                (typeof iVar.length == 'number')
-            )  try {
-                iVar.item();
-                try {
-                    iVar.namedItem();
-                    return 'HTMLCollection';
-                } catch (iError) {
-                    return 'NodeList';
-                }
-            } catch (iError) { }
-        } else if (isNaN(iVar) && (iVar !== iVar))
-            return 'NaN';
+        iType = (iType == 'object') ? (
+                (iVar && iVar.constructor.name) ||
+                Object.prototype.toString.call(iVar).match(/\[object\s+([^\]]+)\]/i)[1]
+            ) : (
+                iType[0].toUpperCase() + iType.slice(1)
+            );
+
+        if (! iVar) {
+            if (isNaN(iVar)  &&  (iVar !== iVar))
+                return 'NaN';
+            return iType;
+        }
+
+        if (
+            Type_Info.BOM[iType] ||
+            ((iVar == iVar.document) && (iVar.document != iVar))
+        )
+            return 'Window';
+
+        if (iVar.defaultView || iVar.documentElement)
+            return 'Document';
+
+        if (
+            iType.match(/HTML\w+?Element$/) ||
+            (typeof iVar.tagName == 'string')
+        )
+            return 'Element';
+
+        if (
+            (_Browser_.msie < 9) &&
+            (iType == 'Object') &&
+            (typeof iVar.length == 'number')
+        )  try {
+            iVar.item();
+            try {
+                iVar.namedItem();
+                return 'HTMLCollection';
+            } catch (iError) {
+                return 'NodeList';
+            }
+        } catch (iError) { }
 
         return iType;
     }
@@ -1063,11 +1071,11 @@
         attr:               function () {
             return  _Operator_('Attribute', this, arguments[0], arguments[1]);
         },
-        removeAttr:         function () {
-            var iAttr = arguments[0].split(/\s+/);
+        removeAttr:         function (iAttr) {
+            iAttr = iAttr.trim().split(/\s+/);
 
             for (var i = 0;  i < iAttr.length;  i++)
-                _Operator_('Attribute', this, iAttr[i], null);
+                this.attr(iAttr[i], null);
 
             return this;
         },
@@ -1261,59 +1269,46 @@
         },
         offset:             DOM_Offset,
         addClass:           function (new_Class) {
-            new_Class = new_Class.split(/\s+/);
+            new_Class = new_Class.trim().split(/\s+/);
 
-//            if (! (DOM.documentElement.classList instanceof DOMTokenList))
-                this.each(function () {
-                    var old_Class = _Operator_('Attribute', [this], 'class') || [ ];
+            return  this.each(function () {
+                    var $_This = $(this);
 
-                    if (typeof old_Class == 'string')
-                        old_Class = old_Class.split(/\s+/);
+                    var old_Class = ($_This.attr('class') || '').trim().split(/\s+/);
 
                     for (var i = 0;  i < new_Class.length;  i++)
                         if ($.inArray(old_Class, new_Class[i]) == -1)
                             old_Class.push( new_Class[i] );
 
-                    _Operator_('Attribute', [this], 'class', old_Class.join(' '));
+                    $_This.attr('class',  old_Class.join(' ').trim());
                 });
-//            else  for (var i = 0;  i < this.length;  i++)
-//                for (var j = 0;  i < new_Class.length;  j++)
-//                    this[i].classList.add(new_Class[j]);
-
-            return this;
         },
         removeClass:        function (iClass) {
-            iClass = iClass.split(/\s+/);
+            iClass = iClass.trim().split(/\s+/);
 
-//            if (! (DOM.documentElement.classList instanceof DOMTokenList))
-                this.each(function () {
-                    var old_Class = _Operator_('Attribute', [this], 'class') || [ ];
+            return  this.each(function () {
+                    var $_This = $(this);
 
-                    if (typeof old_Class == 'string')
-                        old_Class = old_Class.split(/\s+/);
+                    var old_Class = ($_This.attr('class') || '').trim().split(/\s+/);
+                    if (! old_Class[0])  return;
 
                     for (var i = 0;  i < old_Class.length;  i++)
                         if ($.inArray(iClass, old_Class[i]) > -1)
                             delete old_Class[i];
 
-                    _Operator_('Attribute', [this], 'class', old_Class.join(' ').trim());
+                    $_This.attr('class',  old_Class.join(' ').trim());
                 });
-//            else  for (var i = 0;  i < this.length;  i++)
-//                for (var j = 0;  i < iClass.length;  j++)
-//                    this[i].classList.remove(iClass[j]);
-
-            return this;
         },
         hasClass:           function (iClass) {
             iClass = iClass.trim();
 
-            if (DOM.documentElement.classList instanceof DOMTokenList)
+            if (! DOM.documentElement.classList)
                 return  ((' ' + this.attr('class') + ' ').indexOf(' ' + iClass + ' ') > -1);
             else
                 return  this[0].classList.contains(iClass);
         },
         bind:               function (iType, iCallback) {
-            iType = iType.split(/\s+/);
+            iType = iType.trim().split(/\s+/);
 
             return  this.each(function () {
                     var $_This = $(this);
@@ -1332,7 +1327,7 @@
                 });
         },
         unbind:             function (iType, iCallback) {
-            iType = iType.split(/\s+/);
+            iType = iType.trim().split(/\s+/);
 
             return  this.each(function () {
                     var $_This = $(this);
@@ -2468,7 +2463,7 @@
     $.fn.load = function (iURL, iData, iCallback) {
         var $_This = this;
 
-        iURL = iURL.split(/\s+/);
+        iURL = iURL.trim().split(/\s+/);
         iURL[1] = iURL.slice(1).join(' ');
         iURL.length = 2;
         if (typeof iData == 'function') {
