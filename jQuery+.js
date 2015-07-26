@@ -2,7 +2,7 @@
 //              >>>  jQuery+  <<<
 //
 //
-//    [Version]     v3.0  (2015-7-26)
+//    [Version]     v3.5  (2015-7-26)
 //
 //    [Based on]    jQuery  v1.9+
 //
@@ -11,15 +11,39 @@
 //
 
 
-/* ---------- ECMAScript 5/6  Patch  v0.1 ---------- */
-(function () {
+/* ---------- ECMAScript 5/6  Patch ---------- */
+(function (BOM, $) {
 
     if (! ''.repeat)
         String.prototype.repeat = function (Times) {
             return  (new Array(Times + 1)).join(this);
         };
 
-})();
+/* ---------- JSON Extension  v0.4 ---------- */
+
+    if (! BOM.JSON)
+        BOM.JSON = {
+            parse:    function () {
+                return  $.parseJSON(arguments[0]);
+            }
+        };
+
+    BOM.JSON.format = function () {
+        return  this.stringify(arguments[0], null, 4)
+            .replace(/(\s+"[^"]+":) ([^\s]+)/g, '$1    $2');
+    };
+
+    BOM.JSON.parseAll = function (iJSON) {
+        return  this.parse(iJSON,  function (iKey, iValue) {
+                if (iKey && (typeof iValue == 'string'))  try {
+                    return  BOM.JSON.parse(iValue);
+                } catch (iError) { }
+
+                return iValue;
+            });
+    };
+
+})(self,  self.jQuery || self.Zepto);
 
 
 
@@ -87,12 +111,14 @@
             });
         },
         start:     function (iName) {
-            var iTimer = $_BOM.data('_timer_');
+            var Time_Stamp;
 
-            iTimer[iName] = $.now();
-            $_BOM.data('_timer_', iTimer);
+            $_BOM.data('_timer_',  function (_Index_, iTimer) {
+                Time_Stamp = iTimer[iName] = $.now();
+                return iTimer;
+            });
 
-            return  iTimer[iName];
+            return Time_Stamp;
         },
         end:       function () {
             var iTimer = $_BOM.data('_timer_');
@@ -175,11 +201,39 @@
         return iType;
     }
 
-    $.extend($, {
-        isData:    function () {
-            return  (_Type_(arguments[0]) in Type_Info.Data);
+    $.isData = function () {
+        return  (_Type_(arguments[0]) in Type_Info.Data);
+    };
+
+
+/* ---------- $.param() 逆方法  v0.1 ---------- */
+
+    $.paramJSON = function (Args_Str) {
+        Args_Str = (Args_Str || BOM.location.search).match(/[^\?&\s]+/g);
+        if (! Args_Str)  return { };
+
+        var _Args_ = {
+                toString:    function () {
+                    return  BOM.JSON.format(this);
+                }
+            };
+
+        for (var i = 0, iValue; i < Args_Str.length; i++) {
+            Args_Str[i] = Args_Str[i].split('=');
+
+            iValue = BOM.decodeURIComponent(
+                Args_Str[i].slice(1).join('=')
+            );
+            try {
+                iValue = BOM.JSON.parse(iValue);
+            } catch (iError) { }
+
+            _Args_[ Args_Str[i][0] ] = iValue;
         }
-    });
+
+        return  Args_Str.length ? _Args_ : { };
+    };
+
 
 /* ---------- 远程 Console  v0.1 ---------- */
 
@@ -644,38 +698,48 @@
     };
 
 
-/* ---------- jQuery 元素集合父元素交集  v0.1 ---------- */
+/* ---------- jQuery 元素集合父元素交集  v0.2 ---------- */
+
+    function Back_Track(iName, iCallback) {
+        var iResult = [ ];
+
+        for (var _This_ = this, _Next_, i = 0;  _This_[iName];  _This_ = _Next_, i++) {
+            _Next_ = _This_[iName];
+            iResult.push(_Next_);
+            if ( iCallback )
+                iCallback.call(_Next_, i, _Next_);
+        }
+
+        return iResult;
+    }
+
+    function _Parents_() {
+        var _GUID_ = $.guid('parent');
+
+        for (var i = 0;  i < this.length;  i++)
+            Back_Track.call(this[i],  'parentNode',  function () {
+                $(this).attr(_GUID_,  function (_Index_, iTimes) {
+                    return  iTimes ? (parseInt(iTimes) + 1) : 1
+                });
+            });
+
+        return _GUID_;
+    }
 
     $.fn.sameParents = function () {
-        if (this.length == 1)
-            return this.parents();
+        var _GUID_ = _Parents_.call(this);
+        var iTimes = $(DOM.documentElement).attr(_GUID_);
 
-        var $_Min = this.eq(0).parents(),
-            $_Larger, $_Root;
+        var $_Result = $(['*[', _GUID_, '="', iTimes, '"]'].join(''))
+                .removeAttr(_GUID_);
 
-        this.each(function () {
-            if (! arguments[0]) return;
+        if ( arguments[0] )
+            $_Result = $_Result.filter(arguments[0]);
 
-            var $_Parents = $(this).parents();
-
-            if ($_Parents.length > $_Min.length)
-                $_Larger = $_Parents;
-            else {
-                $_Larger = $_Min;
-                $_Min = $_Parents;
-            }
-        });
-
-        $_Min.each(function (Index) {
-            Index -= $_Min.length;
-
-            if (this === $_Larger[$_Larger.length + Index]) {
-                $_Root = $_Min.slice(Index);
-                return false;
-            }
-        });
-
-        return  arguments[0] ? $_Root.filter(arguments[0]) : $_Root;
+        return  $.extend(
+                Array.prototype.reverse.call($_Result),
+                {prevObject:  this}
+            );
     };
 
 })(self,  self.document,  self.jQuery || self.Zepto);
