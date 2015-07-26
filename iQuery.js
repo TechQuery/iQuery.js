@@ -12,7 +12,7 @@
 //
 
 
-/* ---------- ECMAScript 5  Patch ---------- */
+/* ---------- ECMAScript 5/6  Patch ---------- */
 (function (BOM) {
 
     if (! console) {
@@ -374,7 +374,7 @@
 
     /* ----- DOM Style ----- */
     var IE_CSS_Filter = (! _Browser_.modern),
-        Code_Indent = _Browser_.modern ? '' : ' '.repeat(4);
+        Code_Indent = (_Browser_.modern  ?  ''  :  ' '.repeat(4));
 
     function toHexInt(iDec, iLength) {
         var iHex = parseInt( Number(iDec).toFixed(0) ).toString(16);
@@ -459,7 +459,7 @@
                 }
             }
 
-            if ((! isNaN( Number(iValue) )) && this.PX_Needed[iName])
+            if ((! isNaN( Number(iValue) ))  &&  this.PX_Needed[iName])
                 iValue += 'px';
             if (iWrapper)
                 iValue = iWrapper.replace(/\{n\}/g,  iConvert ?
@@ -578,6 +578,8 @@
 
 
 /* ---------- DOM Event ---------- */
+    _Operator_('Data',  [BOM],  '_timer_',  { });
+
     var _Time_ = {
             _Root_:     BOM,
             now:        Date.now,
@@ -602,12 +604,19 @@
                     return false;
                 });
             },
-            _Timer_:    { },
-            start:      function () {
-                return  this._Timer_[arguments[0]] = this.now();
+            start:      function (iName) {
+                var _This_ = this,  Time_Stamp;
+
+                _Operator_('Data', [BOM], '_timer_',  function (_Index_, iTimer) {
+                    Time_Stamp = iTimer[iName] = _This_.now();
+                    return iTimer;
+                });
+
+                return Time_Stamp;
             },
             end:        function () {
-                return  (this.now() - this._Timer_[arguments[0]]) / 1000;
+                var iTimer = _Operator_('Data', [BOM], '_timer_');
+                return  (this.now() - iTimer[arguments[0]]) / 1000;
             },
             guid:       function () {
                 return  [
@@ -660,11 +669,9 @@
 
         for (var i = 0;  i < this.length;  i++)
             Back_Track.call(this[i],  'parentNode',  function () {
-                var iTimes = _Operator_('Attribute', [this], _GUID_);
-
-                _Operator_('Attribute', [this], _GUID_, (
-                    iTimes ? (parseInt(iTimes) + 1) : 1
-                ));
+                _Operator_('Attribute',  [this],  _GUID_,  function (_Index_, iTimes) {
+                    return  iTimes ? (parseInt(iTimes) + 1) : 1
+                });
             });
 
         return _GUID_;
@@ -1291,31 +1298,31 @@
             new_Class = new_Class.trim().split(/\s+/);
 
             return  this.each(function () {
-                    var $_This = $(this);
+                    $(this).attr('class',  function (_Index_, old_Class) {
+                        old_Class = (old_Class || '').trim().split(/\s+/);
 
-                    var old_Class = ($_This.attr('class') || '').trim().split(/\s+/);
+                        for (var i = 0;  i < new_Class.length;  i++)
+                            if ($.inArray(old_Class, new_Class[i]) == -1)
+                                old_Class.push( new_Class[i] );
 
-                    for (var i = 0;  i < new_Class.length;  i++)
-                        if ($.inArray(old_Class, new_Class[i]) == -1)
-                            old_Class.push( new_Class[i] );
-
-                    $_This.attr('class',  old_Class.join(' ').trim());
+                        return  old_Class.join(' ').trim();
+                    });
                 });
         },
         removeClass:        function (iClass) {
             iClass = iClass.trim().split(/\s+/);
 
             return  this.each(function () {
-                    var $_This = $(this);
+                    $(this).attr('class',  function (_Index_, old_Class) {
+                        old_Class = (old_Class || '').trim().split(/\s+/);
+                        if (! old_Class[0])  return;
 
-                    var old_Class = ($_This.attr('class') || '').trim().split(/\s+/);
-                    if (! old_Class[0])  return;
+                        for (var i = 0;  i < old_Class.length;  i++)
+                            if ($.inArray(iClass, old_Class[i]) > -1)
+                                delete old_Class[i];
 
-                    for (var i = 0;  i < old_Class.length;  i++)
-                        if ($.inArray(iClass, old_Class[i]) > -1)
-                            delete old_Class[i];
-
-                    $_This.attr('class',  old_Class.join(' ').trim());
+                        return  old_Class.join(' ').trim();
+                    });
                 });
         },
         hasClass:           function (iClass) {
@@ -1739,7 +1746,7 @@
 
     if ($.browser.mobile)  $.fn.click = $.fn.tap;
 
-/* ---------- jQuery+  v1.8 ---------- */
+/* ---------- jQuery+  v3.5 ---------- */
 
     /* ----- 远程 Console  v0.1 ----- */
 
@@ -1820,7 +1827,7 @@
         }
     };
 
-    /* ----- CSS 规则添加  v0.5 ----- */
+    /* ----- CSS 规则操作  v0.7 ----- */
 
     function CSS_Rule2Text(iRule) {
         var Rule_Text = [''],  Rule_Block,  _Rule_Block_;
@@ -1890,9 +1897,10 @@
             });
     };
 
+    var Pseudo_RE = /:{1,2}[\w\-]+/g;
+
     $.cssPseudo = function () {
-        var Pseudo_Rule = [ ],
-            Pseudo_RE = /:{1,2}[\w\-]+/g;
+        var Pseudo_Rule = [ ];
 
         $.each(arguments[0] || DOM.styleSheets,  function () {
             var iRule = this.cssRules;
@@ -1922,8 +1930,8 @@
 
         switch ( this.tagName.toLowerCase() ) {
             case 'img':      {
-                iReturn = $_This.on('load',  function () {
-                    $(this).off('load').trigger('Ready');
+                iReturn = $_This.one('load',  function () {
+                    $(this).trigger('Ready');
                 }).addClass('jQuery_Loading').attr('src', iValue);
                 iResource.count++ ;
                 console.log(this);
@@ -1996,7 +2004,7 @@
 
     /* ----- jQuery 对象 所在页面 URL 路径  v0.1 ----- */
 
-    $.fn.PagePath = function () {
+    $.fn.pagePath = function () {
         var _PP = this[0].baseURI || this[0].ownerDocument.URL;
         _PP = _PP.split('/');
         if (_PP.length > 3) _PP.pop();
@@ -2008,7 +2016,7 @@
 
     function Get_zIndex($_DOM) {
         var _zIndex_ = $_DOM.css('z-index');
-        if (_zIndex_ != 'auto')  return Number(_zIndex_);
+        if (_zIndex_ != 'auto')  return parseInt(_zIndex_);
 
         var $_Parents = $_DOM.parents();
         _zIndex_ = 0;
@@ -2016,8 +2024,9 @@
         $_Parents.each(function () {
             var _Index_ = $(this).css('z-index');
 
-            if (_Index_ == 'auto')  _zIndex_++ ;
-            else  _zIndex_ += _Index_;
+            _zIndex_ = _zIndex_ + (
+                (_Index_ == 'auto')  ?  1  :  _Index_
+            );
         });
 
         return ++_zIndex_;
@@ -2038,7 +2047,7 @@
         else if (new_Index == '+')
             return  this.each(Set_zIndex);
         else
-            return  this.css('z-index',  Number(new_Index) || 'auto');
+            return  this.css('z-index',  parseInt(new_Index) || 'auto');
     };
 
     /* ----- Form 元素 无刷新提交  v0.4 ----- */
@@ -2194,16 +2203,18 @@
                 }
                 if (! iType) return;
 
-                var iHandler = $_This.data('ie-handler') || {
+                $_This.data('ie-handler',  function (_Index_, iHandler) {
+                    iHandler = iHandler || {
                         user:     [ ],
                         proxy:    [ ]
                     };
-                iHandler.user.push(iCallback);
-                iHandler.proxy.push( IE_Event_Handler(this, iCallback) );
-                $_This.data('ie-handler', iHandler);
-                this.attachEvent(
-                    'on' + iType,  iHandler.proxy.slice(-1)
-                );
+                    iHandler.user.push(iCallback);
+                    iHandler.proxy.push( IE_Event_Handler(this, iCallback) );
+                    this.attachEvent(
+                        'on' + iType,  iHandler.proxy.slice(-1)
+                    );
+                    return iHandler;
+                });
             },
             removeEventListener:    function (iType, iCallback) {
                 iType = IE_Event_Type.call(this, iType);
