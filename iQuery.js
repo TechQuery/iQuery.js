@@ -152,7 +152,7 @@
             is_Pad || is_Phone || UA.match(/Mobile/i)
         ) && (! UA.match(/ PC /));
 
-    var is_iOS = UA.match(/(iTouch|iPhone|iPad|iWatch);[^\)]+CPU[^\)]+OS (\d+_\d+)_/i),
+    var is_iOS = UA.match(/(iTouch|iPhone|iPad|iWatch);[^\)]+CPU[^\)]+OS (\d+_\d+)/i),
         is_Android = UA.match(/(Android |Silk\/)(\d+\.\d+)/i);
 
     var _Browser_ = {
@@ -650,11 +650,18 @@
             Trigger_Data = _Operator_('Data', [this], '_trigger_');
 
         for (var i = 0, _Return_;  i < iHandler.length;  i++) {
-            _Return_ = iHandler[i].apply(
-                this,  _Extend_([ ], arguments).concat(Trigger_Data)
-            );
+            if ( iHandler[i] )
+                _Return_ = iHandler[i].apply(
+                    this,  _Extend_([ ], arguments).concat(Trigger_Data)
+                );
+            else if (iHandler[i] === false)
+                _Return_ = false;
+            else
+                continue;
+
             if (iReturn !== false)  iReturn = _Return_;
         }
+
         _Operator_('Data', [this], '_trigger_', null);
 
         if (iReturn === false) {
@@ -986,7 +993,7 @@
 
             return  Args_Str.length ? _Args_ : { };
         },
-        fileName:         function File_Name() {
+        fileName:         function () {
             return  (arguments[0] || BOM.location.pathname)
                     .split('?')[0].split('/').slice(-1)[0];
         },
@@ -1034,10 +1041,9 @@
         },
         index:              function (iTarget) {
             if (! iTarget)
-                return
-                    Back_Track.call(
+                return  Back_Track.call(
                         this[0],
-                        ($.browser.msie < 9) ? 'prevSibling' : 'prevElementSibling'
+                        ($.browser.msie < 9) ? 'previousSibling' : 'previousElementSibling'
                     ).length;
 
             var iType = $.type(iTarget);
@@ -1297,32 +1303,28 @@
         addClass:           function (new_Class) {
             new_Class = new_Class.trim().split(/\s+/);
 
-            return  this.each(function () {
-                    $(this).attr('class',  function (_Index_, old_Class) {
-                        old_Class = (old_Class || '').trim().split(/\s+/);
+            return  this.attr('class',  function (_Index_, old_Class) {
+                    old_Class = (old_Class || '').trim().split(/\s+/);
 
-                        for (var i = 0;  i < new_Class.length;  i++)
-                            if ($.inArray(old_Class, new_Class[i]) == -1)
-                                old_Class.push( new_Class[i] );
+                    for (var i = 0;  i < new_Class.length;  i++)
+                        if ($.inArray(old_Class, new_Class[i]) == -1)
+                            old_Class.push( new_Class[i] );
 
-                        return  old_Class.join(' ').trim();
-                    });
+                    return  old_Class.join(' ').trim();
                 });
         },
         removeClass:        function (iClass) {
             iClass = iClass.trim().split(/\s+/);
 
-            return  this.each(function () {
-                    $(this).attr('class',  function (_Index_, old_Class) {
-                        old_Class = (old_Class || '').trim().split(/\s+/);
-                        if (! old_Class[0])  return;
+            return  this.attr('class',  function (_Index_, old_Class) {
+                    old_Class = (old_Class || '').trim().split(/\s+/);
+                    if (! old_Class[0])  return;
 
-                        for (var i = 0;  i < old_Class.length;  i++)
-                            if ($.inArray(iClass, old_Class[i]) > -1)
-                                delete old_Class[i];
+                    for (var i = 0;  i < old_Class.length;  i++)
+                        if ($.inArray(iClass, old_Class[i]) > -1)
+                            delete old_Class[i];
 
-                        return  old_Class.join(' ').trim();
-                    });
+                    return  old_Class.join(' ').trim();
                 });
         },
         hasClass:           function (iClass) {
@@ -1514,11 +1516,15 @@
             var $_Value = this.find('*[name]').not(':button, [disabled]'),
                 iValue = [ ];
 
-            for (var i = 0;  i < $_Value.length;  i++)
+            for (var i = 0;  i < $_Value.length;  i++) {
+                if ($_Value[i].type.match(/radio|checkbox/i)  &&  (! $_Value[i].checked))
+                    continue;
+
                 iValue.push({
                     name:     $_Value[i].name,
                     value:    $_Value[i].value
                 });
+            }
 
             return iValue;
         }
@@ -1664,6 +1670,7 @@
         HTTP_Client.withCredentials = true;
         if (typeof iData == 'string')
             HTTP_Client.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
+        HTTP_Client.setRequestHeader('Accept', '*/*');
         HTTP_Client.send(iData);
 
         return HTTP_Client;
@@ -1746,7 +1753,7 @@
 
     if ($.browser.mobile)  $.fn.click = $.fn.tap;
 
-/* ---------- jQuery+  v3.5 ---------- */
+/* ---------- jQuery+  v3.8 ---------- */
 
     /* ----- 远程 Console  v0.1 ----- */
 
