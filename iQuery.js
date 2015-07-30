@@ -377,7 +377,7 @@
 
     _Get_Set_.innerHTML = {
         set:    function (iElement, iHTML) {
-            var IE_Scope = iHTML.match(
+            var IE_Scope = iHTML.toString().match(
                     /^[^<]*<\s*(head|meta|title|link|style|script|noscript|(!--[^>]*--))[^>]*>/i
                 );
 
@@ -712,7 +712,13 @@
     function DOM_Create(TagName, AttrList) {
         var iNew,  iTag = TagName.match(/<\s*\w+[^>]*>/g);
 
-        if (iTag.length > 1) {
+        if (! iTag)  return [
+                DOM.createTextNode(TagName)
+            ];
+
+        var iAttr = iTag.length && TagName.match(/<\s*\w+\s+\w+[^>]*>/g);
+
+        if ((iTag.length > 1) || iAttr) {
             iNew = _Get_Set_.innerHTML.set(
                 DOM.createElement('div'),  TagName
             );
@@ -1335,6 +1341,8 @@
         },
         offset:             DOM_Offset,
         addClass:           function (new_Class) {
+            if (typeof new_Class != 'string')  return this;
+
             new_Class = new_Class.trim().split(/\s+/);
 
             return  this.attr('class',  function (_Index_, old_Class) {
@@ -1348,6 +1356,8 @@
                 });
         },
         removeClass:        function (iClass) {
+            if (typeof iClass != 'string')  return this;
+
             iClass = iClass.trim().split(/\s+/);
 
             return  this.attr('class',  function (_Index_, old_Class) {
@@ -1362,6 +1372,8 @@
                 });
         },
         hasClass:           function (iClass) {
+            if (typeof iClass != 'string')  return false;
+
             iClass = iClass.trim();
 
             if (! DOM.documentElement.classList)
@@ -1969,7 +1981,7 @@
                     if ((! End_Element) && _BGI_)
                         $_This.css('background-image',  'url("' + iValue + '")');
                     else
-                        $_This.html(iValue);
+                        $_This.text(iValue);
                 } else {
                     _BGI_ = $_This.css('background-image').match(/^url\(('|")?([^'"]+)('|")?\)/);
                     _BGI_ = _BGI_ && _BGI_[2];
