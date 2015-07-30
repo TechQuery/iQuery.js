@@ -2,7 +2,7 @@
 //                >>>  iQuery.js  <<<
 //
 //
-//      [Version]    v1.0  (2015-7-26)  Stable
+//      [Version]    v1.0  (2015-7-30)  Stable
 //
 //      [Usage]      A Light-weight jQuery Compatible API
 //                   with IE 8+ compatibility.
@@ -345,7 +345,7 @@
         }
     }
 
-    /* ----- DOM innerText ----- */
+    /* ----- DOM Content ----- */
     _Get_Set_.innerText = {
         set:    function (iElement, iText) {
             switch ( iElement.tagName.toLowerCase() ) {
@@ -357,7 +357,10 @@
                     iElement.text = iText;
                     return;
                 }
-                default:          iElement.appendChild( DOM.createTextNode(iText) );
+                case '':          {
+                    iElement.appendChild( DOM.createTextNode(iText) );
+                    return;
+                }
             }
             iElement[_Browser_.ff ? 'textContent' : 'innerText'] = iText;
         },
@@ -371,6 +374,26 @@
                 return iElement.innerText;
             }
     };
+
+    _Get_Set_.innerHTML = {
+        set:    function (iElement, iHTML) {
+            var IE_Scope = iHTML.match(
+                    /^[^<]*<\s*(head|meta|title|link|style|script|noscript|(!--[^>]*--))[^>]*>/i
+                );
+
+            if (_Browser_.modern || (! IE_Scope))
+                iElement.innerHTML = iHTML;
+            else {
+                iElement.innerHTML = 'IE_Scope' + iHTML;
+                var iChild = iElement.childNodes;
+                iChild[0].nodeValue = iChild[0].nodeValue.slice(8);
+                if (! iChild[0].nodeValue.length)
+                    iElement.removeChild(iChild[0]);
+            }
+
+            return iElement.childNodes;
+        }
+    }
 
     /* ----- DOM Style ----- */
     var IE_CSS_Filter = (! _Browser_.modern),
@@ -687,24 +710,14 @@
 
 /* ---------- DOM Constructor ---------- */
     function DOM_Create(TagName, AttrList) {
-        var iNew,
-            iTag = TagName.match(/<\s*\w+[^>]*>/g),
-            IE_Scope = TagName.match(
-                /^[^<]*<\s*(head|meta|title|link|style|script|noscript|(!--[^>]*--))[^>]*>/i
-            );
-        IE_Scope = (! _Browser_.modern) && IE_Scope;
+        var iNew,  iTag = TagName.match(/<\s*\w+[^>]*>/g);
 
         if (iTag.length > 1) {
-            iNew = DOM.createElement('div');
-            iNew.innerHTML = (IE_Scope ? 'IE_Scope' : '') + TagName;
+            iNew = _Get_Set_.innerHTML.set(
+                DOM.createElement('div'),  TagName
+            );
 
-            iNew = _Extend_([ ],  iNew.childNodes);
-            if (! iNew.length)  return iNew;
-
-            if (IE_Scope)
-                iNew[0].nodeValue = iNew[0].nodeValue.slice(8);
-
-            if ((iNew.length > 1)  ||  (iNew[0].nodeType != 1))
+            if ((iNew.length != 1)  ||  (iNew[0].nodeType != 1))
                 return iNew;
         } else
             iNew = [DOM.createElement(
@@ -716,7 +729,7 @@
             try {
                 switch (AK) {
                     case 'text':     _Get_Set_.innerText.set(iNew[0], iValue);  break;
-                    case 'html':     iNew[0].innerHTML = iValue;                break;
+                    case 'html':     _Get_Set_.innerHTML.set(iNew[0], iValue);  break;
                     case 'style':    if (_Type_(iValue) == 'Object') {
                         _Operator_('Style', iNew, iValue);
                         break;
@@ -874,38 +887,58 @@
 
 
 /* ---------- jQuery API ---------- */
-    BOM.iQuery = function () {
+    BOM.iQuery = function (Element_Set, iContext) {
         /* ----- Global Wrapper ----- */
         var _Self_ = arguments.callee;
-        var iArgs = _Extend_([ ], arguments);
 
         if (! (this instanceof _Self_))
-            return  new _Self_(iArgs[0], iArgs[1]);
-        if (iArgs[0] instanceof _Self_)
-            return  iArgs[0];
+            return  new _Self_(Element_Set, iContext);
+        if (Element_Set instanceof _Self_)
+            return  Element_Set;
 
         /* ----- Constructor ----- */
         this.length = 0;
 
-        if (! iArgs[0]) return;
+        if (! Element_Set) return;
 
-        if (typeof iArgs[0] == 'string') {
-            if (iArgs[0][0] != '<') {
-                this.context = iArgs[1] || DOM;
-                try {
-                    this.add( DOM_Search(this.context, iArgs[0]) );
-                } catch (iError) { }
-                this.selector = iArgs[0];
+        if (typeof Element_Set == 'string') {
+            if (Element_Set[0] != '<') {
+                this.context = iContext || DOM;
+                this.selector = Element_Set;
+                Element_Set = DOM_Search(this.context, Element_Set);
             } else
-                this.add(DOM_Create(
-                    iArgs[0],  (_Type_(iArgs[1]) == 'Object') && iArgs[1]
-                ));
-        } else
-            this.add( iArgs[0] );
+                Element_Set = DOM_Create(
+                    Element_Set,  (_Type_(iContext) == 'Object') && iContext
+                );
+        }
+        this.add( Element_Set );
     };
 
     var $ = BOM.iQuery;
     $.fn = $.prototype;
+
+    $.fn.add = function (Element_Set) {
+        var iType = _Type_(Element_Set);
+
+        if (iType == 'String')
+            Element_Set = $(Element_Set, arguments[1]);
+        else if (iType in Type_Info.DOM.element)
+            Element_Set = [ Element_Set ];
+
+        if (typeof Element_Set.length == 'number') {
+            for (var i = 0;  i < Element_Set.length;  i++)
+                if (Element_Set[i] && (
+                    (Element_Set[i].nodeType == 1) ||
+                    (_Type_(Element_Set[i]) in Type_Info.DOM.root)
+                ))
+                    Array.prototype.push.call(this, Element_Set[i]);
+
+            if (this.length == 1)
+                this.context = this[0].ownerDocument;
+        }
+
+        return this;
+    };
 
     if (typeof BOM.jQuery != 'function') {
         BOM.jQuery = BOM.iQuery;
@@ -1007,30 +1040,6 @@
     /* ----- iQuery Instance Method ----- */
     _Extend_($.fn, {
         splice:             Array.prototype.splice,
-        add:                function () {
-            var iArgs = $.makeArray(arguments);
-            var iArgType = $.type(iArgs[0]);
-
-            if (iArgType == 'String') {
-                iArgs[0] = $(iArgs[0], iArgs[1]);
-                iArgType = 'iQuery';
-            } else if (
-                ($.type(iArgs[0].length) == 'Number') &&
-                (! (iArgType in Type_Info.DOM.element))
-            )
-                iArgType = 'Array';
-
-            if (iArgType in Type_Info.DOM.set) {
-                for (var i = 0;  i < iArgs[0].length;  i++)
-                    if ( iArgs[0][i] )
-                        Array.prototype.push.call(this, iArgs[0][i]);
-            } else if (iArgType in Type_Info.DOM.element) {
-                Array.prototype.push.call(this, iArgs[0]);
-                this.context = iArgs[0].ownerDocument;
-            }
-
-            return this;
-        },
         jquery:             '1.9.1',
         iquery:             '1.0',
         eq:                 function () {
@@ -1225,11 +1234,34 @@
 
             return  $.extend($($_Result), {prevObject:  this});
         },
+        detach:             function () {
+            for (var i = 0;  i < this.length;  i++)
+                if (this[i].parentNode)
+                    this[i].parentNode.removeChild(this[i]);
+
+            return this;
+        },
+        remove:             function () {
+            return this.detach().data();
+        },
+        empty:              function () {
+            this.children().remove();
+
+            for (var i = 0, iChild;  i < this.length;  i++) {
+                iChild = this[i].childNodes;
+                for (var j = 0;  j < iChild.length;  j++)
+                    this[i].removeChild(iChild[j]);
+            }
+
+            return this;
+        },
         text:               function (iText) {
-            var iResult = [ ];
+            var iGetter = (! $.isData(iText)),  iResult = [ ];
+
+            if (! iGetter)  this.empty();
 
             for (var i = 0;  i < this.length;  i++)
-                if (! $.isData(iText))
+                if (iGetter)
                     iResult.push( _Get_Set_.innerText.get(this[i]) );
                 else
                     _Get_Set_.innerText.set(this[i], iText);
@@ -1240,8 +1272,10 @@
             if (! $.isData(iHTML))
                 return this[0].innerHTML;
 
+            this.empty();
+
             for (var i = 0;  i < this.length;  i++)
-                this[i].innerHTML = iHTML;
+                _Get_Set_.innerHTML.set(this[i], iHTML);
 
             return  this;
         },
@@ -1487,24 +1521,6 @@
             }
 
             return  $.extend($($_Result), {prevObject:  this});
-        },
-        detach:             function () {
-            for (var i = 0;  i < this.length;  i++)
-                if (this[i].parentNode)
-                    this[i].parentNode.removeChild(this[i]);
-
-            return this;
-        },
-        remove:             function () {
-            return this.detach().data();
-        },
-        empty:              function () {
-            var iChild = this.children().remove();
-
-            for (var i = 0;  i < iChild.length;  i++)
-                iChild[i].innerHTML = '';
-
-            return this;
         },
         val:                function () {
             if (! $.isData(arguments[0]))
