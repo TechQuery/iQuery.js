@@ -2,7 +2,7 @@
 //              >>>  jQuery+  <<<
 //
 //
-//    [Version]     v3.5  (2015-7-26)
+//    [Version]     v3.9  (2015-8-1)
 //
 //    [Based on]    jQuery  v1.9+
 //
@@ -47,6 +47,54 @@
 
 
 
+/* ---------- HTML 5 Shim  v0.1 ---------- */
+(function ($) {
+
+    if ($.browser.modern && (! $.browser.ios))  return;
+
+    function Value_Check() {
+        var $_This = $(this);
+
+        if ((typeof $_This.attr('required') == 'string')  &&  (! this.value))
+            return false;
+
+        var iRegEx = $_This.attr('pattern');
+        if (iRegEx)  try {
+            return  RegExp(iRegEx).test(this.value);
+        } catch (iError) { }
+
+        if ((this.tagName.toLowerCase() == 'input')  &&  (this.type == 'number')) {
+            var iNumber = Number(this.value),
+                iMin = Number( $_This.attr('min') );
+            if (
+                isNaN(iNumber)  ||
+                (iNumber < iMin)  ||
+                (iNumber > Number( $_This.attr('max') ))  ||
+                ((iNumber - iMin)  %  Number( $_This.attr('step') ))
+            )
+                return false;
+        }
+
+        return true;
+    }
+
+    HTMLInputElement.prototype.checkValidity = Value_Check;
+    HTMLSelectElement.prototype.checkValidity = Value_Check;
+    HTMLTextAreaElement.prototype.checkValidity = Value_Check;
+
+    HTMLFormElement.prototype.checkValidity = function () {
+        var $_Input = $('*[name]:input', this);
+
+        for (var i = 0;  i < $_Input.length;  i++)
+            if (! $_Input[i].checkValidity())
+                return false;
+        return true;
+    };
+
+})(self.iQuery);
+
+
+
 (function (BOM, DOM, $) {
 
 /* ---------- $.browser+  v0.2 ---------- */
@@ -66,7 +114,7 @@
             is_Pad || is_Phone || UA.match(/Mobile/i)
         ) && (! UA.match(/ PC /));
 
-    var is_iOS = UA.match(/(iTouch|iPhone|iPad|iWatch);[^\)]+CPU[^\)]+OS (\d+_\d+)_/i),
+    var is_iOS = UA.match(/(iTouch|iPhone|iPad|iWatch);[^\)]+CPU[^\)]+OS (\d+_\d+)/i),
         is_Android = UA.match(/(Android |Silk\/)(\d+\.\d+)/i);
 
     $.browser = {
@@ -114,6 +162,7 @@
             var Time_Stamp;
 
             $_BOM.data('_timer_',  function (_Index_, iTimer) {
+                iTimer = iTimer || { };
                 Time_Stamp = iTimer[iName] = $.now();
                 return iTimer;
             });
@@ -163,10 +212,14 @@
                 iType[0].toUpperCase() + iType.slice(1)
             );
 
+        if (iType != 'Object')  return iType;
+
+        //  Object Type Detail
         if (! iVar) {
             if (isNaN(iVar)  &&  (iVar !== iVar))
                 return 'NaN';
-            return iType;
+            else
+                return 'Null';
         }
 
         if (
@@ -184,11 +237,7 @@
         )
             return 'Element';
 
-        if (
-            ($.browser.msie < 9) &&
-            (iType == 'Object') &&
-            (typeof iVar.length == 'number')
-        )  try {
+        if ((_Browser_.msie < 9)  &&  (typeof iVar.length == 'number'))  try {
             iVar.item();
             try {
                 iVar.namedItem();
@@ -206,33 +255,39 @@
     };
 
 
-/* ---------- $.param() 逆方法  v0.1 ---------- */
+/* ---------- URL 处理扩展  v0.2 ---------- */
 
-    $.paramJSON = function (Args_Str) {
-        Args_Str = (Args_Str || BOM.location.search).match(/[^\?&\s]+/g);
-        if (! Args_Str)  return { };
+    $.extend($, {
+        paramJSON:    function (Args_Str) {
+            Args_Str = (Args_Str || BOM.location.search).match(/[^\?&\s]+/g);
+            if (! Args_Str)  return { };
 
-        var _Args_ = {
-                toString:    function () {
-                    return  BOM.JSON.format(this);
-                }
-            };
+            var _Args_ = {
+                    toString:    function () {
+                        return  BOM.JSON.format(this);
+                    }
+                };
 
-        for (var i = 0, iValue; i < Args_Str.length; i++) {
-            Args_Str[i] = Args_Str[i].split('=');
+            for (var i = 0, iValue; i < Args_Str.length; i++) {
+                Args_Str[i] = Args_Str[i].split('=');
 
-            iValue = BOM.decodeURIComponent(
-                Args_Str[i].slice(1).join('=')
-            );
-            try {
-                iValue = BOM.JSON.parse(iValue);
-            } catch (iError) { }
+                iValue = BOM.decodeURIComponent(
+                    Args_Str[i].slice(1).join('=')
+                );
+                try {
+                    iValue = BOM.JSON.parse(iValue);
+                } catch (iError) { }
 
-            _Args_[ Args_Str[i][0] ] = iValue;
+                _Args_[ Args_Str[i][0] ] = iValue;
+            }
+
+            return  Args_Str.length ? _Args_ : { };
+        },
+        fileName:     function () {
+            return  (arguments[0] || BOM.location.pathname)
+                    .split('?')[0].split('/').slice(-1)[0];
         }
-
-        return  Args_Str.length ? _Args_ : { };
-    };
+    });
 
 
 /* ---------- 远程 Console  v0.1 ---------- */
@@ -687,10 +742,13 @@
                 }
             }
 
-            $.post(this.action,  iData,  function () {
+            if ( this.checkValidity() )
+                $.post(this.action,  this,  function () {
+                    $_Button.prop('disabled', false);
+                    iCallback.call($_Form[0], arguments[0]);
+                });
+            else
                 $_Button.prop('disabled', false);
-                iCallback.call($_Form[0], arguments[0]);
-            });
         });
         $_Button.prop('disabled', false);
 
@@ -741,5 +799,70 @@
                 {prevObject:  this}
             );
     };
+
+/* ---------- 单点手势事件  v0.2 ---------- */
+
+    function get_Touch(iEvent) {
+        if (! iEvent.timeStamp)
+            iEvent.timeStamp = $.now();
+
+        if (! $.browser.mobile)  return iEvent;
+
+        try {
+            return iEvent.changedTouches[0];
+        } catch (iError) {
+            return iEvent.touches[0];
+        }
+    }
+
+    var Touch_Data;
+
+    $(DOM).bind(
+        $.browser.mobile ? 'touchstart MSPointerDown' : 'mousedown',
+        function (iEvent) {
+            var iTouch = get_Touch(iEvent);
+
+            Touch_Data = {
+                pX:      iTouch.pageX,
+                pY:      iTouch.pageY,
+                time:    iEvent.timeStamp
+            };
+        }
+    ).bind(
+        $.browser.mobile ? 'touchend touchcancel MSPointerUp' : 'mouseup',
+        function (iEvent) {
+            if (! Touch_Data)  return;
+
+            var iTouch = get_Touch(iEvent);
+
+            var swipeLeft = Touch_Data.pX - iTouch.pageX,
+                swipeTop = Touch_Data.pY - iTouch.pageY,
+                iTime = iEvent.timeStamp - Touch_Data.time;
+
+            if (Math.max(Math.abs(swipeLeft), Math.abs(swipeTop)) > 20)
+                $(iEvent.target).trigger('swipe',  [swipeLeft, swipeTop]);
+            else
+                $(iEvent.target).trigger((iTime > 300) ? 'press' : 'tap');
+        }
+    );
+
+    var iShortCut = _inKey_('tap', 'press', 'swipe');
+
+    function Event_Method(iName) {
+        return  function () {
+                if (! arguments[0]) {
+                    for (var i = 0;  i < this.length;  i++)
+                        $(this[i]).trigger(iName);
+                } else
+                    this.bind(iName, arguments[0]);
+
+                return this;
+            };
+    }
+
+    for (var iName in iShortCut)
+        $.fn[iName] = Event_Method(iName);
+
+    if ($.browser.mobile)  $.fn.click = $.fn.tap;
 
 })(self,  self.document,  self.jQuery || self.Zepto);
