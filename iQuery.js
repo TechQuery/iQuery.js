@@ -214,7 +214,7 @@
             BOM:          _inKey_('Window', 'DOMWindow', 'global'),
             DOM:          {
                 set:        _inKey_('Array', 'HTMLCollection', 'NodeList', 'jQuery', 'iQuery'),
-                element:    _inKey_('Window', 'Document', 'Element'),
+                element:    _inKey_('Window', 'Document', 'HTMLElement'),
                 root:       _inKey_('Document', 'Window')
             },
             DOM_Event:    _inKey_(
@@ -245,10 +245,10 @@
                 iType[0].toUpperCase() + iType.slice(1)
             );
 
-        if (! iVar) {
-            if (isNaN(iVar)  &&  (iVar !== iVar))
-                return 'NaN';
-            return iType;
+        if (! iVar)  switch (true) {
+            case (isNaN(iVar)  &&  (iVar !== iVar)):    return 'NaN';
+            case (iVar === null):                       return 'Null';
+            default:                                    return iType;
         }
 
         if (
@@ -264,10 +264,10 @@
             iType.match(/HTML\w+?Element$/) ||
             (typeof iVar.tagName == 'string')
         )
-            return 'Element';
+            return 'HTMLElement';
 
         if (
-            (_Browser_.msie < 9) &&
+            (! _Browser_.modern) &&
             (iType == 'Object') &&
             (typeof iVar.length == 'number')
         )  try {
@@ -631,6 +631,7 @@
                 var _This_ = this,  Time_Stamp;
 
                 _Operator_('Data', [BOM], '_timer_',  function (_Index_, iTimer) {
+                    iTimer = iTimer || { };
                     Time_Stamp = iTimer[iName] = _This_.now();
                     return iTimer;
                 });
@@ -1670,7 +1671,7 @@
     }
 
     function iHTTP(iURL, iData, iCallback) {
-        if ($.type(iData) == 'Element') {
+        if ($.type(iData) == 'HTMLElement') {
             var $_Form = $(iData);
             iData = { };
 
@@ -1781,7 +1782,7 @@
 
     if ($.browser.mobile)  $.fn.click = $.fn.tap;
 
-/* ---------- jQuery+  v3.8 ---------- */
+/* ---------- jQuery+  v3.9 ---------- */
 
     /* ----- 远程 Console  v0.1 ----- */
 
@@ -1981,7 +1982,7 @@
                     if ((! End_Element) && _BGI_)
                         $_This.css('background-image',  'url("' + iValue + '")');
                     else
-                        $_This.text(iValue);
+                        $_This.html(iValue);
                 } else {
                     _BGI_ = $_This.css('background-image').match(/^url\(('|")?([^'"]+)('|")?\)/);
                     _BGI_ = _BGI_ && _BGI_[2];
@@ -2249,7 +2250,7 @@
                     iHandler.user.push(iCallback);
                     iHandler.proxy.push( IE_Event_Handler(this, iCallback) );
                     this.attachEvent(
-                        'on' + iType,  iHandler.proxy.slice(-1)
+                        'on' + iType,  iHandler.proxy[iHandler.proxy.length - 1]
                     );
                     return iHandler;
                 });
@@ -2409,14 +2410,16 @@
 /* ---------- HTML 5 Form Shim ---------- */
 (function ($) {
 
+    if ($.browser.modern && (! $.browser.ios))  return;
+
     function Value_Check() {
         var $_This = $(this);
 
-        if ($.isData( $_This.attr('required') )  &&  (! this.value))
+        if ((typeof $_This.attr('required') == 'string')  &&  (! this.value))
             return false;
 
         var iRegEx = $_This.attr('pattern');
-        if ( $.isData(iRegEx) )  try {
+        if (iRegEx)  try {
             return  RegExp(iRegEx).test(this.value);
         } catch (iError) { }
 
@@ -2619,12 +2622,14 @@
         }
 
         function Append_Back() {
-            $_This.children().fadeOut();
-            $(arguments[0]).appendTo( $_This.empty() ).fadeIn();
+            var $_HTML = $(arguments[0]);
 
-            if (typeof iCallback == 'function')
-                for (var i = 0;  i < $_This.length;  i++)
+            for (var i = 0;  i < $_This.length;  i++) {
+                $_HTML.clone().appendTo( $($_This[i]).empty() ).fadeIn();
+                try {
                     iCallback.apply($_This[i], arguments);
+                } catch (iError) { }
+            }
         }
 
         function Load_Back(iHTML) {
