@@ -2,7 +2,7 @@
 //                >>>  iQuery.js  <<<
 //
 //
-//      [Version]    v1.0  (2015-7-30)  Stable
+//      [Version]    v1.0  (2015-8-5)  Stable
 //
 //      [Usage]      A Light-weight jQuery Compatible API
 //                   with IE 8+ compatibility.
@@ -580,7 +580,10 @@
         },
         clone:     function (iOld, iNew) {
             iNew.dataIndex = this._Data_.push({ }) - 1;
-            _Extend_(this._Data_[iNew.dataIndex], this._Data_[iOld.dataIndex]);
+            return _Extend_(
+                    this._Data_[iNew.dataIndex],
+                    this._Data_[iOld.dataIndex]
+                )._event_;
         }
     };
 
@@ -672,6 +675,8 @@
         var iHandler = _Operator_('Data', [this], '_event_')[iEvent.type],
             iReturn,
             Trigger_Data = _Operator_('Data', [this], '_trigger_');
+
+        if (! iHandler)  return;
 
         for (var i = 0, _Return_;  i < iHandler.length;  i++) {
             if ( iHandler[i] )
@@ -809,14 +814,25 @@
             '(.*?)' + _Pseudo_ + "([>\\+~\\s]*.*)",  undefined,  null
         );
 
-    var _Concat_ = Array.prototype.concat;
+    var _Concat_ = function () {
+            var iArgs = _Extend_([ ], arguments);
+
+            for (var i = 0;  i < iArgs.length;  i++)
+                if (
+                    (typeof iArgs[i].length == 'number')  &&
+                    (! (_Type_(iArgs[i]) in Type_Info.DOM.element))
+                )
+                    iArgs[i] = _Extend_([ ], iArgs[i]);
+
+            return  Array.prototype.concat.apply(iArgs.shift(), iArgs);
+        };
 
     function DOM_Search(iRoot, iSelector) {
         var _Self_ = arguments.callee,  iSet = [ ];
 
         _Each_(iSelector.split(/\s*,\s*/),  function () {
             try {
-                iSet = _Concat_.apply(iSet,  iRoot.querySelectorAll(arguments[1] || '*'));
+                iSet = _Concat_(iSet,  iRoot.querySelectorAll(arguments[1] || '*'));
             } catch (iError) {
                 var _Selector_;
                 for (var _Pseudo_ in iPseudo) {
@@ -1049,11 +1065,13 @@
         splice:             Array.prototype.splice,
         jquery:             '1.9.1',
         iquery:             '1.0',
+        pushStack:          function () {
+            var $_New = $(arguments[0]);
+            $_New.prevObject = this;
+            return $_New;
+        },
         eq:                 function () {
-            return  $.extend(
-                    $( this[arguments[0]] ),
-                    {prevObject:  this}
-                );
+            return  this.pushStack( this[arguments[0]] );
         },
         index:              function (iTarget) {
             if (! iTarget)
@@ -1076,10 +1094,7 @@
             return -1;
         },
         slice:              function () {
-            return  $.extend(
-                    $( [ ].slice.apply(this, arguments) ),
-                    {prevObject:  this}
-                );
+            return  this.pushStack( [ ].slice.apply(this, arguments) );
         },
         each:               function () {
             $.each(this, arguments[0]);
@@ -1104,7 +1119,7 @@
                         $_Result.push( this[i] );
             }
 
-            return  $.extend($($_Result), {prevObject:  this});
+            return this.pushStack($_Result);
         },
         not:                function () {
             var $_Not = $(arguments[0]),
@@ -1114,7 +1129,7 @@
                 if ($.inArray($_Not, this[i]) < 0)
                     $_Result.push(this[i]);
 
-            return  $.extend($($_Result), {prevObject:  this});
+            return this.pushStack($_Result);
         },
         attr:               function () {
             return  _Operator_('Attribute', this, arguments[0], arguments[1]);
@@ -1137,12 +1152,11 @@
             var _GUID_ = $.guid();
 
             var $_Result = $(
-                    _Concat_.apply($.makeArray(this), this.prevObject)
+                    _Concat_(this, this.prevObject)
                 ).attr('iquery', _GUID_);
 
-            return  $.extend(
-                    $('*[iquery="' + _GUID_ + '"]').removeAttr('iquery'),
-                    {prevObject:  this}
+            return  this.pushStack(
+                    $('*[iquery="' + _GUID_ + '"]').removeAttr('iquery')
                 );
         },
         parent:             function () {
@@ -1156,7 +1170,7 @@
             if ( arguments[0] )
                 $_Result = $_Result.filter(arguments[0]);
 
-            return  $.extend($_Result, {prevObject:  this});
+            return this.pushStack($_Result);
         },
         parents:            function () {
             var _GUID_ = _Parents_.call(this);
@@ -1164,10 +1178,7 @@
             if ( arguments[0] )
                 $_Result = $_Result.filter(arguments[0]);
 
-            return  $.extend(
-                    Array.prototype.reverse.call($_Result),
-                    {prevObject:  this}
-                );
+            return  this.pushStack( Array.prototype.reverse.call($_Result) );
         },
         sameParents:        function () {
             var _GUID_ = _Parents_.call(this);
@@ -1179,10 +1190,7 @@
             if ( arguments[0] )
                 $_Result = $_Result.filter(arguments[0]);
 
-            return  $.extend(
-                    Array.prototype.reverse.call($_Result),
-                    {prevObject:  this}
-                );
+            return  this.pushStack( Array.prototype.reverse.call($_Result) );
         },
         parentsUntil:       function () {
             return  this.parents().not(
@@ -1193,13 +1201,13 @@
             var $_Result = [ ];
 
             for (var i = 0;  i < this.length;  i++)
-                $_Result = _Concat_.apply($_Result, this[i].children);
+                $_Result = _Concat_($_Result, this[i].children);
 
             $_Result = $($_Result);
             if ( arguments[0] )
                 $_Result = $_Result.filter(arguments[0]);
 
-            return  $.extend($_Result, {prevObject:  this});
+            return this.pushStack($_Result);
         },
         contents:           function () {
             var $_Result = [ ],
@@ -1216,7 +1224,7 @@
                     if ($_Result[i].nodeType != Type_Filter)
                         $_Result[i] = null;
 
-            return  $.extend($($_Result), {prevObject:  this});
+            return this.pushStack($_Result);
         },
         siblings:           function () {
             var _GUID_ = $.guid();
@@ -1231,15 +1239,15 @@
             if ( arguments[0] )
                 $_Result = $_Result.filter(arguments[0]);
 
-            return  $.extend($_Result, {prevObject:  $_This});
+            return this.pushStack($_Result);
         },
         find:               function () {
             var $_Result = [ ];
 
             for (var i = 0;  i < this.length;  i++)
-                $_Result = _Concat_.apply($_Result,  $(arguments[0], this[i]));
+                $_Result = _Concat_($_Result,  $(arguments[0], this[i]));
 
-            return  $.extend($($_Result), {prevObject:  this});
+            return this.pushStack($_Result);
         },
         detach:             function () {
             for (var i = 0;  i < this.length;  i++)
@@ -1482,21 +1490,37 @@
 
             for (var i = 0;  i < iHandler.length;  i++)
                 iReturn = iHandler[i].apply(
-                    this[0],  _Concat_.apply([ ], arguments)
+                    this[0],  _Concat_([ ], arguments)
                 );
 
             return iReturn;
+        },
+        clone:              function (iDeep) {
+            var $_Result = [ ];
+
+            for (var i = 0, iEvent;  i < this.length;  i++) {
+                $_Result[i] = this[i].cloneNode(iDeep);
+                iEvent = _Get_Set_.Data.clone(this[i], $_Result[i]);
+
+                for (var iType in iEvent)
+                    iNew.addEventListener(iType, Proxy_Handler, false);
+            }
+
+            return this.pushStack($_Result);
         },
         append:             function () {
             var $_Child = $(arguments[0], arguments[1]),
                 DOM_Cache = DOM.createDocumentFragment();
 
-            for (var i = 0;  i < $_Child.length;  i++)
-                DOM_Cache.appendChild( $_Child[i] );
+            return  this.each(function (Index) {
+                    var _Child_ = Index ? $_Child.clone(true) : $_Child,
+                        _Cache_ = DOM_Cache.cloneNode();
 
-            this[0].appendChild(DOM_Cache);
+                    for (var i = 0;  i < _Child_.length;  i++)
+                        _Cache_.appendChild( _Child_[i] );
 
-            return this;
+                    this.appendChild(_Cache_);
+                });
         },
         appendTo:           function () {
             $(arguments[0], arguments[1]).append(this);
@@ -1504,12 +1528,18 @@
             return  this;
         },
         before:             function () {
-            var $_Brother = $(arguments[0], arguments[1]);
+            var $_Brother = $(arguments[0], arguments[1]),
+                DOM_Cache = DOM.createDocumentFragment();
 
-            for (var i = 0;  i < $_Brother.length;  i++)
-                this[0].parentNode.insertBefore($_Brother[i], this[0]);
+            return  this.each(function (Index) {
+                    var _Brother_ = Index ? $_Brother.clone(true) : $_Brother,
+                        _Cache_ = DOM_Cache.cloneNode();
 
-            return this;
+                    for (var i = 0;  i < _Brother_.length;  i++)
+                        _Cache_.appendChild( _Brother_[i] );
+
+                    this.parentNode.insertBefore(_Cache_, this);
+                });
         },
         prepend:            function () {
             if (this.length) {
@@ -1524,16 +1554,6 @@
             $(arguments[0], arguments[1]).prepend(this);
 
             return  this;
-        },
-        clone:              function (iDeep) {
-            var $_Result = [ ];
-
-            for (var i = 0;  i < this.length;  i++) {
-                $_Result[i] = this[i].cloneNode(iDeep);
-                _Get_Set_.Data.clone(this[i], $_Result[i]);
-            }
-
-            return  $.extend($($_Result), {prevObject:  this});
         },
         val:                function () {
             if (! $.isData(arguments[0]))
@@ -1575,70 +1595,70 @@
         if (Target_URL[6] && (Target_URL[6] != iPort))  return true;
     }
 
-    if ($.browser.msie < 10)
-        BOM.XDomainRequest.prototype.setRequestHeader = function () {
+    var XHR_Open = XMLHttpRequest.prototype.open;
+    var XHR_Proto = {
+            open:           function () {
+                var iXHR = this,
+                    XHR_XD = X_Domain(arguments[1]);
+
+                this[XHR_XD ? 'onload' : 'onreadystatechange'] = function () {
+                    if (! (XHR_XD || (iXHR.readyState == 4)))  return;
+
+                    if (typeof iXHR.onready == 'function')
+                        iXHR.onready.call(iXHR, iXHR.responseAny());
+                    iXHR = null;
+                };
+                XHR_Open.apply(this, arguments);
+
+                this.requestArgs = arguments;
+            },
+            responseAny:    function () {
+                var iContent = this.responseText,
+                    iType = this.responseType || 'text/plain';
+
+                switch ( iType.split('/')[1] ) {
+                    case 'plain':    ;
+                    case 'json':     {
+                        var _Content_ = iContent.trim();
+                        try {
+                            iContent = BOM.JSON.parseAll(_Content_);
+                        } catch (iError) {
+                            if ($.browser.msie != 9)  try {
+                                iContent = $.parseXML(_Content_);
+                            } catch (iError) { }
+                        }
+                        break;
+                    }
+                    case 'xml':      iContent = this.responseXML;
+                }
+
+                return iContent;
+            },
+            timeOut:        function (TimeOut_Seconds, TimeOut_Callback) {
+                var iXHR = this;
+
+                $.wait(TimeOut_Seconds, function () {
+                    iXHR.onreadystatechange = null;
+                    iXHR.abort();
+                    TimeOut_Callback.call(iXHR);
+                });
+            },
+            retry:          function (Wait_Seconds) {
+                var iXHR = this;
+
+                $.wait(Wait_Seconds, function () {
+                    iXHR.open.apply(iXHR, iXHR.requestArgs);
+                });
+            }
+        };
+
+    $.extend(XMLHttpRequest.prototype, XHR_Proto);
+
+    if ($.browser.msie < 10) {
+        XHR_Proto.setRequestHeader = function () {
             console.warn("IE 8/9 XDR doesn't support Changing HTTP Headers...");
         };
-
-    function iAJAX(This_Call, X_Domain) {
-        var iXHR = new BOM[
-                (X_Domain && ($.browser.msie < 10)) ? 'XDomainRequest' : 'XMLHttpRequest'
-            ]();
-
-        var _Open_ = iXHR.open;
-        iXHR.open = function () {
-            var _This_ = this;
-
-            _This_[
-                X_Domain ? 'onload' : 'onreadystatechange'
-            ] = function () {
-                if (! (X_Domain || (_This_.readyState == 4)))  return;
-
-                if (typeof iXHR.onready == 'function')
-                    iXHR.onready.call(iXHR, iXHR.responseAny());
-                iXHR = null;
-            };
-            _Open_.apply(_This_, arguments);
-        };
-
-        return  $.extend(iXHR, {
-                responseAny:    function () {
-                    var iContent = this.responseText,
-                        iType = this.responseType || 'text/plain';
-
-                    switch ( iType.split('/')[1] ) {
-                        case 'plain':    ;
-                        case 'json':     {
-                            var _Content_ = iContent.trim();
-                            try {
-                                iContent = BOM.JSON.parseAll(_Content_);
-                            } catch (iError) {
-                                if ($.browser.msie != 9)  try {
-                                    iContent = $.parseXML(_Content_);
-                                } catch (iError) { }
-                            }
-                            break;
-                        }
-                        case 'xml':      iContent = this.responseXML;
-                    }
-
-                    return iContent;
-                },
-                timeOut:        function (TimeOut_Seconds, TimeOut_Callback) {
-                    var iXHR = this;
-
-                    $.wait(TimeOut_Seconds, function () {
-                        iXHR.onreadystatechange = null;
-                        iXHR.abort();
-                        TimeOut_Callback.call(iXHR);
-                    });
-                },
-                retry:    function (Wait_Seconds) {
-                    $.wait(Wait_Seconds, function () {
-                        This_Call.callee.apply(BOM, This_Call);
-                    });
-                }
-            });
+        $.extend(BOM.XDomainRequest.prototype, XHR_Proto);
     }
 
     function ECDS_Post(iCallback) {
@@ -1693,7 +1713,9 @@
         if ( $.isPlainObject(iData) )
             iData = BOM.encodeURI( $.param(iData || { }) );
 
-        var HTTP_Client = iAJAX(arguments, X_Domain(iURL));
+        var HTTP_Client = new BOM[
+                (X_Domain(iURL) && ($.browser.msie < 10))  ?  'XDomainRequest' : 'XMLHttpRequest'
+            ]();
         HTTP_Client.onready = iCallback;
         HTTP_Client.open(iData ? 'POST' : 'GET',  iURL,  true);
         HTTP_Client.withCredentials = true;
@@ -1718,14 +1740,13 @@
             }
 
             var iArgs = $.paramJSON(iURL[1]),
-                iJSONP;
-            for (var iName in iArgs)
-                if (iArgs[iName] == '?') {
-                    iJSONP = $.guid();
-                    this.JSONP[iJSONP] = iCallback;
-                    iArgs[iName] = 'iQuery.JSONP.' + iJSONP;
-                    break;
-                }
+                iJSONP = iURL[1].match(/(\w+)=\?/);
+
+            if (iJSONP) {
+                var JSONP_GUID = $.guid();
+                this.JSONP[JSONP_GUID] = iCallback;
+                iArgs[iJSONP[1]] = 'iQuery.JSONP.' + JSONP_GUID;
+            }
 
             iURL = iURL[0] + '?' + $.param(
                 $.extend(iArgs,  iData,  {_: $.now()})
@@ -1736,8 +1757,12 @@
             $('<script />', {
                 src:       iURL,
                 onload:    function () {
-                    delete $.JSONP[iJSONP];
-                    $(this).remove();
+                    var $_JSONP = $(this);
+
+                    $.wait(1,  function () {
+                        delete $.JSONP[JSONP_GUID];
+                        $_JSONP.remove();
+                    });
                 }
             }).appendTo(DOM.head);
         },
@@ -2124,11 +2149,28 @@
 
     if ( $.browser.modern )  return;
 
-    BOM.HTMLEvents = function () {
+    BOM.HTMLEvents = function (iEvent) {
         $.extend(this, DOM.createEventObject());
-        this.bubbles = true;
-        this.eventPhase = 3;
-        this.view = BOM;
+
+        if (! iEvent)  return;
+        
+        $.extend(this, {
+            type:               iEvent.type,
+            target:             iEvent.srcElement,
+            which:              (iEvent.type && (iEvent.type.slice(0, 3) == 'key'))  ?
+                iEvent.keyCode  :  [0, 1, 3, 0, 2, 0, 0, 0][iEvent.button],
+            relatedTarget:      ({
+                mouseover:     iEvent.fromElement,
+                mouseout:      iEvent.toElement,
+                mouseenter:    iEvent.fromElement || iEvent.toElement,
+                mouseleave:    iEvent.toElement || iEvent.fromElement
+            })[iEvent.type],
+            bubbles:            true,
+            eventPhase:         3,
+            view:               BOM,
+            isTrusted:          false,
+            propertyName:       iEvent.propertyName
+        });
     };
 
     $.extend(BOM.HTMLEvents.prototype, {
@@ -2148,14 +2190,16 @@
         }
     });
 
-    BOM.CustomEvent = function () { };
+    BOM.CustomEvent = function () {
+        BOM.HTMLEvents.call(this, arguments[0]);
+    };
     BOM.CustomEvent.prototype = new BOM.HTMLEvents();
     BOM.CustomEvent.prototype.initCustomEvent = function () {
         $.extend(this, {
             type:          arguments[0],
             bubbles:       !! arguments[1],
             cancelable:    !! arguments[2],
-            detail:        arguments[3]
+            detail:        arguments[3] || 0
         });
     };
 
@@ -2165,33 +2209,26 @@
 
     function IE_Event_Handler(iElement, iCallback) {
         return  function () {
-                var iEvent = $.extend(new HTMLEvents(),  BOM.event),
-                    Loaded;
+                var iEvent = new HTMLEvents(BOM.event),  Loaded;
 
                 switch (iEvent.type) {
-                    case 'readystatechange':    ;
-//                            Loaded = iElement.readyState.match(/loaded|complete/);  break;
+                    case 'readystatechange':    iEvent.type = 'load';
+//                      Loaded = iElement.readyState.match(/loaded|complete/);  break;
                     case 'load':
                         Loaded = (iElement.readyState == 'loaded');  break;
-                    case 'propertychange':
-                        if ( $(iElement).data('custom-event') )
-                            iEvent.type = iEvent.propertyName.replace(/^on/i, '');
-                    default:
-                        Loaded = true;
+                    case 'propertychange':      {
+                        var iType = iEvent.propertyName.match(/^on(.+)/i);
+                        if (iType && iElement.attributes[iEvent.propertyName].expando)
+                            iEvent.type = iType[1];
+                        else {
+                            iEvent.type = 'DOMAttrModified';
+                            iEvent.attrName = iEvent.propertyName;
+                        }
+                    }
+                    default:                    Loaded = true;
                 }
-                if (! Loaded)  return;
-
-                iCallback.call(iElement,  $.extend(iEvent, {
-                    target:             iEvent.srcElement,
-                    which:              (iEvent.type.slice(0, 3) == 'key') ?
-                        iEvent.keyCode  :  [0, 1, 3, 0, 2, 0, 0, 0][iEvent.button],
-                    relatedTarget:      ({
-                        mouseover:     iEvent.fromElement,
-                        mouseout:      iEvent.toElement,
-                        mouseenter:    iEvent.fromElement || iEvent.toElement,
-                        mouseleave:    iEvent.toElement || iEvent.fromElement
-                    })[iEvent.type]
-                }));
+                if (Loaded  &&  (typeof iCallback == 'function'))
+                    iCallback.call(iElement, iEvent);
             };
     }
 
@@ -2622,14 +2659,12 @@
         }
 
         function Append_Back() {
-            var $_HTML = $(arguments[0]);
+            $_This.children().fadeOut();
+            $(arguments[0]).appendTo( $_This.empty() ).fadeIn();
 
-            for (var i = 0;  i < $_This.length;  i++) {
-                $_HTML.clone().appendTo( $($_This[i]).empty() ).fadeIn();
-                try {
+            if (typeof iCallback == 'function')
+                for (var i = 0;  i < $_This.length;  i++)
                     iCallback.apply($_This[i], arguments);
-                } catch (iError) { }
-            }
         }
 
         function Load_Back(iHTML) {
