@@ -2,7 +2,7 @@
 //              >>>  jQuery+  <<<
 //
 //
-//    [Version]     v3.9  (2015-8-1)
+//    [Version]     v4.1  (2015-8-6)
 //
 //    [Based on]    jQuery  v1.9+
 //
@@ -212,14 +212,10 @@
                 iType[0].toUpperCase() + iType.slice(1)
             );
 
-        if (iType != 'Object')  return iType;
-
-        //  Object Type Detail
-        if (! iVar) {
-            if (isNaN(iVar)  &&  (iVar !== iVar))
-                return 'NaN';
-            else
-                return 'Null';
+        if (! iVar)  switch (true) {
+            case (isNaN(iVar)  &&  (iVar !== iVar)):    return 'NaN';
+            case (iVar === null):                       return 'Null';
+            default:                                    return iType;
         }
 
         if (
@@ -235,9 +231,13 @@
             iType.match(/HTML\w+?Element$/) ||
             (typeof iVar.tagName == 'string')
         )
-            return 'Element';
+            return 'HTMLElement';
 
-        if ((_Browser_.msie < 9)  &&  (typeof iVar.length == 'number'))  try {
+        if (
+            (! _Browser_.modern) &&
+            (iType == 'Object') &&
+            (typeof iVar.length == 'number')
+        )  try {
             iVar.item();
             try {
                 iVar.namedItem();
@@ -682,36 +682,110 @@
     };
 
 
-/* ---------- Form 元素 无刷新提交  v0.4 ---------- */
-
-    function ECDS_Post(iCallback) {
-        var $_Button = this.find(':button').attr('disabled', true),
-            iTarget = this.attr('target');
-        if ((! iTarget) || (iTarget in Type_Info.Target)) {
-            iTarget = $.guid('iframe');
-            this.attr('target', iTarget);
+/* ---------- HTML DOM 沙盒  v0.1 ---------- */
+    $.fn.sandBox = function (iHTML, iSelector, iCallback) {
+        if (arguments.length < 3) {
+            iCallback = iSelector;
+            iSelector = '';
         }
 
-        var $_iFrame = $('iframe[name="' + iTarget + '"]');
-        if (! $_iFrame.length)
-            $_iFrame = $('<iframe />', {
-                frameBorder:          0,
-                allowTransparency:    true,
-                name:                 iTarget
+        var $_iFrame = $('<iframe style="display: none"></iframe>');
+
+        $_iFrame.one('load',  function () {
+            var _DOM_ = this.contentWindow.document;
+
+            $.every(0.04,  function () {
+                if (! (_DOM_.body && _DOM_.body.childNodes.length))
+                    return;
+
+                var $_Content = $(iSelector || 'body > *',  _DOM_);
+                if (! $_Content.length)
+                    $_Content = _DOM_.body.childNodes;
+
+                iCallback.call(
+                    $_iFrame[0],  $('head style', _DOM_).add($_Content).clone(true)
+                );
+
+                return false;
+            });
+            _DOM_.write(iHTML);
+            _DOM_.close();
+        });
+
+        return $_iFrame.appendTo(DOM.body);
+    };
+
+
+/* ---------- Form 元素 无刷新提交  v0.5 ---------- */
+
+    /* ----- DOM HTTP 请求对象  v0.2 ----- */
+    BOM.DOMHttpRequest = function () { };
+    BOM.DOMHttpRequest.JSONP = { };
+
+    $.extend(BOM.DOMHttpRequest.prototype, {
+        open:    function (iMethod, iTarget) {
+            this.method = iMethod.toUpperCase();
+
+            //  <script />, JSONP
+            if (this.method == 'GET') {
+                this.URL = iTarget;
+                return;
+            }
+
+            //  <iframe />
+            var iDHR = this,  $_Form = $(iTarget);
+
+            var $_Button = $_Form.find(':button').attr('disabled', true),
+                iTarget = $_Form.attr('target');
+            if ((! iTarget) || (iTarget in Type_Info.Target)) {
+                iTarget = $.guid('iframe');
+                $_Form.attr('target', iTarget);
+            }
+
+            var $_iFrame = $('iframe[name="' + iTarget + '"]');
+            if (! $_iFrame.length)
+                $_iFrame = $('<iframe />', {
+                    frameBorder:          0,
+                    allowTransparency:    true,
+                    name:                 iTarget
+                });
+
+            $_iFrame.hide().appendTo( $_Form.parent() ).on('load', function () {
+                $_Button.prop('disabled', false);
+                try {
+                    var $_Content = $(this).contents();
+                    iDHR.onload.call(
+                        $_Form[0],  $_Content.find('body').text(),  $_Content
+                    );
+                } catch (iError) { }
             });
 
-        var $_This = this;
-        $_iFrame.hide().appendTo( this.parent() ).on('load', function () {
-            $_Button.prop('disabled', false);
-            try {
-                var $_Content = $(this).contents();
-                iCallback.call(
-                    $_This[0],  $_Content.find('body').text(),  $_Content
-                );
-            } catch (iError) { }
-        });
-        this.submit();
-    }
+            this.$_DOM = $_Form;
+        },
+        send:    function () {
+            //  <iframe />
+            if (this.method == 'POST') {
+                this.$_DOM.submit();
+                return;
+            }
+
+            //  <script />, JSONP
+            var iURL = this.URL.match(/([^\?=&]+\?|\?)?(\w.+)?/);
+            if (! iURL)  throw 'Illegal URL !';
+
+            var _GUID_ = $.guid(),  iDHR = this,  $_JSONP;
+
+            BOM.DOMHttpRequest.JSONP[_GUID_] = function () {
+                iDHR.onload.apply(iDHR, arguments);
+                delete this[_GUID_];
+                $_JSONP.remove();
+            };
+            this.URL = iURL[1] + $.extend(arguments[0], $.paramJSON(
+                iURL[2].replace(/(\w+)=\?/,  '$1=DOMHttpRequest.JSONP.' + _GUID_)
+            ));
+            $_JSONP = $('<script />', {src:  this.URL}).appendTo(DOM.head);
+        }
+    });
 
     $.fn.post = function (iCallback) {
         if (! this.length)  return this;
@@ -737,7 +811,10 @@
                 if (! ($.browser.msie < 10))
                     iData = new FormData($_Form[0]);
                 else {
-                    ECDS_Post.call($_Form, iCallback);
+                    var iDHR = new BOM.DOMHttpRequest();
+                    iDHR.open('POST', $_Form)
+                    iDHR.onload = iCallback;
+                    iDHR.send();
                     return;
                 }
             }
