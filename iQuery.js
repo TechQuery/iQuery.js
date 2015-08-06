@@ -2,7 +2,7 @@
 //                >>>  iQuery.js  <<<
 //
 //
-//      [Version]    v1.0  (2015-8-5)  Stable
+//      [Version]    v1.0  (2015-8-6)  Stable
 //
 //      [Usage]      A Light-weight jQuery Compatible API
 //                   with IE 8+ compatibility.
@@ -817,12 +817,15 @@
     var _Concat_ = function () {
             var iArgs = _Extend_([ ], arguments);
 
-            for (var i = 0;  i < iArgs.length;  i++)
-                if (
-                    (typeof iArgs[i].length == 'number')  &&
-                    (! (_Type_(iArgs[i]) in Type_Info.DOM.element))
-                )
-                    iArgs[i] = _Extend_([ ], iArgs[i]);
+            for (var i = 0, iType;  i < iArgs.length;  i++)
+                if (typeof iArgs[i].length == 'number') {
+                    iType = _Type_(iArgs[i]);
+                    if (
+                        (! iType.match(/String|Array/))  &&
+                        (! (iType in Type_Info.DOM.element))
+                    )
+                        iArgs[i] = _Extend_([ ], iArgs[i]);
+                }
 
             return  Array.prototype.concat.apply(iArgs.shift(), iArgs);
         };
@@ -1483,14 +1486,15 @@
                 );
         },
         triggerHandler:     function () {
-            var iHandler = $(this[0]).data('_event_'),  iReturn;
+            var iHandler = $(this[0]).data('_event_');
             iHandler = iHandler && iHandler[arguments[0]];
-
             if (! iHandler)  return;
 
+            var iArgs = $.extend([ ], arguments),  iReturn;
+            iArgs.unshift([ ]);
             for (var i = 0;  i < iHandler.length;  i++)
                 iReturn = iHandler[i].apply(
-                    this[0],  _Concat_([ ], arguments)
+                    this[0],  _Concat_.apply(BOM, iArgs)
                 );
 
             return iReturn;
@@ -1503,7 +1507,7 @@
                 iEvent = _Get_Set_.Data.clone(this[i], $_Result[i]);
 
                 for (var iType in iEvent)
-                    iNew.addEventListener(iType, Proxy_Handler, false);
+                    $_Result[i].addEventListener(iType, Proxy_Handler, false);
             }
 
             return this.pushStack($_Result);
@@ -1579,7 +1583,7 @@
         }
     });
 
-    /* ----- HTTP Client ----- */
+/* ---------- HTTP Client ---------- */
     function X_Domain(Target_URL) {
         var iLocation = BOM.location;
         Target_URL = Target_URL.match(/^(\w+?(s)?:)?\/\/([\w\d:]+@)?([^\/\:\@]+)(:(\d+))?/);
@@ -1595,6 +1599,7 @@
         if (Target_URL[6] && (Target_URL[6] != iPort))  return true;
     }
 
+    /* ----- XML HTTP Request ----- */
     var XHR_Open = XMLHttpRequest.prototype.open;
     var XHR_Proto = {
             open:           function () {
@@ -1661,35 +1666,76 @@
         $.extend(BOM.XDomainRequest.prototype, XHR_Proto);
     }
 
-    function ECDS_Post(iCallback) {
-        var $_Button = this.find(':button').attr('disabled', true),
-            iTarget = this.attr('target');
-        if ((! iTarget) || (iTarget in Type_Info.Target)) {
-            iTarget = $.guid('iframe');
-            this.attr('target', iTarget);
-        }
+    /* ----- DOM HTTP Request ----- */
+    BOM.DOMHttpRequest = function () { };
+    BOM.DOMHttpRequest.JSONP = { };
 
-        var $_iFrame = $('iframe[name="' + iTarget + '"]');
-        if (! $_iFrame.length)
-            $_iFrame = $('<iframe />', {
-                frameBorder:          0,
-                allowTransparency:    true,
-                name:                 iTarget
+    $.extend(BOM.DOMHttpRequest.prototype, {
+        open:    function (iMethod, iTarget) {
+            this.method = iMethod.toUpperCase();
+
+            //  <script />, JSONP
+            if (this.method == 'GET') {
+                this.URL = iTarget;
+                return;
+            }
+
+            //  <iframe />
+            var iDHR = this,  $_Form = $(iTarget);
+
+            var $_Button = $_Form.find(':button').attr('disabled', true),
+                iTarget = $_Form.attr('target');
+            if ((! iTarget) || (iTarget in Type_Info.Target)) {
+                iTarget = $.guid('iframe');
+                $_Form.attr('target', iTarget);
+            }
+
+            var $_iFrame = $('iframe[name="' + iTarget + '"]');
+            if (! $_iFrame.length)
+                $_iFrame = $('<iframe />', {
+                    frameBorder:          0,
+                    allowTransparency:    true,
+                    name:                 iTarget
+                });
+
+            $_iFrame.hide().appendTo( $_Form.parent() ).on('load', function () {
+                $_Button.prop('disabled', false);
+                try {
+                    var $_Content = $(this).contents();
+                    iDHR.onload.call(
+                        $_Form[0],  $_Content.find('body').text(),  $_Content
+                    );
+                } catch (iError) { }
             });
 
-        var $_This = this;
-        $_iFrame.hide().appendTo( this.parent() ).on('load', function () {
-            $_Button.prop('disabled', false);
-            try {
-                var $_Content = $(this).contents();
-                iCallback.call(
-                    $_This[0],  $_Content.find('body').text(),  $_Content
-                );
-            } catch (iError) { }
-        });
-        this.submit();
-    }
+            this.$_DOM = $_Form;
+        },
+        send:    function () {
+            //  <iframe />
+            if (this.method == 'POST') {
+                this.$_DOM.submit();
+                return;
+            }
 
+            //  <script />, JSONP
+            var iURL = this.URL.match(/([^\?=&]+\?|\?)?(\w.+)?/);
+            if (! iURL)  throw 'Illegal URL !';
+
+            var _GUID_ = $.guid(),  iDHR = this,  $_JSONP;
+
+            BOM.DOMHttpRequest.JSONP[_GUID_] = function () {
+                iDHR.onload.apply(iDHR, arguments);
+                delete this[_GUID_];
+                $_JSONP.remove();
+            };
+            this.URL = iURL[1] + $.extend(arguments[0], $.paramJSON(
+                iURL[2].replace(/(\w+)=\?/,  '$1=DOMHttpRequest.JSONP.' + _GUID_)
+            ));
+            $_JSONP = $('<script />', {src:  this.URL}).appendTo(DOM.head);
+        }
+    });
+
+    /* ----- HTTP Wraped Method ----- */
     function iHTTP(iURL, iData, iCallback) {
         if ($.type(iData) == 'HTMLElement') {
             var $_Form = $(iData);
@@ -1704,7 +1750,10 @@
                     if (! ($.browser.msie < 10))
                         iData = new FormData($_Form[0]);
                     else {
-                        ECDS_Post.call($_Form, iCallback);
+                        var iDHR = new DOMHttpRequest();
+                        iDHR.open('POST', $_Form);
+                        iDHR.onload = iCallback;
+                        iDHR.send();
                         return;
                     }
                 }
@@ -1713,65 +1762,46 @@
         if ( $.isPlainObject(iData) )
             iData = BOM.encodeURI( $.param(iData || { }) );
 
-        var HTTP_Client = new BOM[
+        var iXHR = new BOM[
                 (X_Domain(iURL) && ($.browser.msie < 10))  ?  'XDomainRequest' : 'XMLHttpRequest'
             ]();
-        HTTP_Client.onready = iCallback;
-        HTTP_Client.open(iData ? 'POST' : 'GET',  iURL,  true);
-        HTTP_Client.withCredentials = true;
+        iXHR.onready = iCallback;
+        iXHR.open(iData ? 'POST' : 'GET',  iURL,  true);
+        iXHR.withCredentials = true;
         if (typeof iData == 'string')
-            HTTP_Client.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
-        HTTP_Client.setRequestHeader('Accept', '*/*');
-        HTTP_Client.send(iData);
+            iXHR.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
+        iXHR.setRequestHeader('Accept', '*/*');
+        iXHR.send(iData);
 
-        return HTTP_Client;
+        return iXHR;
     }
 
     $.extend($, {
-        JSONP:    { },
-        get:      function (iURL, iData, iCallback) {
-            iURL = iURL.split('?');
-            iURL[1] = iURL.slice(1).join('?');
-            iURL.length = 2;
+        get:     function (iURL, iData, iCallback) {
+            if ( iURL.match(/\w+=\?/) ) {
+                var iDHR = new BOM.DOMHttpRequest();
+                iDHR.open('GET', iURL);
+                iDHR.onload = iCallback;
+                return iDHR.send(iData);
+            }
 
+            iURL = iURL.split('?');
             if (typeof iData == 'function') {
                 iCallback = iData;
                 iData = { };
             }
-
-            var iArgs = $.paramJSON(iURL[1]),
-                iJSONP = iURL[1].match(/(\w+)=\?/);
-
-            if (iJSONP) {
-                var JSONP_GUID = $.guid();
-                this.JSONP[JSONP_GUID] = iCallback;
-                iArgs[iJSONP[1]] = 'iQuery.JSONP.' + JSONP_GUID;
-            }
-
-            iURL = iURL[0] + '?' + $.param(
-                $.extend(iArgs,  iData,  {_: $.now()})
-            );
-            if (! iJSONP)
-                return  iHTTP(iURL, null, iCallback);
-
-            $('<script />', {
-                src:       iURL,
-                onload:    function () {
-                    var $_JSONP = $(this);
-
-                    $.wait(1,  function () {
-                        delete $.JSONP[JSONP_GUID];
-                        $_JSONP.remove();
-                    });
-                }
-            }).appendTo(DOM.head);
+            return  iHTTP(iURL[0] + '?' + $.param(
+                    $.extend($.paramJSON(iURL[1]), iData, {
+                        _:    $.now()
+                    })
+                ), null, iCallback);
         },
-        post:     iHTTP
+        post:    iHTTP
     });
 
     $.getJSON = $.get;
 
-    /* ----- Event ShortCut ----- */
+/* ---------- Event ShortCut ---------- */
     $.fn.off = $.fn.unbind;
 
     var iShortCut = $.extend(_inKey_('tap', 'press', 'swipe'),  Type_Info.DOM_Event),
@@ -2647,6 +2677,39 @@
 /* ---------- Smart HTML Loading ---------- */
 (function (DOM, $) {
 
+    /* ----- HTML DOM SandBox ----- */
+    $.fn.sandBox = function (iHTML, iSelector, iCallback) {
+        if (arguments.length < 3) {
+            iCallback = iSelector;
+            iSelector = '';
+        }
+
+        var $_iFrame = $('<iframe style="display: none"></iframe>');
+
+        $_iFrame.one('load',  function () {
+            var _DOM_ = this.contentWindow.document;
+
+            $.every(0.04,  function () {
+                if (! (_DOM_.body && _DOM_.body.childNodes.length))
+                    return;
+
+                var $_Content = $(iSelector || 'body > *',  _DOM_);
+                if (! $_Content.length)
+                    $_Content = _DOM_.body.childNodes;
+
+                iCallback.call(
+                    $_iFrame[0],  $('head style', _DOM_).add($_Content).clone(true)
+                );
+
+                return false;
+            });
+            _DOM_.write(iHTML);
+            _DOM_.close();
+        });
+
+        return $_iFrame.appendTo(DOM.body);
+    };
+
     $.fn.load = function (iURL, iData, iCallback) {
         var $_This = this;
 
@@ -2675,31 +2738,12 @@
 
             var _Context_ = [this, $.makeArray(arguments)];
 
-            $('<iframe />', {
-                style:    'display: none'
-            }).one('load',  function () {
-                var $_iFrame = $(this),
-                    _DOM_ = this.contentWindow.document;
-
-                $.every(0.04,  function () {
-                    if (! (_DOM_.body && _DOM_.body.childNodes.length))
-                        return;
-
-                    var $_Content = $(iURL[1] || 'body > *',  _DOM_);
-                    if (! $_Content.length)
-                        $_Content = _DOM_.body.childNodes;
-
-                    Append_Back.apply(
-                        _Context_[0],
-                        _Context_[1].splice(0,  1,  $('head style', _DOM_).add($_Content))
-                    );
-
-                    $_iFrame.remove();
-                    return false;
-                });
-                _DOM_.write(iHTML);
-                _DOM_.close();
-            }).appendTo(DOM.body);
+            $(DOM.body).sandBox(iHTML,  iURL[1],  function ($_innerDOM) {
+                Append_Back.apply(
+                    _Context_[0],  _Context_[1].splice(0, 1, $_innerDOM)
+                );
+                $(this).remove();
+            });
         }
 
         if (! iData)
