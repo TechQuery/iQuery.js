@@ -2,7 +2,7 @@
 //              >>>  jQuery+  <<<
 //
 //
-//    [Version]     v4.1  (2015-8-6)
+//    [Version]     v4.1  (2015-8-7)
 //
 //    [Based on]    jQuery  v1.9+
 //
@@ -719,16 +719,66 @@
 /* ---------- Form 元素 无刷新提交  v0.5 ---------- */
 
     /* ----- DOM HTTP 请求对象  v0.2 ----- */
-    BOM.DOMHttpRequest = function () { };
+    var XHR_Extension = {
+            timeOut:        function (iSecond, iCallback) {
+                var iXHR = this;
+
+                $.wait(iSecond, function () {
+                    iXHR[
+                        (iXHR.$_DOM || iXHR.crossDomain)  ?  'onload'  :  'onreadystatechange'
+                    ] = null;
+                    iXHR.abort();
+                    iCallback.call(iXHR);
+                    iXHR = null;
+                });
+            },
+            responseAny:    function () {
+                var iContent = this.responseText,
+                    iType = this.responseType || 'text/plain';
+
+                switch ( iType.split('/')[1] ) {
+                    case 'plain':    ;
+                    case 'json':     {
+                        var _Content_ = iContent.trim();
+                        try {
+                            iContent = BOM.JSON.parseAll(_Content_);
+                            this.responseType = 'application/json';
+                        } catch (iError) {
+                            if ($.browser.msie != 9)  try {
+                                iContent = $.parseXML(_Content_);
+                                this.responseType = 'text/xml';
+                            } catch (iError) { }
+                        }
+                        break;
+                    }
+                    case 'xml':      iContent = this.responseXML;
+                }
+
+                return iContent;
+            },
+            retry:          function (Wait_Seconds) {
+                var iXHR = this;
+
+                $.wait(Wait_Seconds, function () {
+                    iXHR.open.apply(iXHR, iXHR.requestArgs);
+                });
+            }
+        };
+
+    BOM.DOMHttpRequest = function () {
+        this.status = 0;
+        this.readyState = 0;
+        this.responseType = 'text/plain';
+    };
     BOM.DOMHttpRequest.JSONP = { };
 
-    $.extend(BOM.DOMHttpRequest.prototype, {
-        open:    function (iMethod, iTarget) {
+    $.extend(BOM.DOMHttpRequest.prototype, XHR_Extension, {
+        open:                function (iMethod, iTarget) {
             this.method = iMethod.toUpperCase();
 
             //  <script />, JSONP
             if (this.method == 'GET') {
-                this.URL = iTarget;
+                this.responseURL = iTarget;
                 return;
             }
 
@@ -752,38 +802,52 @@
 
             $_iFrame.hide().appendTo( $_Form.parent() ).on('load', function () {
                 $_Button.prop('disabled', false);
-                try {
+
+                if (iDHR.readyState)  try {
                     var $_Content = $(this).contents();
-                    iDHR.onload.call(
-                        $_Form[0],  $_Content.find('body').text(),  $_Content
-                    );
+                    iDHR.responseText = $_Content.find('body').text();
+                    iDHR.status = 200;
+                    iDHR.readyState = 4;
+                    iDHR.onload.call($_Form[0],  iDHR.responseAny(),  $_Content);
                 } catch (iError) { }
             });
 
             this.$_DOM = $_Form;
+            this.requestArgs = arguments;
         },
-        send:    function () {
-            //  <iframe />
-            if (this.method == 'POST') {
-                this.$_DOM.submit();
-                return;
+        send:                function () {
+            if (this.method == 'POST')
+                this.$_DOM.submit();    //  <iframe />
+            else {
+                //  <script />, JSONP
+                var iURL = this.responseURL.match(/([^\?=&]+\?|\?)?(\w.+)?/);
+                if (! iURL)  throw 'Illegal URL !';
+
+                var _GUID_ = $.guid(),  iDHR = this;
+
+                BOM.DOMHttpRequest.JSONP[_GUID_] = function () {
+                    if (iDHR.readyState) {
+                        iDHR.status = 200;
+                        iDHR.readyState = 4;
+                        iDHR.onload.apply(iDHR, arguments);
+                    }
+                    delete this[_GUID_];
+                    iDHR.$_DOM.remove();
+                };
+                this.responseURL = iURL[1] + $.param(
+                    $.extend(arguments[0], $.paramJSON(
+                        iURL[2].replace(/(\w+)=\?/,  '$1=DOMHttpRequest.JSONP.' + _GUID_)
+                    ))
+                );
+                this.$_DOM = $('<script />', {src:  this.responseURL}).appendTo(DOM.head);
             }
-
-            //  <script />, JSONP
-            var iURL = this.URL.match(/([^\?=&]+\?|\?)?(\w.+)?/);
-            if (! iURL)  throw 'Illegal URL !';
-
-            var _GUID_ = $.guid(),  iDHR = this,  $_JSONP;
-
-            BOM.DOMHttpRequest.JSONP[_GUID_] = function () {
-                iDHR.onload.apply(iDHR, arguments);
-                delete this[_GUID_];
-                $_JSONP.remove();
-            };
-            this.URL = iURL[1] + $.extend(arguments[0], $.paramJSON(
-                iURL[2].replace(/(\w+)=\?/,  '$1=DOMHttpRequest.JSONP.' + _GUID_)
-            ));
-            $_JSONP = $('<script />', {src:  this.URL}).appendTo(DOM.head);
+            this.readyState = 1;
+        },
+        setRequestHeader:    function () {
+            console.warn("JSONP/iframe doesn't support Changing HTTP Headers...");
+        },
+        abort:               function () {
+            this.readyState = 0;
         }
     });
 
