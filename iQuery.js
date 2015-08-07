@@ -2,7 +2,7 @@
 //                >>>  iQuery.js  <<<
 //
 //
-//      [Version]    v1.0  (2015-8-6)  Stable
+//      [Version]    v1.0  (2015-8-7)  Stable
 //
 //      [Usage]      A Light-weight jQuery Compatible API
 //                   with IE 8+ compatibility.
@@ -1583,224 +1583,6 @@
         }
     });
 
-/* ---------- HTTP Client ---------- */
-    function X_Domain(Target_URL) {
-        var iLocation = BOM.location;
-        Target_URL = Target_URL.match(/^(\w+?(s)?:)?\/\/([\w\d:]+@)?([^\/\:\@]+)(:(\d+))?/);
-
-        if (! Target_URL)  return false;
-        if (Target_URL[1] && (Target_URL[1] != iLocation.protocol))  return true;
-        if (Target_URL[4] && (Target_URL[4] != iLocation.hostname))  return true;
-        var iPort = iLocation.port || (
-                (iLocation.protocol == 'http:') && 80
-            ) || (
-                (iLocation.protocol == 'https:') && 443
-            );
-        if (Target_URL[6] && (Target_URL[6] != iPort))  return true;
-    }
-
-    /* ----- XML HTTP Request ----- */
-    var XHR_Open = XMLHttpRequest.prototype.open;
-    var XHR_Proto = {
-            open:           function () {
-                var iXHR = this,
-                    XHR_XD = X_Domain(arguments[1]);
-
-                this[XHR_XD ? 'onload' : 'onreadystatechange'] = function () {
-                    if (! (XHR_XD || (iXHR.readyState == 4)))  return;
-
-                    if (typeof iXHR.onready == 'function')
-                        iXHR.onready.call(iXHR, iXHR.responseAny());
-                    iXHR = null;
-                };
-                XHR_Open.apply(this, arguments);
-
-                this.requestArgs = arguments;
-            },
-            responseAny:    function () {
-                var iContent = this.responseText,
-                    iType = this.responseType || 'text/plain';
-
-                switch ( iType.split('/')[1] ) {
-                    case 'plain':    ;
-                    case 'json':     {
-                        var _Content_ = iContent.trim();
-                        try {
-                            iContent = BOM.JSON.parseAll(_Content_);
-                        } catch (iError) {
-                            if ($.browser.msie != 9)  try {
-                                iContent = $.parseXML(_Content_);
-                            } catch (iError) { }
-                        }
-                        break;
-                    }
-                    case 'xml':      iContent = this.responseXML;
-                }
-
-                return iContent;
-            },
-            timeOut:        function (TimeOut_Seconds, TimeOut_Callback) {
-                var iXHR = this;
-
-                $.wait(TimeOut_Seconds, function () {
-                    iXHR.onreadystatechange = null;
-                    iXHR.abort();
-                    TimeOut_Callback.call(iXHR);
-                });
-            },
-            retry:          function (Wait_Seconds) {
-                var iXHR = this;
-
-                $.wait(Wait_Seconds, function () {
-                    iXHR.open.apply(iXHR, iXHR.requestArgs);
-                });
-            }
-        };
-
-    $.extend(XMLHttpRequest.prototype, XHR_Proto);
-
-    if ($.browser.msie < 10) {
-        XHR_Proto.setRequestHeader = function () {
-            console.warn("IE 8/9 XDR doesn't support Changing HTTP Headers...");
-        };
-        $.extend(BOM.XDomainRequest.prototype, XHR_Proto);
-    }
-
-    /* ----- DOM HTTP Request ----- */
-    BOM.DOMHttpRequest = function () { };
-    BOM.DOMHttpRequest.JSONP = { };
-
-    $.extend(BOM.DOMHttpRequest.prototype, {
-        open:    function (iMethod, iTarget) {
-            this.method = iMethod.toUpperCase();
-
-            //  <script />, JSONP
-            if (this.method == 'GET') {
-                this.URL = iTarget;
-                return;
-            }
-
-            //  <iframe />
-            var iDHR = this,  $_Form = $(iTarget);
-
-            var $_Button = $_Form.find(':button').attr('disabled', true),
-                iTarget = $_Form.attr('target');
-            if ((! iTarget) || (iTarget in Type_Info.Target)) {
-                iTarget = $.guid('iframe');
-                $_Form.attr('target', iTarget);
-            }
-
-            var $_iFrame = $('iframe[name="' + iTarget + '"]');
-            if (! $_iFrame.length)
-                $_iFrame = $('<iframe />', {
-                    frameBorder:          0,
-                    allowTransparency:    true,
-                    name:                 iTarget
-                });
-
-            $_iFrame.hide().appendTo( $_Form.parent() ).on('load', function () {
-                $_Button.prop('disabled', false);
-                try {
-                    var $_Content = $(this).contents();
-                    iDHR.onload.call(
-                        $_Form[0],  $_Content.find('body').text(),  $_Content
-                    );
-                } catch (iError) { }
-            });
-
-            this.$_DOM = $_Form;
-        },
-        send:    function () {
-            //  <iframe />
-            if (this.method == 'POST') {
-                this.$_DOM.submit();
-                return;
-            }
-
-            //  <script />, JSONP
-            var iURL = this.URL.match(/([^\?=&]+\?|\?)?(\w.+)?/);
-            if (! iURL)  throw 'Illegal URL !';
-
-            var _GUID_ = $.guid(),  iDHR = this,  $_JSONP;
-
-            BOM.DOMHttpRequest.JSONP[_GUID_] = function () {
-                iDHR.onload.apply(iDHR, arguments);
-                delete this[_GUID_];
-                $_JSONP.remove();
-            };
-            this.URL = iURL[1] + $.extend(arguments[0], $.paramJSON(
-                iURL[2].replace(/(\w+)=\?/,  '$1=DOMHttpRequest.JSONP.' + _GUID_)
-            ));
-            $_JSONP = $('<script />', {src:  this.URL}).appendTo(DOM.head);
-        }
-    });
-
-    /* ----- HTTP Wraped Method ----- */
-    function iHTTP(iURL, iData, iCallback) {
-        if ($.type(iData) == 'HTMLElement') {
-            var $_Form = $(iData);
-            iData = { };
-
-            if ($_Form[0].tagName.toLowerCase() == 'form') {
-                if (! $_Form.find('input[type="file"]').length) {
-                    var _Data_ = $_Form.serializeArray();
-                    for (var i = 0;  i < _Data_.length;  i++)
-                        iData[_Data_[i].name] = _Data_[i].value;
-                } else {
-                    if (! ($.browser.msie < 10))
-                        iData = new FormData($_Form[0]);
-                    else {
-                        var iDHR = new DOMHttpRequest();
-                        iDHR.open('POST', $_Form);
-                        iDHR.onload = iCallback;
-                        iDHR.send();
-                        return;
-                    }
-                }
-            }
-        }
-        if ( $.isPlainObject(iData) )
-            iData = BOM.encodeURI( $.param(iData || { }) );
-
-        var iXHR = new BOM[
-                (X_Domain(iURL) && ($.browser.msie < 10))  ?  'XDomainRequest' : 'XMLHttpRequest'
-            ]();
-        iXHR.onready = iCallback;
-        iXHR.open(iData ? 'POST' : 'GET',  iURL,  true);
-        iXHR.withCredentials = true;
-        if (typeof iData == 'string')
-            iXHR.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
-        iXHR.setRequestHeader('Accept', '*/*');
-        iXHR.send(iData);
-
-        return iXHR;
-    }
-
-    $.extend($, {
-        get:     function (iURL, iData, iCallback) {
-            if ( iURL.match(/\w+=\?/) ) {
-                var iDHR = new BOM.DOMHttpRequest();
-                iDHR.open('GET', iURL);
-                iDHR.onload = iCallback;
-                return iDHR.send(iData);
-            }
-
-            iURL = iURL.split('?');
-            if (typeof iData == 'function') {
-                iCallback = iData;
-                iData = { };
-            }
-            return  iHTTP(iURL[0] + '?' + $.param(
-                    $.extend($.paramJSON(iURL[1]), iData, {
-                        _:    $.now()
-                    })
-                ), null, iCallback);
-        },
-        post:    iHTTP
-    });
-
-    $.getJSON = $.get;
-
 /* ---------- Event ShortCut ---------- */
     $.fn.off = $.fn.unbind;
 
@@ -1837,89 +1619,115 @@
 
     if ($.browser.mobile)  $.fn.click = $.fn.tap;
 
-/* ---------- jQuery+  v3.9 ---------- */
 
-    /* ----- 远程 Console  v0.1 ----- */
 
-    //  Thank for raphealguo --- http://rapheal.sinaapp.com/2014/11/06/javascript-error-monitor/
+    $(BOM).data('_type_', Type_Info);    //  Share Information of Types between iQuery Modules.
 
-    var Console_URL = $('head link[rel="console"]').attr('href');
 
-    BOM.onerror = function (iMessage, iURL, iLine, iColumn, iError){
-        $.wait(0,  function () {
-            var iData = {
-                    message:    iMessage,
-                    url:        iURL,
-                    line:       iLine,
-                    column:     iColumn  ||  (BOM.event && BOM.event.errorCharacter)  ||  0
-                };
 
-            if (iError && iError.stack)
-                iData.stack = (iError.stack || iError.stacktrace).toString();
+/* ----- DOM UI Data Operator ----- */
+    function Value_Operator(iValue, iResource) {
+        var $_This = $(this),  iReturn;
 
-            if (Console_URL) {
-                if (iData.stack)
-                    $.post(Console_URL, iData);
-                else
-                    $.get(Console_URL, iData);
+        switch ( this.tagName.toLowerCase() ) {
+            case 'img':      {
+                iReturn = $_This.one('load',  function () {
+                    $(this).trigger('Ready');
+                }).addClass('jQuery_Loading').attr('src', iValue);
+                iResource.count++ ;
+                console.log(this);
+            }  break;
+            case 'input':    iReturn = $_This.attr('value', iValue);  break;
+            default:         {
+                var _Set_ = iValue || $.isData(iValue),
+                    End_Element = (! this.children.length),
+                    _BGI_ = (typeof iValue == 'string') && iValue.match(/^\w+:\/\/[^\/]+/);
+
+                if (_Set_) {
+                    if ((! End_Element) && _BGI_)
+                        $_This.css('background-image',  'url("' + iValue + '")');
+                    else
+                        $_This.html(iValue);
+                } else {
+                    _BGI_ = $_This.css('background-image').match(/^url\(('|")?([^'"]+)('|")?\)/);
+                    _BGI_ = _BGI_ && _BGI_[2];
+                    iReturn = End_Element ? $_This.text() : _BGI_;
+                    iReturn = $.isData(iReturn) ? iReturn : _BGI_;
+                }
             }
-        });
-
-        return true;
-    };
-
-    /* ----- Hash 算法集合（浏览器原生） v0.1 ----- */
-
-    //  Thank for "emu" --- http://blog.csdn.net/emu/article/details/39618297
-
-    function BufferToString(iBuffer){
-        var iDataView = new DataView(iBuffer),
-            iResult = [ ];
-
-        for (var i = 0, iTemp;  i < iBuffer.byteLength;  i += 4) {
-            iTemp = iDataView.getUint32(i).toString(16);
-            iResult.push(
-                ((iTemp.length == 8) ? '' : '0') + iTemp
-            );
         }
-        return iResult.join('');
+        return iReturn;
     }
 
-    $.dataHash = function (iAlgorithm, iData, iCallback, iFailback) {
-        var iCrypto = BOM.crypto || BOM.msCrypto;
-        var iSubtle = iCrypto.subtle || iCrypto.webkitSubtle;
+    $.fn.value = function (iFiller) {
+        if (! iFiller)
+            return Value_Operator.call(this[0]);
+        else if ( $.isPlainObject(iFiller) )
+            var Data_Set = true;
 
-        iAlgorithm = iAlgorithm || 'SHA-512';
-        iFailback = iFailback || iCallback;
+        var $_This = this,
+            Resource_Ready = {count:  0};
 
-        try {
-            iData = iData.split('');
-            for (var i = 0;  i < iData.length;  i++)
-                iData[i] = iData[i].charCodeAt(0);
+        this.on('Ready',  'img.jQuery_Loading',  function () {
+            $(this).removeClass('jQuery_Loading');
+            if (--Resource_Ready.count == 0)
+                $_This.trigger('Ready');
+            console.log(Resource_Ready.count, this);
+            return false;
+        });
 
-            var iPromise = iSubtle.digest(
-                    {name:  iAlgorithm},
-                    new Uint8Array(iData)
-                );
+        for (var i = 0, iName;  i < this.length;  i++) {
+            iName = this[i].getAttribute('name');
 
-            if(typeof iPromise.then == 'function')
-                iPromise.then(
-                    function() {
-                        iCallback.call(this, BufferToString(arguments[0]));
-                    },
-                    iFailback
-                );
-            else
-                iPromise.oncomplete = function(){
-                    iCallback.call(this,  BufferToString( arguments[0].target.result ));
-                };
-        } catch (iError) {
-            iFailback(iError);
+            Value_Operator.call(
+                this[i],
+                Data_Set  ?  iFiller[iName]  :  iFiller.call(this[i], iName),
+                Resource_Ready
+            );
         }
+        return this;
     };
 
-    /* ----- CSS 规则操作  v0.7 ----- */
 
+/* ---------- Smart zIndex ---------- */
+    function Get_zIndex($_DOM) {
+        var _zIndex_ = $_DOM.css('z-index');
+        if (_zIndex_ != 'auto')  return parseInt(_zIndex_);
+
+        var $_Parents = $_DOM.parents();
+        _zIndex_ = 0;
+
+        $_Parents.each(function () {
+            var _Index_ = $(this).css('z-index');
+
+            _zIndex_ = _zIndex_ + (
+                (_Index_ == 'auto')  ?  1  :  _Index_
+            );
+        });
+
+        return ++_zIndex_;
+    }
+
+    function Set_zIndex() {
+        var $_This = $(this),  _Index_ = 0;
+
+        $_This.siblings().addBack().filter(':visible').each(function () {
+            _Index_ = Math.max(_Index_, Get_zIndex( $(this) ));
+        });
+        $_This.css('z-index', ++_Index_);
+    }
+
+    $.fn.zIndex = function (new_Index) {
+        if (! $.isData(new_Index))
+            return  Get_zIndex(this.eq(0));
+        else if (new_Index == '+')
+            return  this.each(Set_zIndex);
+        else
+            return  this.css('z-index',  parseInt(new_Index) || 'auto');
+    };
+
+
+/* ---------- CSS Rule ---------- */
     function CSS_Rule2Text(iRule) {
         var Rule_Text = [''],  Rule_Block,  _Rule_Block_;
 
@@ -2015,71 +1823,8 @@
         return Pseudo_Rule;
     };
 
-    /* ----- DOM UI 数据读写  v0.3 ----- */
-    function Value_Operator(iValue, iResource) {
-        var $_This = $(this),  iReturn;
 
-        switch ( this.tagName.toLowerCase() ) {
-            case 'img':      {
-                iReturn = $_This.one('load',  function () {
-                    $(this).trigger('Ready');
-                }).addClass('jQuery_Loading').attr('src', iValue);
-                iResource.count++ ;
-                console.log(this);
-            }  break;
-            case 'input':    iReturn = $_This.attr('value', iValue);  break;
-            default:         {
-                var _Set_ = iValue || $.isData(iValue),
-                    End_Element = (! this.children.length),
-                    _BGI_ = (typeof iValue == 'string') && iValue.match(/^\w+:\/\/[^\/]+/);
-
-                if (_Set_) {
-                    if ((! End_Element) && _BGI_)
-                        $_This.css('background-image',  'url("' + iValue + '")');
-                    else
-                        $_This.html(iValue);
-                } else {
-                    _BGI_ = $_This.css('background-image').match(/^url\(('|")?([^'"]+)('|")?\)/);
-                    _BGI_ = _BGI_ && _BGI_[2];
-                    iReturn = End_Element ? $_This.text() : _BGI_;
-                    iReturn = $.isData(iReturn) ? iReturn : _BGI_;
-                }
-            }
-        }
-        return iReturn;
-    }
-
-    $.fn.value = function (iFiller) {
-        if (! iFiller)
-            return Value_Operator.call(this[0]);
-        else if ( $.isPlainObject(iFiller) )
-            var Data_Set = true;
-
-        var $_This = this,
-            Resource_Ready = {count:  0};
-
-        this.on('Ready',  'img.jQuery_Loading',  function () {
-            $(this).removeClass('jQuery_Loading');
-            if (--Resource_Ready.count == 0)
-                $_This.trigger('Ready');
-            console.log(Resource_Ready.count, this);
-            return false;
-        });
-
-        for (var i = 0, iName;  i < this.length;  i++) {
-            iName = this[i].getAttribute('name');
-
-            Value_Operator.call(
-                this[i],
-                Data_Set  ?  iFiller[iName]  :  iFiller.call(this[i], iName),
-                Resource_Ready
-            );
-        }
-        return this;
-    };
-
-    /* ----- jQuery 选择符合法性判断  v0.1 ----- */
-
+/* ---------- Selector Detection ---------- */
     $.is_Selector = function (iString) {
         if (! iString)  return false;
 
@@ -2093,88 +1838,38 @@
         return true;
     };
 
-    /* ----- jQuery 对象 所在页面 URL 路径  v0.1 ----- */
+    
+/* ---------- Remote Error Log ---------- */
+    var Console_URL = $('head link[rel="console"]').attr('href');
 
-    $.fn.pagePath = function () {
-        var _PP = this[0].baseURI || this[0].ownerDocument.URL;
-        _PP = _PP.split('/');
-        if (_PP.length > 3) _PP.pop();
-        _PP.push('');
-        return _PP.join('/');
-    };
+    BOM.onerror = function (iMessage, iURL, iLine, iColumn, iError){
+        $.wait(0,  function () {
+            var iData = {
+                    message:    iMessage,
+                    url:        iURL,
+                    line:       iLine,
+                    column:     iColumn  ||  (BOM.event && BOM.event.errorCharacter)  ||  0
+                };
 
-    /* ----- jQuery 元素 z-index 独立方法  v0.2 ----- */
+            if (iError && iError.stack)
+                iData.stack = (iError.stack || iError.stacktrace).toString();
 
-    function Get_zIndex($_DOM) {
-        var _zIndex_ = $_DOM.css('z-index');
-        if (_zIndex_ != 'auto')  return parseInt(_zIndex_);
-
-        var $_Parents = $_DOM.parents();
-        _zIndex_ = 0;
-
-        $_Parents.each(function () {
-            var _Index_ = $(this).css('z-index');
-
-            _zIndex_ = _zIndex_ + (
-                (_Index_ == 'auto')  ?  1  :  _Index_
-            );
+            if (Console_URL) {
+                if (iData.stack)
+                    $.post(Console_URL, iData);
+                else
+                    $.get(Console_URL, iData);
+            }
         });
 
-        return ++_zIndex_;
-    }
-
-    function Set_zIndex() {
-        var $_This = $(this),  _Index_ = 0;
-
-        $_This.siblings().addBack().filter(':visible').each(function () {
-            _Index_ = Math.max(_Index_, Get_zIndex( $(this) ));
-        });
-        $_This.css('z-index', ++_Index_);
-    }
-
-    $.fn.zIndex = function (new_Index) {
-        if (! $.isData(new_Index))
-            return  Get_zIndex(this.eq(0));
-        else if (new_Index == '+')
-            return  this.each(Set_zIndex);
-        else
-            return  this.css('z-index',  parseInt(new_Index) || 'auto');
-    };
-
-    /* ----- Form 元素 无刷新提交  v0.4 ----- */
-    $.fn.post = function (iCallback) {
-        if (! this.length)  return this;
-
-        var $_Form = (
-                (this[0].tagName.toLowerCase() == 'form') ?
-                    this : this.find('form')
-            ).eq(0);
-        if (! $_Form.length)  return this;
-
-        var $_Button = $_Form.find(':button').attr('disabled', true);
-        $_Form.one('submit',  function (iEvent) {
-            iEvent.preventDefault();
-            iEvent.stopPropagation();
-            $_Button.attr('disabled', true);
-
-            if ( this.checkValidity() )
-                $.post(this.action,  this,  function () {
-                    $_Button.prop('disabled', false);
-                    iCallback.call($_Form[0], arguments[0]);
-                });
-            else
-                $_Button.prop('disabled', false);
-        });
-        $_Button.prop('disabled', false);
-
-        return this;
+        return true;
     };
 
 })(self, self.document);
 
 
- 
-/* ----- W3C Event Shim ----- */
+
+/* ---------- W3C Event Shim ---------- */
 (function (BOM, DOM, $) {
 
     if ( $.browser.modern )  return;
@@ -2474,102 +2169,6 @@
 
 
 
-/* ---------- HTML 5 Form Shim ---------- */
-(function ($) {
-
-    if ($.browser.modern && (! $.browser.ios))  return;
-
-    function Value_Check() {
-        var $_This = $(this);
-
-        if ((typeof $_This.attr('required') == 'string')  &&  (! this.value))
-            return false;
-
-        var iRegEx = $_This.attr('pattern');
-        if (iRegEx)  try {
-            return  RegExp(iRegEx).test(this.value);
-        } catch (iError) { }
-
-        if ((this.tagName.toLowerCase() == 'input')  &&  (this.type == 'number')) {
-            var iNumber = Number(this.value),
-                iMin = Number( $_This.attr('min') );
-            if (
-                isNaN(iNumber)  ||
-                (iNumber < iMin)  ||
-                (iNumber > Number( $_This.attr('max') ))  ||
-                ((iNumber - iMin)  %  Number( $_This.attr('step') ))
-            )
-                return false;
-        }
-
-        return true;
-    }
-
-    HTMLInputElement.prototype.checkValidity = Value_Check;
-    HTMLSelectElement.prototype.checkValidity = Value_Check;
-    HTMLTextAreaElement.prototype.checkValidity = Value_Check;
-
-    HTMLFormElement.prototype.checkValidity = function () {
-        var $_Input = $('*[name]:input', this);
-
-        for (var i = 0;  i < $_Input.length;  i++)
-            if (! $_Input[i].checkValidity())
-                return false;
-        return true;
-    };
-
-})(self.iQuery);
-
-
-
-/* ---------- History API Shim ---------- */
-(function (BOM, DOM, $) {
-
-    if (! ($.browser.msie < 10))  return;
-
-    var _State_ = [
-            [null, DOM.title, DOM.URL]
-        ],
-        _Pushing_ = false,
-        $_BOM = $(BOM);
-
-    BOM.history.pushState = function (iState, iTitle, iURL) {
-        for (var iKey in iState)
-            if (! $.isData(iState[iKey]))
-                throw ReferenceError("The History State can't be Complex Object !");
-
-        if (typeof iTitle != 'string')
-            throw TypeError("The History State needs a Title String !");
-
-        DOM.title = iTitle;
-        _Pushing_ = true;
-        BOM.location.hash = '_' + (_State_.push(arguments) - 1);
-    };
-
-    BOM.history.replaceState = function () {
-        _State_ = [ ];
-        this.pushState.apply(this, arguments);
-    };
-
-    $_BOM.on('hashchange',  function () {
-        if (_Pushing_) {
-            _Pushing_ = false;
-            return;
-        }
-
-        var iState = _State_[ BOM.location.hash.slice(2) ];
-        if (! iState)  return;
-
-        BOM.history.state = iState[0];
-        DOM.title = iState[1];
-
-        $_BOM.trigger('popstate');
-    });
-
-})(self, self.document, self.iQuery);
-
-
-
 /* ---------- DOM/CSS Animation ---------- */
 (function ($) {
 
@@ -2674,8 +2273,253 @@
 
 
 
-/* ---------- Smart HTML Loading ---------- */
-(function (DOM, $) {
+/* ---------- HTTP Client ---------- */
+(function (BOM, DOM, $) {
+
+    function X_Domain(Target_URL) {
+        var iLocation = BOM.location;
+        Target_URL = Target_URL.match(/^(\w+?(s)?:)?\/\/([\w\d:]+@)?([^\/\:\@]+)(:(\d+))?/);
+
+        if (! Target_URL)  return false;
+        if (Target_URL[1] && (Target_URL[1] != iLocation.protocol))  return true;
+        if (Target_URL[4] && (Target_URL[4] != iLocation.hostname))  return true;
+        var iPort = iLocation.port || (
+                (iLocation.protocol == 'http:') && 80
+            ) || (
+                (iLocation.protocol == 'https:') && 443
+            );
+        if (Target_URL[6] && (Target_URL[6] != iPort))  return true;
+    }
+
+    var XHR_Extension = {
+            timeOut:        function (iSecond, iCallback) {
+                var iXHR = this;
+
+                $.wait(iSecond, function () {
+                    iXHR[
+                        (iXHR.$_DOM || iXHR.crossDomain)  ?  'onload'  :  'onreadystatechange'
+                    ] = null;
+                    iXHR.abort();
+                    iCallback.call(iXHR);
+                    iXHR = null;
+                });
+            },
+            responseAny:    function () {
+                var iContent = this.responseText,
+                    iType = this.responseType || 'text/plain';
+
+                switch ( iType.split('/')[1] ) {
+                    case 'plain':    ;
+                    case 'json':     {
+                        var _Content_ = iContent.trim();
+                        try {
+                            iContent = BOM.JSON.parseAll(_Content_);
+                            this.responseType = 'application/json';
+                        } catch (iError) {
+                            if ($.browser.msie != 9)  try {
+                                iContent = $.parseXML(_Content_);
+                                this.responseType = 'text/xml';
+                            } catch (iError) { }
+                        }
+                        break;
+                    }
+                    case 'xml':      iContent = this.responseXML;
+                }
+
+                return iContent;
+            },
+            retry:          function (Wait_Seconds) {
+                var iXHR = this;
+
+                $.wait(Wait_Seconds, function () {
+                    iXHR.open.apply(iXHR, iXHR.requestArgs);
+                });
+            }
+        };
+
+    /* ----- XML HTTP Request ----- */
+    var XHR_Open = BOM.XMLHttpRequest.prototype.open;
+
+    $.extend(BOM.XMLHttpRequest.prototype, XHR_Extension, {
+        open:           function () {
+            this.crossDomain = X_Domain(arguments[1]);
+
+            var iXHR = this;
+            this[
+                this.crossDomain ? 'onload' : 'onreadystatechange'
+            ] = function () {
+                if (! (iXHR.crossDomain || (iXHR.readyState == 4)))  return;
+
+                if (typeof iXHR.onready == 'function')
+                    iXHR.onready.call(iXHR, iXHR.responseAny());
+                iXHR = null;
+            };
+            XHR_Open.apply(this, arguments);
+
+            this.requestArgs = arguments;
+        }
+    });
+
+    if ($.browser.msie < 10) {
+        XHR_Proto.setRequestHeader = function () {
+            console.warn("IE 8/9 XDR doesn't support Changing HTTP Headers...");
+        };
+        $.extend(BOM.XDomainRequest.prototype, XHR_Proto);
+    }
+
+    /* ----- DOM HTTP Request ----- */
+    BOM.DOMHttpRequest = function () {
+        this.status = 0;
+        this.readyState = 0;
+        this.responseType = 'text/plain';
+    };
+    BOM.DOMHttpRequest.JSONP = { };
+
+    var Type_Info = $(BOM).data('_type_');
+
+    $.extend(BOM.DOMHttpRequest.prototype, XHR_Extension, {
+        open:                function (iMethod, iTarget) {
+            this.method = iMethod.toUpperCase();
+
+            //  <script />, JSONP
+            if (this.method == 'GET') {
+                this.responseURL = iTarget;
+                return;
+            }
+
+            //  <iframe />
+            var iDHR = this,  $_Form = $(iTarget);
+
+            var $_Button = $_Form.find(':button').attr('disabled', true),
+                iTarget = $_Form.attr('target');
+            if ((! iTarget) || (iTarget in Type_Info.Target)) {
+                iTarget = $.guid('iframe');
+                $_Form.attr('target', iTarget);
+            }
+
+            var $_iFrame = $('iframe[name="' + iTarget + '"]');
+            if (! $_iFrame.length)
+                $_iFrame = $('<iframe />', {
+                    frameBorder:          0,
+                    allowTransparency:    true,
+                    name:                 iTarget
+                });
+
+            $_iFrame.hide().appendTo( $_Form.parent() ).on('load', function () {
+                $_Button.prop('disabled', false);
+
+                if (iDHR.readyState)  try {
+                    var $_Content = $(this).contents();
+                    iDHR.responseText = $_Content.find('body').text();
+                    iDHR.status = 200;
+                    iDHR.readyState = 4;
+                    iDHR.onload.call($_Form[0],  iDHR.responseAny(),  $_Content);
+                } catch (iError) { }
+            });
+
+            this.$_DOM = $_Form;
+            this.requestArgs = arguments;
+        },
+        send:                function () {
+            if (this.method == 'POST')
+                this.$_DOM.submit();    //  <iframe />
+            else {
+                //  <script />, JSONP
+                var iURL = this.responseURL.match(/([^\?=&]+\?|\?)?(\w.+)?/);
+                if (! iURL)  throw 'Illegal URL !';
+
+                var _GUID_ = $.guid(),  iDHR = this;
+
+                BOM.DOMHttpRequest.JSONP[_GUID_] = function () {
+                    if (iDHR.readyState) {
+                        iDHR.status = 200;
+                        iDHR.readyState = 4;
+                        iDHR.onload.apply(iDHR, arguments);
+                    }
+                    delete this[_GUID_];
+                    iDHR.$_DOM.remove();
+                };
+                this.responseURL = iURL[1] + $.param(
+                    $.extend(arguments[0], $.paramJSON(
+                        iURL[2].replace(/(\w+)=\?/,  '$1=DOMHttpRequest.JSONP.' + _GUID_)
+                    ))
+                );
+                this.$_DOM = $('<script />', {src:  this.responseURL}).appendTo(DOM.head);
+            }
+            this.readyState = 1;
+        },
+        setRequestHeader:    function () {
+            console.warn("JSONP/iframe doesn't support Changing HTTP Headers...");
+        },
+        abort:               function () {
+            this.readyState = 0;
+        }
+    });
+
+    /* ----- HTTP Wraped Method ----- */
+    function iHTTP(iURL, iData, iCallback) {
+        var iXHR = BOM[
+                (X_Domain(iURL) && ($.browser.msie < 10))  ?  'XDomainRequest' : 'XMLHttpRequest'
+            ];
+
+        if ($.type(iData) == 'HTMLElement') {
+            var $_Form = $(iData);
+            iData = { };
+
+            if ($_Form[0].tagName.toLowerCase() == 'form') {
+                if (! $_Form.find('input[type="file"]').length) {
+                    var _Data_ = $_Form.serializeArray();
+                    for (var i = 0;  i < _Data_.length;  i++)
+                        iData[_Data_[i].name] = _Data_[i].value;
+                } else {
+                    if (! ($.browser.msie < 10))
+                        iData = new FormData($_Form[0]);
+                    else
+                        iXHR = BOM.DOMHttpRequest;
+                }
+            }
+        }
+        if ( $.isPlainObject(iData) )
+            iData = BOM.encodeURI( $.param(iData || { }) );
+
+        iXHR = new iXHR();
+        iXHR[$_Form ? 'onload' : 'onready'] = iCallback;
+        iXHR.open(iData ? 'POST' : 'GET',  $_Form || iURL,  true);
+        iXHR.withCredentials = true;
+        if (typeof iData == 'string')
+            iXHR.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
+        iXHR.setRequestHeader('X-Requested-With', 'XMLHttpRequest');
+        iXHR.setRequestHeader('Accept', '*/*');
+        iXHR.send(iData);
+
+        return iXHR;
+    }
+
+    $.extend($, {
+        get:     function (iURL, iData, iCallback) {
+            if (typeof iData == 'function') {
+                iCallback = iData;
+                iData = { };
+            }
+
+            if (! iURL.match(/\w+=\?/)) {
+                iURL = iURL.split('?');
+                return  iHTTP(iURL[0] + '?' + $.param(
+                        $.extend($.paramJSON(iURL[1]), iData, {
+                            _:    $.now()
+                        })
+                    ), null, iCallback);
+            }
+            //  JSONP
+            var iDHR = new BOM.DOMHttpRequest();
+            iDHR.open('GET', iURL);
+            iDHR.onload = iCallback;
+            return iDHR.send(iData);
+        },
+        post:    iHTTP
+    });
+
+    $.getJSON = $.get;
 
     /* ----- HTML DOM SandBox ----- */
     $.fn.sandBox = function (iHTML, iSelector, iCallback) {
@@ -2710,6 +2554,7 @@
         return $_iFrame.appendTo(DOM.body);
     };
 
+    /* ----- Smart HTML Loading ----- */
     $.fn.load = function (iURL, iData, iCallback) {
         var $_This = this;
 
@@ -2754,4 +2599,192 @@
         return this;
     };
 
-})(self.document, self.iQuery);
+    /* ----- Form Element AJAX Submit ----- */
+    $.fn.post = function (iCallback) {
+        if (! this.length)  return this;
+
+        var $_Form = (
+                (this[0].tagName.toLowerCase() == 'form') ?
+                    this : this.find('form')
+            ).eq(0);
+        if (! $_Form.length)  return this;
+
+        var $_Button = $_Form.find(':button').attr('disabled', true);
+        $_Form.one('submit',  function (iEvent) {
+            iEvent.preventDefault();
+            iEvent.stopPropagation();
+            $_Button.attr('disabled', true);
+
+            if ( this.checkValidity() )
+                $.post(this.action,  this,  function () {
+                    $_Button.prop('disabled', false);
+                    iCallback.call($_Form[0], arguments[0]);
+                });
+            else
+                $_Button.prop('disabled', false);
+        });
+        $_Button.prop('disabled', false);
+
+        return this;
+    };
+
+})(self, self.document, self.iQuery);
+
+
+
+/* ---------- HTML 5 Form Shim ---------- */
+(function ($) {
+
+    if ($.browser.modern && (! $.browser.ios))  return;
+
+    function Value_Check() {
+        var $_This = $(this);
+
+        if ((typeof $_This.attr('required') == 'string')  &&  (! this.value))
+            return false;
+
+        var iRegEx = $_This.attr('pattern');
+        if (iRegEx)  try {
+            return  RegExp(iRegEx).test(this.value);
+        } catch (iError) { }
+
+        if ((this.tagName.toLowerCase() == 'input')  &&  (this.type == 'number')) {
+            var iNumber = Number(this.value),
+                iMin = Number( $_This.attr('min') );
+            if (
+                isNaN(iNumber)  ||
+                (iNumber < iMin)  ||
+                (iNumber > Number( $_This.attr('max') ))  ||
+                ((iNumber - iMin)  %  Number( $_This.attr('step') ))
+            )
+                return false;
+        }
+
+        return true;
+    }
+
+    HTMLInputElement.prototype.checkValidity = Value_Check;
+    HTMLSelectElement.prototype.checkValidity = Value_Check;
+    HTMLTextAreaElement.prototype.checkValidity = Value_Check;
+
+    HTMLFormElement.prototype.checkValidity = function () {
+        var $_Input = $('*[name]:input', this);
+
+        for (var i = 0;  i < $_Input.length;  i++)
+            if (! $_Input[i].checkValidity())
+                return false;
+        return true;
+    };
+
+})(self.iQuery);
+
+
+
+/* ---------- History API Shim ---------- */
+(function (BOM, DOM, $) {
+
+    if (! ($.browser.msie < 10))  return;
+
+    var _State_ = [
+            [null, DOM.title, DOM.URL]
+        ],
+        _Pushing_ = false,
+        $_BOM = $(BOM);
+
+    BOM.history.pushState = function (iState, iTitle, iURL) {
+        for (var iKey in iState)
+            if (! $.isData(iState[iKey]))
+                throw ReferenceError("The History State can't be Complex Object !");
+
+        if (typeof iTitle != 'string')
+            throw TypeError("The History State needs a Title String !");
+
+        DOM.title = iTitle;
+        _Pushing_ = true;
+        BOM.location.hash = '_' + (_State_.push(arguments) - 1);
+    };
+
+    BOM.history.replaceState = function () {
+        _State_ = [ ];
+        this.pushState.apply(this, arguments);
+    };
+
+    $_BOM.on('hashchange',  function () {
+        if (_Pushing_) {
+            _Pushing_ = false;
+            return;
+        }
+
+        var iState = _State_[ BOM.location.hash.slice(2) ];
+        if (! iState)  return;
+
+        BOM.history.state = iState[0];
+        DOM.title = iState[1];
+
+        $_BOM.trigger('popstate');
+    });
+
+})(self, self.document, self.iQuery);
+
+
+
+/* ---------- Other Extension ---------- */
+(function (BOM, DOM, $) {
+
+    /* ----- Hash Algorithm (Crypto API Wrapper) ----- */
+    function BufferToString(iBuffer){
+        var iDataView = new DataView(iBuffer),
+            iResult = [ ];
+
+        for (var i = 0, iTemp;  i < iBuffer.byteLength;  i += 4) {
+            iTemp = iDataView.getUint32(i).toString(16);
+            iResult.push(
+                ((iTemp.length == 8) ? '' : '0') + iTemp
+            );
+        }
+        return iResult.join('');
+    }
+
+    $.dataHash = function (iAlgorithm, iData, iCallback, iFailback) {
+        var iCrypto = BOM.crypto || BOM.msCrypto;
+        var iSubtle = iCrypto.subtle || iCrypto.webkitSubtle;
+
+        iAlgorithm = iAlgorithm || 'SHA-512';
+        iFailback = iFailback || iCallback;
+
+        try {
+            iData = iData.split('');
+            for (var i = 0;  i < iData.length;  i++)
+                iData[i] = iData[i].charCodeAt(0);
+
+            var iPromise = iSubtle.digest(
+                    {name:  iAlgorithm},
+                    new Uint8Array(iData)
+                );
+
+            if(typeof iPromise.then == 'function')
+                iPromise.then(
+                    function() {
+                        iCallback.call(this, BufferToString(arguments[0]));
+                    },
+                    iFailback
+                );
+            else
+                iPromise.oncomplete = function(){
+                    iCallback.call(this,  BufferToString( arguments[0].target.result ));
+                };
+        } catch (iError) {
+            iFailback(iError);
+        }
+    };
+
+    /* ----- Page URL of a DOM ----- */
+    $.fn.pagePath = function () {
+        var _PP = this[0].baseURI || this[0].ownerDocument.URL;
+        _PP = _PP.split('/');
+        if (_PP.length > 3) _PP.pop();
+        _PP.push('');
+        return _PP.join('/');
+    };
+
+})(self, self.document, self.iQuery);
