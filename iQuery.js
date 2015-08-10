@@ -2,7 +2,7 @@
 //                >>>  iQuery.js  <<<
 //
 //
-//      [Version]    v1.0  (2015-8-7)  Stable
+//      [Version]    v1.0  (2015-8-10)  Stable
 //
 //      [Usage]      A Light-weight jQuery Compatible API
 //                   with IE 8+ compatibility.
@@ -50,6 +50,8 @@
         return iRegExp_Compiled;
     };
 
+    /* ----- String Extension ----- */
+
     if (! ''.trim)
         var Blank_Char = BOM.iRegExp('(^\\s*)|(\\s*$)', 'g');
     else
@@ -74,6 +76,16 @@
             return  (new Array(Times + 1)).join(this);
         };
 
+    String.prototype.toCamelCase = function () {
+        var iName = this.split(arguments[0] || '-');
+
+        for (var i = 1;  i < iName.length;  i++)
+            iName[i] = iName[i][0].toUpperCase() + iName[i].slice(1);
+
+        return iName.join('');
+    };
+
+
     if (! [ ].indexOf)
         Array.prototype.indexOf = function () {
             for (var i = 0;  i < this.length;  i++)
@@ -88,7 +100,7 @@
             return  (new Date()).getTime();
         };
 
-//  JSON Extension  v0.4
+    /* ----- JSON Extension  v0.4 ----- */
 
     BOM.JSON.format = function () {
         return  this.stringify(arguments[0], null, 4)
@@ -105,7 +117,7 @@
             });
     };
 
-//  New Window Fix  v0.3
+    /* ----- New Window Fix  v0.3 ----- */
 
     BOM.new_Window_Fix = function (Fix_More) {
         if (! this)  return false;
@@ -131,6 +143,7 @@
     BOM.new_Window_Fix();
 
 })(self);
+
 
 
 // ---------->  iQuery.js  <---------- //
@@ -560,15 +573,8 @@
             if (_Type_(iElement.dataIndex) != 'Number')
                 iElement.dataIndex = this._Data_.push({ }) - 1;
 
-            var iData = (this._Data_[iElement.dataIndex] || { })[iName];
-
-            if (iData)
-                return iData;
-            else  try {
-                return  _Operator_('Attribute', [iElement],  'data-' + iName);
-            } catch (iError) {
-                return null;
-            }
+            return  (this._Data_[iElement.dataIndex] || { })[iName]  ||
+                (iElement.dataset || { })[ iName.toCamelCase() ];
         },
         clear:     function (iElement, iName) {
             if (typeof iElement.dataIndex != 'number')  return;
@@ -994,16 +1000,18 @@
         inArray:          function () {
             return  Array.prototype.indexOf.call(arguments[0], arguments[1]);
         },
-        contains:         function (iParent, iChild) {
-            if (! iChild)  return false;
-
-            if ($.browser.modern)
-                return  !!(iParent.compareDocumentPosition(iChild) & 16);
-            else
-                return  (iParent !== iChild) && iParent.contains(iChild);
-        },
         trim:             function () {
             return  arguments[0].trim();
+        },
+        split:            function (iString, iSplit, iLimit, iJoin) {
+            iString = iString.split(iSplit);
+            if (iLimit) {
+                iString[iLimit - 1] = iString.slice(iLimit - 1).join(
+                    (typeof iJoin == 'string') ? iJoin : iSplit
+                );
+                iString.length = iLimit;
+            }
+            return iString;
         },
         parseJSON:        BOM.JSON.parse,
         parseXML:         XML_Parse,
@@ -1019,11 +1027,13 @@
                     else if (! $.isData(iValue))
                         continue;
 
-                    iParameter.push(iName + '=' + iValue);
+                    iParameter.push(iName + '=' + BOM.encodeURIComponent(iValue));
                 }
             else if (iObject instanceof $)
                 for (var i = 0;  i < iObject.length;  i++)
-                    iParameter.push(iObject[i].name + '=' + iObject[i].value);
+                    iParameter.push(
+                        iObject[i].name + '=' + BOM.encodeURIComponent(iObject[i].value)
+                    );
 
             return iParameter.join('&');
         },
@@ -1038,11 +1048,9 @@
                 };
 
             for (var i = 0, iValue; i < Args_Str.length; i++) {
-                Args_Str[i] = Args_Str[i].split('=');
+                Args_Str[i] = $.split(Args_Str[i], '=', 2);
 
-                iValue = BOM.decodeURIComponent(
-                    Args_Str[i].slice(1).join('=')
-                );
+                iValue = BOM.decodeURIComponent( Args_Str[i][1] );
                 try {
                     iValue = BOM.JSON.parse(iValue);
                 } catch (iError) { }
@@ -1058,6 +1066,14 @@
         },
         data:             function (iElement, iName, iValue) {
             return  _Operator_('Data', [iElement], iName, iValue);
+        },
+        contains:         function (iParent, iChild) {
+            if (! iChild)  return false;
+
+            if ($.browser.modern)
+                return  !!(iParent.compareDocumentPosition(iChild) & 16);
+            else
+                return  (iParent !== iChild) && iParent.contains(iChild);
         }
     });
 
@@ -1838,33 +1854,6 @@
         return true;
     };
 
-    
-/* ---------- Remote Error Log ---------- */
-    var Console_URL = $('head link[rel="console"]').attr('href');
-
-    BOM.onerror = function (iMessage, iURL, iLine, iColumn, iError){
-        $.wait(0,  function () {
-            var iData = {
-                    message:    iMessage,
-                    url:        iURL,
-                    line:       iLine,
-                    column:     iColumn  ||  (BOM.event && BOM.event.errorCharacter)  ||  0
-                };
-
-            if (iError && iError.stack)
-                iData.stack = (iError.stack || iError.stacktrace).toString();
-
-            if (Console_URL) {
-                if (iData.stack)
-                    $.post(Console_URL, iData);
-                else
-                    $.get(Console_URL, iData);
-            }
-        });
-
-        return true;
-    };
-
 })(self, self.document);
 
 
@@ -2360,12 +2349,10 @@
         }
     });
 
-    if ($.browser.msie < 10) {
-        XHR_Proto.setRequestHeader = function () {
+    if ($.browser.msie < 10)
+        BOM.XDomainRequest.prototype.setRequestHeader = function () {
             console.warn("IE 8/9 XDR doesn't support Changing HTTP Headers...");
         };
-        $.extend(BOM.XDomainRequest.prototype, XHR_Proto);
-    }
 
     /* ----- DOM HTTP Request ----- */
     BOM.DOMHttpRequest = function () {
@@ -2680,11 +2667,27 @@
 
 
 
-/* ---------- History API Shim ---------- */
 (function (BOM, DOM, $) {
 
     if (! ($.browser.msie < 10))  return;
 
+/* ---------- HTML 5 Element Data Set  Shim ---------- */
+    function DOMStringMap(iElement) {
+        for (var i = 0, iAttr;  i < iElement.attributes.length;  i++) {
+            iAttr = iElement.attributes[i];
+            if (iAttr.nodeName.slice(0, 5) == 'data-')
+                this[ iAttr.nodeName.toCamelCase() ] = iAttr.nodeValue;
+        }
+    }
+
+    Object.defineProperty(Element.prototype, 'dataset', {
+        get:    function () {
+            return  new DOMStringMap(this);
+        },
+        set:    function () { }
+    });
+
+/* ---------- History API Shim ---------- */
     var _State_ = [
             [null, DOM.title, DOM.URL]
         ],
@@ -2730,6 +2733,33 @@
 
 /* ---------- Other Extension ---------- */
 (function (BOM, DOM, $) {
+
+    /* ----- Remote Error Log ----- */
+    var Console_URL = $('head link[rel="console"]').attr('href');
+
+    BOM.onerror = function (iMessage, iURL, iLine, iColumn, iError){
+        $.wait(0,  function () {
+            var iData = {
+                    message:    iMessage,
+                    url:        iURL,
+                    line:       iLine,
+                    column:     iColumn  ||  (BOM.event && BOM.event.errorCharacter)  ||  0
+                };
+
+            if (iError && iError.stack)
+                iData.stack = (iError.stack || iError.stacktrace).toString();
+
+            if (Console_URL) {
+                if (iData.stack)
+                    $.post(Console_URL, iData);
+                else
+                    $.get(Console_URL, iData);
+            }
+        });
+
+        return true;
+    };
+
 
     /* ----- Hash Algorithm (Crypto API Wrapper) ----- */
     function BufferToString(iBuffer){
