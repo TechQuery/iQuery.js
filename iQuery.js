@@ -2,7 +2,7 @@
 //                >>>  iQuery.js  <<<
 //
 //
-//      [Version]    v1.0  (2015-8-10)  Stable
+//      [Version]    v1.0  (2015-8-11)  Stable
 //
 //      [Usage]      A Light-weight jQuery Compatible API
 //                   with IE 8+ compatibility.
@@ -296,7 +296,13 @@
         return iType;
     }
 
-    function Back_Track(iName, iCallback) {
+    function Empty_Object() {
+        for (var iKey in arguments[0])
+            return false;
+        return true;
+    }
+
+    function Object_Seek(iName, iCallback) {
         var iResult = [ ];
 
         for (var _This_ = this, _Next_, i = 0;  _This_[iName];  _This_ = _Next_, i++) {
@@ -600,7 +606,7 @@
                 top:     this[0].offsetTop
             };
 
-        Back_Track.call('offsetParent', function () {
+        Object_Seek.call(this[0], 'offsetParent', function () {
             iOffset.left += this.offsetLeft;
             iOffset.top += this.offsetTop;
         });
@@ -710,7 +716,7 @@
         var _GUID_ = _Time_.guid('parent');
 
         for (var i = 0;  i < this.length;  i++)
-            Back_Track.call(this[i],  'parentNode',  function () {
+            Object_Seek.call(this[i],  'parentNode',  function () {
                 _Operator_('Attribute',  [this],  _GUID_,  function (_Index_, iTimes) {
                     return  iTimes ? (parseInt(iTimes) + 1) : 1
                 });
@@ -805,6 +811,11 @@
                 feature:    _inKey_('input', 'textarea', 'button', 'select'),
                 filter:     function () {
                     return  (arguments[0].tagName.toLowerCase() in this.feature);
+                }
+            },
+            ':data':       {
+                filter:    function () {
+                    return  (! Empty_Object(arguments[0].dataset));
                 }
             }
         };
@@ -984,11 +995,7 @@
         isPlainObject:    function (iValue) {
             return  iValue && (iValue.constructor === Object);
         },
-        isEmptyObject:    function () {
-            for (var iKey in arguments[0])
-                return false;
-            return true;
-        },
+        isEmptyObject:    Empty_Object,
         isData:           function () {
             return  (this.type(arguments[0]) in Type_Info.Data);
         },
@@ -1094,9 +1101,9 @@
         },
         index:              function (iTarget) {
             if (! iTarget)
-                return  Back_Track.call(
+                return  Object_Seek.call(
                         this[0],
-                        ($.browser.msie < 9) ? 'previousSibling' : 'previousElementSibling'
+                        $.browser.modern ? 'previousElementSibling' : 'previousSibling'
                     ).length;
 
             var iType = $.type(iTarget);
@@ -1185,17 +1192,15 @@
                 if ($.inArray($_Result, this[i].parentNode) == -1)
                     $_Result.push( this[i].parentNode );
 
-            $_Result = $($_Result);
-            if ( arguments[0] )
-                $_Result = $_Result.filter(arguments[0]);
+            if (arguments[0])  $_Result = $($_Result).filter(arguments[0]);
 
             return this.pushStack($_Result);
         },
         parents:            function () {
             var _GUID_ = _Parents_.call(this);
             var $_Result = $('*[' + _GUID_ + ']').removeAttr(_GUID_);
-            if ( arguments[0] )
-                $_Result = $_Result.filter(arguments[0]);
+
+            if (arguments[0])  $_Result = $_Result.filter(arguments[0]);
 
             return  this.pushStack( Array.prototype.reverse.call($_Result) );
         },
@@ -1206,8 +1211,7 @@
             var $_Result = $(['*[', _GUID_, '="', iTimes, '"]'].join(''))
                     .removeAttr(_GUID_);
 
-            if ( arguments[0] )
-                $_Result = $_Result.filter(arguments[0]);
+            if (arguments[0])  $_Result = $_Result.filter(arguments[0]);
 
             return  this.pushStack( Array.prototype.reverse.call($_Result) );
         },
@@ -1222,9 +1226,7 @@
             for (var i = 0;  i < this.length;  i++)
                 $_Result = _Concat_($_Result, this[i].children);
 
-            $_Result = $($_Result);
-            if ( arguments[0] )
-                $_Result = $_Result.filter(arguments[0]);
+            if (arguments[0])  $_Result = $($_Result).filter(arguments[0]);
 
             return this.pushStack($_Result);
         },
@@ -1245,18 +1247,36 @@
 
             return this.pushStack($_Result);
         },
+        nextAll:            function () {
+            var $_Result = [ ];
+
+            for (var i = 0;  i < this.length;  i++)
+                $_Result = _Concat_($_Result, Object_Seek.call(
+                    this[i],
+                    $.browser.modern ? 'nextElementSibling' : 'nextSibling'
+                ));
+
+            if (arguments[0])  $_Result = $($_Result).filter(arguments[0]);
+
+            return this.pushStack($_Result);
+        },
+        prevAll:            function () {
+            var $_Result = [ ];
+
+            for (var i = 0;  i < this.length;  i++)
+                $_Result = _Concat_($_Result, Object_Seek.call(
+                    this[i],
+                    $.browser.modern ? 'previousElementSibling' : 'previousSibling'
+                ));
+
+            if (arguments[0])  $_Result = $($_Result).filter(arguments[0]);
+
+            return this.pushStack($_Result);
+        },
         siblings:           function () {
-            var _GUID_ = $.guid();
-            var $_This = this.prop('iQuery_ID', _GUID_);
+            var $_Result = this.prevAll().add( this.nextAll() );
 
-            var $_Result = this.parent().children();
-            for (var i = 0;  i < $_Result.length;  i++)
-                if ($_Result[i].iQuery_ID == _GUID_)
-                    $_Result[i] = $_Result[i].iQuery_ID = null;
-
-            $_Result = $( $.makeArray($_Result) );
-            if ( arguments[0] )
-                $_Result = $_Result.filter(arguments[0]);
+            if (arguments[0])  $_Result = $_Result.filter(arguments[0]);
 
             return this.pushStack($_Result);
         },
