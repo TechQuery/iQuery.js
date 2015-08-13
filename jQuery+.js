@@ -2,7 +2,7 @@
 //              >>>  jQuery+  <<<
 //
 //
-//    [Version]     v4.5  (2015-8-11)
+//    [Version]     v4.7  (2015-8-13)
 //
 //    [Based on]    jQuery  v1.9+
 //
@@ -14,21 +14,42 @@
 /* ---------- ECMAScript 5/6  Patch ---------- */
 (function (BOM, $) {
 
-/* ---------- String Extension  v0.2 ---------- */
+/* ---------- String Extension  v0.3 ---------- */
 
     if (! ''.repeat)
         String.prototype.repeat = function (Times) {
             return  (new Array(Times + 1)).join(this);
         };
 
-    String.prototype.toCamelCase = function () {
-        var iName = this.split(arguments[0] || '-');
+    $.extend(String.prototype, {
+        toCamelCase:     function () {
+            var iName = this.split(arguments[0] || '-');
 
-        for (var i = 1;  i < iName.length;  i++)
-            iName[i] = iName[i][0].toUpperCase() + iName[i].slice(1);
+            for (var i = 1;  i < iName.length;  i++)
+                iName[i] = iName[i][0].toUpperCase() + iName[i].slice(1);
 
-        return iName.join('');
-    };
+            return iName.join('');
+        },
+        toHyphenCase:    function () {
+            var iString = [ ];
+
+            for (var i = 0;  i < this.length;  i++)  switch (true) {
+                case ((this[i] >= 'A')  &&  (this[i] < 'a')):    {
+                    iString.push('-');
+                    iString.push( this[i].toLowerCase() );
+                    break;
+                }
+                case ((this[i] < '0')  ||  (this[i] > 'z')):     {
+                    iString.push('-');
+                    break;
+                }
+                default:
+                    iString.push( this[i] );
+            }
+
+            return iString.join('');
+        }
+    });
 
 /* ---------- JSON Extension  v0.4 ---------- */
 
@@ -689,6 +710,38 @@
         return $_iFrame.appendTo(DOM.body);
     };
 
+
+/* ---------- HTTP Method 快捷方法  v0.1 ---------- */
+    function iHTTP(iMethod, iURL, iData, iCallback) {
+        if (typeof iData == 'function') {
+            iCallback = iData;
+            iData = null;
+        }
+        return  $.ajax({
+            method:         iMethod,
+            url:            iURL,
+            data:           iData,
+            complete:       iCallback,
+            crossDomain:    true,
+            xhrFields:      {
+                withCredentials:    true
+            }
+        });
+    }
+
+    $.delete = function () {
+        var iArgs = $.makeArray(arguments);
+        iArgs.unshift('DELETE');
+
+        return  iHTTP.apply(BOM, iArgs);
+    };
+
+    $.put = function () {
+        var iArgs = $.makeArray(arguments);
+        iArgs.unshift('PUT');
+
+        return  iHTTP.apply(BOM, iArgs);
+    };
 
 /* ---------- Form 元素 无刷新提交  v0.5 ---------- */
 

@@ -2,7 +2,7 @@
 //                >>>  iQuery.js  <<<
 //
 //
-//      [Version]    v1.0  (2015-8-11)  Stable
+//      [Version]    v1.0  (2015-8-13)  Stable
 //
 //      [Usage]      A Light-weight jQuery Compatible API
 //                   with IE 8+ compatibility.
@@ -85,6 +85,26 @@
         return iName.join('');
     };
 
+    String.prototype.toHyphenCase = function () {
+        var iString = [ ];
+
+        for (var i = 0;  i < this.length;  i++)  switch (true) {
+            case ((this[i] >= 'A')  &&  (this[i] < 'a')):    {
+                iString.push('-');
+                iString.push( this[i].toLowerCase() );
+                break;
+            }
+            case ((this[i] < '0')  ||  (this[i] > 'z')):     {
+                iString.push('-');
+                break;
+            }
+            default:
+                iString.push( this[i] );
+        }
+
+        return iString.join('');
+    };
+
 
     if (! [ ].indexOf)
         Array.prototype.indexOf = function () {
@@ -129,7 +149,7 @@
             if (_Window_ && (this.location.href == 'about:blank'))
                 This_DOM.domain = _Window_.document.domain;
 
-            if (! (_Window_ || this).$.browser.modern)
+            if (! (_Window_ || this).navigator.userAgent.match(/MSIE 8/i))
                 This_DOM.head = This_DOM.documentElement.firstChild;
         } catch (iError) {
             return false;
@@ -146,7 +166,7 @@
 
 
 
-// ---------->  iQuery.js  <---------- //
+/* ---------- iQuery Core & API ---------- */
 (function (BOM, DOM) {
 
 /* ---------- UA Check ---------- */
@@ -415,28 +435,7 @@
     }
 
     /* ----- DOM Style ----- */
-    var IE_CSS_Filter = (! _Browser_.modern),
-        Code_Indent = (_Browser_.modern  ?  ''  :  ' '.repeat(4));
-
-    function toHexInt(iDec, iLength) {
-        var iHex = parseInt( Number(iDec).toFixed(0) ).toString(16);
-
-        if (iLength && (iLength > iHex.length))
-            iHex = '0'.repeat(iLength - iHex.length) + iHex;
-
-        return iHex;
-    }
-
-    function RGB_Hex(iRed, iGreen, iBlue) {
-        var iArgs = _Extend_([ ], arguments);
-
-        if ((iArgs.length == 1) && (typeof iArgs[0] == 'string'))
-            iArgs = iArgs[0].replace(/rgb\(([^\)]+)\)/i, '$1').replace(/,\s*/g, ',').split(',');
-
-        for (var i = 0; i < 3; i++)
-            iArgs[i] = toHexInt(iArgs[i], 2);
-        return iArgs.join('');
-    }
+    var Code_Indent = _Browser_.modern ? '' : ' '.repeat(4);
 
     _Get_Set_.Style = {
         PX_Needed:    _inKey_(
@@ -450,112 +449,49 @@
             if ((! iElement) || (_Type_(iElement) in Type_Info.DOM.root))
                 return null;
 
-            var iScale = 1;
-
-            if (IE_CSS_Filter)
-                switch (iName) {
-                    case 'opacity':    {
-                        iName = 'filter';
-                        iScale = 100;
-                    }
-                }
-
-            var iStyle = IE_CSS_Filter ?
-                    iElement.currentStyle.getAttribute(iName) :
-                    DOM.defaultView.getComputedStyle(iElement, null).getPropertyValue(iName);
-
-            if ((_Type_(iStyle) == 'Number') || (! iStyle))
-                return iStyle;
-
+            var iStyle = DOM.defaultView.getComputedStyle(iElement, null).getPropertyValue(iName);
             var iNumber = parseFloat(iStyle);
 
-            return  isNaN(iNumber) ? iStyle : (iNumber / iScale);
+            return  isNaN(iNumber) ? iStyle : iNumber;
         },
         set:          function (iElement, iName, iValue) {
             if (_Type_(iElement) in Type_Info.DOM.root)  return false;
 
-            if (IE_CSS_Filter) {
-                var iString = '',  iWrapper,  iScale = 1,  iConvert;
-                if (typeof iValue == 'string')
-                    var iRGBA = iValue.match(/\s*rgba\(([^\)]+),\s*(\d\.\d+)\)/i);
-
-                if (iName == 'opacity') {
-                    iName = 'filter';
-                    iWrapper = 'progid:DXImageTransform.Microsoft.Alpha(opacity={n})';
-                    iScale = 100;
-                } else if (!! iRGBA) {
-                    iString = iValue.replace(iRGBA[0], '');
-                    if (iString)
-                        iString += arguments.callee(arguments[0], iName, iString);
-                    if (iName != 'background')
-                        iString += arguments.callee(
-                            arguments[0],
-                            (iName.indexOf('-color') > -1) ? iName : (iName + '-color'),
-                            'rgb(' + iRGBA[1] + ')'
-                        );
-                    iName = 'filter';
-                    iWrapper = 'progid:DXImageTransform.Microsoft.Gradient(startColorStr=#{n},endColorStr=#{n})';
-                    iConvert = function (iAlpha, iRGB) {
-                        return  toHexInt(parseFloat(iAlpha) * 256, 2) + RGB_Hex(iRGB);
-                    };
-                }
-            }
-
             if ((! isNaN( Number(iValue) ))  &&  this.PX_Needed[iName])
                 iValue += 'px';
-            if (iWrapper)
-                iValue = iWrapper.replace(/\{n\}/g,  iConvert ?
-                      iConvert(iRGBA[2], iRGBA[1]) :
-                      (iValue * iScale)
-                );
 
             if (iElement)
-                iElement.style[
-                    IE_CSS_Filter ? 'setAttribute' : 'setProperty'
-                ](
+                iElement.style.setProperty(
                     iName,
                     (_Browser_.msie != 9) ? iValue : iValue.toString(),
                     'important'
                 );
-            else  return [
-                    iString ? (iString + ";\n") : ''
-                ].concat([
-                    iName,  ':',  Code_Indent,  iValue
-                ]).join('');
+            else
+                return  [iName, ':', Code_Indent, iValue].join('');
         }
     };
 
     /* ----- DOM Attribute ----- */
     _Get_Set_.Attribute = {
-        alias:    {
-            'class':    'className',
-            'for':      'htmlFor'
-        },
         get:      function (iElement, iName) {
             return  (_Type_(iElement) in Type_Info.DOM.root) ?
-                    null : iElement.getAttribute(
-                        _Browser_.modern  ?  iName  :  (this.alias[iName] || iName)
-                    );
+                    null : iElement.getAttribute(iName);
         },
         set:      function (iElement, iName, iValue) {
-            if (_Type_(iElement) in Type_Info.DOM.root)
-                return false;
-
-            if ((! _Browser_.modern) && this.alias[iName])
-                iElement[ this.alias[iName] ] = iValue;
-            else
-                iElement.setAttribute(iName, iValue);
+            return  (_Type_(iElement) in Type_Info.DOM.root) ?
+                    false  :  iElement.setAttribute(iName, iValue);
         },
         clear:    function (iElement, iName) {
-            iElement.removeAttribute(
-                _Browser_.modern  ?  iName  :  (this.alias[iName] || iName)
-            );
+            iElement.removeAttribute(iName);
         }
     };
 
     /* ----- DOM Property ----- */
     _Get_Set_.Property = {
-        alias:    _Get_Set_.Attribute.alias,
+        alias:    {
+            'class':    'className',
+            'for':      'htmlFor'
+        },
         get:      function (iElement, iName) {
             return  iElement[
                     _Browser_.modern  ?  iName  :  (this.alias[iName] || iName)
@@ -1878,11 +1814,195 @@
 
 
 
-/* ---------- W3C Event Shim ---------- */
+/* ---------- W3C HTML 5  Shim ---------- */
 (function (BOM, DOM, $) {
 
-    if ( $.browser.modern )  return;
+    if (! ($.browser.msie < 10))  return;
 
+    /* ----- Element Data Set ----- */
+    function DOMStringMap(iElement) {
+        for (var i = 0, iAttr;  i < iElement.attributes.length;  i++) {
+            iAttr = iElement.attributes[i];
+            if (iAttr.nodeName.slice(0, 5) == 'data-')
+                this[ iAttr.nodeName.toCamelCase() ] = iAttr.nodeValue;
+        }
+    }
+
+    Object.defineProperty(Element.prototype, 'dataset', {
+        get:    function () {
+            return  new DOMStringMap(this);
+        },
+        set:    function () { }
+    });
+
+
+    /* ----- History API ----- */
+    var _State_ = [
+            [null, DOM.title, DOM.URL]
+        ],
+        _Pushing_ = false,
+        $_BOM = $(BOM);
+
+    BOM.history.pushState = function (iState, iTitle, iURL) {
+        for (var iKey in iState)
+            if (! $.isData(iState[iKey]))
+                throw ReferenceError("The History State can't be Complex Object !");
+
+        if (typeof iTitle != 'string')
+            throw TypeError("The History State needs a Title String !");
+
+        DOM.title = iTitle;
+        _Pushing_ = true;
+        BOM.location.hash = '_' + (_State_.push(arguments) - 1);
+    };
+
+    BOM.history.replaceState = function () {
+        _State_ = [ ];
+        this.pushState.apply(this, arguments);
+    };
+
+    $_BOM.on('hashchange',  function () {
+        if (_Pushing_) {
+            _Pushing_ = false;
+            return;
+        }
+
+        var iState = _State_[ BOM.location.hash.slice(2) ];
+        if (! iState)  return;
+
+        BOM.history.state = iState[0];
+        DOM.title = iState[1];
+
+        $_BOM.trigger('popstate');
+    });
+
+
+    if ($.browser.modern)  return;
+
+    /* ----- DOM Attribute Name ----- */
+    var iAlias = {
+            'class':    'className',
+            'for':      'htmlFor'
+        },
+        Get_Attribute = Element.prototype.getAttribute,
+        Set_Attribute = Element.prototype.setAttribute,
+        Remove_Attribute = Element.prototype.removeAttribute;
+
+    $.extend(Element.prototype, {
+        getAttribute:    function (iName) {
+            return  Get_Attribute.call(this,  iAlias[iName] || iName);
+        },
+        setAttribute:    function (iName) {
+            return  Set_Attribute.call(this,  iAlias[iName] || iName,  arguments[1]);
+        },
+        removeAttribute:    function (iName) {
+            return  Remove_Attribute.call(this,  iAlias[iName] || iName);
+        }
+    });
+
+    /* ----- Computed Style ----- */
+    function CSSStyleDeclaration() {
+        $.extend(this, arguments[0].currentStyle, {
+            length:       0,
+            cssText:      '',
+            ownerNode:    arguments[0]
+        });
+
+        for (var iName in this) {
+            this[this.length++] = iName.toHyphenCase();
+            this.cssText += [
+                iName,  ': ',  this[iName],  '; '
+            ].join('');
+        }
+        this.cssText = this.cssText.trim();
+    }
+
+    var Code_Indent = ' '.repeat(4);
+
+    function toHexInt(iDec, iLength) {
+        var iHex = parseInt( Number(iDec).toFixed(0) ).toString(16);
+
+        if (iLength && (iLength > iHex.length))
+            iHex = '0'.repeat(iLength - iHex.length) + iHex;
+
+        return iHex;
+    }
+
+    function RGB_Hex(iRed, iGreen, iBlue) {
+        var iArgs = $.makeArray(arguments);
+
+        if ((iArgs.length == 1) && (typeof iArgs[0] == 'string'))
+            iArgs = iArgs[0].replace(/rgb\(([^\)]+)\)/i, '$1').replace(/,\s*/g, ',').split(',');
+
+        for (var i = 0;  i < 3;  i++)
+            iArgs[i] = toHexInt(iArgs[i], 2);
+        return iArgs.join('');
+    }
+
+    $.extend(CSSStyleDeclaration.prototype, {
+        getPropertyValue:    function (iName) {
+            var iScale = 1;
+
+            switch (iName) {
+                case 'opacity':    {
+                    iName = 'filter';
+                    iScale = 100;
+                }
+            }
+            var iStyle = this[ iName.toCamelCase() ];
+            var iNumber = parseFloat(iStyle);
+
+            return  isNaN(iNumber) ? iStyle : (iNumber / iScale);
+        },
+        setPropertyValue:    function (iName, iValue) {
+            this[this.length++] = iName;
+
+            var iString = '',  iWrapper,  iScale = 1,  iConvert;
+            if (typeof iValue == 'string')
+                var iRGBA = iValue.match(/\s*rgba\(([^\)]+),\s*(\d\.\d+)\)/i);
+
+            if (iName == 'opacity') {
+                iName = 'filter';
+                iWrapper = 'progid:DXImageTransform.Microsoft.Alpha(opacity={n})';
+                iScale = 100;
+            } else if (iRGBA) {
+                iString = iValue.replace(iRGBA[0], '');
+                if (iString)
+                    iString += arguments.callee.call(this, arguments[0], iName, iString);
+                if (iName != 'background')
+                    iString += arguments.callee.call(
+                        this,
+                        arguments[0],
+                        (iName.indexOf('-color') > -1) ? iName : (iName + '-color'),
+                        'rgb(' + iRGBA[1] + ')'
+                    );
+                iName = 'filter';
+                iWrapper = 'progid:DXImageTransform.Microsoft.Gradient(startColorStr=#{n},endColorStr=#{n})';
+                iConvert = function (iAlpha, iRGB) {
+                    return  toHexInt(parseFloat(iAlpha) * 256, 2) + RGB_Hex(iRGB);
+                };
+            }
+            if (iWrapper)
+                iValue = iWrapper.replace(/\{n\}/g,  iConvert ?
+                      iConvert(iRGBA[2], iRGBA[1]) :
+                      (iValue * iScale)
+                );
+
+            this[ this[this.length - 1].toCamelCase() ] = iValue + (arguments[2] ? ' !important' : '');
+
+            if (this.ownerNode)
+                this.ownerNode.style.setAttribute(iName,  iValue,  arguments[2] && 'important');
+            else
+                return  [iString, ";\n", iName, ':', Code_Indent, iValue].join('');
+        }
+    });
+
+    BOM.getComputedStyle = function () {
+        return  new CSSStyleDeclaration(arguments[0]);
+    };
+
+
+    /* ----- Event Object ----- */
     BOM.HTMLEvents = function (iEvent) {
         $.extend(this, DOM.createEventObject());
 
@@ -2464,7 +2584,7 @@
     });
 
     /* ----- HTTP Wraped Method ----- */
-    function iHTTP(iURL, iData, iCallback) {
+    function iHTTP(iMethod, iURL, iData, iCallback) {
         var iXHR = BOM[
                 (X_Domain(iURL) && ($.browser.msie < 10))  ?  'XDomainRequest' : 'XMLHttpRequest'
             ];
@@ -2491,7 +2611,7 @@
 
         iXHR = new iXHR();
         iXHR[$_Form ? 'onload' : 'onready'] = iCallback;
-        iXHR.open(iData ? 'POST' : 'GET',  $_Form || iURL,  true);
+        iXHR.open(iMethod,  $_Form || iURL,  true);
         iXHR.withCredentials = true;
         if (typeof iData == 'string')
             iXHR.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
@@ -2503,7 +2623,7 @@
     }
 
     $.extend($, {
-        get:     function (iURL, iData, iCallback) {
+        get:       function (iURL, iData, iCallback) {
             if (typeof iData == 'function') {
                 iCallback = iData;
                 iData = { };
@@ -2511,11 +2631,17 @@
 
             if (! iURL.match(/\w+=\?/)) {
                 iURL = iURL.split('?');
-                return  iHTTP(iURL[0] + '?' + $.param(
+
+                return  iHTTP(
+                    'GET',
+                    iURL[0] + '?' + $.param(
                         $.extend($.paramJSON(iURL[1]), iData, {
                             _:    $.now()
                         })
-                    ), null, iCallback);
+                    ),
+                    null,
+                    iCallback
+                );
             }
             //  JSONP
             var iDHR = new BOM.DOMHttpRequest();
@@ -2523,7 +2649,35 @@
             iDHR.onload = iCallback;
             return iDHR.send(iData);
         },
-        post:    iHTTP
+        post:      function () {
+            var iArgs = $.makeArray(arguments);
+            iArgs.unshift('POST');
+
+            return  iHTTP.apply(BOM, iArgs);
+        },
+        delete:    function (iURL, iData, iCallback) {
+            iURL = iURL.split('?');
+            if (typeof iData == 'function') {
+                iCallback = iData;
+                iData = { };
+            }
+            return  iHTTP(
+                'DELETE',
+                iURL[0] + '?' + $.param(
+                    $.extend($.paramJSON(iURL[1]), iData, {
+                        _:    $.now()
+                    })
+                ),
+                null,
+                iCallback
+            );
+        },
+        put:       function () {
+            var iArgs = $.makeArray(arguments);
+            iArgs.unshift('PUT');
+
+            return  iHTTP.apply(BOM, iArgs);
+        }
     });
 
     $.getJSON = $.get;
@@ -2684,70 +2838,6 @@
     };
 
 })(self.iQuery);
-
-
-
-(function (BOM, DOM, $) {
-
-    if (! ($.browser.msie < 10))  return;
-
-/* ---------- HTML 5 Element Data Set  Shim ---------- */
-    function DOMStringMap(iElement) {
-        for (var i = 0, iAttr;  i < iElement.attributes.length;  i++) {
-            iAttr = iElement.attributes[i];
-            if (iAttr.nodeName.slice(0, 5) == 'data-')
-                this[ iAttr.nodeName.toCamelCase() ] = iAttr.nodeValue;
-        }
-    }
-
-    Object.defineProperty(Element.prototype, 'dataset', {
-        get:    function () {
-            return  new DOMStringMap(this);
-        },
-        set:    function () { }
-    });
-
-/* ---------- History API Shim ---------- */
-    var _State_ = [
-            [null, DOM.title, DOM.URL]
-        ],
-        _Pushing_ = false,
-        $_BOM = $(BOM);
-
-    BOM.history.pushState = function (iState, iTitle, iURL) {
-        for (var iKey in iState)
-            if (! $.isData(iState[iKey]))
-                throw ReferenceError("The History State can't be Complex Object !");
-
-        if (typeof iTitle != 'string')
-            throw TypeError("The History State needs a Title String !");
-
-        DOM.title = iTitle;
-        _Pushing_ = true;
-        BOM.location.hash = '_' + (_State_.push(arguments) - 1);
-    };
-
-    BOM.history.replaceState = function () {
-        _State_ = [ ];
-        this.pushState.apply(this, arguments);
-    };
-
-    $_BOM.on('hashchange',  function () {
-        if (_Pushing_) {
-            _Pushing_ = false;
-            return;
-        }
-
-        var iState = _State_[ BOM.location.hash.slice(2) ];
-        if (! iState)  return;
-
-        BOM.history.state = iState[0];
-        DOM.title = iState[1];
-
-        $_BOM.trigger('popstate');
-    });
-
-})(self, self.document, self.iQuery);
 
 
 
