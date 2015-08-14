@@ -2,7 +2,7 @@
 //                >>>  iQuery.js  <<<
 //
 //
-//      [Version]    v1.0  (2015-8-13)  Stable
+//      [Version]    v1.0  (2015-8-14)  Stable
 //
 //      [Usage]      A Light-weight jQuery Compatible API
 //                   with IE 8+ compatibility.
@@ -20,7 +20,7 @@
             var iString = [ ];
 
             for (var i = 0;  i < arguments;  i++)
-                iString.push( arguments[i].toString() );
+                iString.push( String(arguments[i]) );
 
             BOM.status = iString.join(' ');
         }
@@ -243,7 +243,7 @@
     }
 
     var Type_Info = {
-            Data:         _inKey_('String', 'Number', 'Boolean', 'Object', 'Null'),
+            Data:         _inKey_('String', 'Number', 'Boolean', 'Null'),
             BOM:          _inKey_('Window', 'DOMWindow', 'global'),
             DOM:          {
                 set:        _inKey_('Array', 'HTMLCollection', 'NodeList', 'jQuery', 'iQuery'),
@@ -416,7 +416,7 @@
 
     _Get_Set_.innerHTML = {
         set:    function (iElement, iHTML) {
-            var IE_Scope = iHTML.toString().match(
+            var IE_Scope = String(iHTML).match(
                     /^[^<]*<\s*(head|meta|title|link|style|script|noscript|(!--[^>]*--))[^>]*>/i
                 );
 
@@ -461,11 +461,7 @@
                 iValue += 'px';
 
             if (iElement)
-                iElement.style.setProperty(
-                    iName,
-                    (_Browser_.msie != 9) ? iValue : iValue.toString(),
-                    'important'
-                );
+                iElement.style.setProperty(iName, String(iValue), 'important');
             else
                 return  [iName, ':', Code_Indent, iValue].join('');
         }
@@ -1609,7 +1605,14 @@
                 iResource.count++ ;
                 console.log(this);
             }  break;
-            case 'input':    iReturn = $_This.attr('value', iValue);  break;
+            case 'textarea':    ;
+            case 'select':      ;
+            case 'input':       {
+                if ($_This.attr('type').match(/radio|checkbox/i) && iValue)
+                    $_This.prop('checked', true);
+                iReturn = $_This.attr('value', iValue);
+                break;
+            }
             default:         {
                 var _Set_ = iValue || $.isData(iValue),
                     End_Element = (! this.children.length),
@@ -2446,7 +2449,7 @@
                             this.responseType = 'application/json';
                         } catch (iError) {
                             if ($.browser.msie != 9)  try {
-                                iContent = $.parseXML(_Content_);
+                                iContent = $.browser.ff ? this.responseXML : $.parseXML(_Content_);
                                 this.responseType = 'text/xml';
                             } catch (iError) { }
                         }
@@ -2540,7 +2543,7 @@
                     iDHR.responseText = $_Content.find('body').text();
                     iDHR.status = 200;
                     iDHR.readyState = 4;
-                    iDHR.onload.call($_Form[0],  iDHR.responseAny(),  $_Content);
+                    iDHR.onready.call($_Form[0],  iDHR.responseAny(),  $_Content);
                 } catch (iError) { }
             });
 
@@ -2561,7 +2564,7 @@
                     if (iDHR.readyState) {
                         iDHR.status = 200;
                         iDHR.readyState = 4;
-                        iDHR.onload.apply(iDHR, arguments);
+                        iDHR.onready.apply(iDHR, arguments);
                     }
                     delete this[_GUID_];
                     iDHR.$_DOM.remove();
@@ -2610,8 +2613,12 @@
             iData = BOM.encodeURI( $.param(iData || { }) );
 
         iXHR = new iXHR();
-        iXHR[$_Form ? 'onload' : 'onready'] = iCallback;
-        iXHR.open(iMethod,  $_Form || iURL,  true);
+        iXHR.onready = iCallback;
+        iXHR.open(
+            iMethod,
+            ((! iData) && $_Form)  ?  $_Form  :  iURL,
+            true
+        );
         iXHR.withCredentials = true;
         if (typeof iData == 'string')
             iXHR.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
@@ -2622,31 +2629,34 @@
         return iXHR;
     }
 
+    function Idempotent_Args(iURL) {
+        iURL = iURL.split('?');
+        iURL[1] = $.extend($.paramJSON(iURL[1]), arguments[1]);
+
+        var iPrefetch;
+        $('link[rel="next"], link[rel="prefetch"]').each(function () {
+            if ($.fileName(this.href) == $.fileName(iURL[0]))
+                iPrefetch = true;
+        });
+        if (! iPrefetch)  iURL[1]._ = $.now();
+
+        return  (iURL[0] + '?' + $.param(iURL[1])).trim('?');
+    }
+
     $.extend($, {
         get:       function (iURL, iData, iCallback) {
             if (typeof iData == 'function') {
                 iCallback = iData;
                 iData = { };
             }
+            //  XHR
+            if (! iURL.match(/\w+=\?/))
+                return  iHTTP('GET',  Idempotent_Args(iURL, iData),  null,  iCallback);
 
-            if (! iURL.match(/\w+=\?/)) {
-                iURL = iURL.split('?');
-
-                return  iHTTP(
-                    'GET',
-                    iURL[0] + '?' + $.param(
-                        $.extend($.paramJSON(iURL[1]), iData, {
-                            _:    $.now()
-                        })
-                    ),
-                    null,
-                    iCallback
-                );
-            }
             //  JSONP
             var iDHR = new BOM.DOMHttpRequest();
             iDHR.open('GET', iURL);
-            iDHR.onload = iCallback;
+            iDHR.onready = iCallback;
             return iDHR.send(iData);
         },
         post:      function () {
@@ -2656,21 +2666,11 @@
             return  iHTTP.apply(BOM, iArgs);
         },
         delete:    function (iURL, iData, iCallback) {
-            iURL = iURL.split('?');
             if (typeof iData == 'function') {
                 iCallback = iData;
                 iData = { };
             }
-            return  iHTTP(
-                'DELETE',
-                iURL[0] + '?' + $.param(
-                    $.extend($.paramJSON(iURL[1]), iData, {
-                        _:    $.now()
-                    })
-                ),
-                null,
-                iCallback
-            );
+            return  iHTTP('DELETE',  Idempotent_Args(iURL, iData),  null,  iCallback);
         },
         put:       function () {
             var iArgs = $.makeArray(arguments);
@@ -2737,6 +2737,8 @@
         }
 
         function Load_Back(iHTML) {
+            if (typeof iHTML != 'string')  return;
+
             if (! iHTML.match(/<\s*(html|head|body)[^>]*>/i)) {
                 Append_Back.apply(this, arguments);
                 return;
@@ -2856,8 +2858,7 @@
                     column:     iColumn  ||  (BOM.event && BOM.event.errorCharacter)  ||  0
                 };
 
-            if (iError && iError.stack)
-                iData.stack = (iError.stack || iError.stacktrace).toString();
+            if (iError)  iData.stack = String(iError.stack || iError.stacktrace);
 
             if (Console_URL) {
                 if (iData.stack)

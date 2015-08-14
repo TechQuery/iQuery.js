@@ -300,8 +300,7 @@
                     column:     iColumn  ||  (BOM.event && BOM.event.errorCharacter)  ||  0
                 };
 
-            if (iError && iError.stack)
-                iData.stack = (iError.stack || iError.stacktrace).toString();
+            if (iError)  iData.stack = String(iError.stack || iError.stacktrace);
 
             if (Console_URL) {
                 if (iData.stack)
@@ -625,7 +624,14 @@
                 iResource.count++ ;
                 console.log(this);
             }  break;
-            case 'input':    iReturn = $_This.attr('value', iValue);  break;
+            case 'textarea':    ;
+            case 'select':      ;
+            case 'input':       {
+                if ($_This.attr('type').match(/radio|checkbox/i) && iValue)
+                    $_This.prop('checked', true);
+                iReturn = $_This.attr('value', iValue);
+                break;
+            }
             default:         {
                 var _Set_ = iValue || $.isData(iValue),
                     End_Element = (! this.children.length),
@@ -835,7 +841,7 @@
                     iDHR.responseText = $_Content.find('body').text();
                     iDHR.status = 200;
                     iDHR.readyState = 4;
-                    iDHR.onload.call($_Form[0],  iDHR.responseAny(),  $_Content);
+                    iDHR.onready.call($_Form[0],  iDHR.responseAny(),  $_Content);
                 } catch (iError) { }
             });
 
@@ -856,7 +862,7 @@
                     if (iDHR.readyState) {
                         iDHR.status = 200;
                         iDHR.readyState = 4;
-                        iDHR.onload.apply(iDHR, arguments);
+                        iDHR.onready.apply(iDHR, arguments);
                     }
                     delete this[_GUID_];
                     iDHR.$_DOM.remove();
@@ -904,7 +910,7 @@
                 else {
                     var iDHR = new BOM.DOMHttpRequest();
                     iDHR.open('POST', $_Form)
-                    iDHR.onload = iCallback;
+                    iDHR.onready = iCallback;
                     iDHR.send();
                     return;
                 }
