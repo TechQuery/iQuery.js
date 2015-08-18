@@ -2,7 +2,7 @@
 //                >>>  iQuery.js  <<<
 //
 //
-//      [Version]    v1.0  (2015-8-14)  Stable
+//      [Version]    v1.0  (2015-8-18)  Stable
 //
 //      [Usage]      A Light-weight jQuery Compatible API
 //                   with IE 8+ compatibility.
@@ -217,12 +217,20 @@
         return Arr_Obj;
     }
 
-    function _Extend_(iTarget) {
-        iTarget = iTarget || (
-            (arguments[1] instanceof Array)  ?  [ ]  :  { }
-        );
+    function _Extend_() {
+        var iTarget, iFirst;
 
-        for (var i = 1;  i < arguments.length;  i++)
+        if (arguments.length > 1) {
+            iTarget = arguments[0] || (
+                (arguments[1] instanceof Array)  ?  [ ]  :  { }
+            );
+            iFirst = 1;
+        } else {
+            iTarget = this;
+            iFirst = 0;
+        }
+
+        for (var i = iFirst;  i < arguments.length;  i++)
             for (var iKey in arguments[i])
                 if (
                     Object.prototype.hasOwnProperty.call(arguments[i], iKey)  &&
@@ -817,50 +825,6 @@
     }
 
 
-/* ---------- XML Module ---------- */
-    if (_Browser_.msie < 9)
-        var IE_DOMParser = (function (MS_Version) {
-                for (var i = 0; i < MS_Version.length; i++)  try {
-                    new ActiveXObject( MS_Version[i] );
-                    return MS_Version[i];
-                } catch (iError) { }
-            })([
-                'MSXML2.DOMDocument.6.0',
-                'MSXML2.DOMDocument.5.0',
-                'MSXML2.DOMDocument.4.0',
-                'MSXML2.DOMDocument.3.0',
-                'MSXML2.DOMDocument',
-                'Microsoft.XMLDOM'
-            ]);
-
-    function XML_Parse(iString) {
-        iString = iString.trim();
-        if ((iString[0] != '<') || (iString[iString.length - 1] != '>'))
-            throw 'Illegal XML Format...';
-
-        var iXML;
-
-        if (DOMParser) {
-            iXML = (new DOMParser()).parseFromString(iString, 'text/xml');
-            var iError = iXML.getElementsByTagName('parsererror');
-            if (iError.length) {
-                throw  new SyntaxError(1, 'Incorrect XML Syntax !');
-                console.log(iError[0]);
-            }
-            iXML.cookie;    //  for old WebKit core to throw Error
-        } else {
-            iXML = new ActiveXObject( IE_DOMParser );
-            iXML.async = false;
-            iXML.loadXML(iString);
-            if (iXML.parseError.errorCode) {
-                throw  new SyntaxError(iXML.parseError, 'Incorrect XML Syntax !');
-                console.log(iXML.parseError.reason);
-            }
-        }
-        return iXML;
-    }
-
-
 /* ---------- jQuery API ---------- */
     BOM.iQuery = function (Element_Set, iContext) {
         /* ----- Global Wrapper ----- */
@@ -921,7 +885,9 @@
     }
 
     /* ----- iQuery Static Method ----- */
-    _Extend_($, {
+    $.extend = _Extend_;
+
+    $.extend($, _Time_, {
         browser:          _Browser_,
         type:             _Type_,
         isPlainObject:    function (iValue) {
@@ -932,9 +898,8 @@
             return  (this.type(arguments[0]) in Type_Info.Data);
         },
         each:             _Each_,
-        extend:           _Extend_,
         makeArray:        function () {
-            return  this.extend([ ], arguments[0]);
+            return  $.extend([ ], arguments[0]);
         },
         inArray:          function () {
             return  Array.prototype.indexOf.call(arguments[0], arguments[1]);
@@ -953,7 +918,21 @@
             return iString;
         },
         parseJSON:        BOM.JSON.parse,
-        parseXML:         XML_Parse,
+        parseXML:         function (iString) {
+            iString = iString.trim();
+            if ((iString[0] != '<') || (iString[iString.length - 1] != '>'))
+                throw 'Illegal XML Format...';
+
+            var iXML = (new BOM.DOMParser()).parseFromString(iString, 'text/xml');
+            var iError = iXML.getElementsByTagName('parsererror');
+            if (iError.length) {
+                throw  new SyntaxError(1, 'Incorrect XML Syntax !');
+                console.log(iError[0]);
+            }
+            iXML.cookie;    //  for old WebKit core to throw Error
+
+            return iXML;
+        },
         param:            function (iObject) {
             var iParameter = [ ],  iValue;
 
@@ -968,7 +947,7 @@
 
                     iParameter.push(iName + '=' + BOM.encodeURIComponent(iValue));
                 }
-            else if (iObject instanceof $)
+            else if ($.type(iObject) in Type_Info.DOM.set)
                 for (var i = 0;  i < iObject.length;  i++)
                     iParameter.push(
                         iObject[i].name + '=' + BOM.encodeURIComponent(iObject[i].value)
@@ -1016,10 +995,10 @@
         }
     });
 
-    _Extend_($, _Time_);
-
     /* ----- iQuery Instance Method ----- */
-    _Extend_($.fn, {
+    $.fn.extend = $.extend;
+
+    $.fn.extend({
         splice:             Array.prototype.splice,
         jquery:             '1.9.1',
         iquery:             '1.0',
@@ -1458,7 +1437,7 @@
             iHandler = iHandler && iHandler[arguments[0]];
             if (! iHandler)  return;
 
-            var iArgs = $.extend([ ], arguments),  iReturn;
+            var iArgs = $.makeArray(arguments),  iReturn;
             iArgs.unshift([ ]);
             for (var i = 0;  i < iHandler.length;  i++)
                 iReturn = iHandler[i].apply(
@@ -1532,6 +1511,9 @@
                 return  this[0] && this[0].value;
             else
                 return  this.attr('value', arguments[0]);
+        },
+        serialize:          function () {
+            return $.param(this);
         },
         serializeArray:     function () {
             var $_Value = this.find('*[name]').not(':button, [disabled]'),
@@ -2180,6 +2162,45 @@
     $.extend(DOM, IE_Event_Method);
     $.extend(BOM, IE_Event_Method);
 
+
+
+    /* ----- XML DOM Parser ----- */
+    var IE_DOMParser = (function (MS_Version) {
+            for (var i = 0; i < MS_Version.length; i++)  try {
+                new ActiveXObject( MS_Version[i] );
+                return MS_Version[i];
+            } catch (iError) { }
+        })([
+            'MSXML2.DOMDocument.6.0',
+            'MSXML2.DOMDocument.5.0',
+            'MSXML2.DOMDocument.4.0',
+            'MSXML2.DOMDocument.3.0',
+            'MSXML2.DOMDocument',
+            'Microsoft.XMLDOM'
+        ]);
+
+    function XML_Create() {
+        var iXML = new ActiveXObject(IE_DOMParser);
+        iXML.async = false;
+        iXML.loadXML(arguments[0]);
+        return iXML;
+    }
+
+    BOM.DOMParser = function () { };
+
+    BOM.DOMParser.prototype.parseFromString = function () {
+        var iXML = XML_Create(arguments[0]);
+
+        if (iXML.parseError.errorCode)
+            iXML = XML_Create([
+                '<xml><parsererror><h3>This page contains the following errors:</h3><div>',
+                iXML.parseError.reason,
+                '</div></parsererror></xml>'
+            ].join(''));
+
+        return iXML;
+    };
+
 })(self, self.document, self.iQuery);
 
 
@@ -2408,6 +2429,7 @@
 /* ---------- HTTP Client ---------- */
 (function (BOM, DOM, $) {
 
+    /* ----- XML HTTP Request ----- */
     function X_Domain(Target_URL) {
         var iLocation = BOM.location;
         Target_URL = Target_URL.match(/^(\w+?(s)?:)?\/\/([\w\d:]+@)?([^\/\:\@]+)(:(\d+))?/);
@@ -2449,7 +2471,12 @@
                             this.responseType = 'application/json';
                         } catch (iError) {
                             if ($.browser.msie != 9)  try {
-                                iContent = $.browser.ff ? this.responseXML : $.parseXML(_Content_);
+                                if (! $.browser.ff)
+                                    iContent = $.parseXML(_Content_);
+                                else if (this.responseXML)
+                                    iContent = this.responseXML;
+                                else
+                                    break;
                                 this.responseType = 'text/xml';
                             } catch (iError) { }
                         }
@@ -2469,7 +2496,6 @@
             }
         };
 
-    /* ----- XML HTTP Request ----- */
     var XHR_Open = BOM.XMLHttpRequest.prototype.open;
 
     $.extend(BOM.XMLHttpRequest.prototype, XHR_Extension, {
@@ -2643,7 +2669,7 @@
         return  (iURL[0] + '?' + $.param(iURL[1])).trim('?');
     }
 
-    $.extend($, {
+    $.extend({
         get:       function (iURL, iData, iCallback) {
             if (typeof iData == 'function') {
                 iCallback = iData;
