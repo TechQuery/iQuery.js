@@ -510,13 +510,13 @@
     _Get_Set_.Data = {
         _Data_:    [ ],
         set:       function (iElement, iName, iValue) {
-            if (_Type_(iElement.dataIndex) != 'Number')
+            if (typeof iElement.dataIndex != 'number')
                 iElement.dataIndex = this._Data_.push({ }) - 1;
 
             this._Data_[iElement.dataIndex][iName] = iValue;
         },
         get:       function (iElement, iName) {
-            if (_Type_(iElement.dataIndex) != 'Number')
+            if (typeof iElement.dataIndex != 'number')
                 iElement.dataIndex = this._Data_.push({ }) - 1;
 
             return  (this._Data_[iElement.dataIndex] || { })[iName]  ||
@@ -526,9 +526,11 @@
             if (typeof iElement.dataIndex != 'number')  return;
 
             if (iName)
-                this._Data_[iElement.dataIndex][iName] = null;
-            else
-                this._Data_[iElement.dataIndex] = null;
+                delete this._Data_[iElement.dataIndex][iName];
+            else {
+                delete this._Data_[iElement.dataIndex];
+                delete iElement.dataIndex;
+            }
         },
         clone:     function (iOld, iNew) {
             iNew.dataIndex = this._Data_.push({ }) - 1;
@@ -1323,11 +1325,13 @@
                     old_Class = (old_Class || '').trim().split(/\s+/);
                     if (! old_Class[0])  return;
 
-                    for (var i = 0;  i < old_Class.length;  i++)
-                        if ($.inArray(iClass, old_Class[i]) > -1)
-                            delete old_Class[i];
+                    var new_Class = [ ];
 
-                    return  old_Class.join(' ').trim();
+                    for (var i = 0;  i < old_Class.length;  i++)
+                        if ($.inArray(iClass, old_Class[i]) == -1)
+                            new_Class.push( old_Class[i] );
+
+                    return  new_Class.join(' ');
                 });
         },
         hasClass:           function (iClass) {
@@ -1590,7 +1594,7 @@
             case 'textarea':    ;
             case 'select':      ;
             case 'input':       {
-                if ($_This.attr('type').match(/radio|checkbox/i) && iValue)
+                if (($_This.attr('type') || '').match(/radio|checkbox/i)  &&  iValue)
                     $_This.prop('checked', true);
                 iReturn = $_This.attr('value', iValue);
                 break;
@@ -1799,68 +1803,8 @@
 
 
 
-/* ---------- W3C HTML 5  Shim ---------- */
+/* ---------- IE 8- Patch to W3C ---------- */
 (function (BOM, DOM, $) {
-
-    if (! ($.browser.msie < 10))  return;
-
-    /* ----- Element Data Set ----- */
-    function DOMStringMap(iElement) {
-        for (var i = 0, iAttr;  i < iElement.attributes.length;  i++) {
-            iAttr = iElement.attributes[i];
-            if (iAttr.nodeName.slice(0, 5) == 'data-')
-                this[ iAttr.nodeName.toCamelCase() ] = iAttr.nodeValue;
-        }
-    }
-
-    Object.defineProperty(Element.prototype, 'dataset', {
-        get:    function () {
-            return  new DOMStringMap(this);
-        },
-        set:    function () { }
-    });
-
-
-    /* ----- History API ----- */
-    var _State_ = [
-            [null, DOM.title, DOM.URL]
-        ],
-        _Pushing_ = false,
-        $_BOM = $(BOM);
-
-    BOM.history.pushState = function (iState, iTitle, iURL) {
-        for (var iKey in iState)
-            if (! $.isData(iState[iKey]))
-                throw ReferenceError("The History State can't be Complex Object !");
-
-        if (typeof iTitle != 'string')
-            throw TypeError("The History State needs a Title String !");
-
-        DOM.title = iTitle;
-        _Pushing_ = true;
-        BOM.location.hash = '_' + (_State_.push(arguments) - 1);
-    };
-
-    BOM.history.replaceState = function () {
-        _State_ = [ ];
-        this.pushState.apply(this, arguments);
-    };
-
-    $_BOM.on('hashchange',  function () {
-        if (_Pushing_) {
-            _Pushing_ = false;
-            return;
-        }
-
-        var iState = _State_[ BOM.location.hash.slice(2) ];
-        if (! iState)  return;
-
-        BOM.history.state = iState[0];
-        DOM.title = iState[1];
-
-        $_BOM.trigger('popstate');
-    });
-
 
     if ($.browser.modern)  return;
 
@@ -1875,13 +1819,13 @@
 
     $.extend(Element.prototype, {
         getAttribute:    function (iName) {
-            return  Get_Attribute.call(this,  iAlias[iName] || iName);
+            return  Get_Attribute.call(this,  iAlias[iName] || iName,  0);
         },
         setAttribute:    function (iName) {
-            return  Set_Attribute.call(this,  iAlias[iName] || iName,  arguments[1]);
+            return  Set_Attribute.call(this,  iAlias[iName] || iName,  arguments[1],  0);
         },
         removeAttribute:    function (iName) {
-            return  Remove_Attribute.call(this,  iAlias[iName] || iName);
+            return  Remove_Attribute.call(this,  iAlias[iName] || iName,  0);
         }
     });
 
@@ -2200,6 +2144,72 @@
 
         return iXML;
     };
+
+})(self, self.document, self.iQuery);
+
+
+
+/* ---------- W3C HTML 5  Shim ---------- */
+(function (BOM, DOM, $) {
+
+    if (! ($.browser.msie < 10))  return;
+
+    /* ----- Element Data Set ----- */
+    function DOMStringMap(iElement) {
+        for (var i = 0, iAttr;  i < iElement.attributes.length;  i++) {
+            iAttr = iElement.attributes[i];
+            if (iAttr.nodeName.slice(0, 5) == 'data-')
+                this[ iAttr.nodeName.toCamelCase() ] = iAttr.nodeValue;
+        }
+    }
+
+    Object.defineProperty(Element.prototype, 'dataset', {
+        get:    function () {
+            return  new DOMStringMap(this);
+        },
+        set:    function () { }
+    });
+
+
+    /* ----- History API ----- */
+    var _State_ = [
+            [null, DOM.title, DOM.URL]
+        ],
+        _Pushing_ = false,
+        $_BOM = $(BOM);
+
+    BOM.history.pushState = function (iState, iTitle, iURL) {
+        for (var iKey in iState)
+            if (! $.isData(iState[iKey]))
+                throw ReferenceError("The History State can't be Complex Object !");
+
+        if (typeof iTitle != 'string')
+            throw TypeError("The History State needs a Title String !");
+
+        DOM.title = iTitle;
+        _Pushing_ = true;
+        BOM.location.hash = '_' + (_State_.push(arguments) - 1);
+    };
+
+    BOM.history.replaceState = function () {
+        _State_ = [ ];
+        this.pushState.apply(this, arguments);
+    };
+
+    $_BOM.on('hashchange',  function () {
+        if (_Pushing_) {
+            _Pushing_ = false;
+            return;
+        }
+
+        var iState = _State_[ BOM.location.hash.slice(2) ];
+        if (! iState)  return;
+
+        BOM.history.state = iState[0];
+        DOM.title = iState[1];
+
+        $_BOM.trigger('popstate');
+    });
 
 })(self, self.document, self.iQuery);
 
@@ -2670,7 +2680,7 @@
     }
 
     $.extend({
-        get:       function (iURL, iData, iCallback) {
+        get:         function (iURL, iData, iCallback) {
             if (typeof iData == 'function') {
                 iCallback = iData;
                 iData = { };
@@ -2685,20 +2695,20 @@
             iDHR.onready = iCallback;
             return iDHR.send(iData);
         },
-        post:      function () {
+        post:        function () {
             var iArgs = $.makeArray(arguments);
             iArgs.unshift('POST');
 
             return  iHTTP.apply(BOM, iArgs);
         },
-        delete:    function (iURL, iData, iCallback) {
+        'delete':    function (iURL, iData, iCallback) {
             if (typeof iData == 'function') {
                 iCallback = iData;
                 iData = { };
             }
             return  iHTTP('DELETE',  Idempotent_Args(iURL, iData),  null,  iCallback);
         },
-        put:       function () {
+        put:         function () {
             var iArgs = $.makeArray(arguments);
             iArgs.unshift('PUT');
 
