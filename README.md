@@ -36,7 +36,7 @@
 - 更智能的 $.get()、$.post()：支持 form 元素、FormData 对象的请求数据形式，整合 XHR、XDR、JSONP、iframe **自适应 跨域请求**，**自动转换响应内容**为 JSON 或 XML 对象实例
 - 新增 **$.delete()、$.put()**，方便实现基于 RESTful API 的单页应用
 - 新增 **URL 文件名提取方法** —— $.fileName()
-- 封装了**表单元素无刷新提交**，并可直接绑定响应回调 —— $.fn.post()（基于前述的几个 **AJAX 增强方法** 构建）
+- 封装了**表单元素无刷新提交**，并可直接绑定响应回调 —— $.fn.ajaxSubmit()（基于前述的几个 **AJAX 增强方法** 构建）
 - 新增基于**现代浏览器 Crypto API** 的哈希方法 —— $.dataHash()
 - 新增 **选择符合法性判断方法** —— $.is_Selector()
 - jQuery **伪类选择符** :button 还支持 submit、reset、image 类型的按钮，新增 **:data 伪类**来筛选有 data-* 属性的元素

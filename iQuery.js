@@ -2,7 +2,7 @@
 //                >>>  iQuery.js  <<<
 //
 //
-//      [Version]    v1.0  (2015-8-18)  Stable
+//      [Version]    v1.0  (2015-8-20)  Stable
 //
 //      [Usage]      A Light-weight jQuery Compatible API
 //                   with IE 8+ compatibility.
@@ -2799,7 +2799,7 @@
     };
 
     /* ----- Form Element AJAX Submit ----- */
-    $.fn.post = function (iCallback) {
+    $.fn.ajaxSubmit = function (iCallback) {
         if (! this.length)  return this;
 
         var $_Form = (
@@ -2809,17 +2809,27 @@
         if (! $_Form.length)  return this;
 
         var $_Button = $_Form.find(':button').attr('disabled', true);
+
+        function AJAX_Ready() {
+            $_Button.prop('disabled', false);
+            iCallback.call($_Form[0], arguments[0]);
+        }
+
         $_Form.one('submit',  function (iEvent) {
             iEvent.preventDefault();
             iEvent.stopPropagation();
             $_Button.attr('disabled', true);
 
-            if ( this.checkValidity() )
-                $.post(this.action,  this,  function () {
-                    $_Button.prop('disabled', false);
-                    iCallback.call($_Form[0], arguments[0]);
-                });
-            else
+            var iMethod = (this.method || 'Get').toLowerCase();
+
+            if ( this.checkValidity() )  switch (iMethod) {
+                case 'get':       ;
+                case 'delete':
+                    $[iMethod](this.action, AJAX_Ready);    break;
+                case 'post':      ;
+                case 'put':
+                    $[iMethod](this.action, this, AJAX_Ready);
+            } else
                 $_Button.prop('disabled', false);
         });
         $_Button.prop('disabled', false);

@@ -2,7 +2,7 @@
 //              >>>  jQuery+  <<<
 //
 //
-//    [Version]     v4.7  (2015-8-13)
+//    [Version]     v4.7  (2015-8-20)
 //
 //    [Based on]    jQuery  v1.9+
 //
@@ -884,7 +884,7 @@
         }
     });
 
-    $.fn.post = function (iCallback) {
+    $.fn.ajaxSubmit = function (iCallback) {
         if (! this.length)  return this;
 
         var $_Form = (
@@ -894,6 +894,12 @@
         if (! $_Form.length)  return this;
 
         var $_Button = $_Form.find(':button').attr('disabled', true);
+
+        function AJAX_Ready() {
+            $_Button.prop('disabled', false);
+            iCallback.call($_Form[0], arguments[0]);
+        }
+
         $_Form.one('submit',  function (iEvent) {
             iEvent.preventDefault();
             iEvent.stopPropagation();
@@ -915,13 +921,16 @@
                     return;
                 }
             }
+            var iMethod = (this.method || 'Get').toLowerCase();
 
-            if ( this.checkValidity() )
-                $.post(this.action,  this,  function () {
-                    $_Button.prop('disabled', false);
-                    iCallback.call($_Form[0], arguments[0]);
-                });
-            else
+            if ( this.checkValidity() )  switch (iMethod) {
+                case 'get':       ;
+                case 'delete':
+                    $[iMethod](this.action, AJAX_Ready);    break;
+                case 'post':      ;
+                case 'put':
+                    $[iMethod](this.action, this, AJAX_Ready);
+            } else
                 $_Button.prop('disabled', false);
         });
         $_Button.prop('disabled', false);
