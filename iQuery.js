@@ -2,7 +2,7 @@
 //                >>>  iQuery.js  <<<
 //
 //
-//      [Version]    v1.0  (2015-8-20)  Stable
+//      [Version]    v1.0  (2015-8-21)  Stable
 //
 //      [Usage]      A Light-weight jQuery Compatible API
 //                   with IE 8+ compatibility.
@@ -341,6 +341,22 @@
         }
 
         return iResult;
+    }
+
+    function Array_Concat() {
+        var iArgs = _Extend_([ ], arguments);
+
+        for (var i = 0, iType;  i < iArgs.length;  i++)
+            if (typeof iArgs[i].length == 'number') {
+                iType = _Type_(iArgs[i]);
+                if (
+                    (! iType.match(/String|Array/))  &&
+                    (! (iType in Type_Info.DOM.element))
+                )
+                    iArgs[i] = _Extend_([ ], iArgs[i]);
+            }
+
+        return  Array.prototype.concat.apply(iArgs.shift(), iArgs);
     }
 
 
@@ -713,6 +729,53 @@
 
 /* ---------- DOM Selector ---------- */
     var iPseudo = {
+            ':header':     {
+                filter:    function () {
+                    return  (arguments[0] instanceof HTMLHeadingElement);
+                }
+            },
+            ':image':      {
+                feature:    _Extend_(_inKey_('img', 'svg', 'canvas'), {
+                    input:    {type:  'image'},
+                    link:     {type:  'image/x-icon'}
+                }),
+                filter:    function (iElement) {
+                    var iTag = iElement.tagName.toLowerCase();
+
+                    if (iTag in this.feature)
+                        return  (this.feature[iTag] instanceof Boolean) ? true : (
+                            this.feature[iTag].type == iElement.type.toLowerCase()
+                        );
+                }
+            },
+            ':button':     {
+                feature:    _inKey_('button', 'image', 'submit', 'reset'),
+                filter:     function (iElement) {
+                    var iTag = iElement.tagName.toLowerCase();
+
+                    return  ((iTag == 'button') || (
+                        (iTag == 'input') &&
+                        (iElement.type.toLowerCase() in this.feature)
+                    ));
+                }
+            },
+            ':input':      {
+                feature:    _inKey_('input', 'textarea', 'button', 'select'),
+                filter:     function () {
+                    return  (arguments[0].tagName.toLowerCase() in this.feature);
+                }
+            },
+            ':list':       {
+                feature:    _inKey_('ul', 'ol', 'dl'),
+                filter:     function () {
+                    return  (arguments[0].tagName.toLowerCase() in this.feature);
+                }
+            },
+            ':data':       {
+                filter:    function () {
+                    return  (! Empty_Object(arguments[0].dataset));
+                }
+            },
             ':visible':    {
                 feature:    {
                     display:    'none',
@@ -726,75 +789,47 @@
 
                     for (var iKey in iStyle)
                         if (iStyle[iKey] === this.feature[iKey])
-                            return false;
+                            return;
                     return true;
                 }
             },
-            ':button':     {
-                feature:    _inKey_('button', 'image', 'submit', 'reset'),
-                filter:     function (iElement) {
-                    var iTag = iElement.tagName.toLowerCase();
+            ':parent':      {
+                filter:    function () {
+                    var iNode = arguments[0].childNodes;
 
-                    if ((iTag == 'button') || (
-                        (iTag == 'input') &&
-                        (iElement.type.toLowerCase() in this.feature)
-                    ))
-                        return true;
-                    else
-                        return false;
-                }
-            },
-            ':header':     {
-                filter:    function () {
-                    return  (arguments[0] instanceof HTMLHeadingElement);
-                }
-            },
-            ':input':      {
-                feature:    _inKey_('input', 'textarea', 'button', 'select'),
-                filter:     function () {
-                    return  (arguments[0].tagName.toLowerCase() in this.feature);
-                }
-            },
-            ':data':       {
-                filter:    function () {
-                    return  (! Empty_Object(arguments[0].dataset));
+                    if (! arguments[0].children.length) {
+                        for (var i = 0;  i < iNode.length;  i++)
+                            if (iNode[i].nodeType == 3)
+                                return true;
+                    } else  return true;
                 }
             }
         };
 
-    iPseudo[':hidden'] = {
-        filter:    function () {
-            return  (! iPseudo[':visible'].filter(arguments[0]));
+    _Extend_(iPseudo, {
+        ':hidden':    {
+            filter:    function () {
+                return  (! iPseudo[':visible'].filter(arguments[0]));
+            }
+        },
+        ':empty':     {
+            filter:    function () {
+                return  (! iPseudo[':parent'].filter(arguments[0]));
+            }
         }
-    };
+    });
 
     for (var _Pseudo_ in iPseudo)
         iPseudo[_Pseudo_].regexp = BOM.iRegExp(
             '(.*?)' + _Pseudo_ + "([>\\+~\\s]*.*)",  undefined,  null
         );
 
-    var _Concat_ = function () {
-            var iArgs = _Extend_([ ], arguments);
-
-            for (var i = 0, iType;  i < iArgs.length;  i++)
-                if (typeof iArgs[i].length == 'number') {
-                    iType = _Type_(iArgs[i]);
-                    if (
-                        (! iType.match(/String|Array/))  &&
-                        (! (iType in Type_Info.DOM.element))
-                    )
-                        iArgs[i] = _Extend_([ ], iArgs[i]);
-                }
-
-            return  Array.prototype.concat.apply(iArgs.shift(), iArgs);
-        };
-
     function DOM_Search(iRoot, iSelector) {
         var _Self_ = arguments.callee,  iSet = [ ];
 
         _Each_(iSelector.split(/\s*,\s*/),  function () {
             try {
-                iSet = _Concat_(iSet,  iRoot.querySelectorAll(arguments[1] || '*'));
+                iSet = Array_Concat(iSet,  iRoot.querySelectorAll(arguments[1] || '*'));
             } catch (iError) {
                 var _Selector_;
                 for (var _Pseudo_ in iPseudo) {
@@ -1091,7 +1126,7 @@
             var _GUID_ = $.guid();
 
             var $_Result = $(
-                    _Concat_(this, this.prevObject)
+                    Array_Concat(this, this.prevObject)
                 ).attr('iquery', _GUID_);
 
             return  this.pushStack(
@@ -1137,7 +1172,7 @@
             var $_Result = [ ];
 
             for (var i = 0;  i < this.length;  i++)
-                $_Result = _Concat_($_Result, this[i].children);
+                $_Result = Array_Concat($_Result, this[i].children);
 
             if (arguments[0])  $_Result = $($_Result).filter(arguments[0]);
 
@@ -1164,7 +1199,7 @@
             var $_Result = [ ];
 
             for (var i = 0;  i < this.length;  i++)
-                $_Result = _Concat_($_Result, Object_Seek.call(
+                $_Result = Array_Concat($_Result, Object_Seek.call(
                     this[i],
                     $.browser.modern ? 'nextElementSibling' : 'nextSibling'
                 ));
@@ -1177,7 +1212,7 @@
             var $_Result = [ ];
 
             for (var i = 0;  i < this.length;  i++)
-                $_Result = _Concat_($_Result, Object_Seek.call(
+                $_Result = Array_Concat($_Result, Object_Seek.call(
                     this[i],
                     $.browser.modern ? 'previousElementSibling' : 'previousSibling'
                 ));
@@ -1197,7 +1232,7 @@
             var $_Result = [ ];
 
             for (var i = 0;  i < this.length;  i++)
-                $_Result = _Concat_($_Result,  $(arguments[0], this[i]));
+                $_Result = Array_Concat($_Result,  $(arguments[0], this[i]));
 
             return this.pushStack($_Result);
         },
@@ -1445,7 +1480,7 @@
             iArgs.unshift([ ]);
             for (var i = 0;  i < iHandler.length;  i++)
                 iReturn = iHandler[i].apply(
-                    this[0],  _Concat_.apply(BOM, iArgs)
+                    this[0],  Array_Concat.apply(BOM, iArgs)
                 );
 
             return iReturn;
@@ -2106,6 +2141,11 @@
     $.extend(DOM, IE_Event_Method);
     $.extend(BOM, IE_Event_Method);
 
+    //  Patch for Change Event
+    $(DOM.body).on('click',  'input[type="radio"], input[type="checkbox"]',  function () {
+        this.blur();
+        this.focus();
+    });
 
 
     /* ----- XML DOM Parser ----- */
@@ -2820,7 +2860,7 @@
             iEvent.stopPropagation();
             $_Button.attr('disabled', true);
 
-            var iMethod = (this.method || 'Get').toLowerCase();
+            var iMethod = ($(this).attr('method') || 'Get').toLowerCase();
 
             if ( this.checkValidity() )  switch (iMethod) {
                 case 'get':       ;

@@ -39,8 +39,12 @@
 - 封装了**表单元素无刷新提交**，并可直接绑定响应回调 —— $.fn.ajaxSubmit()（基于前述的几个 **AJAX 增强方法** 构建）
 - 新增基于**现代浏览器 Crypto API** 的哈希方法 —— $.dataHash()
 - 新增 **选择符合法性判断方法** —— $.is_Selector()
-- jQuery **伪类选择符** :button 还支持 submit、reset、image 类型的按钮，新增 **:data 伪类**来筛选有 data-* 属性的元素
-- 新增 **DOM 元素集合父元素交集方法** —— $.sameParents()
+- 更多 jQuery **伪类选择符**：
+  - **:image** 还支持 `img, link[type="image/x-icon"], svg, canvas`
+  - **:button** 还支持 `input[type="submit"], input[type="reset"], input[type="image"]`
+  - 新增 **:data 伪类** 来筛选有 data-* 属性的元素
+  - 新增 **:list 伪类**，等价于 `ul, ol, dl`
+- 新增 **DOM 元素集合父元素交集方法** —— $.fn.sameParents()
 - 新增 **DOM 对象通用 .value() 方法**，智能存取多种类型的值
 - .css() 取值时，会把 纯数字值、像素值 直接返回为 Number 类型
 - .css() 赋值一律默认 important 优先级，确保赋值的有效性
@@ -55,7 +59,7 @@
 - 不支持 浏览器**内置类型**（构造函数）相应的 $.isXXX() 方法（但 $.type() 均能返回与构造函数名一致的“类型名”）
 - 暂不支持 $.ajax() 及相关的各种自定义选项
 - 不支持 $.Deferred()（正在尝试引入 ECMAScript 6 的 Promise 对象）
-- **jQuery 扩展伪类选择符**：只支持 常用且“难以用 **CSS 标准选择符** 或 jQuery API 实现其功能”的 —— :visible、:hidden、:button、:header、:input
+- **jQuery 扩展伪类选择符**：只支持 常用且“难以用 **CSS 标准选择符** 或 jQuery API 实现其功能”的
 - 不支持 **XPath 选择器**、操作 **XML 文档**
 - 构造 DOM 元素时的第二参数中不能调用与键名同名的实例方法，仅能设置 DOM 属性
 - 不支持一些不常用的 **jQuery 静态/实例方法**

@@ -921,7 +921,7 @@
                     return;
                 }
             }
-            var iMethod = (this.method || 'Get').toLowerCase();
+            var iMethod = ($(this).attr('method') || 'Get').toLowerCase();
 
             if ( this.checkValidity() )  switch (iMethod) {
                 case 'get':       ;
