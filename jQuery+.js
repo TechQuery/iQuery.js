@@ -629,7 +629,7 @@
             case 'input':       {
                 if ($_This.attr('type').match(/radio|checkbox/i) && iValue)
                     $_This.prop('checked', true);
-                iReturn = $_This.attr('value', iValue);
+                iReturn = this.value = iValue;
                 break;
             }
             default:         {
@@ -790,10 +790,18 @@
                 return iContent;
             },
             retry:          function (Wait_Seconds) {
-                var iXHR = this;
+                var iXHR = new this.constructor,
+                    iData = this.requestData;
+                iXHR.onready = this.onready;
+                iXHR.open.apply(iXHR, this.requestArgs);
 
                 $.wait(Wait_Seconds, function () {
-                    iXHR.open.apply(iXHR, iXHR.requestArgs);
+                    iXHR.withCredentials = true;
+                    if (typeof iData == 'string')
+                        iXHR.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
+                    iXHR.setRequestHeader('X-Requested-With', 'XMLHttpRequest');
+                    iXHR.setRequestHeader('Accept', '*/*');
+                    iXHR.send(iData);
                 });
             }
         };
@@ -867,8 +875,9 @@
                     delete this[_GUID_];
                     iDHR.$_DOM.remove();
                 };
+                this.requestData = arguments[0];
                 this.responseURL = iURL[1] + $.param(
-                    $.extend(arguments[0], $.paramJSON(
+                    $.extend({ }, arguments[0], $.paramJSON(
                         iURL[2].replace(/(\w+)=\?/,  '$1=DOMHttpRequest.JSONP.' + _GUID_)
                     ))
                 );
