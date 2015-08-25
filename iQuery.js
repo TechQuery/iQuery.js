@@ -2,7 +2,7 @@
 //                >>>  iQuery.js  <<<
 //
 //
-//      [Version]    v1.0  (2015-8-24)  Stable
+//      [Version]    v1.0  (2015-8-25)  Stable
 //
 //      [Usage]      A Light-weight jQuery Compatible API
 //                   with IE 8+ compatibility.
@@ -203,43 +203,57 @@
 
 
 /* ---------- Object Base ---------- */
-    function _Each_(Arr_Obj, iEvery) {
-        if (! Arr_Obj)  return;
+    var _Object_ = {
+            isEmptyObject:    function () {
+                for (var iKey in arguments[0])
+                    return false;
+                return true;
+            },
+            isPlainObject:    function (iValue) {
+                return  iValue && (iValue.constructor === Object);
+            },
+            each:             function (Arr_Obj, iEvery) {
+                if (! Arr_Obj)  return;
 
-        if (typeof Arr_Obj.length == 'number') {
-            for (var i = 0;  i < Arr_Obj.length;  i++)
-                if (iEvery.call(Arr_Obj[i], i, Arr_Obj[i]) === false)
-                    break;
-        } else  for (var iKey in Arr_Obj)
-            if (iEvery.call(Arr_Obj[iKey], iKey, Arr_Obj[iKey]) === false)
-                break;
+                if (typeof Arr_Obj.length == 'number') {
+                    for (var i = 0;  i < Arr_Obj.length;  i++)
+                        if (iEvery.call(Arr_Obj[i], i, Arr_Obj[i]) === false)
+                            break;
+                } else  for (var iKey in Arr_Obj)
+                    if (iEvery.call(Arr_Obj[iKey], iKey, Arr_Obj[iKey]) === false)
+                        break;
 
-        return Arr_Obj;
-    }
+                return Arr_Obj;
+            },
+            extend:           function () {
+                var iDeep = (arguments[0] === true);
+                var iTarget,
+                    iFirst = iDeep ? 1 : 0;
 
-    function _Extend_() {
-        var iTarget, iFirst;
+                if (arguments.length  >  (iFirst + 1)) {
+                    iTarget = arguments[iFirst] || (
+                        (arguments[iFirst + 1] instanceof Array)  ?  [ ]  :  { }
+                    );
+                    iFirst++ ;
+                } else
+                    iTarget = this;
 
-        if (arguments.length > 1) {
-            iTarget = arguments[0] || (
-                (arguments[1] instanceof Array)  ?  [ ]  :  { }
-            );
-            iFirst = 1;
-        } else {
-            iTarget = this;
-            iFirst = 0;
-        }
+                for (var i = iFirst, iValue;  i < arguments.length;  i++)
+                    for (var iKey in arguments[i])
+                        if (
+                            Object.prototype.hasOwnProperty.call(arguments[i], iKey)  &&
+                            (arguments[i][iKey] !== undefined)
+                        ) {
+                            iValue = arguments[i][iKey];
 
-        for (var i = iFirst;  i < arguments.length;  i++)
-            for (var iKey in arguments[i])
-                if (
-                    Object.prototype.hasOwnProperty.call(arguments[i], iKey)  &&
-                    (arguments[i][iKey] !== undefined)
-                )
-                    iTarget[iKey] = arguments[i][iKey];
-
-        return iTarget;
-    }
+                            iTarget[iKey] = (iDeep && (
+                                (iValue instanceof Array)  ||  _Object_.isPlainObject(iValue)
+                            )) ?
+                                arguments.callee.call(this, true, undefined, iValue)  :  iValue;
+                        }
+                return iTarget;
+            }
+        };
 
     function _inKey_() {
         var iObject = { };
@@ -276,7 +290,7 @@
             Target:       _inKey_('_top', '_parent', '_self', '_blank')
         };
 
-    function _Type_(iVar) {
+    _Object_.type = function (iVar) {
         var iType = typeof iVar;
 
         iType = (iType == 'object') ? (
@@ -322,13 +336,7 @@
         } catch (iError) { }
 
         return iType;
-    }
-
-    function Empty_Object() {
-        for (var iKey in arguments[0])
-            return false;
-        return true;
-    }
+    };
 
     function Object_Seek(iName, iCallback) {
         var iResult = [ ];
@@ -344,16 +352,16 @@
     }
 
     function Array_Concat() {
-        var iArgs = _Extend_([ ], arguments);
+        var iArgs = _Object_.extend([ ], arguments);
 
         for (var i = 0, iType;  i < iArgs.length;  i++)
             if (typeof iArgs[i].length == 'number') {
-                iType = _Type_(iArgs[i]);
+                iType = _Object_.type(iArgs[i]);
                 if (
                     (! iType.match(/String|Array/))  &&
                     (! (iType in Type_Info.DOM.element))
                 )
-                    iArgs[i] = _Extend_([ ], iArgs[i]);
+                    iArgs[i] = _Object_.extend([ ], iArgs[i]);
             }
 
         return  Array.prototype.concat.apply(iArgs.shift(), iArgs);
@@ -372,7 +380,7 @@
                     _Get_Set_[iType].clear(iElement[i], iName);
             return iElement;
         }
-        if ((iValue === undefined) && (_Type_(iName) in _Get_Set_.Get_Name_Type)) {
+        if ((iValue === undefined) && (_Object_.type(iName) in _Get_Set_.Get_Name_Type)) {
             if (! iElement.length)
                 return;
             else if (typeof iName == 'string')
@@ -470,7 +478,7 @@
             'border-radius'
         ),
         get:          function (iElement, iName) {
-            if ((! iElement) || (_Type_(iElement) in Type_Info.DOM.root))
+            if ((! iElement) || (_Object_.type(iElement) in Type_Info.DOM.root))
                 return null;
 
             var iStyle = DOM.defaultView.getComputedStyle(iElement, null).getPropertyValue(iName);
@@ -479,7 +487,7 @@
             return  isNaN(iNumber) ? iStyle : iNumber;
         },
         set:          function (iElement, iName, iValue) {
-            if (_Type_(iElement) in Type_Info.DOM.root)  return false;
+            if (_Object_.type(iElement) in Type_Info.DOM.root)  return false;
 
             if ((! isNaN( Number(iValue) ))  &&  this.PX_Needed[iName])
                 iValue += 'px';
@@ -494,11 +502,11 @@
     /* ----- DOM Attribute ----- */
     _Get_Set_.Attribute = {
         get:      function (iElement, iName) {
-            return  (_Type_(iElement) in Type_Info.DOM.root) ?
+            return  (_Object_.type(iElement) in Type_Info.DOM.root) ?
                     null : iElement.getAttribute(iName);
         },
         set:      function (iElement, iName, iValue) {
-            return  (_Type_(iElement) in Type_Info.DOM.root) ?
+            return  (_Object_.type(iElement) in Type_Info.DOM.root) ?
                     false  :  iElement.setAttribute(iName, iValue);
         },
         clear:    function (iElement, iName) {
@@ -535,8 +543,11 @@
             if (typeof iElement.dataIndex != 'number')
                 iElement.dataIndex = this._Data_.push({ }) - 1;
 
-            return  (this._Data_[iElement.dataIndex] || { })[iName]  ||
-                (iElement.dataset || { })[ iName.toCamelCase() ];
+            var iData =  (this._Data_[iElement.dataIndex] || { })[iName]  ||
+                    (iElement.dataset || { })[ iName.toCamelCase() ];
+
+            return  ((iData instanceof Array)  ||  _Object_.isPlainObject(iData))  ?
+                    _Object_.extend(true, undefined, iData)  :  iData;
         },
         clear:     function (iElement, iName) {
             if (typeof iElement.dataIndex != 'number')  return;
@@ -550,7 +561,7 @@
         },
         clone:     function (iOld, iNew) {
             iNew.dataIndex = this._Data_.push({ }) - 1;
-            return _Extend_(
+            return _Object_.extend(
                     this._Data_[iNew.dataIndex],
                     this._Data_[iOld.dataIndex]
                 )._event_;
@@ -651,7 +662,7 @@
         for (var i = 0, _Return_;  i < iHandler.length;  i++) {
             if ( iHandler[i] )
                 _Return_ = iHandler[i].apply(
-                    this,  _Extend_([ ], arguments).concat(Trigger_Data)
+                    this,  _Object_.extend([ ], arguments).concat(Trigger_Data)
                 );
             else if (iHandler[i] === false)
                 _Return_ = false;
@@ -712,7 +723,7 @@
                 switch (AK) {
                     case 'text':     _Get_Set_.innerText.set(iNew[0], iValue);  break;
                     case 'html':     _Get_Set_.innerHTML.set(iNew[0], iValue);  break;
-                    case 'style':    if (_Type_(iValue) == 'Object') {
+                    case 'style':    if (_Object_.type(iValue) == 'Object') {
                         _Operator_('Style', iNew, iValue);
                         break;
                     }
@@ -735,7 +746,7 @@
                 }
             },
             ':image':      {
-                feature:    _Extend_(_inKey_('img', 'svg', 'canvas'), {
+                feature:    _Object_.extend(_inKey_('img', 'svg', 'canvas'), {
                     input:    {type:  'image'},
                     link:     {type:  'image/x-icon'}
                 }),
@@ -773,7 +784,7 @@
             },
             ':data':       {
                 filter:    function () {
-                    return  (! Empty_Object(arguments[0].dataset));
+                    return  (! _Object_.isEmptyObject(arguments[0].dataset));
                 }
             },
             ':visible':    {
@@ -806,7 +817,7 @@
             }
         };
 
-    _Extend_(iPseudo, {
+    _Object_.extend(iPseudo, {
         ':hidden':    {
             filter:    function () {
                 return  (! iPseudo[':visible'].filter(arguments[0]));
@@ -827,7 +838,7 @@
     function DOM_Search(iRoot, iSelector) {
         var _Self_ = arguments.callee,  iSet = [ ];
 
-        _Each_(iSelector.split(/\s*,\s*/),  function () {
+        _Object_.each(iSelector.split(/\s*,\s*/),  function () {
             try {
                 iSet = Array_Concat(iSet,  iRoot.querySelectorAll(arguments[1] || '*'));
             } catch (iError) {
@@ -884,7 +895,7 @@
                 Element_Set = DOM_Search(this.context, Element_Set);
             } else
                 Element_Set = DOM_Create(
-                    Element_Set,  (_Type_(iContext) == 'Object') && iContext
+                    Element_Set,  _Object_.isPlainObject(iContext) && iContext
                 );
         }
         this.add( Element_Set );
@@ -894,7 +905,7 @@
     $.fn = $.prototype;
 
     $.fn.add = function (Element_Set) {
-        var iType = _Type_(Element_Set);
+        var iType = _Object_.type(Element_Set);
 
         if (iType == 'String')
             Element_Set = $(Element_Set, arguments[1]);
@@ -905,7 +916,7 @@
             for (var i = 0;  i < Element_Set.length;  i++)
                 if (Element_Set[i] && (
                     (Element_Set[i].nodeType == 1) ||
-                    (_Type_(Element_Set[i]) in Type_Info.DOM.root)
+                    (_Object_.type(Element_Set[i]) in Type_Info.DOM.root)
                 ))
                     Array.prototype.push.call(this, Element_Set[i]);
 
@@ -922,19 +933,11 @@
     }
 
     /* ----- iQuery Static Method ----- */
-    $.extend = _Extend_;
-
-    $.extend($, _Time_, {
+    _Object_.extend($, _Object_, _Time_, {
         browser:          _Browser_,
-        type:             _Type_,
-        isPlainObject:    function (iValue) {
-            return  iValue && (iValue.constructor === Object);
-        },
-        isEmptyObject:    Empty_Object,
         isData:           function () {
             return  (this.type(arguments[0]) in Type_Info.Data);
         },
-        each:             _Each_,
         makeArray:        function () {
             return  $.extend([ ], arguments[0]);
         },
@@ -1033,6 +1036,29 @@
     });
 
     /* ----- iQuery Instance Method ----- */
+    function DOM_Scroll(iName) {
+        iName = 'scroll' + iName;
+
+        return  function (iPX) {
+            iPX = parseInt(iPX);
+
+            if ( isNaN(iPX) ) {
+                iPX = this[0][iName];
+                return  (iPX !== undefined) ? iPX : (
+                        this[0].documentElement[iName] || this[0].body[iName]
+                    );
+            }
+            for (var i = 0;  i < this.length;  i++)
+                if (this[i][iName] !== undefined)
+                    this[i][iName] = iPX;
+                else {
+                    if (this[i].documentElement[iName])
+                        this[i].documentElement[iName] = iPX;
+                    else
+                        this[i].body[iName] = iPX;
+                }
+        };
+    }
     $.fn.extend = $.extend;
 
     $.fn.extend({
@@ -1329,6 +1355,8 @@
                 default:            return  this.css('height', arguments[0]);
             }
         },
+        scrollTop:          DOM_Scroll('Top'),
+        scrollLeft:         DOM_Scroll('Left'),
         position:           function () {
             return  {
                     left:    this[0].offsetLeft,
@@ -1342,14 +1370,14 @@
             new_Class = new_Class.trim().split(/\s+/);
 
             return  this.attr('class',  function (_Index_, old_Class) {
-                    old_Class = (old_Class || '').trim().split(/\s+/);
+                old_Class = (old_Class || '').trim().split(/\s+/);
 
-                    for (var i = 0;  i < new_Class.length;  i++)
-                        if ($.inArray(old_Class, new_Class[i]) == -1)
-                            old_Class.push( new_Class[i] );
+                for (var i = 0;  i < new_Class.length;  i++)
+                    if ($.inArray(old_Class, new_Class[i]) == -1)
+                        old_Class.push( new_Class[i] );
 
-                    return  old_Class.join(' ').trim();
-                });
+                return  old_Class.join(' ').trim();
+            });
         },
         removeClass:        function (iClass) {
             if (typeof iClass != 'string')  return this;
@@ -1357,17 +1385,17 @@
             iClass = iClass.trim().split(/\s+/);
 
             return  this.attr('class',  function (_Index_, old_Class) {
-                    old_Class = (old_Class || '').trim().split(/\s+/);
-                    if (! old_Class[0])  return;
+                old_Class = (old_Class || '').trim().split(/\s+/);
+                if (! old_Class[0])  return;
 
-                    var new_Class = [ ];
+                var new_Class = [ ];
 
-                    for (var i = 0;  i < old_Class.length;  i++)
-                        if ($.inArray(iClass, old_Class[i]) == -1)
-                            new_Class.push( old_Class[i] );
+                for (var i = 0;  i < old_Class.length;  i++)
+                    if ($.inArray(iClass, old_Class[i]) == -1)
+                        new_Class.push( old_Class[i] );
 
-                    return  new_Class.join(' ');
-                });
+                return  new_Class.join(' ');
+            });
         },
         hasClass:           function (iClass) {
             if (typeof iClass != 'string')  return false;
@@ -1383,10 +1411,11 @@
             iType = iType.trim().split(/\s+/);
 
             return  this.each(function () {
-                    var $_This = $(this);
+                var $_This = $(this);
 
-                    for (var i = 0, Event_Data;  i < iType.length;  i++) {
-                        Event_Data = $_This.data('_event_') || { };
+                for (var i = 0;  i < iType.length;  i++)
+                    $_This.data('_event_',  function () {
+                        var Event_Data = arguments[1] || { };
 
                         if (! Event_Data[iType[i]]) {
                             Event_Data[iType[i]] = [ ];
@@ -1394,19 +1423,20 @@
                         }
                         Event_Data[iType[i]].push(iCallback);
 
-                        $_This.data('_event_', Event_Data);
-                    }
-                });
+                        return Event_Data;
+                    });
+            });
         },
         unbind:             function (iType, iCallback) {
             iType = iType.trim().split(/\s+/);
 
             return  this.each(function () {
-                    var $_This = $(this);
+                var $_This = $(this);
 
-                    for (var i = 0, Event_Data, This_Event;  i < iType.length;  i++) {
-                        Event_Data = $_This.data('_event_') || { };
-                        This_Event = Event_Data[iType[i]];
+                for (var i = 0;  i < iType.length;  i++)
+                    $_This.data('_event_',  function () {
+                        var Event_Data = arguments[1] || { };
+                        var This_Event = Event_Data[iType[i]];
 
                         if (iCallback)
                             This_Event.splice(This_Event.indexOf(iCallback), 1);
@@ -1415,9 +1445,9 @@
                         if (! Event_Data[iType[i]])
                             this.removeEventListener(iType[i], Proxy_Handler);
 
-                        $_This.data('_event_', Event_Data);
-                    }
-                });
+                        return Event_Data;
+                    });
+            });
         },
         on:                 function (iType, iFilter, iCallback) {
             if (typeof iFilter != 'string')
@@ -1686,11 +1716,13 @@
 
 
 /* ---------- Smart zIndex ---------- */
-    function Get_zIndex($_DOM) {
-        var _zIndex_ = $_DOM.css('z-index');
+    function Get_zIndex() {
+        var $_This = $(this);
+
+        var _zIndex_ = $_This.css('z-index');
         if (_zIndex_ != 'auto')  return parseInt(_zIndex_);
 
-        var $_Parents = $_DOM.parents();
+        var $_Parents = $_This.parents();
         _zIndex_ = 0;
 
         $_Parents.each(function () {
@@ -1708,14 +1740,14 @@
         var $_This = $(this),  _Index_ = 0;
 
         $_This.siblings().addBack().filter(':visible').each(function () {
-            _Index_ = Math.max(_Index_, Get_zIndex( $(this) ));
+            _Index_ = Math.max(_Index_, Get_zIndex.call(this));
         });
         $_This.css('z-index', ++_Index_);
     }
 
     $.fn.zIndex = function (new_Index) {
         if (! $.isData(new_Index))
-            return  Get_zIndex(this.eq(0));
+            return  Get_zIndex.call(this[0]);
         else if (new_Index == '+')
             return  this.each(Set_zIndex);
         else
@@ -1776,20 +1808,20 @@
 
     $.fn.cssRule = function (iRule, iCallback) {
         return  this.each(function () {
-                var $_This = $(this);
-                var _GUID_ = $_This.data('css') || $.guid();
+            var $_This = $(this);
+            var _GUID_ = $_This.data('css') || $.guid();
 
-                $(this).attr('data-css', _GUID_);
-                for (var iSelector in iRule) {
-                    iRule['*[data-css="' + _GUID_ + '"]' + iSelector] = iRule[iSelector];
-                    delete iRule[iSelector];
-                }
+            $(this).attr('data-css', _GUID_);
+            for (var iSelector in iRule) {
+                iRule['*[data-css="' + _GUID_ + '"]' + iSelector] = iRule[iSelector];
+                delete iRule[iSelector];
+            }
 
-                var iSheet = $.cssRule(iRule);
+            var iSheet = $.cssRule(iRule);
 
-                if (iCallback)
-                    iCallback.call(this, iSheet);
-            });
+            if (iCallback)
+                iCallback.call(this, iSheet);
+        });
     };
 
     var Pseudo_RE = /:{1,2}[\w\-]+/g;
@@ -2339,7 +2371,7 @@
 
     var Touch_Data;
 
-    $(DOM).bind(
+    $_DOM.bind(
         $.browser.mobile ? 'touchstart MSPointerDown' : 'mousedown',
         function (iEvent) {
             var iTouch = get_Touch(iEvent);
@@ -2393,13 +2425,13 @@
     $.fn.animate = function (CSS_Final, During_Second) {
         var $_This = this;
 
-        $_This.data('animate', 1);
+        $_This.data('_animate_', 1);
 
         $.each(CSS_Final,  function (iName) {
             var iKeyFrame = KeyFrame($_This.css(iName), this, During_Second);
 
             $.every(1 / FPS,  function () {
-                if ($_This.data('animate') && iKeyFrame.length)
+                if ($_This.data('_animate_') && iKeyFrame.length)
                     $_This.css(iName, iKeyFrame.shift());
                 else {
                     iKeyFrame = null;
@@ -2414,11 +2446,13 @@
     $.fx = {interval:  1000 / FPS};
 
     /* ----- CSS 3 Animation ----- */
-    $('head script').eq(0).before('<link />', {
-        rel:     'stylesheet',
-        type:    'text/css',
-        href:    'http://cdn.bootcss.com/animate.css/3.3.0/animate.min.css'
-    });
+    $('head script').eq(0).before(
+        $('<link />', {
+            rel:     'stylesheet',
+            type:    'text/css',
+            href:    'http://cdn.bootcss.com/animate.css/3.3.0/animate.min.css'
+        })
+    );
 
     var Animate_End = 'webkitAnimationEnd mozAnimationEnd MSAnimationEnd oanimationend animationend';
 
@@ -2469,7 +2503,7 @@
         $.fn[ CSS_Animation[i] ] = iAnimate( CSS_Animation[i] );
 
     $.fn.stop = function () {
-        return  this.data('animate', 0).removeClass('animated');
+        return  this.data('_animate_', 0).removeClass('animated');
     };
 
 })(self.iQuery);
