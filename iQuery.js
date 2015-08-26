@@ -321,19 +321,18 @@
         )
             return 'HTMLElement';
 
-        if (
-            (! _Browser_.modern) &&
-            (iType == 'Object') &&
-            (typeof iVar.length == 'number')
-        )  try {
-            iVar.item();
-            try {
-                iVar.namedItem();
-                return 'HTMLCollection';
-            } catch (iError) {
-                return 'NodeList';
-            }
-        } catch (iError) { }
+        if ((iType == 'Object')  &&  (typeof iVar.length == 'number')) {
+            iType = 'Array';
+            if (! _Browser_.modern)  try {
+                iVar.item();
+                try {
+                    iVar.namedItem();
+                    return 'HTMLCollection';
+                } catch (iError) {
+                    return 'NodeList';
+                }
+            } catch (iError) { }
+        }
 
         return iType;
     };
@@ -354,122 +353,99 @@
     function Array_Concat() {
         var iArgs = _Object_.extend([ ], arguments);
 
-        for (var i = 0, iType;  i < iArgs.length;  i++)
-            if (typeof iArgs[i].length == 'number') {
-                iType = _Object_.type(iArgs[i]);
-                if (
-                    (! iType.match(/String|Array/))  &&
-                    (! (iType in Type_Info.DOM.element))
-                )
-                    iArgs[i] = _Object_.extend([ ], iArgs[i]);
-            }
+        for (var i = 0;  i < iArgs.length;  i++)
+            if (
+                (! (iArgs[i] instanceof Array))  &&
+                (_Object_.type(iArgs[i]) in Type_Info.DOM.set)
+            )
+                iArgs[i] = _Object_.extend([ ], iArgs[i]);
 
         return  Array.prototype.concat.apply(iArgs.shift(), iArgs);
     }
 
 
 /* ---------- DOM Info Operator - Get first, Set all. ---------- */
-    var _Get_Set_ = {
-            Get_Name_Type:    _inKey_('String', 'Array')
+    var _DOM_ = {
+            Get_Name_Type:    _inKey_('String', 'Array'),
+            operate:          function (iType, iElement, iName, iValue) {
+                if ((! iName) || (iValue === null)) {
+                    if (this[iType].clear)
+                        for (var i = 0;  i < iElement.length;  i++)
+                            this[iType].clear(iElement[i], iName);
+                    return iElement;
+                }
+                if ((iValue === undefined) && (_Object_.type(iName) in this.Get_Name_Type)) {
+                    if (! iElement.length)
+                        return;
+                    else if (typeof iName == 'string')
+                        return  this[iType].get(iElement[0], iName);
+                    else {
+                        var iData = { };
+                        for (var i = 0;  i < iName.length;  i++)
+                            iData[iName[i]] = this[iType].get(iElement[0], iName[i]);
+                        return iData;
+                    }
+                } else {
+                    var iResult;
+
+                    if (typeof iName == 'string') {
+                        if (typeof iValue == 'function') {
+                            for (var i = 0;  i < iElement.length;  i++)
+                                iResult = this[iType].set(iElement[i], iName, iValue.call(
+                                    iElement[i],  i,  this[iType].get(iElement[i], iName)
+                                ));
+                            return  iResult || iElement;
+                        } else {
+                            iResult = { };
+                            iResult[iName] = iValue;
+                            iName = iResult;
+                            iResult = undefined;
+                        }
+                    }
+                    for (var i = 0;  i < iElement.length;  i++)
+                        for (var iKey in iName)
+                            iResult = this[iType].set(iElement[i], iKey, iName[iKey]);
+
+                    return  iResult || iElement;
+                }
+            }
         };
 
-    function _Operator_(iType, iElement, iName, iValue) {
-        if ((! iName) || (iValue === null)) {
-            if (_Get_Set_[iType].clear)
-                for (var i = 0;  i < iElement.length;  i++)
-                    _Get_Set_[iType].clear(iElement[i], iName);
-            return iElement;
-        }
-        if ((iValue === undefined) && (_Object_.type(iName) in _Get_Set_.Get_Name_Type)) {
-            if (! iElement.length)
-                return;
-            else if (typeof iName == 'string')
-                return  _Get_Set_[iType].get(iElement[0], iName);
-            else {
-                var iData = { };
-                for (var i = 0;  i < iName.length;  i++)
-                    iData[iName[i]] = _Get_Set_[iType].get(iElement[0], iName[i]);
-                return iData;
-            }
-        } else {
-            var iResult;
-
-            if (typeof iName == 'string') {
-                if (typeof iValue == 'function') {
-                    for (var i = 0;  i < iElement.length;  i++)
-                        iResult = _Get_Set_[iType].set(iElement[i], iName, iValue.call(
-                            iElement[i],  i,  _Get_Set_[iType].get(iElement[i], iName)
-                        ));
-                    return  iResult || iElement;
-                } else {
-                    iResult = { };
-                    iResult[iName] = iValue;
-                    iName = iResult;
-                    iResult = undefined;
-                }
-            }
-            for (var i = 0;  i < iElement.length;  i++)
-                for (var iKey in iName)
-                    iResult = _Get_Set_[iType].set(iElement[i], iKey, iName[iKey]);
-
-            return  iResult || iElement;
-        }
-    }
-
-    /* ----- DOM Content ----- */
-    _Get_Set_.innerText = {
-        set:    function (iElement, iText) {
-            switch ( iElement.tagName.toLowerCase() ) {
-                case 'style':     if (! _Browser_.modern) {
-                    iElement.styleSheet.cssText = iText;
-                    return;
-                }
-                case 'script':    if (! _Browser_.modern) {
-                    iElement.text = iText;
-                    return;
-                }
-                case '':          {
-                    iElement.appendChild( DOM.createTextNode(iText) );
-                    return;
-                }
-            }
-            iElement[_Browser_.ff ? 'textContent' : 'innerText'] = iText;
+    /* ----- DOM Attribute ----- */
+    _DOM_.Attribute = {
+        get:      function (iElement, iName) {
+            return  (_Object_.type(iElement) in Type_Info.DOM.root) ?
+                    null : iElement.getAttribute(iName);
         },
-        get:    _Browser_.ff ?
-            function (iElement) {
-                var TextRange = iElement.ownerDocument.createRange();
-                TextRange.selectNodeContents(iElement);
-                return TextRange.toString();
-            } :
-            function (iElement) {
-                return iElement.innerText;
-            }
+        set:      function (iElement, iName, iValue) {
+            return  (_Object_.type(iElement) in Type_Info.DOM.root) ?
+                    false  :  iElement.setAttribute(iName, iValue);
+        },
+        clear:    function (iElement, iName) {
+            iElement.removeAttribute(iName);
+        }
     };
 
-    _Get_Set_.innerHTML = {
-        set:    function (iElement, iHTML) {
-            var IE_Scope = String(iHTML).match(
-                    /^[^<]*<\s*(head|meta|title|link|style|script|noscript|(!--[^>]*--))[^>]*>/i
-                );
-
-            if (_Browser_.modern || (! IE_Scope))
-                iElement.innerHTML = iHTML;
-            else {
-                iElement.innerHTML = 'IE_Scope' + iHTML;
-                var iChild = iElement.childNodes;
-                iChild[0].nodeValue = iChild[0].nodeValue.slice(8);
-                if (! iChild[0].nodeValue.length)
-                    iElement.removeChild(iChild[0]);
-            }
-
-            return iElement.childNodes;
+    /* ----- DOM Property ----- */
+    _DOM_.Property = {
+        alias:    {
+            'class':    'className',
+            'for':      'htmlFor'
+        },
+        get:      function (iElement, iName) {
+            return  iElement[
+                    _Browser_.modern  ?  iName  :  (this.alias[iName] || iName)
+                ];
+        },
+        set:      function (iElement, iName, iValue) {
+            iElement[this.alias[iName] || iName] = iValue;
         }
-    }
+    };
 
     /* ----- DOM Style ----- */
     var Code_Indent = _Browser_.modern ? '' : ' '.repeat(4);
 
-    _Get_Set_.Style = {
+    _DOM_.Style = {
         PX_Needed:    _inKey_(
             'width',  'min-width',  'max-width',
             'height', 'min-height', 'max-height',
@@ -499,39 +475,8 @@
         }
     };
 
-    /* ----- DOM Attribute ----- */
-    _Get_Set_.Attribute = {
-        get:      function (iElement, iName) {
-            return  (_Object_.type(iElement) in Type_Info.DOM.root) ?
-                    null : iElement.getAttribute(iName);
-        },
-        set:      function (iElement, iName, iValue) {
-            return  (_Object_.type(iElement) in Type_Info.DOM.root) ?
-                    false  :  iElement.setAttribute(iName, iValue);
-        },
-        clear:    function (iElement, iName) {
-            iElement.removeAttribute(iName);
-        }
-    };
-
-    /* ----- DOM Property ----- */
-    _Get_Set_.Property = {
-        alias:    {
-            'class':    'className',
-            'for':      'htmlFor'
-        },
-        get:      function (iElement, iName) {
-            return  iElement[
-                    _Browser_.modern  ?  iName  :  (this.alias[iName] || iName)
-                ];
-        },
-        set:      function (iElement, iName, iValue) {
-            iElement[this.alias[iName] || iName] = iValue;
-        }
-    };
-
     /* ----- DOM Data ----- */
-    _Get_Set_.Data = {
+    _DOM_.Data = {
         _Data_:    [ ],
         set:       function (iElement, iName, iValue) {
             if (typeof iElement.dataIndex != 'number')
@@ -568,6 +513,56 @@
         }
     };
 
+    /* ----- DOM Content ----- */
+    _DOM_.innerText = {
+        set:    function (iElement, iText) {
+            switch ( iElement.tagName.toLowerCase() ) {
+                case 'style':     if (! _Browser_.modern) {
+                    iElement.styleSheet.cssText = iText;
+                    return;
+                }
+                case 'script':    if (! _Browser_.modern) {
+                    iElement.text = iText;
+                    return;
+                }
+                case '':          {
+                    iElement.appendChild( DOM.createTextNode(iText) );
+                    return;
+                }
+            }
+            iElement[_Browser_.ff ? 'textContent' : 'innerText'] = iText;
+        },
+        get:    _Browser_.ff ?
+            function (iElement) {
+                var TextRange = iElement.ownerDocument.createRange();
+                TextRange.selectNodeContents(iElement);
+                return TextRange.toString();
+            } :
+            function (iElement) {
+                return iElement.innerText;
+            }
+    };
+
+    _DOM_.innerHTML = {
+        set:    function (iElement, iHTML) {
+            var IE_Scope = String(iHTML).match(
+                    /^[^<]*<\s*(head|meta|title|link|style|script|noscript|(!--[^>]*--))[^>]*>/i
+                );
+
+            if (_Browser_.modern || (! IE_Scope))
+                iElement.innerHTML = iHTML;
+            else {
+                iElement.innerHTML = 'IE_Scope' + iHTML;
+                var iChild = iElement.childNodes;
+                iChild[0].nodeValue = iChild[0].nodeValue.slice(8);
+                if (! iChild[0].nodeValue.length)
+                    iElement.removeChild(iChild[0]);
+            }
+
+            return iElement.childNodes;
+        }
+    }
+
     /* ----- DOM Offset ----- */
     function DOM_Offset() {
         var iOffset = {
@@ -585,7 +580,7 @@
 
 
 /* ---------- DOM Event ---------- */
-    _Operator_('Data',  [BOM],  '_timer_',  { });
+    _DOM_.operate('Data',  [BOM],  '_timer_',  { });
 
     var _Time_ = {
             _Root_:     BOM,
@@ -614,7 +609,7 @@
             start:      function (iName) {
                 var _This_ = this,  Time_Stamp;
 
-                _Operator_('Data', [BOM], '_timer_',  function (_Index_, iTimer) {
+                _DOM_.operate('Data', [BOM], '_timer_',  function (_Index_, iTimer) {
                     iTimer = iTimer || { };
                     Time_Stamp = iTimer[iName] = _This_.now();
                     return iTimer;
@@ -623,7 +618,7 @@
                 return Time_Stamp;
             },
             end:        function () {
-                var iTimer = _Operator_('Data', [BOM], '_timer_');
+                var iTimer = _DOM_.operate('Data', [BOM], '_timer_');
                 return  (this.now() - iTimer[arguments[0]]) / 1000;
             },
             guid:       function () {
@@ -637,7 +632,7 @@
 
     /* ----- Event Proxy Layer ----- */
     function Event_Trigger(iType, iName, iData) {
-        _Operator_('Data', this, '_trigger_', iData);
+        _DOM_.operate('Data', this, '_trigger_', iData);
 
         for (var i = 0, iEvent;  i < this.length;  i++) {
             iEvent = DOM.createEvent(iType);
@@ -653,9 +648,9 @@
     }
 
     function Proxy_Handler(iEvent) {
-        var iHandler = _Operator_('Data', [this], '_event_')[iEvent.type],
+        var iHandler = _DOM_.operate('Data', [this], '_event_')[iEvent.type],
             iReturn,
-            Trigger_Data = _Operator_('Data', [this], '_trigger_');
+            Trigger_Data = _DOM_.operate('Data', [this], '_trigger_');
 
         if (! iHandler)  return;
 
@@ -672,7 +667,7 @@
             if (iReturn !== false)  iReturn = _Return_;
         }
 
-        _Operator_('Data', [this], '_trigger_', null);
+        _DOM_.operate('Data', [this], '_trigger_', null);
 
         if (iReturn === false) {
             iEvent.preventDefault();
@@ -686,7 +681,7 @@
 
         for (var i = 0;  i < this.length;  i++)
             Object_Seek.call(this[i],  'parentNode',  function () {
-                _Operator_('Attribute',  [this],  _GUID_,  function (_Index_, iTimes) {
+                _DOM_.operate('Attribute',  [this],  _GUID_,  function (_Index_, iTimes) {
                     return  iTimes ? (parseInt(iTimes) + 1) : 1
                 });
             });
@@ -706,7 +701,7 @@
         var iAttr = iTag.length && TagName.match(/<\s*\w+\s+\w+[^>]*>/g);
 
         if ((iTag.length > 1) || iAttr) {
-            iNew = _Get_Set_.innerHTML.set(
+            iNew = _DOM_.innerHTML.set(
                 DOM.createElement('div'),  TagName
             );
 
@@ -721,13 +716,13 @@
             var iValue = AttrList[AK];
             try {
                 switch (AK) {
-                    case 'text':     _Get_Set_.innerText.set(iNew[0], iValue);  break;
-                    case 'html':     _Get_Set_.innerHTML.set(iNew[0], iValue);  break;
+                    case 'text':     _DOM_.innerText.set(iNew[0], iValue);  break;
+                    case 'html':     _DOM_.innerHTML.set(iNew[0], iValue);  break;
                     case 'style':    if (_Object_.type(iValue) == 'Object') {
-                        _Operator_('Style', iNew, iValue);
+                        _DOM_.operate('Style', iNew, iValue);
                         break;
                     }
-                    default:         _Operator_('Attribute', iNew, AK, iValue);
+                    default:         _DOM_.operate('Attribute', iNew, AK, iValue);
                 }
             } catch (iError) {
                 console.error(iError);
@@ -794,7 +789,7 @@
                     height:     0
                 },
                 filter:     function (iElement) {
-                    var iStyle = _Operator_('Style', [iElement], [
+                    var iStyle = _DOM_.operate('Style', [iElement], [
                             'display', 'width', 'height'
                         ]);
 
@@ -1023,7 +1018,7 @@
                     .split('?')[0].split('/').slice(-1)[0];
         },
         data:             function (iElement, iName, iValue) {
-            return  _Operator_('Data', [iElement], iName, iValue);
+            return  _DOM_.operate('Data', [iElement], iName, iValue);
         },
         contains:         function (iParent, iChild) {
             if (! iChild)  return false;
@@ -1037,26 +1032,29 @@
 
     /* ----- iQuery Instance Method ----- */
     function DOM_Scroll(iName) {
-        iName = 'scroll' + iName;
+        iName = {
+            scroll:    'scroll' + iName,
+            offset:    (iName == 'Top') ? 'pageYOffset' : 'pageXOffset'
+        };
 
         return  function (iPX) {
             iPX = parseInt(iPX);
 
             if ( isNaN(iPX) ) {
-                iPX = this[0][iName];
+                iPX = this[0][iName.scroll];
                 return  (iPX !== undefined) ? iPX : (
-                        this[0].documentElement[iName] || this[0].body[iName]
-                    );
+                    this[0].documentElement[iName.scroll] ||
+                    this[0].defaultView[iName.offset] ||
+                    this[0].body[iName.scroll]
+                );
             }
             for (var i = 0;  i < this.length;  i++)
-                if (this[i][iName] !== undefined)
-                    this[i][iName] = iPX;
-                else {
-                    if (this[i].documentElement[iName])
-                        this[i].documentElement[iName] = iPX;
-                    else
-                        this[i].body[iName] = iPX;
-                }
+                if (this[i][iName.scroll] !== undefined)
+                    this[i][iName.scroll] = iPX;
+                else
+                    this[i].documentElement[iName.scroll] =
+                    this[i].defaultView[iName.offset] =
+                    this[i].body[iName.scroll] = iPX;
         };
     }
     $.fn.extend = $.extend;
@@ -1132,7 +1130,7 @@
             return this.pushStack($_Result);
         },
         attr:               function () {
-            return  _Operator_('Attribute', this, arguments[0], arguments[1]);
+            return  _DOM_.operate('Attribute', this, arguments[0], arguments[1]);
         },
         removeAttr:         function (iAttr) {
             iAttr = iAttr.trim().split(/\s+/);
@@ -1143,10 +1141,10 @@
             return this;
         },
         prop:               function () {
-            return  _Operator_('Property', this, arguments[0], arguments[1]);
+            return  _DOM_.operate('Property', this, arguments[0], arguments[1]);
         },
         data:               function () {
-            return  _Operator_('Data', this, arguments[0], arguments[1]);
+            return  _DOM_.operate('Data', this, arguments[0], arguments[1]);
         },
         addBack:            function () {
             var _GUID_ = $.guid();
@@ -1290,9 +1288,9 @@
 
             for (var i = 0;  i < this.length;  i++)
                 if (iGetter)
-                    iResult.push( _Get_Set_.innerText.get(this[i]) );
+                    iResult.push( _DOM_.innerText.get(this[i]) );
                 else
-                    _Get_Set_.innerText.set(this[i], iText);
+                    _DOM_.innerText.set(this[i], iText);
 
             return  iResult.length ? iResult.join('') : this;
         },
@@ -1303,12 +1301,12 @@
             this.empty();
 
             for (var i = 0;  i < this.length;  i++)
-                _Get_Set_.innerHTML.set(this[i], iHTML);
+                _DOM_.innerHTML.set(this[i], iHTML);
 
             return  this;
         },
         css:                function () {
-            return  _Operator_('Style', this, arguments[0], arguments[1]);
+            return  _DOM_.operate('Style', this, arguments[0], arguments[1]);
         },
         hide:               function () {
             for (var i = 0, $_This;  i < this.length;  i++) {
@@ -1520,7 +1518,7 @@
 
             for (var i = 0, iEvent;  i < this.length;  i++) {
                 $_Result[i] = this[i].cloneNode(iDeep);
-                iEvent = _Get_Set_.Data.clone(this[i], $_Result[i]);
+                iEvent = _DOM_.Data.clone(this[i], $_Result[i]);
 
                 for (var iType in iEvent)
                     $_Result[i].addEventListener(iType, Proxy_Handler, false);
@@ -1581,9 +1579,6 @@
             else
                 return  this.attr('value', arguments[0]);
         },
-        serialize:          function () {
-            return $.param(this);
-        },
         serializeArray:     function () {
             var $_Value = this.find('*[name]:input').not(':button, [disabled]'),
                 iValue = [ ];
@@ -1599,6 +1594,9 @@
             }
 
             return iValue;
+        },
+        serialize:          function () {
+            return  $.param( this.serializeArray() );
         }
     });
 
@@ -1765,7 +1763,7 @@
 
             for (var iAttribute in this)
                 _Rule_Block_.push(
-                    _Operator_('Style', [null], iAttribute, this[iAttribute])
+                    _DOM_.operate('Style', [null], iAttribute, this[iAttribute])
                         .replace(/^(\w)/m,  Code_Indent + '$1')
                 );
 
@@ -2901,7 +2899,7 @@
             iCallback.call($_Form[0], arguments[0]);
         }
 
-        $_Form.one('submit',  function (iEvent) {
+        $_Form.on('submit',  function (iEvent) {
             iEvent.preventDefault();
             iEvent.stopPropagation();
             $_Button.attr('disabled', true);

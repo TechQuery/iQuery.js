@@ -178,7 +178,7 @@
     }
 
     var Type_Info = {
-            Data:      _inKey_('String', 'Number', 'Boolean', 'Object', 'Null'),
+            Data:      _inKey_('String', 'Number', 'Boolean', 'Null'),
             BOM:       _inKey_('Window', 'DOMWindow', 'global'),
             DOM:       {
                 root:    _inKey_('Document', 'Window')
@@ -217,19 +217,18 @@
         )
             return 'HTMLElement';
 
-        if (
-            (! _Browser_.modern) &&
-            (iType == 'Object') &&
-            (typeof iVar.length == 'number')
-        )  try {
-            iVar.item();
-            try {
-                iVar.namedItem();
-                return 'HTMLCollection';
-            } catch (iError) {
-                return 'NodeList';
-            }
-        } catch (iError) { }
+        if ((iType == 'Object')  &&  (typeof iVar.length == 'number')) {
+            iType = 'Array';
+            if (! _Browser_.modern)  try {
+                iVar.item();
+                try {
+                    iVar.namedItem();
+                    return 'HTMLCollection';
+                } catch (iError) {
+                    return 'NodeList';
+                }
+            } catch (iError) { }
+        }
 
         return iType;
     }
@@ -264,11 +263,9 @@
                 };
 
             for (var i = 0, iValue; i < Args_Str.length; i++) {
-                Args_Str[i] = Args_Str[i].split('=');
+                Args_Str[i] = $.split(Args_Str[i], '=', 2);
 
-                iValue = BOM.decodeURIComponent(
-                    Args_Str[i].slice(1).join('=')
-                );
+                iValue = BOM.decodeURIComponent( Args_Str[i][1] );
                 try {
                     iValue = BOM.JSON.parse(iValue);
                 } catch (iError) { }
@@ -392,11 +389,13 @@
 
 /* ---------- jQuery 元素 z-index 独立方法  v0.2 ---------- */
 
-    function Get_zIndex($_DOM) {
-        var _zIndex_ = $_DOM.css('z-index');
+    function Get_zIndex() {
+        var $_This = $(this);
+
+        var _zIndex_ = $_This.css('z-index');
         if (_zIndex_ != 'auto')  return parseInt(_zIndex_);
 
-        var $_Parents = $_DOM.parents();
+        var $_Parents = $_This.parents();
         _zIndex_ = 0;
 
         $_Parents.each(function () {
@@ -414,14 +413,14 @@
         var $_This = $(this),  _Index_ = 0;
 
         $_This.siblings().addBack().filter(':visible').each(function () {
-            _Index_ = Math.max(_Index_, Get_zIndex( $(this) ));
+            _Index_ = Math.max(_Index_, Get_zIndex.call(this));
         });
         $_This.css('z-index', ++_Index_);
     }
 
     $.fn.zIndex = function (new_Index) {
         if (! $.isData(new_Index))
-            return  Get_zIndex(this.eq(0));
+            return  Get_zIndex.call(this[0]);
         else if (new_Index == '+')
             return  this.each(Set_zIndex);
         else
@@ -909,7 +908,7 @@
             iCallback.call($_Form[0], arguments[0]);
         }
 
-        $_Form.one('submit',  function (iEvent) {
+        $_Form.on('submit',  function (iEvent) {
             iEvent.preventDefault();
             iEvent.stopPropagation();
             $_Button.attr('disabled', true);
@@ -950,7 +949,7 @@
 
 /* ---------- jQuery 元素集合父元素交集  v0.2 ---------- */
 
-    function Back_Track(iName, iCallback) {
+    function Object_Seek(iName, iCallback) {
         var iResult = [ ];
 
         for (var _This_ = this, _Next_, i = 0;  _This_[iName];  _This_ = _Next_, i++) {
@@ -967,7 +966,7 @@
         var _GUID_ = $.guid('parent');
 
         for (var i = 0;  i < this.length;  i++)
-            Back_Track.call(this[i],  'parentNode',  function () {
+            Object_Seek.call(this[i],  'parentNode',  function () {
                 $(this).attr(_GUID_,  function (_Index_, iTimes) {
                     return  iTimes ? (parseInt(iTimes) + 1) : 1
                 });
