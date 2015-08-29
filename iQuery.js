@@ -2,7 +2,7 @@
 //                >>>  iQuery.js  <<<
 //
 //
-//      [Version]    v1.0  (2015-8-25)  Stable
+//      [Version]    v1.0  (2015-8-30)  Stable
 //
 //      [Usage]      A Light-weight jQuery Compatible API
 //                   with IE 8+ compatibility.
@@ -50,6 +50,32 @@
         return iRegExp_Compiled;
     };
 
+    /* ----- Array Extension ----- */
+
+    if (! [ ].indexOf)
+        Array.prototype.indexOf = function () {
+            for (var i = 0;  i < this.length;  i++)
+                if (arguments[0] === this[i])
+                    return i;
+
+            return -1;
+        };
+
+    if (! [ ].map)
+        Array.prototype.map = function (iCallback) {
+            if (typeof iCallback != 'function')
+                throw  TypeError(iCallback + ' is not a function');
+
+            var New_Array = [ ];
+
+            for (var i = 0;  i < this.length;  i++)
+                if (this[i] !== undefined)
+                    New_Array.concat(
+                        iCallback.call(arguments[1] || BOM,  this[i],  i,  this)
+                    );
+            return New_Array;
+        };
+
     /* ----- String Extension ----- */
 
     if (! ''.trim)
@@ -86,34 +112,18 @@
     };
 
     String.prototype.toHyphenCase = function () {
-        var iString = [ ];
+        return  Array.prototype.map.call(this,  function (iChar) {
+            if ((iChar >= 'A')  &&  (iChar < 'a'))
+                return  ['-', iChar.toLowerCase()];
 
-        for (var i = 0;  i < this.length;  i++)  switch (true) {
-            case ((this[i] >= 'A')  &&  (this[i] < 'a')):    {
-                iString.push('-');
-                iString.push( this[i].toLowerCase() );
-                break;
-            }
-            case ((this[i] < '0')  ||  (this[i] > 'z')):     {
-                iString.push('-');
-                break;
-            }
-            default:
-                iString.push( this[i] );
-        }
+            if ((iChar < '0')  ||  (iChar > 'z'))
+                return '-';
 
-        return iString.join('');
+            return iChar;
+        }).join('');
     };
 
-
-    if (! [ ].indexOf)
-        Array.prototype.indexOf = function () {
-            for (var i = 0;  i < this.length;  i++)
-                if (arguments[0] === this[i])
-                    return i;
-
-            return -1;
-        };
+    /* ----- Date Extension ----- */
 
     if (! Date.now)
         Date.now = function () {
@@ -213,16 +223,15 @@
                 return  iValue && (iValue.constructor === Object);
             },
             each:             function (Arr_Obj, iEvery) {
-                if (! Arr_Obj)  return;
-
-                if (typeof Arr_Obj.length == 'number') {
-                    for (var i = 0;  i < Arr_Obj.length;  i++)
-                        if (iEvery.call(Arr_Obj[i], i, Arr_Obj[i]) === false)
+                if (Arr_Obj) {
+                    if (typeof Arr_Obj.length == 'number') {
+                        for (var i = 0;  i < Arr_Obj.length;  i++)
+                            if (iEvery.call(Arr_Obj[i], i, Arr_Obj[i]) === false)
+                                break;
+                    } else  for (var iKey in Arr_Obj)
+                        if (iEvery.call(Arr_Obj[iKey], iKey, Arr_Obj[iKey]) === false)
                             break;
-                } else  for (var iKey in Arr_Obj)
-                    if (iEvery.call(Arr_Obj[iKey], iKey, Arr_Obj[iKey]) === false)
-                        break;
-
+                }
                 return Arr_Obj;
             },
             extend:           function () {
@@ -244,12 +253,12 @@
                             Object.prototype.hasOwnProperty.call(arguments[i], iKey)  &&
                             (arguments[i][iKey] !== undefined)
                         ) {
-                            iValue = arguments[i][iKey];
+                            iTarget[iKey] = iValue = arguments[i][iKey];
 
-                            iTarget[iKey] = (iDeep && (
-                                (iValue instanceof Array)  ||  _Object_.isPlainObject(iValue)
-                            )) ?
-                                arguments.callee.call(this, true, undefined, iValue)  :  iValue;
+                            if (iDeep)  try {
+                                if ((iValue instanceof Array)  ||  _Object_.isPlainObject(iValue))
+                                    iTarget[iKey] = arguments.callee.call(this, true, undefined, iValue);
+                            } catch (iError) { }
                         }
                 return iTarget;
             }
@@ -939,6 +948,9 @@
         inArray:          function () {
             return  Array.prototype.indexOf.call(arguments[0], arguments[1]);
         },
+        map:              function () {
+            return  Array.prototype.map.call(arguments[0], arguments[1]);
+        },
         trim:             function () {
             return  arguments[0].trim();
         },
@@ -1095,9 +1107,12 @@
             return  this.pushStack( [ ].slice.apply(this, arguments) );
         },
         each:               function () {
-            $.each(this, arguments[0]);
-
-            return this;
+            return  $.each(this, arguments[0]);
+        },
+        map:                function (iCallback) {
+            return  $($.map(this,  function () {
+                return  iCallback.call(arguments[0], arguments[1], arguments[0]);
+            }));
         },
         is:                 function (iSelector) {
             return  (
@@ -1577,7 +1592,7 @@
             if (! $.isData(arguments[0]))
                 return  this[0] && this[0].value;
             else
-                return  this.attr('value', arguments[0]);
+                return  this.prop('value', arguments[0]);
         },
         serializeArray:     function () {
             var $_Value = this.find('*[name]:input').not(':button, [disabled]'),
@@ -1659,7 +1674,7 @@
             case 'input':       {
                 if (($_This.attr('type') || '').match(/radio|checkbox/i)  &&  iValue)
                     $_This.prop('checked', true);
-                iReturn = this.value = iValue;
+                iReturn = $_This.val(iValue);
                 break;
             }
             default:         {
@@ -2066,7 +2081,11 @@
                         Loaded = (iElement.readyState == 'loaded');  break;
                     case 'propertychange':      {
                         var iType = iEvent.propertyName.match(/^on(.+)/i);
-                        if (iType && iElement.attributes[iEvent.propertyName].expando)
+                        if (iType && (
+                            (iElement.attributes || iElement.documentElement.attributes)[
+                                iEvent.propertyName
+                            ].expando
+                        ))
                             iEvent.type = iType[1];
                         else {
                             iEvent.type = 'DOMAttrModified';

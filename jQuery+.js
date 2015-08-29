@@ -628,7 +628,7 @@
             case 'input':       {
                 if ($_This.attr('type').match(/radio|checkbox/i) && iValue)
                     $_This.prop('checked', true);
-                iReturn = this.value = iValue;
+                iReturn = $_This.val(iValue);
                 break;
             }
             default:         {
