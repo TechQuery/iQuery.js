@@ -2,7 +2,7 @@
 //                >>>  iQuery.js  <<<
 //
 //
-//      [Version]    v1.0  (2015-8-30)  Stable
+//      [Version]    v1.0  (2015-9-1)  Stable
 //
 //      [Usage]      A Light-weight jQuery Compatible API
 //                   with IE 8+ compatibility.
@@ -500,6 +500,10 @@
             var iData =  (this._Data_[iElement.dataIndex] || { })[iName]  ||
                     (iElement.dataset || { })[ iName.toCamelCase() ];
 
+            if (typeof iData == 'string')  try {
+                iData = BOM.JSON.parseAll(iData);
+            } catch (iError) { }
+
             return  ((iData instanceof Array)  ||  _Object_.isPlainObject(iData))  ?
                     _Object_.extend(true, undefined, iData)  :  iData;
         },
@@ -570,7 +574,7 @@
 
             return iElement.childNodes;
         }
-    }
+    };
 
     /* ----- DOM Offset ----- */
     function DOM_Offset() {
@@ -701,15 +705,11 @@
 
 /* ---------- DOM Constructor ---------- */
     function DOM_Create(TagName, AttrList) {
-        var iNew,  iTag = TagName.match(/<\s*\w+[^>]*>/g);
+        var iNew,  iTag = TagName.match(/^\s*<(.+?)\s*\/?>([\s\S]+)?/);
 
-        if (! iTag)  return [
-                DOM.createTextNode(TagName)
-            ];
+        if (! iTag)  return  [ DOM.createTextNode(TagName) ];
 
-        var iAttr = iTag.length && TagName.match(/<\s*\w+\s+\w+[^>]*>/g);
-
-        if ((iTag.length > 1) || iAttr) {
+        if (iTag[2]  ||  (iTag[1].split(/\s/).length > 1)) {
             iNew = _DOM_.innerHTML.set(
                 DOM.createElement('div'),  TagName
             );
@@ -717,9 +717,7 @@
             if ((iNew.length != 1)  ||  (iNew[0].nodeType != 1))
                 return iNew;
         } else
-            iNew = [DOM.createElement(
-                TagName.match(/<\s*(\w+)[^>]*>/)[1]
-            )];
+            iNew = [ DOM.createElement( iTag[1] ) ];
 
         if (AttrList)  for (var AK in AttrList) {
             var iValue = AttrList[AK];
@@ -853,7 +851,7 @@
                         break;
                 }
                 var Set_0 = _Self_(
-                        iRoot,  _Selector_[1] + (_Selector_[1].match(/[>\+~]\s*$/) ? '*' : '')
+                        iRoot,  _Selector_[1] + (_Selector_[1].match(/[\s>\+~]\s*$/) ? '*' : '')
                     ),
                     Set_1 = [ ];
                 for (var i = 0;  i < Set_0.length;  i++)
@@ -2770,7 +2768,9 @@
 
     function Idempotent_Args(iURL) {
         iURL = iURL.split('?');
-        iURL[1] = $.extend($.paramJSON(iURL[1]), arguments[1]);
+        iURL[1] = $.extend(
+            iURL[1] ? $.paramJSON(iURL[1]) : { },  arguments[1]
+        );
 
         var iPrefetch;
         $('link[rel="next"], link[rel="prefetch"]').each(function () {
@@ -2827,13 +2827,13 @@
             iCallback = iSelector;
             iSelector = '';
         }
-
-        var $_iFrame = $('<iframe style="display: none"></iframe>');
+        var iURL = (! iHTML.match(/<.+?>/))  &&  iHTML,
+            $_iFrame = $('<iframe style="display: none"></iframe>');
 
         $_iFrame.one('load',  function () {
             var _DOM_ = this.contentWindow.document;
 
-            $.every(0.04,  function () {
+            function Frame_Ready() {
                 if (! (_DOM_.body && _DOM_.body.childNodes.length))
                     return;
 
@@ -2846,10 +2846,17 @@
                 );
 
                 return false;
-            });
-            _DOM_.write(iHTML);
-            _DOM_.close();
+            }
+
+            if (! iURL) {
+                $.every(0.04, Frame_Ready);
+                _DOM_.write(iHTML);
+                _DOM_.close();
+            } else
+                Frame_Ready();
         });
+
+        if (iURL)  $_iFrame.attr('src', iURL);
 
         return $_iFrame.appendTo(DOM.body);
     };
@@ -2886,9 +2893,10 @@
             var _Context_ = [this, $.makeArray(arguments)];
 
             $(DOM.body).sandBox(iHTML,  iURL[1],  function ($_innerDOM) {
-                Append_Back.apply(
-                    _Context_[0],  _Context_[1].splice(0, 1, $_innerDOM)
-                );
+                _Context_[1].splice(0, 1, $_innerDOM);
+
+                Append_Back.apply(_Context_[0], _Context_[1]);
+
                 $(this).remove();
             });
         }

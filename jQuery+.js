@@ -2,7 +2,7 @@
 //              >>>  jQuery+  <<<
 //
 //
-//    [Version]     v4.7  (2015-8-20)
+//    [Version]     v4.8  (2015-9-1)
 //
 //    [Based on]    jQuery  v1.9+
 //
@@ -682,19 +682,19 @@
     };
 
 
-/* ---------- HTML DOM 沙盒  v0.1 ---------- */
+/* ---------- HTML DOM 沙盒  v0.2 ---------- */
     $.fn.sandBox = function (iHTML, iSelector, iCallback) {
         if (arguments.length < 3) {
             iCallback = iSelector;
             iSelector = '';
         }
-
-        var $_iFrame = $('<iframe style="display: none"></iframe>');
+        var iURL = (! iHTML.match(/<.+?>/))  &&  iHTML,
+            $_iFrame = $('<iframe style="display: none"></iframe>');
 
         $_iFrame.one('load',  function () {
             var _DOM_ = this.contentWindow.document;
 
-            $.every(0.04,  function () {
+            function Frame_Ready() {
                 if (! (_DOM_.body && _DOM_.body.childNodes.length))
                     return;
 
@@ -707,10 +707,17 @@
                 );
 
                 return false;
-            });
-            _DOM_.write(iHTML);
-            _DOM_.close();
+            }
+
+            if (! iURL) {
+                $.every(0.04, Frame_Ready);
+                _DOM_.write(iHTML);
+                _DOM_.close();
+            } else
+                Frame_Ready();
         });
+
+        if (iURL)  $_iFrame.attr('src', iURL);
 
         return $_iFrame.appendTo(DOM.body);
     };
