@@ -2,7 +2,7 @@
 //              >>>  jQuery+  <<<
 //
 //
-//    [Version]     v4.8  (2015-9-1)
+//    [Version]     v4.9  (2015-9-2)
 //
 //    [Based on]    jQuery  v1.9+
 //
@@ -360,18 +360,14 @@
         }
     };
 
-/* ---------- jQuery 选择符合法性判断  v0.1 ---------- */
+/* ---------- jQuery 选择符合法性判断  v0.2 ---------- */
 
-    $.is_Selector = function (iString) {
-        if (! iString)  return false;
-
-        iString = $.trim(
-            iString.replace(/([^\.])(\.|#|\[|:){1,2}[^\.#\[:\s>\+~]+/, '$1')
-        );
-        if (! iString)  return true;
-
-        if ($('<' + iString + ' />')[0] instanceof HTMLUnknownElement)
+    $.isSelector = function () {
+        try {
+            DOM.querySelector(arguments[0])
+        } catch (iError) {
             return false;
+        }
         return true;
     };
 
@@ -618,7 +614,7 @@
         switch ( this.tagName.toLowerCase() ) {
             case 'img':      {
                 iReturn = $_This.one('load',  function () {
-                    $(this).trigger('Ready');
+                    $(this).trigger('ready');
                 }).addClass('jQuery_Loading').attr('src', iValue);
                 iResource.count++ ;
                 console.log(this);
@@ -653,28 +649,31 @@
     }
 
     $.fn.value = function (iFiller) {
+        var $_Name = this.filter('*[name]');
+        if (! $_Name.length)
+            $_Name = this.find('*[name]');
+
         if (! iFiller)
-            return Value_Operator.call(this[0]);
+            return Value_Operator.call($_Name[0]);
         else if ( $.isPlainObject(iFiller) )
             var Data_Set = true;
 
-        var $_This = this,
-            Resource_Ready = {count:  0};
+        var Resource_Ready = {count:  0},  $_This = this;
 
-        this.on('Ready',  'img.jQuery_Loading',  function () {
+        this.on('ready',  'img.jQuery_Loading',  function () {
             $(this).removeClass('jQuery_Loading');
             if (--Resource_Ready.count == 0)
-                $_This.trigger('Ready');
+                $_This.trigger('ready');
             console.log(Resource_Ready.count, this);
             return false;
         });
 
-        for (var i = 0, iName;  i < this.length;  i++) {
-            iName = this[i].getAttribute('name');
+        for (var i = 0, iName;  i < $_Name.length;  i++) {
+            iName = $_Name[i].getAttribute('name');
 
             Value_Operator.call(
-                this[i],
-                Data_Set  ?  iFiller[iName]  :  iFiller.call(this[i], iName),
+                $_Name[i],
+                Data_Set  ?  iFiller[iName]  :  iFiller.call($_Name[i], iName),
                 Resource_Ready
             );
         }
@@ -683,12 +682,17 @@
 
 
 /* ---------- HTML DOM 沙盒  v0.2 ---------- */
-    $.fn.sandBox = function (iHTML, iSelector, iCallback) {
-        if (arguments.length < 3) {
-            iCallback = iSelector;
-            iSelector = '';
-        }
-        var iURL = (! iHTML.match(/<.+?>/))  &&  iHTML,
+    $.fn.sandBox = function () {
+        var iArgs = $.makeArray(arguments);
+
+        var iCallback = (typeof iArgs.slice(-1)[0] == 'function')  &&  iArgs.pop();
+        var iHTML = (! $.isSelector(iArgs[0])) ? '' : iArgs.shift();
+        var iSelector = iArgs[0];
+
+        var iURL = (! iHTML.match(/<.+?>/))  &&  (iHTML.trim() || 'about:blank'),
+            $_iFrame = this.filter('iframe').eq(0);
+
+        if (! $_iFrame.length)
             $_iFrame = $('<iframe style="display: none"></iframe>');
 
         $_iFrame.one('load',  function () {
@@ -702,9 +706,13 @@
                 if (! $_Content.length)
                     $_Content = _DOM_.body.childNodes;
 
-                iCallback.call(
-                    $_iFrame[0],  $('head style', _DOM_).add($_Content).clone(true)
-                );
+                if (
+                    (typeof iCallback == 'function')  &&
+                    (false === iCallback.call(
+                        $_iFrame[0],  $('head style', _DOM_).add($_Content).clone(true)
+                    ))
+                )
+                    $_iFrame.remove();
 
                 return false;
             }
@@ -719,7 +727,7 @@
 
         if (iURL)  $_iFrame.attr('src', iURL);
 
-        return $_iFrame.appendTo(DOM.body);
+        return  $_iFrame[0].parentNode ? this : $_iFrame.appendTo(DOM.body);
     };
 
 
@@ -839,25 +847,19 @@
                 $_Form.attr('target', iTarget);
             }
 
-            var $_iFrame = $('iframe[name="' + iTarget + '"]');
-            if (! $_iFrame.length)
-                $_iFrame = $('<iframe />', {
-                    frameBorder:          0,
-                    allowTransparency:    true,
-                    name:                 iTarget
+            $('iframe[name="' + iTarget + '"]').sandBox(function () {
+                $(this).on('load',  function () {
+                    $_Button.prop('disabled', false);
+
+                    if (iDHR.readyState)  try {
+                        var $_Content = $(this).contents();
+                        iDHR.responseText = $_Content.find('body').text();
+                        iDHR.status = 200;
+                        iDHR.readyState = 4;
+                        iDHR.onready.call($_Form[0],  iDHR.responseAny(),  $_Content);
+                    } catch (iError) { }
                 });
-
-            $_iFrame.hide().appendTo( $_Form.parent() ).on('load', function () {
-                $_Button.prop('disabled', false);
-
-                if (iDHR.readyState)  try {
-                    var $_Content = $(this).contents();
-                    iDHR.responseText = $_Content.find('body').text();
-                    iDHR.status = 200;
-                    iDHR.readyState = 4;
-                    iDHR.onready.call($_Form[0],  iDHR.responseAny(),  $_Content);
-                } catch (iError) { }
-            });
+            }).attr('name', iTarget);
 
             this.$_DOM = $_Form;
             this.requestArgs = arguments;

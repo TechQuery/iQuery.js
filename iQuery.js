@@ -2,7 +2,7 @@
 //                >>>  iQuery.js  <<<
 //
 //
-//      [Version]    v1.0  (2015-9-1)  Stable
+//      [Version]    v1.0  (2015-9-5)  Stable
 //
 //      [Usage]      A Light-weight jQuery Compatible API
 //                   with IE 8+ compatibility.
@@ -156,6 +156,8 @@
             var _Window_ = this.opener,
                 This_DOM = this.document;
 
+            This_DOM.defaultView = this;
+
             if (_Window_ && (this.location.href == 'about:blank'))
                 This_DOM.domain = _Window_.document.domain;
 
@@ -261,6 +263,10 @@
                             } catch (iError) { }
                         }
                 return iTarget;
+            },
+            makeArray:        function () {
+                return  _Browser_.modern ?
+                    Array.apply(null, arguments[0])  :  this.extend([ ], arguments[0]);
             }
         };
 
@@ -360,14 +366,14 @@
     }
 
     function Array_Concat() {
-        var iArgs = _Object_.extend([ ], arguments);
+        var iArgs = _Object_.makeArray(arguments);
 
         for (var i = 0;  i < iArgs.length;  i++)
             if (
                 (! (iArgs[i] instanceof Array))  &&
                 (_Object_.type(iArgs[i]) in Type_Info.DOM.set)
             )
-                iArgs[i] = _Object_.extend([ ], iArgs[i]);
+                iArgs[i] = _Object_.makeArray(iArgs[i]);
 
         return  Array.prototype.concat.apply(iArgs.shift(), iArgs);
     }
@@ -455,14 +461,7 @@
     var Code_Indent = _Browser_.modern ? '' : ' '.repeat(4);
 
     _DOM_.Style = {
-        PX_Needed:    _inKey_(
-            'width',  'min-width',  'max-width',
-            'height', 'min-height', 'max-height',
-            'margin', 'padding',
-            'top',    'left',
-            'border-radius'
-        ),
-        get:          function (iElement, iName) {
+        get:           function (iElement, iName) {
             if ((! iElement) || (_Object_.type(iElement) in Type_Info.DOM.root))
                 return null;
 
@@ -471,14 +470,22 @@
 
             return  isNaN(iNumber) ? iStyle : iNumber;
         },
-        set:          function (iElement, iName, iValue) {
+        PX_Needed:     _inKey_(
+            'width',  'min-width',  'max-width',
+            'height', 'min-height', 'max-height',
+            'margin', 'padding',
+            'top',    'left',
+            'border-radius'
+        ),
+        Set_Method:    _Browser_.modern ? 'setProperty' : 'setAttribute',
+        set:           function (iElement, iName, iValue) {
             if (_Object_.type(iElement) in Type_Info.DOM.root)  return false;
 
             if ((! isNaN( Number(iValue) ))  &&  this.PX_Needed[iName])
                 iValue += 'px';
 
             if (iElement)
-                iElement.style.setProperty(iName, String(iValue), 'important');
+                iElement.style[this.Set_Method](iName, String(iValue), 'important');
             else
                 return  [iName, ':', Code_Indent, iValue].join('');
         }
@@ -661,16 +668,16 @@
     }
 
     function Proxy_Handler(iEvent) {
-        var iHandler = _DOM_.operate('Data', [this], '_event_')[iEvent.type],
-            iReturn,
-            Trigger_Data = _DOM_.operate('Data', [this], '_trigger_');
-
+        var iHandler = (_DOM_.operate('Data', [this], '_event_') || { })[iEvent.type];
         if (! iHandler)  return;
+
+        var Trigger_Data = _DOM_.operate('Data', [this], '_trigger_'),
+            iReturn;
 
         for (var i = 0, _Return_;  i < iHandler.length;  i++) {
             if ( iHandler[i] )
                 _Return_ = iHandler[i].apply(
-                    this,  _Object_.extend([ ], arguments).concat(Trigger_Data)
+                    this,  _Object_.makeArray(arguments).concat(Trigger_Data)
                 );
             else if (iHandler[i] === false)
                 _Return_ = false;
@@ -940,8 +947,13 @@
         isData:           function () {
             return  (this.type(arguments[0]) in Type_Info.Data);
         },
-        makeArray:        function () {
-            return  $.extend([ ], arguments[0]);
+        isSelector:       function () {
+            try {
+                DOM.querySelector(arguments[0])
+            } catch (iError) {
+                return false;
+            }
+            return true;
         },
         inArray:          function () {
             return  Array.prototype.indexOf.call(arguments[0], arguments[1]);
@@ -1083,10 +1095,7 @@
         },
         index:              function (iTarget) {
             if (! iTarget)
-                return  Object_Seek.call(
-                        this[0],
-                        $.browser.modern ? 'previousElementSibling' : 'previousSibling'
-                    ).length;
+                return  Object_Seek.call(this[0], 'previousElementSibling').length;
 
             var iType = $.type(iTarget);
             switch (true) {
@@ -1236,10 +1245,9 @@
             var $_Result = [ ];
 
             for (var i = 0;  i < this.length;  i++)
-                $_Result = Array_Concat($_Result, Object_Seek.call(
-                    this[i],
-                    $.browser.modern ? 'nextElementSibling' : 'nextSibling'
-                ));
+                $_Result = Array_Concat(
+                    $_Result,  Object_Seek.call(this[i], 'nextElementSibling')
+                );
 
             if (arguments[0])  $_Result = $($_Result).filter(arguments[0]);
 
@@ -1249,10 +1257,9 @@
             var $_Result = [ ];
 
             for (var i = 0;  i < this.length;  i++)
-                $_Result = Array_Concat($_Result, Object_Seek.call(
-                    this[i],
-                    $.browser.modern ? 'previousElementSibling' : 'previousSibling'
-                ));
+                $_Result = Array_Concat(
+                    $_Result,  Object_Seek.call(this[i], 'previousElementSibling')
+                );
 
             if (arguments[0])  $_Result = $($_Result).filter(arguments[0]);
 
@@ -1662,7 +1669,7 @@
         switch ( this.tagName.toLowerCase() ) {
             case 'img':      {
                 iReturn = $_This.one('load',  function () {
-                    $(this).trigger('Ready');
+                    $(this).trigger('ready');
                 }).addClass('jQuery_Loading').attr('src', iValue);
                 iResource.count++ ;
                 console.log(this);
@@ -1697,28 +1704,31 @@
     }
 
     $.fn.value = function (iFiller) {
+        var $_Name = this.filter('*[name]');
+        if (! $_Name.length)
+            $_Name = this.find('*[name]');
+
         if (! iFiller)
-            return Value_Operator.call(this[0]);
+            return Value_Operator.call($_Name[0]);
         else if ( $.isPlainObject(iFiller) )
             var Data_Set = true;
 
-        var $_This = this,
-            Resource_Ready = {count:  0};
+        var Resource_Ready = {count:  0},  $_This = this;
 
-        this.on('Ready',  'img.jQuery_Loading',  function () {
+        this.on('ready',  'img.jQuery_Loading',  function () {
             $(this).removeClass('jQuery_Loading');
             if (--Resource_Ready.count == 0)
-                $_This.trigger('Ready');
+                $_This.trigger('ready');
             console.log(Resource_Ready.count, this);
             return false;
         });
 
-        for (var i = 0, iName;  i < this.length;  i++) {
-            iName = this[i].getAttribute('name');
+        for (var i = 0, iName;  i < $_Name.length;  i++) {
+            iName = $_Name[i].getAttribute('name');
 
             Value_Operator.call(
-                this[i],
-                Data_Set  ?  iFiller[iName]  :  iFiller.call(this[i], iName),
+                $_Name[i],
+                Data_Set  ?  iFiller[iName]  :  iFiller.call($_Name[i], iName),
                 Resource_Ready
             );
         }
@@ -1862,21 +1872,6 @@
         return Pseudo_Rule;
     };
 
-
-/* ---------- Selector Detection ---------- */
-    $.is_Selector = function (iString) {
-        if (! iString)  return false;
-
-        iString = $.trim(
-            iString.replace(/([^\.])(\.|#|\[|:){1,2}[^\.#\[:\s>\+~]+/, '$1')
-        );
-        if (! iString)  return true;
-
-        if ($('<' + iString + ' />')[0] instanceof HTMLUnknownElement)
-            return false;
-        return true;
-    };
-
 })(self, self.document);
 
 
@@ -1906,6 +1901,22 @@
             return  Remove_Attribute.call(this,  iAlias[iName] || iName,  0);
         }
     });
+
+    /* ----- DOM Sibling ----- */
+    Object.defineProperty(Element.prototype, 'previousElementSibling', {
+        get:    function () {
+            return this.previousSibling;
+        },
+        set:    function () { }
+    });
+
+    Object.defineProperty(Element.prototype, 'nextElementSibling', {
+        get:    function () {
+            return this.nextSibling;
+        },
+        set:    function () { }
+    });
+
 
     /* ----- Computed Style ----- */
     function CSSStyleDeclaration() {
@@ -2068,9 +2079,32 @@
         return  new BOM[arguments[0]]();
     };
 
+    function IE_Event_Type(iType) {
+        if (
+            ((BOM !== BOM.top)  &&  (iType == 'DOMContentLoaded'))  ||
+            ((iType == 'load')  &&  ($.type(this) != 'Window'))
+        )
+            return 'onreadystatechange';
+
+        iType = 'on' + iType;
+
+        if (! (iType in this.constructor.prototype))
+            return 'onpropertychange';
+
+        return iType;
+    }
+
+    function IE_Event_DOM() {
+        return  $(
+            ((arguments[0] == 'onpropertychange')  &&  ($.type(this) == 'Document'))  ?
+                this.documentElement  :  this
+        );
+    }
+
     function IE_Event_Handler(iElement, iCallback) {
         return  function () {
                 var iEvent = new HTMLEvents(BOM.event),  Loaded;
+                iEvent.currentTarget = iElement;
 
                 switch (iEvent.type) {
                     case 'readystatechange':    iEvent.type = 'load';
@@ -2079,11 +2113,7 @@
                         Loaded = (iElement.readyState == 'loaded');  break;
                     case 'propertychange':      {
                         var iType = iEvent.propertyName.match(/^on(.+)/i);
-                        if (iType && (
-                            (iElement.attributes || iElement.documentElement.attributes)[
-                                iEvent.propertyName
-                            ].expando
-                        ))
+                        if (iType  &&  (IE_Event_Type(iType[1]) == 'onpropertychange'))
                             iEvent.type = iType[1];
                         else {
                             iEvent.type = 'DOMAttrModified';
@@ -2097,96 +2127,70 @@
             };
     }
 
-    function IE_Event_Type(iType) {
-        var $_This = $(this);
-
-        if (! (('on' + iType) in this.constructor.prototype)) {
-            if (! $_This.data('custom-event')) {
-                $_This.data('custom-event', true);
-                return 'propertychange';
-            } else
-                return '';
-        } else if (($.type(this) != 'Window') && (iType == 'load'))
-            return 'readystatechange';
-
-        return iType;
-    }
-
     var IE_Event_Method = {
             addEventListener:       function (iType, iCallback) {
-                var $_This = $(this);
-
-                //  Custom DOM Event
-                var _Type_ = 'on' + iType;
-                if (! (_Type_ in this.constructor.prototype))
-                    if (! $_This.attr(_Type_))
-                        $_This.attr(_Type_, $.now());
-
                 iType = IE_Event_Type.call(this, iType);
+                var $_This = IE_Event_DOM.call(this, iType);
 
-                //  DOM Content Loading
-                var This_DOM = ($.type(this) == 'Document') ?
-                        this : (this.ownerDocument || this.document);
-                if (iCallback && (iType == 'DOMContentLoaded')) {
-                    if (BOM !== BOM.top)  iType = 'load';
-                    else {
-                        $.every(0.01, function () {
-                            try {
-                                This_DOM.documentElement.doScroll('left');
-                                iCallback.call(This_DOM, BOM.event);
-                                return false;
-                            } catch (iError) {
-                                return;
-                            }
-                        });
-                        return;
-                    }
-                }
-                if (! iType) return;
+                var _Handler_ = IE_Event_Handler(this, iCallback);
 
-                $_This.data('ie-handler',  function (_Index_, iHandler) {
-                    iHandler = iHandler || {
-                        user:     [ ],
-                        proxy:    [ ]
-                    };
+                $_This.data('ie-handler',  function () {
+                    var iHandler = arguments[1] || {
+                            user:     [ ],
+                            proxy:    [ ]
+                        };
                     iHandler.user.push(iCallback);
-                    iHandler.proxy.push( IE_Event_Handler(this, iCallback) );
-                    this.attachEvent(
-                        'on' + iType,  iHandler.proxy[iHandler.proxy.length - 1]
-                    );
+                    iHandler.proxy.push(_Handler_);
+                    this.attachEvent(iType, _Handler_);
+
                     return iHandler;
                 });
             },
             removeEventListener:    function (iType, iCallback) {
                 iType = IE_Event_Type.call(this, iType);
 
-                if (! iType) return;
+                IE_Event_DOM.call(this, iType).data('ie-handler',  function () {
+                    var iHandler = arguments[1];
+                    var _Index_ = iHandler.user.indexOf(iCallback);
 
-                var iHandler = $(this).data('ie-handler');
-                iHandler = iHandler.proxy[ iHandler.user.indexOf(iCallback) ];
-                if (iHandler)
-                    this.detachEvent('on' + iType,  iHandler);
+                    iHandler.user[_Index_] = null;
+                    this.detachEvent(iType,  iHandler.proxy.splice(_Index_, 1, null)[0]);
+
+                    return iHandler;
+                });
             },
             dispatchEvent:          function (iEvent) {
-                var $_This = $(this);
-                var iType = 'on' + iEvent.type,
-                    iOffset = $_This.offset();
+                var _Type_ = IE_Event_Type.call(this, iEvent.type);
+                var $_This = IE_Event_DOM.call(this, _Type_);
 
+                var iOffset = $_This.offset();
                 $.extend(iEvent, {
                     clientX:    iOffset.left,
                     clientY:    iOffset.top
                 });
 
-                if (iType in this.constructor.prototype)
-                    this.fireEvent(iType, iEvent);
+                if (_Type_ != 'onpropertychange')
+                    this.fireEvent(_Type_, iEvent);
                 else
-                    $_This.attr(iType, $.now());
+                    $_This[0]['on' + iEvent.type] = $.now();
             }
         };
 
     $.extend(Element.prototype, IE_Event_Method);
     $.extend(DOM, IE_Event_Method);
     $.extend(BOM, IE_Event_Method);
+
+    //  DOM Content Loading
+    if (BOM === BOM.top)
+        $.every(0.01, function () {
+            try {
+                DOM.documentElement.doScroll('left');
+                $(DOM).trigger('DOMContentLoaded');
+                return false;
+            } catch (iError) {
+                return;
+            }
+        });
 
     //  Patch for Change Event
     $(DOM.body).on('click',  'input[type="radio"], input[type="checkbox"]',  function () {
@@ -2633,6 +2637,55 @@
             console.warn("IE 8/9 XDR doesn't support Changing HTTP Headers...");
         };
 
+    /* ----- HTML DOM SandBox ----- */
+    $.fn.sandBox = function () {
+        var iArgs = $.makeArray(arguments);
+
+        var iCallback = (typeof iArgs.slice(-1)[0] == 'function')  &&  iArgs.pop();
+        var iHTML = (! $.isSelector(iArgs[0])) ? '' : iArgs.shift();
+        var iSelector = iArgs[0];
+
+        var iURL = (! iHTML.match(/<.+?>/))  &&  (iHTML.trim() || 'about:blank'),
+            $_iFrame = this.filter('iframe').eq(0);
+
+        if (! $_iFrame.length)
+            $_iFrame = $('<iframe style="display: none"></iframe>');
+
+        $_iFrame.one('load',  function () {
+            var _DOM_ = this.contentWindow.document;
+
+            function Frame_Ready() {
+                if (! (_DOM_.body && _DOM_.body.childNodes.length))
+                    return;
+
+                var $_Content = $(iSelector || 'body > *',  _DOM_);
+                if (! $_Content.length)
+                    $_Content = _DOM_.body.childNodes;
+
+                if (
+                    (typeof iCallback == 'function')  &&
+                    (false === iCallback.call(
+                        $_iFrame[0],  $('head style', _DOM_).add($_Content).clone(true)
+                    ))
+                )
+                    $_iFrame.remove();
+
+                return false;
+            }
+
+            if (! iURL) {
+                $.every(0.04, Frame_Ready);
+                _DOM_.write(iHTML);
+                _DOM_.close();
+            } else
+                Frame_Ready();
+        });
+
+        if (iURL)  $_iFrame.attr('src', iURL);
+
+        return  $_iFrame[0].parentNode ? this : $_iFrame.appendTo(DOM.body);
+    };
+
     /* ----- DOM HTTP Request ----- */
     BOM.DOMHttpRequest = function () {
         this.status = 0;
@@ -2663,25 +2716,19 @@
                 $_Form.attr('target', iTarget);
             }
 
-            var $_iFrame = $('iframe[name="' + iTarget + '"]');
-            if (! $_iFrame.length)
-                $_iFrame = $('<iframe />', {
-                    frameBorder:          0,
-                    allowTransparency:    true,
-                    name:                 iTarget
+            $('iframe[name="' + iTarget + '"]').sandBox(function () {
+                $(this).on('load',  function () {
+                    $_Button.prop('disabled', false);
+
+                    if (iDHR.readyState)  try {
+                        var $_Content = $(this).contents();
+                        iDHR.responseText = $_Content.find('body').text();
+                        iDHR.status = 200;
+                        iDHR.readyState = 4;
+                        iDHR.onready.call($_Form[0],  iDHR.responseAny(),  $_Content);
+                    } catch (iError) { }
                 });
-
-            $_iFrame.hide().appendTo( $_Form.parent() ).on('load', function () {
-                $_Button.prop('disabled', false);
-
-                if (iDHR.readyState)  try {
-                    var $_Content = $(this).contents();
-                    iDHR.responseText = $_Content.find('body').text();
-                    iDHR.status = 200;
-                    iDHR.readyState = 4;
-                    iDHR.onready.call($_Form[0],  iDHR.responseAny(),  $_Content);
-                } catch (iError) { }
-            });
+            }).attr('name', iTarget);
 
             this.$_DOM = $_Form;
             this.requestArgs = arguments;
@@ -2820,46 +2867,6 @@
     });
 
     $.getJSON = $.get;
-
-    /* ----- HTML DOM SandBox ----- */
-    $.fn.sandBox = function (iHTML, iSelector, iCallback) {
-        if (arguments.length < 3) {
-            iCallback = iSelector;
-            iSelector = '';
-        }
-        var iURL = (! iHTML.match(/<.+?>/))  &&  iHTML,
-            $_iFrame = $('<iframe style="display: none"></iframe>');
-
-        $_iFrame.one('load',  function () {
-            var _DOM_ = this.contentWindow.document;
-
-            function Frame_Ready() {
-                if (! (_DOM_.body && _DOM_.body.childNodes.length))
-                    return;
-
-                var $_Content = $(iSelector || 'body > *',  _DOM_);
-                if (! $_Content.length)
-                    $_Content = _DOM_.body.childNodes;
-
-                iCallback.call(
-                    $_iFrame[0],  $('head style', _DOM_).add($_Content).clone(true)
-                );
-
-                return false;
-            }
-
-            if (! iURL) {
-                $.every(0.04, Frame_Ready);
-                _DOM_.write(iHTML);
-                _DOM_.close();
-            } else
-                Frame_Ready();
-        });
-
-        if (iURL)  $_iFrame.attr('src', iURL);
-
-        return $_iFrame.appendTo(DOM.body);
-    };
 
     /* ----- Smart HTML Loading ----- */
     $.fn.load = function (iURL, iData, iCallback) {
