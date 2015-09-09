@@ -2,7 +2,7 @@
 //                >>>  iQuery.js  <<<
 //
 //
-//      [Version]    v1.0  (2015-9-5)  Stable
+//      [Version]    v1.0  (2015-9-9)  Stable
 //
 //      [Usage]      A Light-weight jQuery Compatible API
 //                   with IE 8+ compatibility.
@@ -50,32 +50,6 @@
         return iRegExp_Compiled;
     };
 
-    /* ----- Array Extension ----- */
-
-    if (! [ ].indexOf)
-        Array.prototype.indexOf = function () {
-            for (var i = 0;  i < this.length;  i++)
-                if (arguments[0] === this[i])
-                    return i;
-
-            return -1;
-        };
-
-    if (! [ ].map)
-        Array.prototype.map = function (iCallback) {
-            if (typeof iCallback != 'function')
-                throw  TypeError(iCallback + ' is not a function');
-
-            var New_Array = [ ];
-
-            for (var i = 0;  i < this.length;  i++)
-                if (this[i] !== undefined)
-                    New_Array.concat(
-                        iCallback.call(arguments[1] || BOM,  this[i],  i,  this)
-                    );
-            return New_Array;
-        };
-
     /* ----- String Extension ----- */
 
     if (! ''.trim)
@@ -112,16 +86,35 @@
     };
 
     String.prototype.toHyphenCase = function () {
-        return  Array.prototype.map.call(this,  function (iChar) {
-            if ((iChar >= 'A')  &&  (iChar < 'a'))
-                return  ['-', iChar.toLowerCase()];
+        var iString = [ ];
 
-            if ((iChar < '0')  ||  (iChar > 'z'))
-                return '-';
+        for (var i = 0;  i < this.length;  i++)  switch (true) {
+            case ((this[i] >= 'A')  &&  (this[i] < 'a')):    {
+                iString.push('-');
+                iString.push( this[i].toLowerCase() );
+                break;
+            }
+            case ((this[i] < '0')  ||  (this[i] > 'z')):     {
+                iString.push('-');
+                break;
+            }
+            default:
+                iString.push( this[i] );
+        }
 
-            return iChar;
-        }).join('');
+        return iString.join('');
     };
+
+    /* ----- Array Extension ----- */
+
+    if (! [ ].indexOf)
+        Array.prototype.indexOf = function () {
+            for (var i = 0;  i < this.length;  i++)
+                if (arguments[0] === this[i])
+                    return i;
+
+            return -1;
+        };
 
     /* ----- Date Extension ----- */
 
@@ -264,12 +257,46 @@
                         }
                 return iTarget;
             },
+            map:              function (iSource, iCallback) {
+                var iTarget = { },  iArray;
+
+                if (typeof iSource.length == 'number') {
+                    iTarget = [ ];
+                    iArray = true;
+                }
+
+                if (typeof iCallback == 'function')
+                    this.each(iSource,  function (iKey) {
+                        if (this === undefined)  return;
+
+                        var _Element_ = iCallback(this, iKey, iSource);
+
+                        if ((_Element_ !== undefined)  &&  (_Element_ !== null))
+                            if (iArray)
+                                iTarget = iTarget.concat(_Element_);
+                            else
+                                iTarget[iKey] = _Element_;
+                    });
+
+                return iTarget;
+            },
             makeArray:        function () {
                 return  _Browser_.modern ?
                     Array.apply(null, arguments[0])  :  this.extend([ ], arguments[0]);
+            },
+            inArray:          function () {
+                return  Array.prototype.indexOf.call(arguments[0], arguments[1]);
+            },
+            unique:           function (iArray) {
+                var iResult = [ ];
+
+                for (var i = iArray.length - 1;  i > -1 ;  i--)
+                    if (this.inArray(iArray, iArray[i]) == i)
+                        iResult.push( iArray[i] );
+
+                return iResult;
             }
         };
-
     function _inKey_() {
         var iObject = { };
 
@@ -676,9 +703,7 @@
 
         for (var i = 0, _Return_;  i < iHandler.length;  i++) {
             if ( iHandler[i] )
-                _Return_ = iHandler[i].apply(
-                    this,  _Object_.makeArray(arguments).concat(Trigger_Data)
-                );
+                _Return_ = iHandler[i].apply(this, [iEvent].concat(Trigger_Data));
             else if (iHandler[i] === false)
                 _Return_ = false;
             else
@@ -716,32 +741,34 @@
 
         if (! iTag)  return  [ DOM.createTextNode(TagName) ];
 
-        if (iTag[2]  ||  (iTag[1].split(/\s/).length > 1)) {
-            iNew = _DOM_.innerHTML.set(
+        iNew = (iTag[2]  ||  (iTag[1].split(/\s/).length > 1))  ?
+            _DOM_.innerHTML.set(
                 DOM.createElement('div'),  TagName
-            );
+            )  :  [
+                DOM.createElement( iTag[1] )
+            ];
 
-            if ((iNew.length != 1)  ||  (iNew[0].nodeType != 1))
-                return iNew;
-        } else
-            iNew = [ DOM.createElement( iTag[1] ) ];
-
-        if (AttrList)  for (var AK in AttrList) {
-            var iValue = AttrList[AK];
-            try {
-                switch (AK) {
-                    case 'text':     _DOM_.innerText.set(iNew[0], iValue);  break;
-                    case 'html':     _DOM_.innerHTML.set(iNew[0], iValue);  break;
-                    case 'style':    if (_Object_.type(iValue) == 'Object') {
-                        _DOM_.operate('Style', iNew, iValue);
-                        break;
+        if ((iNew.length == 1)  &&  (iNew[0].nodeType = 1)  &&  AttrList)
+            _Object_.each(AttrList,  function (iKey) {
+                try {
+                    switch (iKey) {
+                        case 'text':     _DOM_.innerText.set(iNew[0], this);  break;
+                        case 'html':     _DOM_.innerHTML.set(iNew[0], this);  break;
+                        case 'style':    if ( _Object_.isPlainObject(this) ) {
+                            _DOM_.operate('Style', iNew, this);
+                            break;
+                        }
+                        default:         _DOM_.operate('Attribute', iNew, iKey, this);
                     }
-                    default:         _DOM_.operate('Attribute', iNew, AK, iValue);
+                } catch (iError) {
+                    console.error(iError);
                 }
-            } catch (iError) {
-                console.error(iError);
-            }
-        }
+            });
+        if (iNew[0].parentNode)
+            iNew = _Object_.map(iNew,  function () {
+                iNew[0].parentNode.removeChild( arguments[0] );
+                return arguments[0];
+            });
 
         return iNew;
     }
@@ -845,40 +872,31 @@
         );
 
     function DOM_Search(iRoot, iSelector) {
-        var _Self_ = arguments.callee,  iSet = [ ];
+        var _Self_ = arguments.callee;
 
-        _Object_.each(iSelector.split(/\s*,\s*/),  function () {
+        return  _Object_.map(iSelector.split(/\s*,\s*/),  function () {
             try {
-                iSet = Array_Concat(iSet,  iRoot.querySelectorAll(arguments[1] || '*'));
+                return  _Object_.makeArray( iRoot.querySelectorAll(arguments[0] || '*') );
             } catch (iError) {
                 var _Selector_;
                 for (var _Pseudo_ in iPseudo) {
-                    _Selector_ = arguments[1].match(iPseudo[_Pseudo_].regexp);
-                    if (_Selector_ && (_Selector_.length > 1))
-                        break;
-                }
-                var Set_0 = _Self_(
-                        iRoot,  _Selector_[1] + (_Selector_[1].match(/[\s>\+~]\s*$/) ? '*' : '')
-                    ),
-                    Set_1 = [ ];
-                for (var i = 0;  i < Set_0.length;  i++)
-                    if ( iPseudo[_Pseudo_].filter(Set_0[i]) ) {
-                        if (_Selector_[2])
-                            Set_1 = Set_1.concat(
-                                _Self_(Set_0[i],  '*' + _Selector_[2])
-                            );
-                        else
-                            Set_1.push(Set_0[i]);
-                    }
-                for (var i = Set_1.length - 1;  i > 0;  i--)
-                    if (Set_1.indexOf(Set_1[i]) < i)
-                        Set_1[i] = null;
+                    _Selector_ = arguments[0].match(iPseudo[_Pseudo_].regexp);
+                    if (_Selector_)  break;
+                };
+                _Selector_[1] = _Selector_[1] || '*';
+                _Selector_[1] += (_Selector_[1].match(/[\s>\+~]\s*$/) ? '*' : '');
 
-                iSet = iSet.concat(Set_1);
+                return _Object_.unique(
+                    _Object_.map(
+                        _Self_(iRoot, _Selector_[1]),
+                        function (iDOM) {
+                            if ( iPseudo[_Pseudo_].filter(iDOM) )
+                                return  _Selector_[2]  ?  _Self_(iDOM,  '*' + _Selector_[2])  :  iDOM;
+                        }
+                    )
+                );
             }
         });
-
-        return iSet;
     }
 
 
@@ -954,12 +972,6 @@
                 return false;
             }
             return true;
-        },
-        inArray:          function () {
-            return  Array.prototype.indexOf.call(arguments[0], arguments[1]);
-        },
-        map:              function () {
-            return  Array.prototype.map.call(arguments[0], arguments[1]);
         },
         trim:             function () {
             return  arguments[0].trim();
@@ -1116,11 +1128,6 @@
         each:               function () {
             return  $.each(this, arguments[0]);
         },
-        map:                function (iCallback) {
-            return  $($.map(this,  function () {
-                return  iCallback.call(arguments[0], arguments[1], arguments[0]);
-            }));
-        },
         is:                 function (iSelector) {
             return  (
                     $.inArray(
@@ -1229,11 +1236,11 @@
                 Type_Filter = parseInt(arguments[0]);
 
             for (var i = 0;  i < this.length;  i++)
-                $_Result = $_Result.concat(
+                $_Result = Array_Concat(
+                    $_Result,
                     (this[i].tagName.toLowerCase() != 'iframe') ?
-                        $.makeArray(this[i].childNodes) : this[i].contentWindow.document
+                        this[i].childNodes : this[i].contentWindow.document
                 );
-
             if ($.type(Type_Filter) == 'Number')
                 for (var i = 0;  i < $_Result.length;  i++)
                     if ($_Result[i].nodeType != Type_Filter)
@@ -1248,6 +1255,7 @@
                 $_Result = Array_Concat(
                     $_Result,  Object_Seek.call(this[i], 'nextElementSibling')
                 );
+            $_Result = $.unique($_Result);
 
             if (arguments[0])  $_Result = $($_Result).filter(arguments[0]);
 
@@ -1260,6 +1268,7 @@
                 $_Result = Array_Concat(
                     $_Result,  Object_Seek.call(this[i], 'previousElementSibling')
                 );
+            $_Result = $.unique($_Result);
 
             if (arguments[0])  $_Result = $($_Result).filter(arguments[0]);
 
@@ -1278,7 +1287,7 @@
             for (var i = 0;  i < this.length;  i++)
                 $_Result = Array_Concat($_Result,  $(arguments[0], this[i]));
 
-            return this.pushStack($_Result);
+            return  this.pushStack( $.unique($_Result) );
         },
         detach:             function () {
             for (var i = 0;  i < this.length;  i++)
@@ -1597,7 +1606,7 @@
             if (! $.isData(arguments[0]))
                 return  this[0] && this[0].value;
             else
-                return  this.prop('value', arguments[0]);
+                return  this.not('input[type="file"]').prop('value', arguments[0]);
         },
         serializeArray:     function () {
             var $_Value = this.find('*[name]:input').not(':button, [disabled]'),
@@ -1677,8 +1686,8 @@
             case 'textarea':    ;
             case 'select':      ;
             case 'input':       {
-                if (($_This.attr('type') || '').match(/radio|checkbox/i)  &&  iValue)
-                    $_This.prop('checked', true);
+                if ((this.type || '').match(/radio|checkbox/i)  &&  (this.value == iValue))
+                    this.checked = true;
                 iReturn = $_This.val(iValue);
                 break;
             }
@@ -2642,12 +2651,10 @@
         var iArgs = $.makeArray(arguments);
 
         var iCallback = (typeof iArgs.slice(-1)[0] == 'function')  &&  iArgs.pop();
-        var iHTML = (! $.isSelector(iArgs[0])) ? '' : iArgs.shift();
+        var iHTML = $.isSelector(iArgs[0]) ? '' : iArgs.shift();
         var iSelector = iArgs[0];
 
-        var iURL = (! iHTML.match(/<.+?>/))  &&  (iHTML.trim() || 'about:blank'),
-            $_iFrame = this.filter('iframe').eq(0);
-
+        var $_iFrame = this.filter('iframe').eq(0);
         if (! $_iFrame.length)
             $_iFrame = $('<iframe style="display: none"></iframe>');
 
@@ -2673,15 +2680,13 @@
                 return false;
             }
 
-            if (! iURL) {
-                $.every(0.04, Frame_Ready);
-                _DOM_.write(iHTML);
-                _DOM_.close();
-            } else
-                Frame_Ready();
-        });
+            if (! iHTML)  Frame_Ready();
 
-        if (iURL)  $_iFrame.attr('src', iURL);
+            $.every(0.04, Frame_Ready);
+            _DOM_.write(iHTML);
+            _DOM_.close();
+
+        }).attr('src',  ((! iHTML.match(/<.+?>/)) && iHTML.trim())  ||  'about:blank');
 
         return  $_iFrame[0].parentNode ? this : $_iFrame.appendTo(DOM.body);
     };
@@ -2781,20 +2786,16 @@
             iData = { };
 
             if ($_Form[0].tagName.toLowerCase() == 'form') {
-                if (! $_Form.find('input[type="file"]').length) {
-                    var _Data_ = $_Form.serializeArray();
-                    for (var i = 0;  i < _Data_.length;  i++)
-                        iData[_Data_[i].name] = _Data_[i].value;
-                } else {
-                    if (! ($.browser.msie < 10))
-                        iData = new FormData($_Form[0]);
-                    else
-                        iXHR = BOM.DOMHttpRequest;
-                }
+                if (! $_Form.find('input[type="file"]').length)
+                    iData = $_Form.serializeArray();
+                else if (! ($.browser.msie < 10))
+                    iData = new FormData($_Form[0]);
+                else
+                    iXHR = BOM.DOMHttpRequest;
             }
         }
-        if ( $.isPlainObject(iData) )
-            iData = BOM.encodeURI( $.param(iData || { }) );
+        if ((iData instanceof Array)  ||  $.isPlainObject(iData))
+            iData = $.param(iData);
 
         iXHR = new iXHR();
         iXHR.onready = iCallback;
@@ -2892,7 +2893,7 @@
         function Load_Back(iHTML) {
             if (typeof iHTML != 'string')  return;
 
-            if (! iHTML.match(/<\s*(html|head|body)[^>]*>/i)) {
+            if (! iHTML.match(/<\s*(html|head|body)(\s|>)/i)) {
                 Append_Back.apply(this, arguments);
                 return;
             }
@@ -3009,32 +3010,6 @@
 
 /* ---------- Other Extension ---------- */
 (function (BOM, DOM, $) {
-
-    /* ----- Remote Error Log ----- */
-    var Console_URL = $('head link[rel="console"]').attr('href');
-
-    BOM.onerror = function (iMessage, iURL, iLine, iColumn, iError){
-        $.wait(0,  function () {
-            var iData = {
-                    message:    iMessage,
-                    url:        iURL,
-                    line:       iLine,
-                    column:     iColumn  ||  (BOM.event && BOM.event.errorCharacter)  ||  0
-                };
-
-            if (iError)  iData.stack = String(iError.stack || iError.stacktrace);
-
-            if (Console_URL) {
-                if (iData.stack)
-                    $.post(Console_URL, iData);
-                else
-                    $.get(Console_URL, iData);
-            }
-        });
-
-        return true;
-    };
-
 
     /* ----- Hash Algorithm (Crypto API Wrapper) ----- */
     function BufferToString(iBuffer){

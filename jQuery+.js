@@ -281,35 +281,6 @@
         }
     });
 
-
-/* ---------- 远程 Console  v0.1 ---------- */
-
-//  Thank for raphealguo --- http://rapheal.sinaapp.com/2014/11/06/javascript-error-monitor/
-
-    var Console_URL = $('head link[rel="console"]').attr('href');
-
-    BOM.onerror = function (iMessage, iURL, iLine, iColumn, iError){
-        $.wait(0,  function () {
-            var iData = {
-                    message:    iMessage,
-                    url:        iURL,
-                    line:       iLine,
-                    column:     iColumn  ||  (BOM.event && BOM.event.errorCharacter)  ||  0
-                };
-
-            if (iError)  iData.stack = String(iError.stack || iError.stacktrace);
-
-            if (Console_URL) {
-                if (iData.stack)
-                    $.post(Console_URL, iData);
-                else
-                    $.get(Console_URL, iData);
-            }
-        });
-
-        return true;
-    };
-
 /* ---------- Hash 算法集合（浏览器原生） v0.1 ---------- */
 
 //  Thank for "emu" --- http://blog.csdn.net/emu/article/details/39618297
@@ -622,8 +593,8 @@
             case 'textarea':    ;
             case 'select':      ;
             case 'input':       {
-                if ($_This.attr('type').match(/radio|checkbox/i) && iValue)
-                    $_This.prop('checked', true);
+                if ((this.type || '').match(/radio|checkbox/i)  &&  (this.value == iValue))
+                    this.checked = true;
                 iReturn = $_This.val(iValue);
                 break;
             }
@@ -686,12 +657,10 @@
         var iArgs = $.makeArray(arguments);
 
         var iCallback = (typeof iArgs.slice(-1)[0] == 'function')  &&  iArgs.pop();
-        var iHTML = (! $.isSelector(iArgs[0])) ? '' : iArgs.shift();
+        var iHTML = $.isSelector(iArgs[0]) ? '' : iArgs.shift();
         var iSelector = iArgs[0];
 
-        var iURL = (! iHTML.match(/<.+?>/))  &&  (iHTML.trim() || 'about:blank'),
-            $_iFrame = this.filter('iframe').eq(0);
-
+        var $_iFrame = this.filter('iframe').eq(0);
         if (! $_iFrame.length)
             $_iFrame = $('<iframe style="display: none"></iframe>');
 
@@ -717,15 +686,13 @@
                 return false;
             }
 
-            if (! iURL) {
-                $.every(0.04, Frame_Ready);
-                _DOM_.write(iHTML);
-                _DOM_.close();
-            } else
-                Frame_Ready();
-        });
+            if (! iHTML)  Frame_Ready();
 
-        if (iURL)  $_iFrame.attr('src', iURL);
+            $.every(0.04, Frame_Ready);
+            _DOM_.write(iHTML);
+            _DOM_.close();
+
+        }).attr('src',  ((! iHTML.match(/<.+?>/)) && iHTML.trim())  ||  'about:blank');
 
         return  $_iFrame[0].parentNode ? this : $_iFrame.appendTo(DOM.body);
     };

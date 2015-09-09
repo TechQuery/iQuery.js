@@ -67,7 +67,7 @@
  - 暂不支持 **动画队列**、**速度曲线函数**
 
 ### 【JavaScript、DOM、BOM 原生 API 扩展】
- - 自带 Array indexOf、map 标准方法
+ - 自带 Array indexOf 标准方法
  - **String trim 方法**支持 非空白符（借鉴 PHP）
  - 新增 **String repeat** 标准草案方法
  - 新增 String **toCamelCase**（驼峰命名法）、**toHyphenCase**（连字符命名法）**书写格式转换方法**
