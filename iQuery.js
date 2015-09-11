@@ -2,7 +2,7 @@
 //                >>>  iQuery.js  <<<
 //
 //
-//      [Version]    v1.0  (2015-9-9)  Stable
+//      [Version]    v1.0  (2015-9-11)  Stable
 //
 //      [Usage]      A Light-weight jQuery Compatible API
 //                   with IE 8+ compatibility.
@@ -269,7 +269,7 @@
                     this.each(iSource,  function (iKey) {
                         if (this === undefined)  return;
 
-                        var _Element_ = iCallback(this, iKey, iSource);
+                        var _Element_ = iCallback(arguments[1], iKey, iSource);
 
                         if ((_Element_ !== undefined)  &&  (_Element_ !== null))
                             if (iArray)
@@ -315,12 +315,6 @@
                 root:       _inKey_('Document', 'Window')
             },
             DOM_Event:    _inKey_(
-                'load', 'abort', 'error',
-                'keydown', 'keypress', 'keyup',
-                'mousedown', 'mouseup', 'mousemove',
-                'mouseover', 'mouseout', 'mouseenter', 'mouseleave',
-                'click', 'dblclick', 'scroll', 'mousewheel',
-                'select', 'focus', 'blur', 'change', 'submit', 'reset',
                 'DOMContentLoaded',
                 'DOMAttrModified', 'DOMAttributeNameChanged',
                 'DOMCharacterDataModified',
@@ -328,8 +322,7 @@
                 'DOMNodeInserted', 'DOMNodeInsertedIntoDocument',
                 'DOMNodeRemoved',  'DOMNodeRemovedFromDocument',
                 'DOMSubtreeModified'
-            ),
-            Target:       _inKey_('_top', '_parent', '_self', '_blank')
+            )
         };
 
     _Object_.type = function (iVar) {
@@ -678,22 +671,6 @@
         };
 
     /* ----- Event Proxy Layer ----- */
-    function Event_Trigger(iType, iName, iData) {
-        _DOM_.operate('Data', this, '_trigger_', iData);
-
-        for (var i = 0, iEvent;  i < this.length;  i++) {
-            iEvent = DOM.createEvent(iType);
-            iEvent[
-                'init' + (
-                    (iType == 'HTMLEvents') ? 'Event' : iType
-                )
-            ](iName, true, true, 0);
-            this[i].dispatchEvent(iEvent);
-        }
-
-        return this;
-    }
-
     function Proxy_Handler(iEvent) {
         var iHandler = (_DOM_.operate('Data', [this], '_event_') || { })[iEvent.type];
         if (! iHandler)  return;
@@ -748,7 +725,7 @@
                 DOM.createElement( iTag[1] )
             ];
 
-        if ((iNew.length == 1)  &&  (iNew[0].nodeType = 1)  &&  AttrList)
+        if ((iNew.length == 1)  &&  (iNew[0].nodeType == 1)  &&  AttrList)
             _Object_.each(AttrList,  function (iKey) {
                 try {
                     switch (iKey) {
@@ -1516,17 +1493,27 @@
 
             return  this.on.apply(this, iArgs);
         },
-        trigger:            function (iType, iData) {
+        trigger:            function (iType) {
             if (typeof iType != 'string') {
-                var iEvent = iType;
-                iType = iEvent.type;
+                var _Event_ = iType;
+                iType = iType.type;
             }
-            return Event_Trigger.call(
-                    this,
-                    (iType in Type_Info.DOM_Event) ? 'HTMLEvents' : 'CustomEvent',
-                    iType,
-                    iData
+            this.data('_trigger_', arguments[1]);
+
+            return  this.each(function () {
+                _Type_ = (
+                    (('on' + iType)  in  this.constructor.prototype)  ||
+                    (iType in Type_Info.DOM_Event)
+                ) ? 'HTMLEvents' : 'CustomEvent';
+
+                var iEvent = DOM.createEvent(_Type_);
+                iEvent['init' + (
+                    (_Type_ == 'HTMLEvents')  ?  'Event'  :  _Type_
+                )](iType, true, true, 0);
+                this.dispatchEvent(
+                    _Event_  ?  $.extend(iEvent, _Event_)  :  iEvent
                 );
+            });
         },
         triggerHandler:     function () {
             var iHandler = $(this[0]).data('_event_');
@@ -1632,18 +1619,6 @@
 /* ---------- Event ShortCut ---------- */
     $.fn.off = $.fn.unbind;
 
-    var iShortCut = $.extend(_inKey_('tap', 'press', 'swipe'),  Type_Info.DOM_Event),
-        no_ShortCut = _inKey_(
-            'mouseover', 'mouseout', 'mouseenter', 'mouseleave', 'mousewheel',
-            'load', 'DOMContentLoaded',
-            'DOMAttrModified', 'DOMAttributeNameChanged',
-            'DOMCharacterDataModified',
-            'DOMElementNameChanged',
-            'DOMNodeInserted', 'DOMNodeInsertedIntoDocument',
-            'DOMNodeRemoved',  'DOMNodeRemovedFromDocument',
-            'DOMSubtreeModified'
-        );
-
     function Event_Method(iName) {
         return  function () {
                 if (! arguments[0]) {
@@ -1659,15 +1634,17 @@
             };
     }
 
-    for (var iName in iShortCut)
-        if (! (iName in no_ShortCut))
-            $.fn[iName] = Event_Method(iName);
+    for (var iName in _inKey_(
+        'abort', 'error',
+        'keydown', 'keypress', 'keyup',
+        'mousedown', 'mouseup', 'mousemove',
+        'click', 'dblclick', 'scroll',
+        'select', 'focus', 'blur', 'change', 'submit', 'reset',
+        'tap', 'press', 'swipe'
+    ))
+        $.fn[iName] = Event_Method(iName);
 
     if ($.browser.mobile)  $.fn.click = $.fn.tap;
-
-
-
-    $(BOM).data('_type_', Type_Info);    //  Share Information of Types between iQuery Modules.
 
 
 
@@ -2308,7 +2285,10 @@
         BOM.history.state = iState[0];
         DOM.title = iState[1];
 
-        $_BOM.trigger('popstate');
+        $_BOM.trigger({
+            type:     'popstate',
+            state:    iState[0]
+        });
     });
 
 })(self, self.document, self.iQuery);
@@ -2323,12 +2303,11 @@
     $.start('DOM_Ready');
 
     function DOM_Ready_Event() {
-        if (DOM.isReady) return;
-
-        var _DOM_Ready_ = (DOM.readyState == 'complete') &&
-                DOM.body  &&  DOM.body.lastChild  &&  DOM.getElementById;
-
-        if ((this !== DOM) && (! _DOM_Ready_))
+        if (DOM.isReady || (
+            (this !== DOM)  &&  (
+                (DOM.readyState != 'complete')  ||  (! DOM.body.lastChild)
+            )
+        ))
             return;
 
         DOM.isReady = true;
@@ -2699,8 +2678,6 @@
     };
     BOM.DOMHttpRequest.JSONP = { };
 
-    var Type_Info = $(BOM).data('_type_');
-
     $.extend(BOM.DOMHttpRequest.prototype, XHR_Extension, {
         open:                function (iMethod, iTarget) {
             this.method = iMethod.toUpperCase();
@@ -2716,7 +2693,7 @@
 
             var $_Button = $_Form.find(':button').attr('disabled', true),
                 iTarget = $_Form.attr('target');
-            if ((! iTarget) || (iTarget in Type_Info.Target)) {
+            if ((! iTarget)  ||  iTarget.match(/^_(top|parent|self|blank)$/i)) {
                 iTarget = $.guid('iframe');
                 $_Form.attr('target', iTarget);
             }

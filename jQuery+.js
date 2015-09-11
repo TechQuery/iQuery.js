@@ -178,12 +178,11 @@
     }
 
     var Type_Info = {
-            Data:      _inKey_('String', 'Number', 'Boolean', 'Null'),
-            BOM:       _inKey_('Window', 'DOMWindow', 'global'),
-            DOM:       {
+            Data:    _inKey_('String', 'Number', 'Boolean', 'Null'),
+            BOM:     _inKey_('Window', 'DOMWindow', 'global'),
+            DOM:     {
                 root:    _inKey_('Document', 'Window')
-            },
-            Target:    _inKey_('_top', '_parent', '_self', '_blank')
+            }
         };
 
     function _Type_(iVar) {
@@ -809,7 +808,7 @@
 
             var $_Button = $_Form.find(':button').attr('disabled', true),
                 iTarget = $_Form.attr('target');
-            if ((! iTarget) || (iTarget in Type_Info.Target)) {
+            if ((! iTarget)  ||  iTarget.match(/^_(top|parent|self|blank)$/i)) {
                 iTarget = $.guid('iframe');
                 $_Form.attr('target', iTarget);
             }
