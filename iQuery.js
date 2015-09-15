@@ -599,7 +599,7 @@
                     iElement.removeChild(iChild[0]);
             }
 
-            return iElement.childNodes;
+            return _Object_.makeArray(iElement.childNodes);
         }
     };
 
@@ -726,25 +726,25 @@
             ];
 
         if ((iNew.length == 1)  &&  (iNew[0].nodeType == 1)  &&  AttrList)
-            _Object_.each(AttrList,  function (iKey) {
+            _Object_.each(AttrList,  function (iKey, iValue) {
                 try {
                     switch (iKey) {
-                        case 'text':     _DOM_.innerText.set(iNew[0], this);  break;
-                        case 'html':     _DOM_.innerHTML.set(iNew[0], this);  break;
-                        case 'style':    if ( _Object_.isPlainObject(this) ) {
-                            _DOM_.operate('Style', iNew, this);
+                        case 'text':     _DOM_.innerText.set(iNew[0], iValue);  break;
+                        case 'html':     _DOM_.innerHTML.set(iNew[0], iValue);  break;
+                        case 'style':    if ( _Object_.isPlainObject(iValue) ) {
+                            _DOM_.operate('Style', iNew, iValue);
                             break;
                         }
-                        default:         _DOM_.operate('Attribute', iNew, iKey, this);
+                        default:         _DOM_.operate('Attribute', iNew, iKey, iValue);
                     }
                 } catch (iError) {
                     console.error(iError);
                 }
             });
         if (iNew[0].parentNode)
-            iNew = _Object_.map(iNew,  function () {
-                iNew[0].parentNode.removeChild( arguments[0] );
-                return arguments[0];
+            iNew = _Object_.map(iNew,  function (iDOM, _Index_) {
+                iNew[_Index_].parentNode.removeChild(iDOM);
+                return iDOM;
             });
 
         return iNew;

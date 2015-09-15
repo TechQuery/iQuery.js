@@ -1,6 +1,6 @@
 #iQuery
 
-### 【概述】
+## 【概述】
 
 **iQuery** 是一个**普适**而**轻巧**的 **DOM/JavaScript 开发库** —— **支持 IE 8+ 的 jQuery/W3C 兼容 API**，包含 最常用的 jQuery 静态/实例 属性、方法，适合替代逻辑简单的网页中体积很大的 jQuery，或作为“**Web 前端开发基础库**”嵌入各种 独立发布（不能有外部依赖、自闭合、有兼容性要求）的 JavaScript 库。
 
@@ -10,7 +10,8 @@
 
 【注】对 IE 的兼容仅限其“标准模式”，而非“兼容性视图”。
 
-### 【入门】
+
+## 【入门】
 
 1. 基础知识 ——《[jQuery API 文档](http://www.jquery123.com/api/)》
 2. 嵌入使用 —— 典型应用实例项目：文件级**前端脚本加载器** [EasyImport.js](http://git.oschina.net/Tech_Query/EasyImport.js)
@@ -25,8 +26,16 @@
     ...
 </body></html>
 ```
+### 成功驱动的项目
+ 1. EasyImport.js
+ 2. 某公司 JS-SDK
+ 3. [EasyWebUI](http://git.oschina.net/Tech_Query/EasyWebUI)
+ 4. [EasyWebApp](http://git.oschina.net/Tech_Query/EasyWebApp)
+ 5. 某公司 开放平台、业务后台
+ 6. 某公司 微信轻应用
 
-### 【对 jQuery（最新版）的增强】
+
+## 【对 jQuery（最新版）的增强】
  - 内置一个改进且向下兼容的 **$.browser 对象**，能通过**直接比较版本号**来区分浏览器
  - 新增 **计时相关方法（秒基准）**—— $.every()、$.wait()、$.start()、$.end()
  - 新增 **唯一串号生成器** —— $.guid()
@@ -54,7 +63,8 @@
  - 封装 **Animate.css** 为 $.fn.cssAnimate()，其调用参数 兼容 $.fn.animate()
  - 封装了**触屏单指手势事件**（tap、press、swipe），并为桌面端、移动端提供一致的操作体验
 
-### 【未实现的 jQuery（最新版）特性】
+
+## 【未实现的 jQuery（最新版）特性】
  - 没有 $.noConflict()，但不会强占 jQuery 变量
  - 不支持 浏览器**内置类型**（构造函数）相应的 $.isXXX() 方法（但 $.type() 均能返回与构造函数名一致的“类型名”）
  - 暂不支持 $.ajax() 及相关的各种自定义选项
@@ -66,7 +76,8 @@
  - **事件冒泡** 完全依赖 **浏览器自身实现**，不做抽象统一
  - 暂不支持 **动画队列**、**速度曲线函数**
 
-### 【JavaScript、DOM、BOM 原生 API 扩展】
+
+## 【JavaScript、DOM、BOM 原生 API 扩展】
  - 自带 Array indexOf 标准方法
  - **String trim 方法**支持 非空白符（借鉴 PHP）
  - 新增 **String repeat** 标准草案方法
@@ -81,7 +92,3 @@
  - 自带 **HTMLEvents、CustomEvent 对象**，为 IE 8 提供 **W3C Event API** 支持
  - 自带 **HTML 5 Form API**，为 IE 8、iOS WebKit 提供兼容支持
  - 自带 DOMParser 对象，为 IE 8 提供 **XML 文档解析**支持
-
-### 【协作开发】
-
-本项目提炼于其发起人的**日常开发实战**，其本人会**持续更新**，同时欢迎广大 **Web 开发爱好者**在 **OSChina 社区**与其交流、提交 **Pull Request**！~
