@@ -2,7 +2,7 @@
 //                >>>  iQuery.js  <<<
 //
 //
-//      [Version]    v1.0  (2015-9-11)  Stable
+//      [Version]    v1.0  (2015-9-15)  Stable
 //
 //      [Usage]      A Light-weight jQuery Compatible API
 //                   with IE 8+ compatibility.
@@ -1649,44 +1649,53 @@
 
 
 /* ----- DOM UI Data Operator ----- */
+    var RE_URL = /^(\w+:)?\/\/[\u0033-\u007e\uff61-\uffef]+$/;
+
     function Value_Operator(iValue, iResource) {
-        var $_This = $(this),  iReturn;
+        var $_This = $(this),
+            End_Element = (! this.children.length);
+
+        var _Set_ = iValue || $.isData(iValue),
+            iURL = (typeof iValue == 'string')  &&  iValue.trim().match(RE_URL);
 
         switch ( this.tagName.toLowerCase() ) {
+            case 'a':        {
+                if (_Set_) {
+                    if (iURL)
+                        $_This.attr('href', iURL[0]);
+                    if (End_Element)
+                        $_This.text(iValue);
+                    return;
+                }
+                return  $_This.attr('href')  ||  (End_Element && $_This.text());
+            }
             case 'img':      {
-                iReturn = $_This.one('load',  function () {
-                    $(this).trigger('ready');
-                }).addClass('jQuery_Loading').attr('src', iValue);
                 iResource.count++ ;
                 console.log(this);
-            }  break;
+
+                return  $_This.one('load',  function () {
+                    $(this).trigger('ready');
+                }).addClass('jQuery_Loading').attr('src', iValue);
+            }
             case 'textarea':    ;
             case 'select':      ;
             case 'input':       {
                 if ((this.type || '').match(/radio|checkbox/i)  &&  (this.value == iValue))
                     this.checked = true;
-                iReturn = $_This.val(iValue);
-                break;
+                return $_This.val(iValue);
             }
             default:         {
-                var _Set_ = iValue || $.isData(iValue),
-                    End_Element = (! this.children.length),
-                    _BGI_ = (typeof iValue == 'string') && iValue.match(/^\w+:\/\/[^\/]+/);
-
                 if (_Set_) {
-                    if ((! End_Element) && _BGI_)
+                    if ((! End_Element)  &&  iURL)
                         $_This.css('background-image',  'url("' + iValue + '")');
                     else
                         $_This.html(iValue);
-                } else {
-                    _BGI_ = $_This.css('background-image').match(/^url\(('|")?([^'"]+)('|")?\)/);
-                    _BGI_ = _BGI_ && _BGI_[2];
-                    iReturn = End_Element ? $_This.text() : _BGI_;
-                    iReturn = $.isData(iReturn) ? iReturn : _BGI_;
+                    return;
                 }
+                iURL = $_This.css('background-image').match(/^url\(('|")?([^'"]+)('|")?\)/);
+                return  (End_Element && $_This.text())  ||  (iURL && iURL[2]);
             }
         }
-        return iReturn;
     }
 
     $.fn.value = function (iFiller) {
