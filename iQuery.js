@@ -963,7 +963,7 @@
             }
             return iString;
         },
-        parseJSON:        BOM.JSON.parse,
+        parseJSON:        BOM.JSON.parseAll,
         parseXML:         function (iString) {
             iString = iString.trim();
             if ((iString[0] != '<') || (iString[iString.length - 1] != '>'))
@@ -1016,7 +1016,7 @@
 
                 iValue = BOM.decodeURIComponent( Args_Str[i][1] );
                 try {
-                    iValue = BOM.JSON.parse(iValue);
+                    iValue = $.parseJSON(iValue);
                 } catch (iError) { }
 
                 _Args_[ Args_Str[i][0] ] = iValue;
@@ -2568,7 +2568,7 @@
                     case 'json':     {
                         var _Content_ = iContent.trim();
                         try {
-                            iContent = BOM.JSON.parseAll(_Content_);
+                            iContent = $.parseJSON(_Content_);
                             this.responseType = 'application/json';
                         } catch (iError) {
                             if ($.browser.msie != 9)  try {

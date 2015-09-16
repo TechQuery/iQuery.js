@@ -266,7 +266,7 @@
 
                 iValue = BOM.decodeURIComponent( Args_Str[i][1] );
                 try {
-                    iValue = BOM.JSON.parse(iValue);
+                    iValue = BOM.JSON.parseAll(iValue);
                 } catch (iError) { }
 
                 _Args_[ Args_Str[i][0] ] = iValue;
@@ -577,6 +577,8 @@
 
 
 /* ---------- DOM UI 数据读写  v0.4 ---------- */
+
+    var RE_URL = /^(\w+:)?\/\/[\u0033-\u007e\uff61-\uffef]+$/;
 
     function Value_Operator(iValue, iResource) {
         var $_This = $(this),
