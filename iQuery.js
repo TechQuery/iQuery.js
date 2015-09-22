@@ -2,7 +2,7 @@
 //                >>>  iQuery.js  <<<
 //
 //
-//      [Version]    v1.0  (2015-9-15)  Stable
+//      [Version]    v1.0  (2015-9-22)  Stable
 //
 //      [Usage]      A Light-weight jQuery Compatible API
 //                   with IE 8+ compatibility.
@@ -131,13 +131,13 @@
     };
 
     BOM.JSON.parseAll = function (iJSON) {
-        return  this.parse(iJSON,  function (iKey, iValue) {
-                if (iKey && (typeof iValue == 'string'))  try {
-                    return  BOM.JSON.parse(iValue);
-                } catch (iError) { }
+        return  BOM.JSON.parse(iJSON,  function (iKey, iValue) {
+            if (iKey && (typeof iValue == 'string'))  try {
+                return  BOM.JSON.parse(iValue);
+            } catch (iError) { }
 
-                return iValue;
-            });
+            return iValue;
+        });
     };
 
     /* ----- New Window Fix  v0.3 ----- */
@@ -603,22 +603,6 @@
         }
     };
 
-    /* ----- DOM Offset ----- */
-    function DOM_Offset() {
-        var iOffset = {
-                left:    this[0].offsetLeft,
-                top:     this[0].offsetTop
-            };
-
-        Object_Seek.call(this[0], 'offsetParent', function () {
-            iOffset.left += this.offsetLeft;
-            iOffset.top += this.offsetTop;
-        });
-
-        return iOffset;
-    }
-
-
 /* ---------- DOM Event ---------- */
     _DOM_.operate('Data',  [BOM],  '_timer_',  { });
 
@@ -1042,6 +1026,27 @@
     });
 
     /* ----- iQuery Instance Method ----- */
+    function DOM_Size(iName) {
+        iName = {
+            scroll:    'scroll' + iName,
+            client:    'client' + iName,
+            css:       iName.toLowerCase()
+        };
+
+        return  function () {
+            switch ( $.type(this[0]) ) {
+                case 'Document':    return  Math.max(
+                        this[0].documentElement[iName.scroll],
+                        this[0].body[iName.scroll]
+                    );  break;
+                case 'Window':      return  this[0].innerWidth || Math.max(
+                        this[0].document.documentElement[iName.client],
+                        this[0].document.body[iName.client]
+                    );  break;
+                default:            return  this.css(iName.css, arguments[0]);
+            }
+        };
+    }
     function DOM_Scroll(iName) {
         iName = {
             scroll:    'scroll' + iName,
@@ -1333,41 +1338,30 @@
             }
             return this;
         },
-        width:              function () {
-            switch ( $.type(this[0]) ) {
-                case 'Document':    return  Math.max(
-                        DOM.documentElement.scrollWidth,
-                        DOM.body.scrollWidth
-                    );  break;
-                case 'Window':      return  BOM.innerWidth || Math.max(
-                        DOM.documentElement.clientWidth,
-                        DOM.body.clientWidth
-                    );  break;
-                default:            return  this.css('width', arguments[0]);
-            }
-        },
-        height:             function () {
-            switch ( $.type(this[0]) ) {
-                case 'Document':    return  Math.max(
-                        DOM.documentElement.scrollHeight,
-                        DOM.body.scrollHeight
-                    );  break;
-                case 'Window':      return  BOM.innerHeight || Math.max(
-                        DOM.documentElement.clientHeight,
-                        DOM.body.clientHeight
-                    );  break;
-                default:            return  this.css('height', arguments[0]);
-            }
-        },
+        width:              DOM_Size('Width'),
+        height:             DOM_Size('Height'),
         scrollTop:          DOM_Scroll('Top'),
         scrollLeft:         DOM_Scroll('Left'),
         position:           function () {
             return  {
-                    left:    this[0].offsetLeft,
-                    top:     this[0].offsetTop
-                };
+                left:    this[0].offsetLeft,
+                top:     this[0].offsetTop
+            };
         },
-        offset:             DOM_Offset,
+        offset:             function (iCoordinate) {
+            if ( $.isPlainObject(iCoordinate) )
+                return this.css($.extend({
+                    position:    'fixed'
+                }, iCoordinate));
+
+            var _BOM_ = this[0].ownerDocument.defaultView,
+                iBCR = this[0].getBoundingClientRect();
+
+            return {
+                left:    parseFloat( (_BOM_.pageXOffset + iBCR.left).toFixed(4) ),
+                top:     parseFloat( (_BOM_.pageYOffset + iBCR.top).toFixed(4) )
+            };
+        },
         addClass:           function (new_Class) {
             if (typeof new_Class != 'string')  return this;
 

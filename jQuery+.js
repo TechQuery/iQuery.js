@@ -66,13 +66,13 @@
     };
 
     BOM.JSON.parseAll = function (iJSON) {
-        return  this.parse(iJSON,  function (iKey, iValue) {
-                if (iKey && (typeof iValue == 'string'))  try {
-                    return  BOM.JSON.parse(iValue);
-                } catch (iError) { }
+        return  BOM.JSON.parse(iJSON,  function (iKey, iValue) {
+            if (iKey && (typeof iValue == 'string'))  try {
+                return  BOM.JSON.parse(iValue);
+            } catch (iError) { }
 
-                return iValue;
-            });
+            return iValue;
+        });
     };
 
 })(self,  self.jQuery || self.Zepto);
