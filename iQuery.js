@@ -2,7 +2,7 @@
 //                >>>  iQuery.js  <<<
 //
 //
-//      [Version]    v1.0  (2015-9-22)  Stable
+//      [Version]    v1.0  (2015-9-24)  Stable
 //
 //      [Usage]      A Light-weight jQuery Compatible API
 //                   with IE 8+ compatibility.
@@ -294,6 +294,7 @@
                     if (this.inArray(iArray, iArray[i]) == i)
                         iResult.push( iArray[i] );
 
+                iResult.reverse();
                 return iResult;
             }
         };
@@ -1029,6 +1030,7 @@
     function DOM_Size(iName) {
         iName = {
             scroll:    'scroll' + iName,
+            inner:     'inner' + iName,
             client:    'client' + iName,
             css:       iName.toLowerCase()
         };
@@ -1039,7 +1041,7 @@
                         this[0].documentElement[iName.scroll],
                         this[0].body[iName.scroll]
                     );  break;
-                case 'Window':      return  this[0].innerWidth || Math.max(
+                case 'Window':      return  this[0][iName.inner] || Math.max(
                         this[0].document.documentElement[iName.client],
                         this[0].document.body[iName.client]
                     );  break;
@@ -2851,16 +2853,15 @@
 
     /* ----- Smart HTML Loading ----- */
     $.fn.load = function (iURL, iData, iCallback) {
+        if (! this.length)  return this;
+
         var $_This = this;
 
-        iURL = iURL.trim().split(/\s+/);
-        iURL[1] = iURL.slice(1).join(' ');
-        iURL.length = 2;
+        iURL = $.split(iURL.trim(), /\s+/, 2, ' ');
         if (typeof iData == 'function') {
             iCallback = iData;
             iData = null;
         }
-
         function Append_Back() {
             $_This.children().fadeOut();
             $(arguments[0]).appendTo( $_This.empty() ).fadeIn();
@@ -2869,7 +2870,6 @@
                 for (var i = 0;  i < $_This.length;  i++)
                     iCallback.apply($_This[i], arguments);
         }
-
         function Load_Back(iHTML) {
             if (typeof iHTML != 'string')  return;
 
@@ -2888,7 +2888,6 @@
                 $(this).remove();
             });
         }
-
         if (! iData)
             $.get(iURL[0], Load_Back);
         else
