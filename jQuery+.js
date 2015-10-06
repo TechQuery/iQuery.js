@@ -2,7 +2,7 @@
 //              >>>  jQuery+  <<<
 //
 //
-//    [Version]     v5.0  (2015-9-15)
+//    [Version]     v5.0  (2015-9-25)
 //
 //    [Based on]    jQuery  v1.9+
 //
@@ -507,27 +507,17 @@
             iRule = iMedia;
             iMedia = null;
         }
-
         var CSS_Text = CSS_Rule2Text(iRule);
-        if (iMedia)  CSS_Text = [
+
+        return  $('<style />', {
+            type:       'text/css',
+            'class':    'jQuery_CSS-Rule',
+            text:       (! iMedia) ? CSS_Text : [
                 '@media ' + iMedia + ' {',
                 CSS_Text.replace(/\n/m, "\n    "),
                 '}'
-            ].join("\n");
-
-        var $_Style = $('<style />', {
-                type:       'text/css',
-                'class':    'jQuery_CSS-Rule'
-            });
-
-        if ($.browser.modern)
-            $_Style.html(CSS_Text);
-        else
-            $_Style[0].styleSheet.cssText = CSS_Text;
-
-        $_Style.appendTo(DOM.head);
-
-        return $_Style[0].sheet;
+            ].join("\n")
+        }).appendTo(DOM.head)[0].sheet;
     };
 
     $.fn.cssRule = function (iRule, iCallback) {

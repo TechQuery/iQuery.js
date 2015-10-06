@@ -2,7 +2,7 @@
 //                >>>  iQuery.js  <<<
 //
 //
-//      [Version]    v1.0  (2015-9-24)  Stable
+//      [Version]    v1.0  (2015-10-7)  Stable
 //
 //      [Usage]      A Light-weight jQuery Compatible API
 //                   with IE 8+ compatibility.
@@ -218,15 +218,21 @@
                 return  iValue && (iValue.constructor === Object);
             },
             each:             function (Arr_Obj, iEvery) {
-                if (Arr_Obj) {
-                    if (typeof Arr_Obj.length == 'number') {
-                        for (var i = 0;  i < Arr_Obj.length;  i++)
+                if (Arr_Obj)
+                    if (typeof Arr_Obj.length == 'number')
+                        for (var i = 0;  i < Arr_Obj.length;  i++)  try {
                             if (iEvery.call(Arr_Obj[i], i, Arr_Obj[i]) === false)
                                 break;
-                    } else  for (var iKey in Arr_Obj)
-                        if (iEvery.call(Arr_Obj[iKey], iKey, Arr_Obj[iKey]) === false)
-                            break;
-                }
+                        } catch (iError) {
+                            console.log(iError);
+                        }
+                    else
+                        for (var iKey in Arr_Obj)  try {
+                            if (iEvery.call(Arr_Obj[iKey], iKey, Arr_Obj[iKey]) === false)
+                                break;
+                        } catch (iError) {
+                            console.log(iError);
+                        }
                 return Arr_Obj;
             },
             extend:           function () {
@@ -280,10 +286,13 @@
 
                 return iTarget;
             },
-            makeArray:        function () {
-                return  _Browser_.modern ?
-                    Array.apply(null, arguments[0])  :  this.extend([ ], arguments[0]);
-            },
+            makeArray:        _Browser_.modern ?
+                function () {
+                    return  Array.apply(null, arguments[0]);
+                } :
+                function () {
+                    return  this.extend([ ], arguments[0]);
+                },
             inArray:          function () {
                 return  Array.prototype.indexOf.call(arguments[0], arguments[1]);
             },
@@ -660,19 +669,22 @@
         var iHandler = (_DOM_.operate('Data', [this], '_event_') || { })[iEvent.type];
         if (! iHandler)  return;
 
-        var Trigger_Data = _DOM_.operate('Data', [this], '_trigger_'),
+        var This_DOM = this,
+            Handler_Args = [iEvent].concat( _DOM_.operate('Data', [this], '_trigger_') ),
             iReturn;
 
-        for (var i = 0, _Return_;  i < iHandler.length;  i++) {
-            if ( iHandler[i] )
-                _Return_ = iHandler[i].apply(this, [iEvent].concat(Trigger_Data));
-            else if (iHandler[i] === false)
+        _Object_.each(iHandler,  function () {
+            var _Return_;
+
+            if (this)
+                _Return_ = this.apply(This_DOM, Handler_Args);
+            else if (this === false)
                 _Return_ = false;
             else
-                continue;
+                return;
 
             if (iReturn !== false)  iReturn = _Return_;
-        }
+        });
 
         _DOM_.operate('Data', [this], '_trigger_', null);
 
@@ -1516,12 +1528,14 @@
             iHandler = iHandler && iHandler[arguments[0]];
             if (! iHandler)  return;
 
-            var iArgs = $.makeArray(arguments),  iReturn;
+            var This_DOM = this[0],  iReturn,
+                iArgs = $.makeArray(arguments);
             iArgs.unshift([ ]);
-            for (var i = 0;  i < iHandler.length;  i++)
-                iReturn = iHandler[i].apply(
-                    this[0],  Array_Concat.apply(BOM, iArgs)
+            $.each(iHandler,  function () {
+                iReturn = this.apply(
+                    This_DOM,  Array_Concat.apply(BOM, iArgs)
                 );
+            });
 
             return iReturn;
         },
@@ -1795,27 +1809,17 @@
             iRule = iMedia;
             iMedia = null;
         }
-
         var CSS_Text = CSS_Rule2Text(iRule);
-        if (iMedia)  CSS_Text = [
+
+        return  $('<style />', {
+            type:       'text/css',
+            'class':    'jQuery_CSS-Rule',
+            text:       (! iMedia) ? CSS_Text : [
                 '@media ' + iMedia + ' {',
                 CSS_Text.replace(/\n/m, "\n    "),
                 '}'
-            ].join("\n");
-
-        var $_Style = $('<style />', {
-                type:       'text/css',
-                'class':    'jQuery_CSS-Rule'
-            });
-
-        if ($.browser.modern)
-            $_Style.html(CSS_Text);
-        else
-            $_Style[0].styleSheet.cssText = CSS_Text;
-
-        $_Style.appendTo(DOM.head);
-
-        return $_Style[0].sheet;
+            ].join("\n")
+        }).appendTo(DOM.head)[0].sheet;
     };
 
     $.fn.cssRule = function (iRule, iCallback) {
@@ -2171,20 +2175,21 @@
     $.extend(DOM, IE_Event_Method);
     $.extend(BOM, IE_Event_Method);
 
+    var $_DOM = $(DOM);
+
     //  DOM Content Loading
     if (BOM === BOM.top)
         $.every(0.01, function () {
             try {
                 DOM.documentElement.doScroll('left');
-                $(DOM).trigger('DOMContentLoaded');
+                $_DOM.trigger('DOMContentLoaded');
                 return false;
             } catch (iError) {
                 return;
             }
         });
-
     //  Patch for Change Event
-    $(DOM.body).on('click',  'input[type="radio"], input[type="checkbox"]',  function () {
+    $_DOM.on('click',  'input[type="radio"], input[type="checkbox"]',  function () {
         this.blur();
         this.focus();
     });
@@ -2942,7 +2947,8 @@
 /* ---------- HTML 5 Form Shim ---------- */
 (function ($) {
 
-    if ($.browser.modern && (! $.browser.ios))  return;
+    if (! (($.browser.msie < 10)  ||  $.browser.ios))
+        return;
 
     function Value_Check() {
         var $_This = $(this);
