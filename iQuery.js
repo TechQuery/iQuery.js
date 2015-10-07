@@ -302,9 +302,19 @@
                 for (var i = iArray.length - 1;  i > -1 ;  i--)
                     if (this.inArray(iArray, iArray[i]) == i)
                         iResult.push( iArray[i] );
-
                 iResult.reverse();
+
                 return iResult;
+            },
+            isEqual:          function (iLeft, iRight) {
+                if (! iLeft)
+                    return  (iLeft == iRight);
+
+                if (
+                    (typeof iLeft.toString  ==  'function')  &&
+                    (typeof iRight.toString  ==  'function')
+                )
+                    return  (iLeft.toString() == iRight.toString());
             }
         };
     function _inKey_() {
@@ -872,9 +882,8 @@
             }
         });
     }
-
-
 /* ---------- jQuery API ---------- */
+
     BOM.iQuery = function (Element_Set, iContext) {
         /* ----- Global Wrapper ----- */
         var _Self_ = arguments.callee;
@@ -1264,7 +1273,7 @@
                 $_Result = Array_Concat(
                     $_Result,  Object_Seek.call(this[i], 'previousElementSibling')
                 );
-            $_Result = $.unique($_Result);
+            $_Result = $.unique($_Result).reverse();
 
             if (arguments[0])  $_Result = $($_Result).filter(arguments[0]);
 

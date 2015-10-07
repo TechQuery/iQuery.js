@@ -2,7 +2,7 @@
 //              >>>  jQuery+  <<<
 //
 //
-//    [Version]     v5.0  (2015-9-25)
+//    [Version]     v5.1  (2015-10-7)
 //
 //    [Based on]    jQuery  v1.9+
 //
@@ -236,7 +236,21 @@
         return  (_Type_(arguments[0]) in Type_Info.Data);
     };
 
+/* ---------- 对象值相等  v0.1 ---------- */
+
+    $.isEqual = function (iLeft, iRight) {
+        if (! iLeft)
+            return  (iLeft == iRight);
+
+        if (
+            (typeof iLeft.toString  ==  'function')  &&
+            (typeof iRight.toString  ==  'function')
+        )
+            return  (iLeft.toString() == iRight.toString());
+    };
+
 /* ---------- 字符串切割扩展（类 PHP） v0.1 ---------- */
+
     $.split = function (iString, iSplit, iLimit, iJoin) {
         iString = iString.split(iSplit);
         if (iLimit) {
