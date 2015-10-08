@@ -2,7 +2,7 @@
 //              >>>  jQuery+  <<<
 //
 //
-//    [Version]     v5.1  (2015-10-7)
+//    [Version]     v5.2  (2015-10-8)
 //
 //    [Based on]    jQuery  v1.9+
 //
@@ -11,8 +11,21 @@
 //
 
 
-/* ---------- ECMAScript 5/6  Patch ---------- */
+/* ---------- ECMAScript API  Patch & Extension ---------- */
 (function (BOM, $) {
+
+/* ---------- Object Patch  v0.1 ---------- */
+
+    if (! Object.getOwnPropertyNames)
+        Object.getOwnPropertyNames = function (iObject) {
+            var iKey = [ ];
+
+            for (var _Key_ in iObject)
+                if ( this.prototype.hasOwnProperty.call(iObject, _Key_) )
+                    iKey.push(_Key_);
+
+            return iKey;
+        };
 
 /* ---------- String Extension  v0.3 ---------- */
 
@@ -242,11 +255,21 @@
         if (! iLeft)
             return  (iLeft == iRight);
 
-        if (
-            (typeof iLeft.toString  ==  'function')  &&
-            (typeof iRight.toString  ==  'function')
-        )
-            return  (iLeft.toString() == iRight.toString());
+        var Left_Key = Object.getOwnPropertyNames(iLeft),
+            Right_Key = Object.getOwnPropertyNames(iRight);
+
+        if (Left_Key.length != Right_Key.length)  return false;
+
+        for (var i = 0, _Key_;  i < Left_Key;  i++) {
+            _Key_ = Left_Key[i];
+
+            if (! (
+                (_Key_ in iRight)  &&
+                arguments.callee.call(this, iLeft[_Key_], iRight[_Key_])
+            ))
+                return false;
+        }
+        return true;
     };
 
 /* ---------- 字符串切割扩展（类 PHP） v0.1 ---------- */
@@ -359,11 +382,11 @@
 /* ----- jQuery 对象 所在页面 URL 路径  v0.1 ----- */
 
     $.fn.pagePath = function () {
-        var _PP = this[0].baseURI || this[0].ownerDocument.URL;
-        _PP = _PP.split('/');
-        if (_PP.length > 3) _PP.pop();
-        _PP.push('');
-        return _PP.join('/');
+        var iURL = (this[0].baseURI || this[0].ownerDocument.URL).split('/');
+
+        if (iURL.length > 3)  iURL.splice(-1, 1, '');
+
+        return iURL.join('/');
     };
 
 
@@ -1051,7 +1074,8 @@
 /* ---------- HTML 5 表单验证  v0.1 ---------- */
 (function ($) {
 
-    if ($.browser.modern && (! $.browser.ios))  return;
+    if (! (($.browser.msie < 10)  ||  $.browser.ios))
+        return;
 
     function Value_Check() {
         var $_This = $(this);
