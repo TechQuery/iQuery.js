@@ -2,7 +2,7 @@
 //                >>>  iQuery.js  <<<
 //
 //
-//      [Version]    v1.0  (2015-10-8)  Stable
+//      [Version]    v1.0  (2015-10-15)  Stable
 //
 //      [Usage]      A Light-weight jQuery Compatible API
 //                   with IE 8+ compatibility.
@@ -15,22 +15,7 @@
 /* ---------- ECMAScript API  Patch & Extension ---------- */
 (function (BOM) {
 
-    if (! console) {
-        function _Notice_() {
-            var iString = [ ];
-
-            for (var i = 0;  i < arguments;  i++)
-                iString.push( String(arguments[i]) );
-
-            BOM.status = iString.join(' ');
-        }
-        BOM.console = {
-            log:      _Notice_,
-            info:     _Notice_,
-            warn:     _Notice_,
-            error:    _Notice_
-        };
-    }
+    /* ----- Object Patch ----- */
 
     if (! Object.getOwnPropertyNames)
         Object.getOwnPropertyNames = function (iObject) {
@@ -133,7 +118,7 @@
         });
     };
 
-    /* ----- New Window Fix  v0.3 ----- */
+    /* ----- BOM/DOM Fix  v0.4 ----- */
 
     BOM.new_Window_Fix = function (Fix_More) {
         if (! this)  return false;
@@ -159,6 +144,30 @@
     };
 
     BOM.new_Window_Fix();
+
+
+    if (console)  return;
+
+    function _Notice_() {
+        var iString = [ ];
+
+        for (var i = 0;  i < arguments.length;  i++)  try {
+            iString.push(
+                BOM.JSON.stringify( arguments[i].valueOf() )
+            );
+        } catch (iError) {
+            iString.push( arguments[i] );
+        }
+
+        BOM.status = iString.join(' ');
+    }
+
+    BOM.console = { };
+
+    var Console_Method = ['log', 'info', 'warn', 'error', 'dir'];
+
+    for (var i = 0;  i < Console_Method.length;  i++)
+        BOM.console[ Console_Method[i] ] = _Notice_;
 
 })(self);
 
@@ -217,14 +226,14 @@
                             if (iEvery.call(Arr_Obj[i], i, Arr_Obj[i]) === false)
                                 break;
                         } catch (iError) {
-                            console.log(iError);
+                            console.dir( iError.valueOf() );
                         }
                     else
                         for (var iKey in Arr_Obj)  try {
                             if (iEvery.call(Arr_Obj[iKey], iKey, Arr_Obj[iKey]) === false)
                                 break;
                         } catch (iError) {
-                            console.log(iError);
+                            console.dir( iError.valueOf() );
                         }
                 return Arr_Obj;
             },
@@ -300,15 +309,24 @@
                 return iResult;
             },
             isEqual:          function (iLeft, iRight) {
-                if (! iLeft)
+                if (!  (iLeft && iRight))
                     return  (iLeft == iRight);
+
+                iLeft = iLeft.valueOf();
+                iRight = iRight.valueOf();
+
+                if (iLeft == iRight)  return true;
+                if (! (
+                    (iLeft instanceof Object)  &&  (iRight instanceof Object)
+                ))
+                    return false;
 
                 var Left_Key = Object.getOwnPropertyNames(iLeft),
                     Right_Key = Object.getOwnPropertyNames(iRight);
 
                 if (Left_Key.length != Right_Key.length)  return false;
 
-                for (var i = 0, _Key_;  i < Left_Key;  i++) {
+                for (var i = 0, _Key_;  i < Left_Key.length;  i++) {
                     _Key_ = Left_Key[i];
 
                     if (! (
@@ -472,8 +490,10 @@
     /* ----- DOM Attribute ----- */
     _DOM_.Attribute = {
         get:      function (iElement, iName) {
-            return  (_Object_.type(iElement) in Type_Info.DOM.root) ?
-                    null : iElement.getAttribute(iName);
+            if (! (_Object_.type(iElement) in Type_Info.DOM.root)) {
+                var iValue = iElement.getAttribute(iName);
+                return  (iValue === null) ? undefined : iValue;
+            }
         },
         set:      function (iElement, iName, iValue) {
             return  (_Object_.type(iElement) in Type_Info.DOM.root) ?
@@ -506,7 +526,7 @@
     _DOM_.Style = {
         get:           function (iElement, iName) {
             if ((! iElement) || (_Object_.type(iElement) in Type_Info.DOM.root))
-                return null;
+                return;
 
             var iStyle = DOM.defaultView.getComputedStyle(iElement, null).getPropertyValue(iName);
             var iNumber = parseFloat(iStyle);
@@ -737,20 +757,17 @@
 
         if ((iNew.length == 1)  &&  (iNew[0].nodeType == 1)  &&  AttrList)
             _Object_.each(AttrList,  function (iKey, iValue) {
-                try {
-                    switch (iKey) {
-                        case 'text':     _DOM_.innerText.set(iNew[0], iValue);  break;
-                        case 'html':     _DOM_.innerHTML.set(iNew[0], iValue);  break;
-                        case 'style':    if ( _Object_.isPlainObject(iValue) ) {
-                            _DOM_.operate('Style', iNew, iValue);
-                            break;
-                        }
-                        default:         _DOM_.operate('Attribute', iNew, iKey, iValue);
+                switch (iKey) {
+                    case 'text':     return  _DOM_.innerText.set(iNew[0], iValue);
+                    case 'html':     return  _DOM_.innerHTML.set(iNew[0], iValue);
+                    case 'style':    {
+                        if ( _Object_.isPlainObject(iValue) )
+                            return  _DOM_.operate('Style', iNew, iValue);
                     }
-                } catch (iError) {
-                    console.error(iError);
                 }
+                _DOM_.operate('Attribute', iNew, iKey, iValue);
             });
+
         if (iNew[0].parentNode)
             iNew = _Object_.map(iNew,  function (iDOM, _Index_) {
                 iNew[_Index_].parentNode.removeChild(iDOM);
@@ -979,11 +996,10 @@
                 throw 'Illegal XML Format...';
 
             var iXML = (new BOM.DOMParser()).parseFromString(iString, 'text/xml');
+
             var iError = iXML.getElementsByTagName('parsererror');
-            if (iError.length) {
-                throw  new SyntaxError(1, 'Incorrect XML Syntax !');
-                console.log(iError[0]);
-            }
+            if (iError.length)
+                throw  new SyntaxError(1, iError[0].childNodes[1].nodeValue);
             iXML.cookie;    //  for old WebKit core to throw Error
 
             return iXML;
@@ -1888,6 +1904,19 @@
 
     if ($.browser.modern)  return;
 
+    /* ----- Error Useful Information ----- */
+
+    //  Thanks "Kevin Yang" ---
+    //
+    //      http://www.imkevinyang.com/2010/01/%E8%A7%A3%E6%9E%90ie%E4%B8%AD%E7%9A%84javascript-error%E5%AF%B9%E8%B1%A1.html
+
+    Error.prototype.valueOf = function () {
+        return  $.extend(this, {
+            code:       this.number & 0x0FFFF,
+            helpURL:    'https://msdn.microsoft.com/en-us/library/1dk3k160(VS.85).aspx'
+        });
+    };
+
     /* ----- DOM Attribute Name ----- */
     var iAlias = {
             'class':    'className',
@@ -2271,9 +2300,7 @@
 
 
     /* ----- History API ----- */
-    var _State_ = [
-            [null, DOM.title, DOM.URL]
-        ],
+    var _State_ = [[null, DOM.title, DOM.URL]],
         _Pushing_ = false,
         $_BOM = $(BOM);
 

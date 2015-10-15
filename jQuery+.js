@@ -252,15 +252,24 @@
 /* ---------- 对象值相等  v0.1 ---------- */
 
     $.isEqual = function (iLeft, iRight) {
-        if (! iLeft)
+        if (!  (iLeft && iRight))
             return  (iLeft == iRight);
+
+        iLeft = iLeft.valueOf();
+        iRight = iRight.valueOf();
+
+        if (iLeft == iRight)  return true;
+        if (! (
+            (iLeft instanceof Object)  &&  (iRight instanceof Object)
+        ))
+            return false;
 
         var Left_Key = Object.getOwnPropertyNames(iLeft),
             Right_Key = Object.getOwnPropertyNames(iRight);
 
         if (Left_Key.length != Right_Key.length)  return false;
 
-        for (var i = 0, _Key_;  i < Left_Key;  i++) {
+        for (var i = 0, _Key_;  i < Left_Key.length;  i++) {
             _Key_ = Left_Key[i];
 
             if (! (
@@ -319,7 +328,7 @@
 
 /* ---------- Hash 算法集合（浏览器原生） v0.1 ---------- */
 
-//  Thank for "emu" --- http://blog.csdn.net/emu/article/details/39618297
+//  Thanks "emu" --- http://blog.csdn.net/emu/article/details/39618297
 
     function BufferToString(iBuffer){
         var iDataView = new DataView(iBuffer),

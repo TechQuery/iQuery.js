@@ -85,6 +85,7 @@
  - 新增 String **toCamelCase**（驼峰命名法）、**toHyphenCase**（连字符命名法）**书写格式转换方法**
  - 自带 Date now 标准方法
  - 新增 **JSON format 格式化显示方法、parseAll 深度解析方法**（$.parseJSON() 被其增强）
+ - 重写 IE 8 Error 对象的 valueOf 方法，使之返回可查询的错误码（附带 官方文档 URL）
  - 新增 **DOMHttpRequest 对象**，封装了 **JSONP Get**、**iframe Post**
  - 自带 **DOMStringMap 对象**，为 IE 8/9 提供 **dataset** 支持
  - 自带 **HTML 5 History API**，为 IE 8/9 提供兼容支持
