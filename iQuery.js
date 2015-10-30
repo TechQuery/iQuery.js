@@ -2,7 +2,7 @@
 //                >>>  iQuery.js  <<<
 //
 //
-//      [Version]    v1.0  (2015-10-15)  Stable
+//      [Version]    v1.0  (2015-10-20)  Stable
 //
 //      [Usage]      A Light-weight jQuery Compatible API
 //                   with IE 8+ compatibility.
@@ -64,23 +64,9 @@
     };
 
     String.prototype.toHyphenCase = function () {
-        var iString = [ ];
-
-        for (var i = 0;  i < this.length;  i++)  switch (true) {
-            case ((this[i] >= 'A')  &&  (this[i] < 'a')):    {
-                iString.push('-');
-                iString.push( this[i].toLowerCase() );
-                break;
-            }
-            case ((this[i] < '0')  ||  (this[i] > 'z')):     {
-                iString.push('-');
-                break;
-            }
-            default:
-                iString.push( this[i] );
-        }
-
-        return iString.join('');
+        return  this.replace(/([a-z0-9])[\s_]?([A-Z])/g,  function () {
+            return  arguments[1] + '-' + arguments[2].toLowerCase();
+        });
     };
 
     /* ----- Array Extension ----- */
