@@ -2,7 +2,7 @@
 //              >>>  jQuery+  <<<
 //
 //
-//    [Version]     v5.2  (2015-10-20)
+//    [Version]     v5.4  (2015-11-28)
 //
 //    [Based on]    jQuery  v1.9+
 //
@@ -156,9 +156,9 @@
             var iTimer = $_BOM.data('_timer_');
             return  ($.now() - iTimer[arguments[0]]) / 1000;
         },
-        guid:      function () {
+        uuid:      function () {
             return  [
-                    (arguments[0] || 'guid'),  '_',
+                    (arguments[0] || 'uuid'),  '_',
                     $.now().toString(16),
                     Math.random().toString(16).slice(2)
                 ].join('');
@@ -200,11 +200,16 @@
             default:                                    return iType;
         }
 
-        if (
-            Type_Info.BOM[iType] ||
-            ((iVar == iVar.document) && (iVar.document != iVar))
-        )
-            return 'Window';
+        try {
+            if (
+                Type_Info.BOM[iType] ||
+                ((iVar == iVar.document) && (iVar.document != iVar))
+            )
+                return 'Window';
+        } catch (iError) {
+            if (iError instanceof DOMException)
+                return 'Window';
+        }
 
         if (iVar.defaultView || iVar.documentElement)
             return 'Document';
@@ -309,6 +314,10 @@
         fileName:     function () {
             return  (arguments[0] || BOM.location.pathname)
                     .split('?')[0].split('/').slice(-1)[0];
+        },
+        filePath:         function () {
+            return  $.split(arguments[0] || BOM.location.href,  '?',  2)[0]
+                    .split('/').slice(0, -1).join('/');
         }
     });
 
@@ -555,11 +564,11 @@
     $.fn.cssRule = function (iRule, iCallback) {
         return  this.each(function () {
                 var $_This = $(this);
-                var _GUID_ = $_This.data('css') || $.guid();
+                var _UUID_ = $_This.data('css') || $.uuid();
 
-                $(this).attr('data-css', _GUID_);
+                $(this).attr('data-css', _UUID_);
                 for (var iSelector in iRule) {
-                    iRule['*[data-css="' + _GUID_ + '"]' + iSelector] = iRule[iSelector];
+                    iRule['*[data-css="' + _UUID_ + '"]' + iSelector] = iRule[iSelector];
                     delete iRule[iSelector];
                 }
 
@@ -808,10 +817,13 @@
 
                 $.wait(Wait_Seconds, function () {
                     iXHR.withCredentials = true;
+
                     if (typeof iData == 'string')
                         iXHR.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
-                    iXHR.setRequestHeader('X-Requested-With', 'XMLHttpRequest');
-                    iXHR.setRequestHeader('Accept', '*/*');
+                    if (! iXHR.crossDomain) {
+                        iXHR.setRequestHeader('X-Requested-With', 'XMLHttpRequest');
+                        iXHR.setRequestHeader('Accept', '*/*');
+                    }
                     iXHR.send(iData);
                 });
             }
@@ -840,7 +852,7 @@
             var $_Button = $_Form.find(':button').attr('disabled', true),
                 iTarget = $_Form.attr('target');
             if ((! iTarget)  ||  iTarget.match(/^_(top|parent|self|blank)$/i)) {
-                iTarget = $.guid('iframe');
+                iTarget = $.uuid('iframe');
                 $_Form.attr('target', iTarget);
             }
 
@@ -869,21 +881,21 @@
                 var iURL = this.responseURL.match(/([^\?=&]+\?|\?)?(\w.+)?/);
                 if (! iURL)  throw 'Illegal URL !';
 
-                var _GUID_ = $.guid(),  iDHR = this;
+                var _UUID_ = $.uuid(),  iDHR = this;
 
-                BOM.DOMHttpRequest.JSONP[_GUID_] = function () {
+                BOM.DOMHttpRequest.JSONP[_UUID_] = function () {
                     if (iDHR.readyState) {
                         iDHR.status = 200;
                         iDHR.readyState = 4;
                         iDHR.onready.apply(iDHR, arguments);
                     }
-                    delete this[_GUID_];
+                    delete this[_UUID_];
                     iDHR.$_DOM.remove();
                 };
                 this.requestData = arguments[0];
                 this.responseURL = iURL[1] + $.param(
                     $.extend({ }, arguments[0], $.paramJSON(
-                        iURL[2].replace(/(\w+)=\?/,  '$1=DOMHttpRequest.JSONP.' + _GUID_)
+                        iURL[2].replace(/(\w+)=\?/,  '$1=DOMHttpRequest.JSONP.' + _UUID_)
                     ))
                 );
                 this.$_DOM = $('<script />', {src:  this.responseURL}).appendTo(DOM.head);
@@ -935,12 +947,12 @@
                     return;
                 }
             }
-            var iMethod = ($(this).attr('method') || 'Get').toLowerCase();
+            var iMethod = ($_Form.attr('method') || 'Get').toLowerCase();
 
             if ( this.checkValidity() )  switch (iMethod) {
                 case 'get':       ;
                 case 'delete':
-                    $[iMethod](this.action, AJAX_Ready);    break;
+                    $[iMethod](this.action + $.param($_Form.serializeArray()),  AJAX_Ready);    break;
                 case 'post':      ;
                 case 'put':
                     $[iMethod](this.action, this, AJAX_Ready);
@@ -969,24 +981,24 @@
     }
 
     function _Parents_() {
-        var _GUID_ = $.guid('parent');
+        var _UUID_ = $.uuid('parent');
 
         for (var i = 0;  i < this.length;  i++)
             Object_Seek.call(this[i],  'parentNode',  function () {
-                $(this).attr(_GUID_,  function (_Index_, iTimes) {
+                $(this).attr(_UUID_,  function (_Index_, iTimes) {
                     return  iTimes ? (parseInt(iTimes) + 1) : 1
                 });
             });
 
-        return _GUID_;
+        return _UUID_;
     }
 
     $.fn.sameParents = function () {
-        var _GUID_ = _Parents_.call(this);
-        var iTimes = $(DOM.documentElement).attr(_GUID_);
+        var _UUID_ = _Parents_.call(this);
+        var iTimes = $(DOM.documentElement).attr(_UUID_);
 
-        var $_Result = $(['*[', _GUID_, '="', iTimes, '"]'].join(''))
-                .removeAttr(_GUID_);
+        var $_Result = $(['*[', _UUID_, '="', iTimes, '"]'].join(''))
+                .removeAttr(_UUID_);
 
         if ( arguments[0] )
             $_Result = $_Result.filter(arguments[0]);
@@ -1061,6 +1073,64 @@
         $.fn[iName] = Event_Method(iName);
 
     if ($.browser.mobile)  $.fn.click = $.fn.tap;
+
+
+/* ---------- 跨页面消息事件  v0.2 ---------- */
+
+    function CrossPageMessageEvent(iType, iSource) {
+        if (typeof iType == 'string') {
+            this.type = iType;
+            this.target = iSource;
+        } else
+            $.extend(this, iType);
+
+        $.extend(this, iSource.dataset);
+    }
+
+    CrossPageMessageEvent.prototype.valueOf = function () {
+        var iValue = $.extend({ }, this);
+
+        delete iValue.data;
+        delete iValue.target;
+
+        return iValue;
+    };
+
+    var $_BOM = $(BOM);
+
+    $.fn.onReply = function (iType, iData, iCallback) {
+        var iTarget = this[0],  $_Source;
+
+        if ((iTarget === BOM)  ||  (_Type_(iTarget) != 'Window'))
+            return this;
+
+        if (arguments.length == 4) {
+            $_Source = $(iData);
+            iData = iCallback;
+            iCallback = arguments[3];
+        }
+
+        var _Event_ = new CrossPageMessageEvent(iType, $_Source[0]);
+
+        $_BOM.on('message',  function (iEvent) {
+            iEvent = iEvent.originalEvent || iEvent;
+
+            var iReturn = new CrossPageMessageEvent(iEvent.data);
+
+            if (
+                (iEvent.source === iTarget)  &&
+                (iReturn.event == iType)  &&
+                $.isEqual(iReturn, _Event_)
+            ) {
+                iCallback.call($_Source ? $_Source[0] : this,  iReturn);
+                $_BOM.off('message', arguments.callee);
+            }
+        });
+
+        iTarget.postMessage(
+            $.extend({data: iData},  _Event_),  '*'
+        );
+    };
 
 })(self,  self.document,  self.jQuery || self.Zepto);
 

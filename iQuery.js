@@ -2,7 +2,7 @@
 //                >>>  iQuery.js  <<<
 //
 //
-//      [Version]    v1.0  (2015-11-12)  Stable
+//      [Version]    v1.0  (2015-11-28)  Stable
 //
 //      [Usage]      A Light-weight jQuery Compatible API
 //                   with IE 8+ compatibility.
@@ -368,11 +368,16 @@
             default:                                    return iType;
         }
 
-        if (
-            Type_Info.BOM[iType] ||
-            ((iVar == iVar.document) && (iVar.document != iVar))
-        )
-            return 'Window';
+        try {
+            if (
+                Type_Info.BOM[iType] ||
+                ((iVar == iVar.document) && (iVar.document != iVar))
+            )
+                return 'Window';
+        } catch (iError) {
+            if (iError instanceof DOMException)
+                return 'Window';
+        }
 
         if (iVar.defaultView || iVar.documentElement)
             return 'Document';
@@ -674,9 +679,9 @@
                 var iTimer = _DOM_.operate('Data', [BOM], '_timer_');
                 return  (this.now() - iTimer[arguments[0]]) / 1000;
             },
-            guid:       function () {
+            uuid:       function () {
                 return  [
-                        (arguments[0] || 'guid'),  '_',
+                        (arguments[0] || 'uuid'),  '_',
                         this.now().toString(16),
                         Math.random().toString(16).slice(2)
                     ].join('');
@@ -693,11 +698,11 @@
             iReturn;
 
         _Object_.each(iHandler,  function () {
-            var _Return_;
+            var This_Handler = arguments[1],  _Return_;
 
-            if (this)
-                _Return_ = this.apply(This_DOM, Handler_Args);
-            else if (this === false)
+            if (This_Handler)
+                _Return_ = This_Handler.apply(This_DOM, Handler_Args);
+            else if (This_Handler === false)
                 _Return_ = false;
             else
                 return;
@@ -715,16 +720,16 @@
 
 /* ---------- DOM Traversal ---------- */
     function _Parents_() {
-        var _GUID_ = _Time_.guid('parent');
+        var _UUID_ = _Time_.uuid('parent');
 
         for (var i = 0;  i < this.length;  i++)
             Object_Seek.call(this[i],  'parentNode',  function () {
-                _DOM_.operate('Attribute',  [this],  _GUID_,  function (_Index_, iTimes) {
+                _DOM_.operate('Attribute',  [this],  _UUID_,  function (_Index_, iTimes) {
                     return  iTimes ? (parseInt(iTimes) + 1) : 1
                 });
             });
 
-        return _GUID_;
+        return _UUID_;
     }
 
 
@@ -1039,6 +1044,10 @@
             return  (arguments[0] || BOM.location.pathname)
                     .split('?')[0].split('/').slice(-1)[0];
         },
+        filePath:         function () {
+            return  $.split(arguments[0] || BOM.location.href,  '?',  2)[0]
+                    .split('/').slice(0, -1).join('/');
+        },
         data:             function (iElement, iName, iValue) {
             return  _DOM_.operate('Data', [iElement], iName, iValue);
         },
@@ -1139,7 +1148,8 @@
             return  $.each(this, arguments[0]);
         },
         is:                 function (iSelector) {
-            if (! this[0])  return;
+            if ((! this[0])  ||  ($.type(this[0]) in Type_Info.DOM.root))
+                return;
 
             if (! this[0].parentNode)  $('<div />')[0].appendChild( this[0] );
 
@@ -1182,14 +1192,14 @@
             return  _DOM_.operate('Data', this, arguments[0], arguments[1]);
         },
         addBack:            function () {
-            var _GUID_ = $.guid();
+            var _UUID_ = $.uuid();
 
             var $_Result = $(
                     Array_Concat(this, this.prevObject)
-                ).attr('iquery', _GUID_);
+                ).attr('iquery', _UUID_);
 
             return  this.pushStack(
-                    $('*[iquery="' + _GUID_ + '"]').removeAttr('iquery')
+                    $('*[iquery="' + _UUID_ + '"]').removeAttr('iquery')
                 );
         },
         parent:             function () {
@@ -1204,19 +1214,19 @@
             return this.pushStack($_Result);
         },
         parents:            function () {
-            var _GUID_ = _Parents_.call(this);
-            var $_Result = $('*[' + _GUID_ + ']').removeAttr(_GUID_);
+            var _UUID_ = _Parents_.call(this);
+            var $_Result = $('*[' + _UUID_ + ']').removeAttr(_UUID_);
 
             if (arguments[0])  $_Result = $_Result.filter(arguments[0]);
 
             return  this.pushStack( Array.prototype.reverse.call($_Result) );
         },
         sameParents:        function () {
-            var _GUID_ = _Parents_.call(this);
-            var iTimes = $(DOM.documentElement).attr(_GUID_);
+            var _UUID_ = _Parents_.call(this);
+            var iTimes = $(DOM.documentElement).attr(_UUID_);
 
-            var $_Result = $(['*[', _GUID_, '="', iTimes, '"]'].join(''))
-                    .removeAttr(_GUID_);
+            var $_Result = $(['*[', _UUID_, '="', iTimes, '"]'].join(''))
+                    .removeAttr(_UUID_);
 
             if (arguments[0])  $_Result = $_Result.filter(arguments[0]);
 
@@ -1669,7 +1679,7 @@
 
 
 /* ----- DOM UI Data Operator ----- */
-    var RE_URL = /^(\w+:)?\/\/[\u0033-\u007e\uff61-\uffef]+$/;
+    var RE_URL = /^(\w+:)?\/\/[^\s]+$/;
 
     function Value_Operator(iValue, iResource) {
         var $_This = $(this),
@@ -1835,11 +1845,11 @@
     $.fn.cssRule = function (iRule, iCallback) {
         return  this.each(function () {
             var $_This = $(this);
-            var _GUID_ = $_This.data('css') || $.guid();
+            var _UUID_ = $_This.data('css') || $.uuid();
 
-            $(this).attr('data-css', _GUID_);
+            $(this).attr('data-css', _UUID_);
             for (var iSelector in iRule) {
-                iRule['*[data-css="' + _GUID_ + '"]' + iSelector] = iRule[iSelector];
+                iRule['*[data-css="' + _UUID_ + '"]' + iSelector] = iRule[iSelector];
                 delete iRule[iSelector];
             }
 
@@ -2043,7 +2053,7 @@
         $.extend(this, DOM.createEventObject());
 
         if (! iEvent)  return;
-        
+
         $.extend(this, {
             type:               iEvent.type,
             target:             iEvent.srcElement,
@@ -2437,6 +2447,60 @@
                 $(iEvent.target).trigger((iTime > 300) ? 'press' : 'tap');
         }
     );
+    /* ----- Cross Page Message Event ----- */
+
+    function CrossPageMessageEvent(iType, iSource) {
+        if (typeof iType == 'string') {
+            this.type = iType;
+            this.target = iSource;
+        } else
+            $.extend(this, iType);
+
+        $.extend(this, iSource.dataset);
+    }
+
+    CrossPageMessageEvent.prototype.valueOf = function () {
+        var iValue = $.extend({ }, this);
+
+        delete iValue.data;
+        delete iValue.target;
+
+        return iValue;
+    };
+
+    var $_BOM = $(BOM);
+
+    $.fn.onReply = function (iType, iData, iCallback) {
+        var iTarget = this[0],  $_Source;
+
+        if ((iTarget === BOM)  ||  ($.type(iTarget) != 'Window'))
+            return this;
+
+        if (arguments.length == 4) {
+            $_Source = $(iData);
+            iData = iCallback;
+            iCallback = arguments[3];
+        }
+
+        var _Event_ = new CrossPageMessageEvent(iType, $_Source[0]);
+
+        $_BOM.on('message',  function (iEvent) {
+            var iReturn = new CrossPageMessageEvent(iEvent.data);
+
+            if (
+                (iEvent.source === iTarget)  &&
+                (iReturn.event == iType)  &&
+                $.isEqual(iReturn, _Event_)
+            ) {
+                iCallback.call($_Source ? $_Source[0] : this,  iReturn);
+                $_BOM.off('message', arguments.callee);
+            }
+        });
+
+        iTarget.postMessage(
+            $.extend({data: iData},  _Event_),  '*'
+        );
+    };
 
 })(self, self.document, self.iQuery);
 
@@ -2503,8 +2567,8 @@
 
         var iClass = 'animated ' + iType + (iLoop ? ' infinite' : '');
 
-        this.bind(Animate_End,  function () {
-            $(this).off(Animate_End).removeClass(iClass);
+        this.one(Animate_End,  function () {
+            $(this).removeClass(iClass);
 
             if (iCallback)
                 iCallback.apply(this, arguments);
@@ -2734,7 +2798,7 @@
             var $_Button = $_Form.find(':button').attr('disabled', true),
                 iTarget = $_Form.attr('target');
             if ((! iTarget)  ||  iTarget.match(/^_(top|parent|self|blank)$/i)) {
-                iTarget = $.guid('iframe');
+                iTarget = $.uuid('iframe');
                 $_Form.attr('target', iTarget);
             }
 
@@ -2763,21 +2827,21 @@
                 var iURL = this.responseURL.match(/([^\?=&]+\?|\?)?(\w.+)?/);
                 if (! iURL)  throw 'Illegal URL !';
 
-                var _GUID_ = $.guid(),  iDHR = this;
+                var _UUID_ = $.uuid(),  iDHR = this;
 
-                BOM.DOMHttpRequest.JSONP[_GUID_] = function () {
+                BOM.DOMHttpRequest.JSONP[_UUID_] = function () {
                     if (iDHR.readyState) {
                         iDHR.status = 200;
                         iDHR.readyState = 4;
                         iDHR.onready.apply(iDHR, arguments);
                     }
-                    delete this[_GUID_];
+                    delete this[_UUID_];
                     iDHR.$_DOM.remove();
                 };
                 this.requestData = arguments[0];
                 this.responseURL = iURL[1] + $.param(
                     $.extend({ }, arguments[0], $.paramJSON(
-                        iURL[2].replace(/(\w+)=\?/,  '$1=DOMHttpRequest.JSONP.' + _GUID_)
+                        iURL[2].replace(/(\w+)=\?/,  '$1=DOMHttpRequest.JSONP.' + _UUID_)
                     ))
                 );
                 this.$_DOM = $('<script />', {src:  this.responseURL}).appendTo(DOM.head);
@@ -2949,12 +3013,17 @@
             var iMethod = ($_Form.attr('method') || 'Get').toLowerCase();
 
             if ( this.checkValidity() )  switch (iMethod) {
-                case 'get':       ;
-                case 'delete':
-                    $[iMethod](this.action + $.param($_Form.serializeArray()),  AJAX_Ready);    break;
                 case 'post':      ;
                 case 'put':
-                    $[iMethod](this.action, this, AJAX_Ready);
+                    $[iMethod](this.action, this, AJAX_Ready);    break;
+                case 'get':       ;
+                case 'delete':
+                    $[iMethod](
+                        this.action  +
+                            (this.action.match(/\w+=[^&]+/) ? '&' : '')  +
+                            $.param( $_Form.serializeArray() ),
+                        AJAX_Ready
+                    );
             } else
                 $_Button.prop('disabled', false);
         });
@@ -3052,13 +3121,13 @@
 
             if(typeof iPromise.then == 'function')
                 iPromise.then(
-                    function() {
+                    function () {
                         iCallback.call(this, BufferToString(arguments[0]));
                     },
                     iFailback
                 );
             else
-                iPromise.oncomplete = function(){
+                iPromise.oncomplete = function () {
                     iCallback.call(this,  BufferToString( arguments[0].target.result ));
                 };
         } catch (iError) {

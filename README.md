@@ -38,17 +38,17 @@
 ## 【对 jQuery（最新版）的增强】
  - 内置一个改进且向下兼容的 **$.browser 对象**，能通过**直接比较版本号**来区分浏览器
  - 新增 **计时相关方法（秒基准）**—— $.every()、$.wait()、$.start()、$.end()
- - 新增 **唯一串号生成器** —— $.guid()
+ - 新增 **唯一串号生成器** —— $.uuid()
  - 新增 **纯数据类型判断方法** —— $.isData()
  - 新增 **对象值相等判断方法** —— $.isEqual()
  - 新增 **字符串部分分割方法** —— $.split()（借鉴 PHP）
  - 新增 **URL 参数对象化方法**（$.param() 的逆方法）—— $.paramJSON()，其返回值自带的 .toString() 有 **JSON 格式化（美化）输出**能力
  - 更智能的 $.get()、$.post()：支持 form 元素、FormData 对象的请求数据形式，整合 XHR、XDR、JSONP、iframe **自适应 跨域请求**，**自动转换响应内容**为 JSON 或 XML 对象实例
  - 新增 **$.delete()、$.put()**，方便实现基于 RESTful API 的单页应用
- - 新增 **URL 文件名提取方法** —— $.fileName()
+ - 新增 **URL 信息提取方法** —— $.fileName()、$.filePath()
  - 封装了**表单元素无刷新提交**，并可直接绑定响应回调 —— $.fn.ajaxSubmit()（基于前述的几个 **AJAX 增强方法** 构建）
  - 新增基于**现代浏览器 Crypto API** 的哈希方法 —— $.dataHash()
- - 新增 **选择符合法性判断方法** —— $.is_Selector()
+ - 新增 **选择符合法性判断方法** —— $.isSelector()
  - 更多 jQuery **伪类选择符**：
    - **:image** 还支持 `img, link[type="image/x-icon"], svg, canvas`
    - **:button** 还支持 `input[type="submit"], input[type="reset"], input[type="image"]`
@@ -63,6 +63,7 @@
  - 新增 **伪类/元素 CSS 规则对象 提取方法** —— $.cssPseudo()
  - 封装 **Animate.css** 为 $.fn.cssAnimate()，其调用参数 兼容 $.fn.animate()
  - 封装了**触屏单指手势事件**（tap、press、swipe），并为桌面端、移动端提供一致的操作体验
+ - 新增 **跨页面消息事件** onReply 方法（基于 `window.postMessage`）
 
 
 ## 【未实现的 jQuery（最新版）特性】
@@ -79,6 +80,7 @@
 
 
 ## 【JavaScript、DOM、BOM 原生 API 扩展】
+ - 自带 Object.getOwnPropertyNames 标准方法
  - 自带 Array indexOf 标准方法
  - **String trim 方法**支持 非空白符（借鉴 PHP）
  - 新增 **String repeat** 标准草案方法
