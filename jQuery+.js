@@ -187,12 +187,17 @@
     function _Type_(iVar) {
         var iType = typeof iVar;
 
-        iType = (iType == 'object') ? (
-                (iVar && iVar.constructor.name) ||
-                Object.prototype.toString.call(iVar).match(/\[object\s+([^\]]+)\]/i)[1]
-            ) : (
-                iType[0].toUpperCase() + iType.slice(1)
-            );
+        try {
+            iType = (iType == 'object') ? (
+                    (iVar && iVar.constructor.name) ||
+                    Object.prototype.toString.call(iVar).match(/\[object\s+([^\]]+)\]/i)[1]
+                ) : (
+                    iType[0].toUpperCase() + iType.slice(1)
+                );
+        } catch (iError) {
+            if (iError instanceof DOMException)
+                return 'Window';
+        }
 
         if (! iVar)  switch (true) {
             case (isNaN(iVar)  &&  (iVar !== iVar)):    return 'NaN';
@@ -200,16 +205,11 @@
             default:                                    return iType;
         }
 
-        try {
-            if (
-                Type_Info.BOM[iType] ||
-                ((iVar == iVar.document) && (iVar.document != iVar))
-            )
-                return 'Window';
-        } catch (iError) {
-            if (iError instanceof DOMException)
-                return 'Window';
-        }
+        if (
+            Type_Info.BOM[iType] ||
+            ((iVar == iVar.document) && (iVar.document != iVar))
+        )
+            return 'Window';
 
         if (iVar.defaultView || iVar.documentElement)
             return 'Document';
@@ -1075,23 +1075,24 @@
     if ($.browser.mobile)  $.fn.click = $.fn.tap;
 
 
-/* ---------- 跨页面消息事件  v0.2 ---------- */
+/* ---------- 跨页面事件  v0.2 ---------- */
 
-    function CrossPageMessageEvent(iType, iSource) {
+    function CrossPageEvent(iType, iSource) {
         if (typeof iType == 'string') {
             this.type = iType;
             this.target = iSource;
         } else
             $.extend(this, iType);
 
-        $.extend(this, iSource.dataset);
+        if (iSource)  $.extend(this, iSource.dataset);
     }
 
-    CrossPageMessageEvent.prototype.valueOf = function () {
+    CrossPageEvent.prototype.valueOf = function () {
         var iValue = $.extend({ }, this);
 
         delete iValue.data;
         delete iValue.target;
+        delete iValue.valueOf;
 
         return iValue;
     };
@@ -1110,16 +1111,16 @@
             iCallback = arguments[3];
         }
 
-        var _Event_ = new CrossPageMessageEvent(iType, $_Source[0]);
+        var _Event_ = new CrossPageEvent(iType,  ($_Source || { })[0]);
 
         $_BOM.on('message',  function (iEvent) {
             iEvent = iEvent.originalEvent || iEvent;
 
-            var iReturn = new CrossPageMessageEvent(iEvent.data);
+            var iReturn = new CrossPageEvent(iEvent.data);
 
             if (
                 (iEvent.source === iTarget)  &&
-                (iReturn.event == iType)  &&
+                (iReturn.type == iType)  &&
                 $.isEqual(iReturn, _Event_)
             ) {
                 iCallback.call($_Source ? $_Source[0] : this,  iReturn);
@@ -1128,7 +1129,7 @@
         });
 
         iTarget.postMessage(
-            $.extend({data: iData},  _Event_),  '*'
+            $.extend({data: iData},  _Event_.valueOf()),  '*'
         );
     };
 
