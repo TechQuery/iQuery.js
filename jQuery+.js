@@ -195,8 +195,7 @@
                     iType[0].toUpperCase() + iType.slice(1)
                 );
         } catch (iError) {
-            if (iError instanceof DOMException)
-                return 'Window';
+            return 'Window';
         }
 
         if (! iVar)  switch (true) {
@@ -1189,7 +1188,7 @@
 /* ---------- HTML 5 元素数据集  v0.1 ---------- */
 (function ($) {
 
-    if (! ($.browser.msie < 10))  return;
+    if ($.browser.modern)  return;
 
     function DOMStringMap(iElement) {
         for (var i = 0, iAttr;  i < iElement.attributes.length;  i++) {

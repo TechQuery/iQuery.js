@@ -288,7 +288,7 @@
                 var iResult = [ ];
 
                 for (var i = iArray.length - 1;  i > -1 ;  i--)
-                    if (this.inArray(iArray, iArray[i]) == i)
+                    if (this.inArray(iArray[i], iArray) == i)
                         iResult.push( iArray[i] );
                 iResult.reverse();
 
@@ -363,8 +363,7 @@
                     iType[0].toUpperCase() + iType.slice(1)
                 );
         } catch (iError) {
-            if (iError instanceof DOMException)
-                return 'Window';
+            return 'Window';
         }
 
         if (! iVar)  switch (true) {
@@ -1132,7 +1131,7 @@
             switch (true) {
                 case (iType == 'String'):
                     return  $.inArray(this[0], $(iTarget));
-                case (iType in Type_Info.DOM.set):    {
+                case ((iType in Type_Info.DOM.set)  &&  (!! iTarget.length)):    {
                     iTarget = iTarget[0];
                     iType = $.type(iTarget);
                 }
@@ -1946,6 +1945,23 @@
     });
 
 
+    /* ----- Element Data Set ----- */
+    function DOMStringMap(iElement) {
+        for (var i = 0, iAttr;  i < iElement.attributes.length;  i++) {
+            iAttr = iElement.attributes[i];
+            if (iAttr.nodeName.slice(0, 5) == 'data-')
+                this[ iAttr.nodeName.toCamelCase() ] = iAttr.nodeValue;
+        }
+    }
+
+    Object.defineProperty(Element.prototype, 'dataset', {
+        get:    function () {
+            return  new DOMStringMap(this);
+        },
+        set:    function () { }
+    });
+
+
     /* ----- Computed Style ----- */
     function CSSStyleDeclaration() {
         $.extend(this, arguments[0].currentStyle, {
@@ -2264,73 +2280,6 @@
 
         return iXML;
     };
-
-})(self, self.document, self.iQuery);
-
-
-
-/* ---------- W3C HTML 5  Shim ---------- */
-(function (BOM, DOM, $) {
-
-    if (! ($.browser.msie < 10))  return;
-
-    /* ----- Element Data Set ----- */
-    function DOMStringMap(iElement) {
-        for (var i = 0, iAttr;  i < iElement.attributes.length;  i++) {
-            iAttr = iElement.attributes[i];
-            if (iAttr.nodeName.slice(0, 5) == 'data-')
-                this[ iAttr.nodeName.toCamelCase() ] = iAttr.nodeValue;
-        }
-    }
-
-    Object.defineProperty(Element.prototype, 'dataset', {
-        get:    function () {
-            return  new DOMStringMap(this);
-        },
-        set:    function () { }
-    });
-
-
-    /* ----- History API ----- */
-    var _State_ = [[null, DOM.title, DOM.URL]],
-        _Pushing_ = false,
-        $_BOM = $(BOM);
-
-    BOM.history.pushState = function (iState, iTitle, iURL) {
-        for (var iKey in iState)
-            if (! $.isData(iState[iKey]))
-                throw ReferenceError("The History State can't be Complex Object !");
-
-        if (typeof iTitle != 'string')
-            throw TypeError("The History State needs a Title String !");
-
-        DOM.title = iTitle;
-        _Pushing_ = true;
-        BOM.location.hash = '_' + (_State_.push(arguments) - 1);
-    };
-
-    BOM.history.replaceState = function () {
-        _State_ = [ ];
-        this.pushState.apply(this, arguments);
-    };
-
-    $_BOM.on('hashchange',  function () {
-        if (_Pushing_) {
-            _Pushing_ = false;
-            return;
-        }
-
-        var iState = _State_[ BOM.location.hash.slice(2) ];
-        if (! iState)  return;
-
-        BOM.history.state = iState[0];
-        DOM.title = iState[1];
-
-        $_BOM.trigger({
-            type:     'popstate',
-            state:    iState[0]
-        });
-    });
 
 })(self, self.document, self.iQuery);
 
@@ -3037,11 +2986,14 @@
 
 
 
-/* ---------- HTML 5 Form Shim ---------- */
-(function ($) {
+/* ---------- W3C HTML 5  Shim ---------- */
+(function (BOM, DOM, $) {
 
     if (! (($.browser.msie < 10)  ||  $.browser.ios))
         return;
+
+
+    /* ----- Form API ----- */
 
     function Value_Check() {
         var $_This = $(this);
@@ -3082,7 +3034,53 @@
         return true;
     };
 
-})(self.iQuery);
+
+    if (! ($.browser.msie < 10))  return;
+
+
+    /* ----- History API ----- */
+
+    var _State_ = [[null, DOM.title, DOM.URL]],
+        _Pushing_ = false,
+        $_BOM = $(BOM);
+
+    BOM.history.pushState = function (iState, iTitle, iURL) {
+        for (var iKey in iState)
+            if (! $.isData(iState[iKey]))
+                throw ReferenceError("The History State can't be Complex Object !");
+
+        if (typeof iTitle != 'string')
+            throw TypeError("The History State needs a Title String !");
+
+        DOM.title = iTitle;
+        _Pushing_ = true;
+        BOM.location.hash = '_' + (_State_.push(arguments) - 1);
+    };
+
+    BOM.history.replaceState = function () {
+        _State_ = [ ];
+        this.pushState.apply(this, arguments);
+    };
+
+    $_BOM.on('hashchange',  function () {
+        if (_Pushing_) {
+            _Pushing_ = false;
+            return;
+        }
+
+        var iState = _State_[ BOM.location.hash.slice(2) ];
+        if (! iState)  return;
+
+        BOM.history.state = iState[0];
+        DOM.title = iState[1];
+
+        $_BOM.trigger({
+            type:     'popstate',
+            state:    iState[0]
+        });
+    });
+
+})(self, self.document, self.iQuery);
 
 
 
