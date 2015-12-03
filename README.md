@@ -1,4 +1,4 @@
-#iQuery
+# iQuery
 
 ## 【概述】
 
@@ -26,7 +26,7 @@
     ...
 </body></html>
 ```
-### 成功驱动的项目
+### 【成功驱动的项目】
  1. EasyImport.js
  2. 某公司 JS-SDK
  3. [EasyWebUI](http://git.oschina.net/Tech_Query/EasyWebUI)
@@ -47,7 +47,6 @@
  - 新增 **$.delete()、$.put()**，方便实现基于 RESTful API 的单页应用
  - 新增 **URL 信息提取方法** —— $.fileName()、$.filePath()
  - 封装了**表单元素无刷新提交**，并可直接绑定响应回调 —— $.fn.ajaxSubmit()（基于前述的几个 **AJAX 增强方法** 构建）
- - 新增基于**现代浏览器 Crypto API** 的哈希方法 —— $.dataHash()
  - 新增 **选择符合法性判断方法** —— $.isSelector()
  - 更多 jQuery **伪类选择符**：
    - **:image** 还支持 `img, link[type="image/x-icon"], svg, canvas`
@@ -96,3 +95,9 @@
  - 自带 **HTMLEvents、CustomEvent 对象**，为 IE 8 提供 **W3C Event API** 支持
  - 自带 **HTML 5 Form API**，为 IE 8、iOS WebKit 提供兼容支持
  - 自带 DOMParser 对象，为 IE 8 提供 **XML 文档解析**支持
+
+
+## 【iQuery+ 插件库】
+ - 通用 **ListView 对象**生成方法 —— $.ListView()
+ - Base64 文本转**二进制对象**方法 —— $.toBlob()
+ - 基于**现代浏览器 Crypto API** 的哈希方法 —— $.dataHash()

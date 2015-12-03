@@ -2,12 +2,12 @@
 //              >>>  jQuery+  <<<
 //
 //
-//    [Version]     v5.3  (2015-12-3)
+//    [Version]     v5.1  (2015-12-3)
 //
 //    [Based on]    jQuery  v1.9+
 //
 //
-//      (C)2014-2015  test_32@fyscu.com
+//        (C)2014-2015  shiy2008@gmail.com
 //
 
 
@@ -78,6 +78,7 @@
 
 
 
+/* ---------- iQuery Core  Patch ---------- */
 (function (BOM, DOM, $) {
 
 /* ---------- $.browser+  v0.2 ---------- */
@@ -320,56 +321,6 @@
         }
     });
 
-/* ---------- Hash 算法集合（浏览器原生） v0.1 ---------- */
-
-//  Thanks "emu" --- http://blog.csdn.net/emu/article/details/39618297
-
-    function BufferToString(iBuffer){
-        var iDataView = new DataView(iBuffer),
-            iResult = [ ];
-
-        for (var i = 0, iTemp;  i < iBuffer.byteLength;  i += 4) {
-            iTemp = iDataView.getUint32(i).toString(16);
-            iResult.push(
-                ((iTemp.length == 8) ? '' : '0') + iTemp
-            );
-        }
-        return iResult.join('');
-    }
-
-    $.dataHash = function (iAlgorithm, iData, iCallback, iFailback) {
-        var iCrypto = BOM.crypto || BOM.msCrypto;
-        var iSubtle = iCrypto.subtle || iCrypto.webkitSubtle;
-
-        iAlgorithm = iAlgorithm || 'SHA-512';
-        iFailback = iFailback || iCallback;
-
-        try {
-            iData = iData.split('');
-            for (var i = 0;  i < iData.length;  i++)
-                iData[i] = iData[i].charCodeAt(0);
-
-            var iPromise = iSubtle.digest(
-                    {name:  iAlgorithm},
-                    new Uint8Array(iData)
-                );
-
-            if(typeof iPromise.then == 'function')
-                iPromise.then(
-                    function() {
-                        iCallback.call(this, BufferToString(arguments[0]));
-                    },
-                    iFailback
-                );
-            else
-                iPromise.oncomplete = function(){
-                    iCallback.call(this,  BufferToString( arguments[0].target.result ));
-                };
-        } catch (iError) {
-            iFailback(iError);
-        }
-    };
-
 /* ---------- jQuery 选择符合法性判断  v0.2 ---------- */
 
     $.isSelector = function () {
@@ -380,18 +331,6 @@
         }
         return true;
     };
-
-
-/* ----- jQuery 对象 所在页面 URL 路径  v0.1 ----- */
-
-    $.fn.pagePath = function () {
-        var iURL = (this[0].baseURI || this[0].ownerDocument.URL).split('/');
-
-        if (iURL.length > 3)  iURL.splice(-1, 1, '');
-
-        return iURL.join('/');
-    };
-
 
 /* ---------- jQuery 元素 z-index 独立方法  v0.2 ---------- */
 
@@ -754,7 +693,7 @@
         });
     }
 
-    $.delete = function () {
+    $['delete'] = function () {
         var iArgs = $.makeArray(arguments);
         iArgs.unshift('DELETE');
 
@@ -1133,8 +1072,10 @@
 
 
 
-/* ---------- HTML 5 表单验证  v0.1 ---------- */
+/* ---------- W3C HTML 5  Shim ---------- */
 (function ($) {
+
+    /* ----- HTML 5 表单验证  v0.1 ----- */
 
     if (! (($.browser.msie < 10)  ||  $.browser.ios))
         return;
@@ -1178,12 +1119,7 @@
         return true;
     };
 
-})(self.jQuery || self.Zepto);
-
-
-
-/* ---------- HTML 5 元素数据集  v0.1 ---------- */
-(function ($) {
+    /* ----- HTML 5 元素数据集  v0.1 ----- */
 
     if ($.browser.modern)  return;
 
