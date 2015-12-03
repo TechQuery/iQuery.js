@@ -2,7 +2,7 @@
 //                >>>  iQuery.js  <<<
 //
 //
-//      [Version]    v1.0  (2015-11-28)  Stable
+//      [Version]    v1.0  (2015-12-3)  Stable
 //
 //      [Usage]      A Light-weight jQuery Compatible API
 //                   with IE 8+ compatibility.
@@ -717,21 +717,6 @@
         }
     }
 
-/* ---------- DOM Traversal ---------- */
-    function _Parents_() {
-        var _UUID_ = _Time_.uuid('parent');
-
-        for (var i = 0;  i < this.length;  i++)
-            Object_Seek.call(this[i],  'parentNode',  function () {
-                _DOM_.operate('Attribute',  [this],  _UUID_,  function (_Index_, iTimes) {
-                    return  iTimes ? (parseInt(iTimes) + 1) : 1
-                });
-            });
-
-        return _UUID_;
-    }
-
-
 /* ---------- DOM Constructor ---------- */
     function DOM_Create(TagName, AttrList) {
         var iNew,  iTag = TagName.match(/^\s*<(.+?)\s*\/?>([\s\S]+)?/);
@@ -1116,7 +1101,17 @@
         jquery:             '1.9.1',
         iquery:             '1.0',
         pushStack:          function () {
-            var $_New = $(arguments[0]);
+            var $_New = Array.prototype.sort.call($(arguments[0]),  function (A, B) {
+                    var $_A = Object_Seek.call(A, 'parentNode').reverse(),
+                        $_B = Object_Seek.call(B, 'parentNode').reverse();
+
+                    for (var i = 0;  i < $_A.length;  i++)
+                        if ($_A[i] !== $_B[i])
+                            return (
+                                Object_Seek.call($_A[i], 'previousElementSibling').length  -
+                                Object_Seek.call($_B[i], 'previousElementSibling').length
+                            );
+                });
             $_New.prevObject = this;
             return $_New;
         },
@@ -1191,15 +1186,7 @@
             return  _DOM_.operate('Data', this, arguments[0], arguments[1]);
         },
         addBack:            function () {
-            var _UUID_ = $.uuid();
-
-            var $_Result = $(
-                    Array_Concat(this, this.prevObject)
-                ).attr('iquery', _UUID_);
-
-            return  this.pushStack(
-                    $('*[iquery="' + _UUID_ + '"]').removeAttr('iquery')
-                );
+            return  this.pushStack( Array_Concat(this, this.prevObject) );
         },
         parent:             function () {
             var $_Result = [ ];
@@ -1208,28 +1195,46 @@
                 if ($.inArray(this[i].parentNode, $_Result) == -1)
                     $_Result.push( this[i].parentNode );
 
-            if (arguments[0])  $_Result = $($_Result).filter(arguments[0]);
-
-            return this.pushStack($_Result);
+            return this.pushStack(
+                arguments[0]  ?  $($_Result).filter(arguments[0])  :  $_Result
+            );
         },
         parents:            function () {
-            var _UUID_ = _Parents_.call(this);
-            var $_Result = $('*[' + _UUID_ + ']').removeAttr(_UUID_);
+            var $_Result = [ ];
 
-            if (arguments[0])  $_Result = $_Result.filter(arguments[0]);
+            for (var i = 0;  i < this.length;  i++)
+                $_Result = $_Result.concat( Object_Seek.call(this[i], 'parentNode') );
 
-            return  this.pushStack( Array.prototype.reverse.call($_Result) );
+            $_Result = $( $.unique($_Result) );
+
+            return this.pushStack(Array.prototype.reverse.call(
+                arguments[0]  ?  $_Result.filter(arguments[0])  :  $_Result
+            ));
         },
         sameParents:        function () {
-            var _UUID_ = _Parents_.call(this);
-            var iTimes = $(DOM.documentElement).attr(_UUID_);
+            if (this.length < 2)  return this.parents();
 
-            var $_Result = $(['*[', _UUID_, '="', iTimes, '"]'].join(''))
-                    .removeAttr(_UUID_);
+            var iMin = Object_Seek.call(this[0], 'parentNode'),  iPrev;
 
-            if (arguments[0])  $_Result = $_Result.filter(arguments[0]);
+            for (var i = 1, iLast;  i < this.length;  i++) {
+                iLast = Object_Seek.call(this[i], 'parentNode');
+                if (iLast.length < iMin.length) {
+                    iPrev = iMin;
+                    iMin = iLast;
+                }
+            }
+            iPrev = iPrev || iLast;
 
-            return  this.pushStack( Array.prototype.reverse.call($_Result) );
+            var iDiff = iPrev.length - iMin.length,  $_Result = [ ];
+
+            for (var i = 0;  i < iMin.length;  i++)
+                if (iMin[i]  ===  iPrev[i + iDiff]) {
+                    $_Result = iMin.slice(i);
+                    break;
+                }
+            return this.pushStack(
+                arguments[0]  ?  $($_Result).filter(arguments[0])  :  $_Result
+            );
         },
         parentsUntil:       function () {
             return  this.parents().not(
@@ -1242,9 +1247,9 @@
             for (var i = 0;  i < this.length;  i++)
                 $_Result = Array_Concat($_Result, this[i].children);
 
-            if (arguments[0])  $_Result = $($_Result).filter(arguments[0]);
-
-            return this.pushStack($_Result);
+            return this.pushStack(
+                arguments[0]  ?  $($_Result).filter(arguments[0])  :  $_Result
+            );
         },
         contents:           function () {
             var $_Result = [ ],
@@ -1272,9 +1277,9 @@
                 );
             $_Result = $.unique($_Result);
 
-            if (arguments[0])  $_Result = $($_Result).filter(arguments[0]);
-
-            return this.pushStack($_Result);
+            return this.pushStack(
+                arguments[0]  ?  $($_Result).filter(arguments[0])  :  $_Result
+            );
         },
         prevAll:            function () {
             var $_Result = [ ];
@@ -1285,16 +1290,16 @@
                 );
             $_Result = $.unique($_Result).reverse();
 
-            if (arguments[0])  $_Result = $($_Result).filter(arguments[0]);
-
-            return this.pushStack($_Result);
+            return this.pushStack(
+                arguments[0]  ?  $($_Result).filter(arguments[0])  :  $_Result
+            );
         },
         siblings:           function () {
             var $_Result = this.prevAll().add( this.nextAll() );
 
-            if (arguments[0])  $_Result = $_Result.filter(arguments[0]);
-
-            return this.pushStack($_Result);
+            return this.pushStack(
+                arguments[0]  ?  $_Result.filter(arguments[0])  :  $_Result
+            );
         },
         find:               function () {
             var $_Result = [ ];

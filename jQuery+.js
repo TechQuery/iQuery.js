@@ -2,7 +2,7 @@
 //              >>>  jQuery+  <<<
 //
 //
-//    [Version]     v5.4  (2015-11-28)
+//    [Version]     v5.3  (2015-12-3)
 //
 //    [Based on]    jQuery  v1.9+
 //
@@ -964,7 +964,7 @@
     };
 
 
-/* ---------- jQuery 元素集合父元素交集  v0.2 ---------- */
+/* ---------- jQuery 元素集合父元素交集  v0.1 ---------- */
 
     function Object_Seek(iName, iCallback) {
         var iResult = [ ];
@@ -979,33 +979,30 @@
         return iResult;
     }
 
-    function _Parents_() {
-        var _UUID_ = $.uuid('parent');
-
-        for (var i = 0;  i < this.length;  i++)
-            Object_Seek.call(this[i],  'parentNode',  function () {
-                $(this).attr(_UUID_,  function (_Index_, iTimes) {
-                    return  iTimes ? (parseInt(iTimes) + 1) : 1
-                });
-            });
-
-        return _UUID_;
-    }
-
     $.fn.sameParents = function () {
-        var _UUID_ = _Parents_.call(this);
-        var iTimes = $(DOM.documentElement).attr(_UUID_);
+        if (this.length < 2)  return this.parents();
 
-        var $_Result = $(['*[', _UUID_, '="', iTimes, '"]'].join(''))
-                .removeAttr(_UUID_);
+        var iMin = Object_Seek.call(this[0], 'parentNode'),  iPrev;
 
-        if ( arguments[0] )
-            $_Result = $_Result.filter(arguments[0]);
+        for (var i = 1, iLast;  i < this.length;  i++) {
+            iLast = Object_Seek.call(this[i], 'parentNode');
+            if (iLast.length < iMin.length) {
+                iPrev = iMin;
+                iMin = iLast;
+            }
+        }
+        iPrev = iPrev || iLast;
 
-        return  $.extend(
-                Array.prototype.reverse.call($_Result),
-                {prevObject:  this}
-            );
+        var iDiff = iPrev.length - iMin.length,  $_Result = [ ];
+
+        for (var i = 0;  i < iMin.length;  i++)
+            if (iMin[i]  ===  iPrev[i + iDiff]) {
+                $_Result = iMin.slice(i);
+                break;
+            }
+        return this.pushStack(
+            arguments[0]  ?  $($_Result).filter(arguments[0])  :  $_Result
+        );
     };
 
 /* ---------- 单点手势事件  v0.2 ---------- */
