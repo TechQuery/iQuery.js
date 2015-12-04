@@ -2,7 +2,7 @@
 //                >>>  iQuery.js  <<<
 //
 //
-//      [Version]    v1.0  (2015-12-3)  Stable
+//      [Version]    v1.0  (2015-12-4)  Stable
 //
 //      [Usage]      A Light-weight jQuery Compatible API
 //                   with IE 8+ compatibility.
@@ -274,6 +274,12 @@
 
                 return iTarget;
             },
+            likeArray:        function () {
+                return (
+                    (typeof arguments[0].length == 'number')  &&
+                    (typeof arguments[0].valueOf() != 'string')
+                );
+            },
             makeArray:        _Browser_.modern ?
                 function () {
                     return  Array.apply(null, arguments[0]);
@@ -357,11 +363,11 @@
 
         try {
             iType = (iType == 'object') ? (
-                    (iVar && iVar.constructor.name) ||
-                    Object.prototype.toString.call(iVar).match(/\[object\s+([^\]]+)\]/i)[1]
-                ) : (
-                    iType[0].toUpperCase() + iType.slice(1)
-                );
+                (iVar && iVar.constructor.name) ||
+                Object.prototype.toString.call(iVar).match(/\[object\s+([^\]]+)\]/i)[1]
+            ) : (
+                iType[0].toUpperCase() + iType.slice(1)
+            );
         } catch (iError) {
             return 'Window';
         }
@@ -387,7 +393,7 @@
         )
             return 'HTMLElement';
 
-        if ((iType == 'Object')  &&  (typeof iVar.length == 'number')) {
+        if ( this.likeArray(iVar) ) {
             iType = 'Array';
             if (! _Browser_.modern)  try {
                 iVar.item();
@@ -414,19 +420,6 @@
         }
 
         return iResult;
-    }
-
-    function Array_Concat() {
-        var iArgs = _Object_.makeArray(arguments);
-
-        for (var i = 0;  i < iArgs.length;  i++)
-            if (
-                (! (iArgs[i] instanceof Array))  &&
-                (_Object_.type(iArgs[i]) in Type_Info.DOM.set)
-            )
-                iArgs[i] = _Object_.makeArray(iArgs[i]);
-
-        return  Array.prototype.concat.apply(iArgs.shift(), iArgs);
     }
 
 
@@ -917,7 +910,7 @@
         else if (iType in Type_Info.DOM.element)
             Element_Set = [ Element_Set ];
 
-        if (typeof Element_Set.length == 'number') {
+        if (_Object_.likeArray( Element_Set )) {
             for (var i = 0;  i < Element_Set.length;  i++)
                 if (Element_Set[i] && (
                     (Element_Set[i].nodeType == 1) ||
@@ -1094,6 +1087,19 @@
                     this[i].body[iName.scroll] = iPX;
         };
     }
+
+    function Array_Concat(iSource) {
+        if (! (iSource instanceof Array))
+            iSource = $.makeArray(iSource);
+
+        for (var i = 1;  i < arguments.length;  i++)
+            iSource = Array.prototype.concat.apply(
+                iSource,
+                $.likeArray( arguments[i] )  ?  arguments[i]  :  [arguments[i]]
+            );
+        return iSource;
+    }
+
     $.fn.extend = $.extend;
 
     $.fn.extend({
@@ -1272,8 +1278,8 @@
             var $_Result = [ ];
 
             for (var i = 0;  i < this.length;  i++)
-                $_Result = Array_Concat(
-                    $_Result,  Object_Seek.call(this[i], 'nextElementSibling')
+                $_Result = $_Result.concat(
+                    Object_Seek.call(this[i], 'nextElementSibling')
                 );
             $_Result = $.unique($_Result);
 
@@ -1285,8 +1291,8 @@
             var $_Result = [ ];
 
             for (var i = 0;  i < this.length;  i++)
-                $_Result = Array_Concat(
-                    $_Result,  Object_Seek.call(this[i], 'previousElementSibling')
+                $_Result = $_Result.concat(
+                    Object_Seek.call(this[i], 'previousElementSibling')
                 );
             $_Result = $.unique($_Result).reverse();
 
@@ -1548,18 +1554,15 @@
             });
         },
         triggerHandler:     function () {
-            var iHandler = $(this[0]).data('_event_');
+            var iHandler = $(this[0]).data('_event_'),  iReturn;
+
             iHandler = iHandler && iHandler[arguments[0]];
             if (! iHandler)  return;
 
-            var This_DOM = this[0],  iReturn,
-                iArgs = $.makeArray(arguments);
-            iArgs.unshift([ ]);
-            $.each(iHandler,  function () {
-                iReturn = this.apply(
-                    This_DOM,  Array_Concat.apply(BOM, iArgs)
+            for (var i = 0;  i < iHandler.length;  i++)
+                iReturn = iHandler[i].apply(
+                    this[0],  Array_Concat([ ], arguments)
                 );
-            });
 
             return iReturn;
         },
@@ -1685,7 +1688,7 @@
 /* ----- DOM UI Data Operator ----- */
     var RE_URL = /^(\w+:)?\/\/[^\s]+$/;
 
-    function Value_Operator(iValue, iResource) {
+    function Value_Operator(iValue) {
         var $_This = $(this),
             End_Element = (! this.children.length);
 
@@ -1693,7 +1696,7 @@
             iURL = (typeof iValue == 'string')  &&  iValue.trim().match(RE_URL);
 
         switch ( this.tagName.toLowerCase() ) {
-            case 'a':        {
+            case 'a':           {
                 if (_Set_) {
                     if (iURL)
                         $_This.attr('href', iURL[0]);
@@ -1703,14 +1706,7 @@
                 }
                 return  $_This.attr('href')  ||  (End_Element && $_This.text());
             }
-            case 'img':      {
-                iResource.count++ ;
-                console.log(this);
-
-                return  $_This.one('load',  function () {
-                    $(this).trigger('ready');
-                }).addClass('jQuery_Loading').attr('src', iValue);
-            }
+            case 'img':         return  $_This.attr('src', iValue);
             case 'textarea':    ;
             case 'select':      ;
             case 'input':       {
@@ -1718,7 +1714,7 @@
                     this.checked = true;
                 return $_This.val(iValue);
             }
-            default:         {
+            default:            {
                 if (_Set_) {
                     if ((! End_Element)  &&  iURL)
                         $_This.css('background-image',  'url("' + iValue + '")');
@@ -1742,23 +1738,14 @@
         else if ( $.isPlainObject(iFiller) )
             var Data_Set = true;
 
-        var Resource_Ready = {count:  0},  $_This = this;
-
-        this.on('ready',  'img.jQuery_Loading',  function () {
-            $(this).removeClass('jQuery_Loading');
-            if (--Resource_Ready.count == 0)
-                $_This.trigger('ready');
-            console.log(Resource_Ready.count, this);
-            return false;
-        });
+        var $_This = this;
 
         for (var i = 0, iName;  i < $_Name.length;  i++) {
             iName = $_Name[i].getAttribute('name');
 
             Value_Operator.call(
                 $_Name[i],
-                Data_Set  ?  iFiller[iName]  :  iFiller.call($_Name[i], iName),
-                Resource_Ready
+                Data_Set  ?  iFiller[iName]  :  iFiller.call($_Name[i], iName)
             );
         }
         return this;

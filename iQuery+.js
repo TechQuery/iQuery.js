@@ -2,7 +2,7 @@
 //          >>>  iQuery+  <<<
 //
 //
-//    [Version]     v0.4  (2015-12-3)
+//    [Version]     v0.4  (2015-12-4)
 //
 //    [Based on]    jQuery  v1.9+
 //
@@ -18,55 +18,59 @@
 //  Thanks "EasyWebApp" Project --- http://git.oschina.net/Tech_Query/EasyWebApp
 
     function ListView() {
-        var iArgs = $.makeArray(arguments);
+        this.$_View = arguments[0];
+        this.$_Template = this.$_View.children().eq(0);
+        this.length = 0;
+        this.data = [ ];
+        this.onInsert = arguments[1];
 
-        this.$_View = iArgs.shift();
-        this.$_Template = this.$_View.children().eq(0).clone(true);
-        this.data = (iArgs[0] instanceof Function)  ?  [ ]  :  iArgs.shift();
-        this.onRenderOne = iArgs[0];
+//        this.limit = parseInt( this.$_View.attr('max') )  ||  Infinity;
+//        this.limit = (this.data.length > this.limit) ? this.limit : this.data.length;
     }
 
     ListView.listSelector = 'ul, ol, dl, tbody, *[multiple]';
 
     $.extend(ListView.prototype, {
-        renderOne:     function (iValue) {
+        insert:     function (iValue, Index) {
+            Index = Index || 0;
             var $_Clone = this.$_Template.clone(true);
 
-            this.onRenderOne(
-                $_Clone.data('LV_Model', iValue),  iValue
+            var iReturn = this.onInsert(
+                    $_Clone.data('LV_Model', iValue),  iValue
+                );
+            this.data.splice(
+                Index,  0,  (iReturn === undefined) ? iValue : iReturn
             );
-            return $_Clone;
+            $(this.$_View[0].children[Index]).before( $_Clone[0] );
+
+            this.length++ ;
         },
-        render:        function (iData) {
-            this.data = iData  ?  [ ].concat.apply(iData, this.data)  :  this.data;
+        render:     function (iData, DetachTemplate) {
+            iData = $.likeArray(iData) ? iData : [iData];
 
-            var iLimit = parseInt( this.$_View.attr('max') )  ||  Infinity;
-            iLimit = (this.data.length > iLimit) ? iLimit : this.data.length;
+            for (var i = 0;  i < iData.length;  i++)
+                this.insert( iData[i] );
 
-            var $_List = $();
+            if (DetachTemplate)  this.$_Template.detach();
 
-            for (var i = 0;  i < iLimit;  i++)
-                $_List.add( this.renderOne( this.data[i] ) );
-
-            $_List.prependTo( this.$_View );
+            return this;
         },
-        insert:        function (iData, Index) {
-            Index = Index || 0;
-
-            this.data.splice(Index, 0, iData);
-            this.$_View.eq(Index).before( this.renderOne(iData) );
-        },
-        delete:        function (Index) {
+        remove:     function (Index) {
             Index = parseInt(Index);
             if (isNaN( Index ))  return;
 
             this.data.splice(Index, 1);
-            this.$_View.eq(Index).remove();
+            $(this.$_View[0].children[Index]).remove();
+        },
+        valueOf:    function () {
+            var iValue = this.data[Number( arguments[0] )];
+
+            return  (iValue === undefined) ? $.makeArray(this.data) : iValue;
         }
     });
 
-    $.ListView = function ($_View, iData, iRender) {
-        return  new ListView($($_View), iData, iRender);
+    $.ListView = function ($_View, iRender) {
+        return  new ListView($($_View), iRender);
     };
 
     $.ListView.listSelector = ListView.listSelector;

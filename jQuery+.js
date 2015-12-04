@@ -2,7 +2,7 @@
 //              >>>  jQuery+  <<<
 //
 //
-//    [Version]     v5.1  (2015-12-3)
+//    [Version]     v5.2  (2015-12-4)
 //
 //    [Based on]    jQuery  v1.9+
 //
@@ -166,7 +166,14 @@
         }
     });
 
-/* ---------- 类型判断+  v0.3 ---------- */
+/* ---------- 类型判断+  v0.4 ---------- */
+
+    $.likeArray = function () {
+        return (
+            (typeof arguments[0].length == 'number')  &&
+            (typeof arguments[0].valueOf() != 'string')
+        );
+    };
 
     function _inKey_() {
         var iObject = { };
@@ -190,11 +197,11 @@
 
         try {
             iType = (iType == 'object') ? (
-                    (iVar && iVar.constructor.name) ||
-                    Object.prototype.toString.call(iVar).match(/\[object\s+([^\]]+)\]/i)[1]
-                ) : (
-                    iType[0].toUpperCase() + iType.slice(1)
-                );
+                (iVar && iVar.constructor.name) ||
+                Object.prototype.toString.call(iVar).match(/\[object\s+([^\]]+)\]/i)[1]
+            ) : (
+                iType[0].toUpperCase() + iType.slice(1)
+            );
         } catch (iError) {
             return 'Window';
         }
@@ -220,7 +227,7 @@
         )
             return 'HTMLElement';
 
-        if ((iType == 'Object')  &&  (typeof iVar.length == 'number')) {
+        if ( $.likeArray(iVar) ) {
             iType = 'Array';
             if (! _Browser_.modern)  try {
                 iVar.item();
@@ -549,7 +556,7 @@
 
     var RE_URL = /^(\w+:)?\/\/[\u0033-\u007e\uff61-\uffef]+$/;
 
-    function Value_Operator(iValue, iResource) {
+    function Value_Operator(iValue) {
         var $_This = $(this),
             End_Element = (! this.children.length);
 
@@ -557,7 +564,7 @@
             iURL = (typeof iValue == 'string')  &&  iValue.trim().match(RE_URL);
 
         switch ( this.tagName.toLowerCase() ) {
-            case 'a':        {
+            case 'a':           {
                 if (_Set_) {
                     if (iURL)
                         $_This.attr('href', iURL[0]);
@@ -567,14 +574,7 @@
                 }
                 return  $_This.attr('href')  ||  (End_Element && $_This.text());
             }
-            case 'img':      {
-                iResource.count++ ;
-                console.log(this);
-
-                return  $_This.one('load',  function () {
-                    $(this).trigger('ready');
-                }).addClass('jQuery_Loading').attr('src', iValue);
-            }
+            case 'img':         return  $_This.attr('src', iValue);
             case 'textarea':    ;
             case 'select':      ;
             case 'input':       {
@@ -582,7 +582,7 @@
                     this.checked = true;
                 return $_This.val(iValue);
             }
-            default:         {
+            default:            {
                 if (_Set_) {
                     if ((! End_Element)  &&  iURL)
                         $_This.css('background-image',  'url("' + iValue + '")');
@@ -606,23 +606,14 @@
         else if ( $.isPlainObject(iFiller) )
             var Data_Set = true;
 
-        var Resource_Ready = {count:  0},  $_This = this;
-
-        this.on('ready',  'img.jQuery_Loading',  function () {
-            $(this).removeClass('jQuery_Loading');
-            if (--Resource_Ready.count == 0)
-                $_This.trigger('ready');
-            console.log(Resource_Ready.count, this);
-            return false;
-        });
+        var $_This = this;
 
         for (var i = 0, iName;  i < $_Name.length;  i++) {
             iName = $_Name[i].getAttribute('name');
 
             Value_Operator.call(
                 $_Name[i],
-                Data_Set  ?  iFiller[iName]  :  iFiller.call($_Name[i], iName),
-                Resource_Ready
+                Data_Set  ?  iFiller[iName]  :  iFiller.call($_Name[i], iName)
             );
         }
         return this;
