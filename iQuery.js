@@ -2,7 +2,7 @@
 //                >>>  iQuery.js  <<<
 //
 //
-//      [Version]    v1.0  (2015-12-4)  Stable
+//      [Version]    v1.0  (2015-12-8)  Stable
 //
 //      [Usage]      A Light-weight jQuery Compatible API
 //                   with IE 8+ compatibility.
@@ -1088,6 +1088,21 @@
         };
     }
 
+    function DOM_Insert(iName) {
+        return  function () {
+            if (this.length) {
+                if (! this[0][iName])
+                    this.append.apply(
+                        (iName == 'firstElementChild')  ?  this  :  this.parent(),
+                        arguments
+                    );
+                else
+                    this.before.apply($(this[0][iName]), arguments);
+            }
+            return this;
+        };
+    }
+
     function Array_Concat(iSource) {
         if (! (iSource instanceof Array))
             iSource = $.makeArray(iSource);
@@ -1612,20 +1627,13 @@
                     this.parentNode.insertBefore(_Cache_, this);
                 });
         },
-        prepend:            function () {
-            if (this.length) {
-                if (! this[0].children.length)
-                    this.append.apply(this, arguments);
-                else
-                    this.before.apply($(this[0].children[0]), arguments);
-            }
-            return this;
-        },
+        prepend:            DOM_Insert('firstElementChild'),
         prependTo:          function () {
             $(arguments[0], arguments[1]).prepend(this);
 
             return  this;
         },
+        after:              DOM_Insert('nextElementSibling'),
         val:                function () {
             if (! $.isData(arguments[0]))
                 return  this[0] && this[0].value;
@@ -1657,18 +1665,18 @@
     $.fn.off = $.fn.unbind;
 
     function Event_Method(iName) {
-        return  function () {
-                if (! arguments[0]) {
-                    for (var i = 0;  i < this.length;  i++)  try {
-                        this[i][iName]();
-                    } catch (iError) {
-                        $(this[i]).trigger(iName);
-                    }
-                } else
-                    this.bind(iName, arguments[0]);
+        return  function (iCallback) {
+            if ((typeof iCallback == 'function')  ||  (iCallback === false))
+                return  this.bind(iName, arguments[0]);
 
-                return this;
-            };
+            for (var i = 0;  i < this.length;  i++)  try {
+                this[i][iName]();
+            } catch (iError) {
+                $(this[i]).trigger(iName);
+            }
+
+            return this;
+        };
     }
 
     for (var iName in _inKey_(
@@ -1887,19 +1895,6 @@
 
     if ($.browser.modern)  return;
 
-    /* ----- Error Useful Information ----- */
-
-    //  Thanks "Kevin Yang" ---
-    //
-    //      http://www.imkevinyang.com/2010/01/%E8%A7%A3%E6%9E%90ie%E4%B8%AD%E7%9A%84javascript-error%E5%AF%B9%E8%B1%A1.html
-
-    Error.prototype.valueOf = function () {
-        return  $.extend(this, {
-            code:       this.number & 0x0FFFF,
-            helpURL:    'https://msdn.microsoft.com/en-us/library/1dk3k160(VS.85).aspx'
-        });
-    };
-
     /* ----- DOM Attribute Name ----- */
     var iAlias = {
             'class':    'className',
@@ -1921,37 +1916,27 @@
         }
     });
 
-    /* ----- DOM Sibling ----- */
-    Object.defineProperty(Element.prototype, 'previousElementSibling', {
-        get:    function () {
-            return this.previousSibling;
-        },
-        set:    function () { }
-    });
+    /* ----- DOM ShortCut ----- */
+    var iGetter = {
+            firstElementChild:         function () {
+                return this.children[0];
+            },
+            lastElementChild:          function () {
+                return  this.children[this.children.length - 1];
+            },
+            previousElementSibling:    function () {
+                return this.previousSibling;
+            },
+            nextElementSibling:        function () {
+                return this.nextSibling;
+            }
+        };
 
-    Object.defineProperty(Element.prototype, 'nextElementSibling', {
-        get:    function () {
-            return this.nextSibling;
-        },
-        set:    function () { }
-    });
-
-
-    /* ----- Element Data Set ----- */
-    function DOMStringMap(iElement) {
-        for (var i = 0, iAttr;  i < iElement.attributes.length;  i++) {
-            iAttr = iElement.attributes[i];
-            if (iAttr.nodeName.slice(0, 5) == 'data-')
-                this[ iAttr.nodeName.toCamelCase() ] = iAttr.nodeValue;
-        }
-    }
-
-    Object.defineProperty(Element.prototype, 'dataset', {
-        get:    function () {
-            return  new DOMStringMap(this);
-        },
-        set:    function () { }
-    });
+    for (var iName in iGetter)
+        Object.defineProperty(Element.prototype, iName, {
+            get:    iGetter[iName],
+            set:    function () { }
+        });
 
 
     /* ----- Computed Style ----- */
@@ -2981,54 +2966,41 @@
 /* ---------- W3C HTML 5  Shim ---------- */
 (function (BOM, DOM, $) {
 
-    if (! (($.browser.msie < 10)  ||  $.browser.ios))
-        return;
+    if (! ($.browser.msie < 11))  return;
 
 
-    /* ----- Form API ----- */
+    /* ----- Element Data Set ----- */
 
-    function Value_Check() {
-        var $_This = $(this);
-
-        if ((typeof $_This.attr('required') == 'string')  &&  (! this.value))
-            return false;
-
-        var iRegEx = $_This.attr('pattern');
-        if (iRegEx)  try {
-            return  RegExp(iRegEx).test(this.value);
-        } catch (iError) { }
-
-        if ((this.tagName.toLowerCase() == 'input')  &&  (this.type == 'number')) {
-            var iNumber = Number(this.value),
-                iMin = Number( $_This.attr('min') );
-            if (
-                isNaN(iNumber)  ||
-                (iNumber < iMin)  ||
-                (iNumber > Number( $_This.attr('max') ))  ||
-                ((iNumber - iMin)  %  Number( $_This.attr('step') ))
-            )
-                return false;
+    function DOMStringMap(iElement) {
+        for (var i = 0, iAttr;  i < iElement.attributes.length;  i++) {
+            iAttr = iElement.attributes[i];
+            if (iAttr.nodeName.slice(0, 5) == 'data-')
+                this[ iAttr.nodeName.toCamelCase() ] = iAttr.nodeValue;
         }
-
-        return true;
     }
 
-    HTMLInputElement.prototype.checkValidity = Value_Check;
-    HTMLSelectElement.prototype.checkValidity = Value_Check;
-    HTMLTextAreaElement.prototype.checkValidity = Value_Check;
-
-    HTMLFormElement.prototype.checkValidity = function () {
-        var $_Input = $('*[name]:input', this);
-
-        for (var i = 0;  i < $_Input.length;  i++)
-            if (! $_Input[i].checkValidity())
-                return false;
-        return true;
-    };
+    Object.defineProperty(Element.prototype, 'dataset', {
+        get:    function () {
+            return  new DOMStringMap(this);
+        },
+        set:    function () { }
+    });
 
 
     if (! ($.browser.msie < 10))  return;
 
+    /* ----- Error Useful Information ----- */
+
+    //  Thanks "Kevin Yang" ---
+    //
+    //      http://www.imkevinyang.com/2010/01/%E8%A7%A3%E6%9E%90ie%E4%B8%AD%E7%9A%84javascript-error%E5%AF%B9%E8%B1%A1.html
+
+    Error.prototype.valueOf = function () {
+        return  $.extend(this, {
+            code:       this.number & 0x0FFFF,
+            helpURL:    'https://msdn.microsoft.com/en-us/library/1dk3k160(VS.85).aspx'
+        });
+    };
 
     /* ----- History API ----- */
 
@@ -3071,5 +3043,55 @@
             state:    iState[0]
         });
     });
+
+})(self, self.document, self.jQuery);
+
+
+
+(function (BOM, DOM, $) {
+
+    if (! (($.browser.msie < 10)  ||  $.browser.ios))
+        return;
+
+    /* ----- Form API ----- */
+
+    function Value_Check() {
+        var $_This = $(this);
+
+        if ((typeof $_This.attr('required') == 'string')  &&  (! this.value))
+            return false;
+
+        var iRegEx = $_This.attr('pattern');
+        if (iRegEx)  try {
+            return  RegExp(iRegEx).test(this.value);
+        } catch (iError) { }
+
+        if ((this.tagName.toLowerCase() == 'input')  &&  (this.type == 'number')) {
+            var iNumber = Number(this.value),
+                iMin = Number( $_This.attr('min') );
+            if (
+                isNaN(iNumber)  ||
+                (iNumber < iMin)  ||
+                (iNumber > Number( $_This.attr('max') ))  ||
+                ((iNumber - iMin)  %  Number( $_This.attr('step') ))
+            )
+                return false;
+        }
+
+        return true;
+    }
+
+    HTMLInputElement.prototype.checkValidity = Value_Check;
+    HTMLSelectElement.prototype.checkValidity = Value_Check;
+    HTMLTextAreaElement.prototype.checkValidity = Value_Check;
+
+    HTMLFormElement.prototype.checkValidity = function () {
+        var $_Input = $('*[name]:input', this);
+
+        for (var i = 0;  i < $_Input.length;  i++)
+            if (! $_Input[i].checkValidity())
+                return false;
+        return true;
+    };
 
 })(self, self.document, self.iQuery);

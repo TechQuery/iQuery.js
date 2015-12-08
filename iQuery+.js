@@ -39,11 +39,13 @@
                     $_Clone.data('LV_Model', iValue),  iValue
                 );
             this.data.splice(
-                Index,  0,  (iReturn === undefined) ? iValue : iReturn
+                Index + 1,  0,  (iReturn === undefined) ? iValue : iReturn
             );
-            $(this.$_View[0].children[Index]).before( $_Clone[0] );
+            $(this.$_View[0].children[Index]).after( $_Clone[0] );
 
             this.length++ ;
+
+            return $_Clone;
         },
         render:     function (iData, DetachTemplate) {
             iData = $.likeArray(iData) ? iData : [iData];

@@ -229,7 +229,7 @@
 
         if ( $.likeArray(iVar) ) {
             iType = 'Array';
-            if (! _Browser_.modern)  try {
+            if (! $.browser.modern)  try {
                 iVar.item();
                 try {
                     iVar.namedItem();
