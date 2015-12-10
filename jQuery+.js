@@ -168,10 +168,11 @@
 
 /* ---------- 类型判断+  v0.4 ---------- */
 
-    $.likeArray = function () {
+    $.likeArray = function (iObject) {
         return (
-            (typeof arguments[0].length == 'number')  &&
-            (typeof arguments[0].valueOf() != 'string')
+            iObject  &&
+            (typeof iObject.length == 'number')  &&
+            (typeof iObject.valueOf() != 'string')
         );
     };
 

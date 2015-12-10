@@ -2,7 +2,7 @@
 //                >>>  iQuery.js  <<<
 //
 //
-//      [Version]    v1.0  (2015-12-8)  Stable
+//      [Version]    v1.0  (2015-12-10)  Stable
 //
 //      [Usage]      A Light-weight jQuery Compatible API
 //                   with IE 8+ compatibility.
@@ -123,8 +123,7 @@
         } catch (iError) {
             return false;
         }
-        if (Fix_More)
-            Fix_More.call(this);
+        if (Fix_More)  Fix_More.call(this);
 
         return true;
     };
@@ -274,10 +273,11 @@
 
                 return iTarget;
             },
-            likeArray:        function () {
+            likeArray:        function (iObject) {
                 return (
-                    (typeof arguments[0].length == 'number')  &&
-                    (typeof arguments[0].valueOf() != 'string')
+                    iObject  &&
+                    (typeof iObject.length == 'number')  &&
+                    (typeof iObject.valueOf() != 'string')
                 );
             },
             makeArray:        _Browser_.modern ?
@@ -1126,6 +1126,9 @@
                     var $_A = Object_Seek.call(A, 'parentNode').reverse(),
                         $_B = Object_Seek.call(B, 'parentNode').reverse();
 
+                    if ($_A.length != $_B.length)
+                        return  $_B.length - $_A.length;
+
                     for (var i = 0;  i < $_A.length;  i++)
                         if ($_A[i] !== $_B[i])
                             return (
@@ -1136,8 +1139,13 @@
             $_New.prevObject = this;
             return $_New;
         },
-        eq:                 function () {
-            return  this.pushStack( this[arguments[0]] );
+        slice:              function () {
+            return  this.pushStack( [ ].slice.apply(this, arguments) );
+        },
+        eq:                 function (Index) {
+            return  this.pushStack(
+                [ ].slice.call(this,  Index,  (Index + 1) || undefined)
+            );
         },
         index:              function (iTarget) {
             if (! iTarget)
@@ -1155,9 +1163,6 @@
                     return  $.inArray(iTarget, this);
             }
             return -1;
-        },
-        slice:              function () {
-            return  this.pushStack( [ ].slice.apply(this, arguments) );
         },
         each:               function () {
             return  $.each(this, arguments[0]);
@@ -1228,9 +1233,9 @@
 
             $_Result = $( $.unique($_Result) );
 
-            return this.pushStack(Array.prototype.reverse.call(
+            return this.pushStack(
                 arguments[0]  ?  $_Result.filter(arguments[0])  :  $_Result
-            ));
+            );
         },
         sameParents:        function () {
             if (this.length < 2)  return this.parents();

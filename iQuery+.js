@@ -2,7 +2,7 @@
 //          >>>  iQuery+  <<<
 //
 //
-//    [Version]     v0.4  (2015-12-4)
+//    [Version]     v0.5  (2015-12-10)
 //
 //    [Based on]    jQuery  v1.9+
 //
@@ -13,16 +13,33 @@
 
 (function (BOM, DOM, $) {
 
-/* ---------- ListView Object  v0.2 ---------- */
+/* ---------- ListView Interface  v0.3 ---------- */
 
 //  Thanks "EasyWebApp" Project --- http://git.oschina.net/Tech_Query/EasyWebApp
 
-    function ListView() {
-        this.$_View = arguments[0];
-        this.$_Template = this.$_View.children().eq(0);
+    function ListView($_View, onInsert) {
+        var _Self_ = arguments.callee;
+
+        if (!  (this instanceof _Self_))
+            return  new _Self_($_View, onInsert);
+
+        $_View = $($_View);
+
+        iView = $_View.data('_LVI_');
+        iView = (iView instanceof _Self_)  ?  iView  :  this;
+
+        this.callback = {
+            insert:    [ ],
+            remove:    [ ]
+        };
+        if (onInsert)  iView.on('insert', onInsert);
+
+        if (iView !== this)  return iView;
+
+        this.$_View = $_View.data('_LVI_', this);
+        this.$_Template = $(this.$_View[0].children[0]).addClass('ListView_Item');
         this.length = 0;
         this.data = [ ];
-        this.onInsert = arguments[1];
 
 //        this.limit = parseInt( this.$_View.attr('max') )  ||  Infinity;
 //        this.limit = (this.data.length > this.limit) ? this.limit : this.data.length;
@@ -30,18 +47,42 @@
 
     ListView.listSelector = 'ul, ol, dl, tbody, *[multiple]';
 
+    function _Callback_($_Item, iValue, Index) {
+        var iCallback = this.callback.insert,  iReturn;
+
+        for (var i = 0;  i < iCallback.length;  i++)
+            iReturn = iCallback[i].call(
+                this,  $_Item.data('LV_Model', iValue),  iValue,  Index
+            );
+        return iReturn;
+    }
+
     $.extend(ListView.prototype, {
+        on:         function (iType, iCallback) {
+            if (
+                (typeof iType == 'string')  &&
+                (typeof iCallback == 'function')
+            )
+                this.callback[iType].push(iCallback);
+
+            return this;
+        },
+        indexOf:    function () {
+            return  this.$_View.children('.ListView_Item').eq( arguments[0] );
+        },
         insert:     function (iValue, Index) {
+            iValue = (iValue === undefined)  ?  { }  :  iValue;
             Index = Index || 0;
+
             var $_Clone = this.$_Template.clone(true);
 
-            var iReturn = this.onInsert(
-                    $_Clone.data('LV_Model', iValue),  iValue
-                );
+            this.indexOf(Index).before( $_Clone[0] );
+
+            var iReturn = _Callback_.call(this, $_Clone, iValue, Index);
+
             this.data.splice(
-                Index + 1,  0,  (iReturn === undefined) ? iValue : iReturn
+                Index,  0,  (iReturn === undefined) ? iValue : iReturn
             );
-            $(this.$_View[0].children[Index]).after( $_Clone[0] );
 
             this.length++ ;
 
@@ -61,8 +102,12 @@
             Index = parseInt(Index);
             if (isNaN( Index ))  return;
 
-            this.data.splice(Index, 1);
-            $(this.$_View[0].children[Index]).remove();
+            _Callback_.call(
+                this,
+                this.indexOf(Index).remove(),
+                this.data.splice(Index, 1)[0],
+                Index
+            );
         },
         valueOf:    function () {
             var iValue = this.data[Number( arguments[0] )];
@@ -71,11 +116,7 @@
         }
     });
 
-    $.ListView = function ($_View, iRender) {
-        return  new ListView($($_View), iRender);
-    };
-
-    $.ListView.listSelector = ListView.listSelector;
+    $.ListView = ListView;
 
 
 /* ---------- Base64 to Blob  v0.1 ---------- */
