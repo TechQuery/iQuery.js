@@ -2,7 +2,7 @@
 //                >>>  iQuery.js  <<<
 //
 //
-//      [Version]    v1.0  (2015-12-10)  Stable
+//      [Version]    v1.0  (2015-12-11)  Stable
 //
 //      [Usage]      A Light-weight jQuery Compatible API
 //                   with IE 8+ compatibility.
@@ -872,7 +872,7 @@
     }
 /* ---------- jQuery API ---------- */
 
-    BOM.iQuery = function (Element_Set, iContext) {
+    function iQuery(Element_Set, iContext) {
         /* ----- Global Wrapper ----- */
         var _Self_ = arguments.callee;
 
@@ -897,9 +897,9 @@
                 );
         }
         this.add( Element_Set );
-    };
+    }
 
-    var $ = BOM.iQuery;
+    var $ = BOM.iQuery = iQuery;
     $.fn = $.prototype;
 
     $.fn.add = function (Element_Set) {
@@ -925,12 +925,12 @@
         return this;
     };
 
-    if (typeof BOM.jQuery != 'function') {
-        BOM.jQuery = BOM.iQuery;
-        BOM.$ = $;
-    }
+    if (typeof BOM.jQuery != 'function')
+        BOM.jQuery = BOM.$ = $;
+
 
     /* ----- iQuery Static Method ----- */
+
     _Object_.extend($, _Object_, _Time_, {
         browser:          _Browser_,
         isData:           function () {
@@ -1137,6 +1137,17 @@
                             );
                 });
             $_New.prevObject = this;
+
+            return $_New;
+        },
+        refresh:            function () {
+            if (! this.selector)  return this;
+
+            var $_New = $(this.selector, this.context);
+
+            if (this.prevObject instanceof $)
+                $_New = this.prevObject.pushStack($_New);
+
             return $_New;
         },
         slice:              function () {

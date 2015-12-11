@@ -2,7 +2,7 @@
 //              >>>  jQuery+  <<<
 //
 //
-//    [Version]     v5.2  (2015-12-4)
+//    [Version]     v5.3  (2015-12-11)
 //
 //    [Based on]    jQuery  v1.9+
 //
@@ -338,6 +338,19 @@
             return false;
         }
         return true;
+    };
+
+/* ---------- jQuery 元素成员更新  v0.1 ---------- */
+
+    $.fn.refresh = function () {
+        if (! this.selector)  return this;
+
+        var $_New = $(this.selector, this.context);
+
+        if (this.prevObject instanceof $)
+            $_New = this.prevObject.pushStack($_New);
+
+        return $_New;
     };
 
 /* ---------- jQuery 元素 z-index 独立方法  v0.2 ---------- */

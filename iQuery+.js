@@ -1,13 +1,13 @@
 //
-//          >>>  iQuery+  <<<
+//              >>>  iQuery+  <<<
 //
 //
-//    [Version]     v0.5  (2015-12-10)
+//    [Version]     v0.5  (2015-12-10)  Beta
 //
 //    [Based on]    jQuery  v1.9+
 //
 //
-//      (C)2015  shiy2008@gmail.com
+//          (C)2015  shiy2008@gmail.com
 //
 
 
@@ -17,13 +17,17 @@
 
 //  Thanks "EasyWebApp" Project --- http://git.oschina.net/Tech_Query/EasyWebApp
 
-    function ListView($_View, onInsert) {
+    function ListView($_View, $_Item, onInsert) {
         var _Self_ = arguments.callee;
 
         if (!  (this instanceof _Self_))
-            return  new _Self_($_View, onInsert);
+            return  new _Self_($_View, $_Item, onInsert);
 
         $_View = $($_View);
+        if (typeof $_Item == 'function') {
+            onInsert = $_Item;
+            $_Item = undefined;
+        }
 
         iView = $_View.data('_LVI_');
         iView = (iView instanceof _Self_)  ?  iView  :  this;
@@ -37,7 +41,7 @@
         if (iView !== this)  return iView;
 
         this.$_View = $_View.data('_LVI_', this);
-        this.$_Template = $(this.$_View[0].children[0]).addClass('ListView_Item');
+        this.$_Template = this.$_View.children($_Item).eq(0).addClass('ListView_Item');
         this.length = 0;
         this.data = [ ];
 
