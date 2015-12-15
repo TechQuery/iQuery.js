@@ -2,7 +2,7 @@
 //              >>>  iQuery+  <<<
 //
 //
-//    [Version]     v0.5  (2015-12-10)  Beta
+//    [Version]     v0.5  (2015-12-14)  Stable
 //
 //    [Based on]    jQuery  v1.9+
 //
@@ -51,8 +51,8 @@
 
     ListView.listSelector = 'ul, ol, dl, tbody, *[multiple]';
 
-    function _Callback_($_Item, iValue, Index) {
-        var iCallback = this.callback.insert,  iReturn;
+    function _Callback_(iType, $_Item, iValue, Index) {
+        var iCallback = this.callback[iType],  iReturn;
 
         for (var i = 0;  i < iCallback.length;  i++)
             iReturn = iCallback[i].call(
@@ -82,8 +82,9 @@
 
             this.indexOf(Index).before( $_Clone[0] );
 
-            var iReturn = _Callback_.call(this, $_Clone, iValue, Index);
-
+            var iReturn = _Callback_.call(
+                    this,  'insert',  $_Clone,  iValue,  Index
+                );
             this.data.splice(
                 Index,  0,  (iReturn === undefined) ? iValue : iReturn
             );
@@ -106,12 +107,15 @@
             Index = parseInt(Index);
             if (isNaN( Index ))  return;
 
-            _Callback_.call(
-                this,
-                this.indexOf(Index).remove(),
-                this.data.splice(Index, 1)[0],
-                Index
-            );
+            var $_Item = this.indexOf(Index);
+
+            if (false === _Callback_.call(
+                this,  'remove',  $_Item,  this.data[Index],  Index
+            ))
+                return;
+
+            this.data.splice(Index, 1);
+            $_Item.remove();
         },
         valueOf:    function () {
             var iValue = this.data[Number( arguments[0] )];

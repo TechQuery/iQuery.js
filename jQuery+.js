@@ -2,7 +2,7 @@
 //              >>>  jQuery+  <<<
 //
 //
-//    [Version]     v5.3  (2015-12-11)
+//    [Version]     v5.4  (2015-12-14)
 //
 //    [Based on]    jQuery  v1.9+
 //
@@ -988,8 +988,13 @@
                 swipeTop = Touch_Data.pY - iTouch.pageY,
                 iTime = iEvent.timeStamp - Touch_Data.time;
 
-            if (Math.max(Math.abs(swipeLeft), Math.abs(swipeTop)) > 20)
-                $(iEvent.target).trigger('swipe',  [swipeLeft, swipeTop]);
+            var iShift = Math.sqrt(
+                    Math.pow(swipeLeft, 2)  +  Math.pow(swipeTop, 2)
+                );
+            if (iShift > 20)
+                $(iEvent.target).trigger('swipe', [
+                    swipeLeft,  swipeTop,  iShift
+                ]);
             else
                 $(iEvent.target).trigger((iTime > 300) ? 'press' : 'tap');
         }
@@ -1014,6 +1019,47 @@
 
     if ($.browser.mobile)  $.fn.click = $.fn.tap;
 
+
+/* ---------- 文字输入事件  v0.1 ---------- */
+
+    $.fn.input = function (iHandler) {
+        this.filter('input, textarea').on(
+            $.browser.modern ? 'input' : 'propertychange',
+            function (iEvent) {
+                if ((! $.browser.modern)  &&  (iEvent.propertyName != 'value'))
+                    return;
+
+                iHandler.call(iEvent.target, iEvent, this.value);
+            }
+        );
+
+        this.not('input, textarea').on('paste',  function (iEvent) {
+
+            return  iHandler.call(
+                iEvent.target,
+                iEvent,
+                iEvent.clipboardData.getData(
+                    $.browser.modern ? 'text/plain' : 'text'
+                )
+            );
+        }).keyup(function (iEvent) {
+
+            var iKey = iEvent.which;
+
+            if (
+                (iKey < 48)  ||  (iKey > 105)  ||
+                ((iKey > 90)  &&  (iKey < 96))
+            )
+                return;
+
+            if (iEvent.ctrlKey || iEvent.shiftKey || iEvent.altKey)
+                return;
+
+            iHandler.call(iEvent.target, iEvent, iEvent.target.innerText);
+        });
+
+        return this;
+    };
 
 /* ---------- 跨页面事件  v0.2 ---------- */
 
