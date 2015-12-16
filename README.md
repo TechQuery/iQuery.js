@@ -64,6 +64,7 @@
  - 新增 **伪类/元素 CSS 规则对象 提取方法** —— $.cssPseudo()
  - 封装 **Animate.css** 为 $.fn.cssAnimate()，其调用参数 兼容 $.fn.animate()
  - 封装了**触屏单指手势事件**（tap、press、swipe），并为桌面端、移动端提供一致的操作体验
+ - 统一 **mousewheel 事件**，并新增其快捷方法
  - 新增 **跨页面消息事件** onReply 方法（基于 `window.postMessage`）
 
 

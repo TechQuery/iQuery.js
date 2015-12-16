@@ -2,7 +2,7 @@
 //              >>>  jQuery+  <<<
 //
 //
-//    [Version]     v5.4  (2015-12-14)
+//    [Version]     v5.5  (2015-12-16)
 //
 //    [Based on]    jQuery  v1.9+
 //
@@ -605,7 +605,7 @@
                     return;
                 }
                 iURL = $_This.css('background-image').match(/^url\(('|")?([^'"]+)('|")?\)/);
-                return  (End_Element && $_This.text())  ||  (iURL && iURL[2]);
+                return  End_Element  ?  $_This.text()  :  (iURL && iURL[2]);
             }
         }
     }
@@ -949,6 +949,16 @@
         );
     };
 
+/* ---------- 鼠标滚轮事件  v0.1 ---------- */
+
+    if ( $.browser.ff )
+        $(DOM).on('DOMMouseScroll',  function (iEvent) {
+            $(iEvent.target).trigger({
+                type:          'mousewheel',
+                wheelDelta:    -iEvent.detail * 40
+            });
+        });
+
 /* ---------- 单点手势事件  v0.2 ---------- */
 
     function get_Touch(iEvent) {
@@ -991,16 +1001,18 @@
             var iShift = Math.sqrt(
                     Math.pow(swipeLeft, 2)  +  Math.pow(swipeTop, 2)
                 );
-            if (iShift > 20)
-                $(iEvent.target).trigger('swipe', [
-                    swipeLeft,  swipeTop,  iShift
-                ]);
-            else
-                $(iEvent.target).trigger((iTime > 300) ? 'press' : 'tap');
+
+            $(iEvent.target).trigger((iShift < 22)  ?
+                ((iTime > 300) ? 'press' : 'tap')  :  {
+                    type:      'swipe',
+                    pageX:     swipeLeft,
+                    pageY:     swipeTop,
+                    detail:    iShift
+                }
+            );
         }
     );
-
-    var iShortCut = _inKey_('tap', 'press', 'swipe');
+    var iShortCut = _inKey_('mousewheel', 'tap', 'press', 'swipe');
 
     function Event_Method(iName) {
         return  function () {
@@ -1022,6 +1034,17 @@
 
 /* ---------- 文字输入事件  v0.1 ---------- */
 
+    function TypeBack(iHandler, iEvent, iKey) {
+        var iValue = this[iKey];
+
+        var iReturn = iHandler.call(iEvent.target, iEvent, iValue);
+
+        if (iReturn !== false)
+            $(this).data('_Last_Value_', iValue);
+        else
+            this[iKey] = $(this).data('_Last_Value_');
+    }
+
     $.fn.input = function (iHandler) {
         this.filter('input, textarea').on(
             $.browser.modern ? 'input' : 'propertychange',
@@ -1029,7 +1052,7 @@
                 if ((! $.browser.modern)  &&  (iEvent.propertyName != 'value'))
                     return;
 
-                iHandler.call(iEvent.target, iEvent, this.value);
+                TypeBack.call(this, iHandler, iEvent, 'value');
             }
         );
 
@@ -1038,7 +1061,7 @@
             return  iHandler.call(
                 iEvent.target,
                 iEvent,
-                iEvent.clipboardData.getData(
+                ($.browser.modern ? iEvent : BOM).clipboardData.getData(
                     $.browser.modern ? 'text/plain' : 'text'
                 )
             );
@@ -1055,7 +1078,7 @@
             if (iEvent.ctrlKey || iEvent.shiftKey || iEvent.altKey)
                 return;
 
-            iHandler.call(iEvent.target, iEvent, iEvent.target.innerText);
+            TypeBack.call(iEvent.target, iHandler, iEvent, 'innerText');
         });
 
         return this;
