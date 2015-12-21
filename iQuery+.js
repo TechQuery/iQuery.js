@@ -2,7 +2,7 @@
 //              >>>  iQuery+  <<<
 //
 //
-//    [Version]     v0.5  (2015-12-14)  Stable
+//    [Version]     v0.6  (2015-12-19)  Stable
 //
 //    [Based on]    jQuery  v1.9+
 //
@@ -13,7 +13,7 @@
 
 (function (BOM, DOM, $) {
 
-/* ---------- ListView Interface  v0.3 ---------- */
+/* ---------- ListView Interface  v0.4 ---------- */
 
 //  Thanks "EasyWebApp" Project --- http://git.oschina.net/Tech_Query/EasyWebApp
 
@@ -33,17 +33,22 @@
         iView = (iView instanceof _Self_)  ?  iView  :  this;
 
         this.callback = {
-            insert:    [ ],
-            remove:    [ ]
+            insert:         [ ],
+            remove:         [ ],
+            afterRender:    [ ]
         };
         if (onInsert)  iView.on('insert', onInsert);
 
         if (iView !== this)  return iView;
 
         this.$_View = $_View.data('_LVI_', this);
-        this.$_Template = this.$_View.children($_Item).eq(0).addClass('ListView_Item');
-        this.length = 0;
         this.data = [ ];
+
+        var $_List = this.$_View.children($_Item);
+        $.extend(this, $.makeArray($_List));
+        this.length = $_List.length;
+
+        this.$_Template = $(this[0]).clone(true);
 
 //        this.limit = parseInt( this.$_View.attr('max') )  ||  Infinity;
 //        this.limit = (this.data.length > this.limit) ? this.limit : this.data.length;
@@ -52,16 +57,35 @@
     ListView.listSelector = 'ul, ol, dl, tbody, *[multiple]';
 
     function _Callback_(iType, $_Item, iValue, Index) {
-        var iCallback = this.callback[iType],  iReturn;
+        var iCallback = this.callback[iType],  iReturn,
+            iArgs = ($_Item instanceof $)  ?
+                [$_Item.data('LV_Model', iValue),  iValue,  Index]  :
+                [$_Item];
 
         for (var i = 0;  i < iCallback.length;  i++)
-            iReturn = iCallback[i].call(
-                this,  $_Item.data('LV_Model', iValue),  iValue,  Index
-            );
+            iReturn = iCallback[i].apply(this, iArgs);
+
         return iReturn;
     }
 
+    function New_Item($_Item, Index) {
+        $_Item.after( this.$_Template.clone(true)[0] );
+
+        $_Item = $($_Item[0].nextElementSibling);
+        this.splice(Index, 0, $_Item[0]);
+
+        return $_Item;
+    }
+
     $.extend(ListView.prototype, {
+        slice:      Array.prototype.slice,
+        splice:     Array.prototype.splice,
+        destroy:    function () {
+            this.data = [ ];
+
+            return  this.$_View.empty().append( this.$_Template )
+                    .data('_LVI_', null);
+        },
         on:         function (iType, iCallback) {
             if (
                 (typeof iType == 'string')  &&
@@ -71,51 +95,61 @@
 
             return this;
         },
-        indexOf:    function () {
-            return  this.$_View.children('.ListView_Item').eq( arguments[0] );
+        indexOf:    function (Index) {
+            return  isNaN(parseInt( Index ))  ?
+                [ ].indexOf.call(this, Index)  :
+                $(this.slice(Index,  ++Index ? Index : undefined));
         },
         insert:     function (iValue, Index) {
             iValue = (iValue === undefined)  ?  { }  :  iValue;
             Index = Index || 0;
 
-            var $_Clone = this.$_Template.clone(true);
+            var $_Item = this.indexOf(Index),  iArgs;
 
-            this.indexOf(Index).before( $_Clone[0] );
+            if (! $_Item.length)
+                $_Item = New_Item.call(this, this.indexOf(--Index), Index);
+            else if ( $_Item.hasClass('ListView_Item') )
+                $_Item = New_Item.call(this, $_Item, Index);
+
+            $_Item.addClass('ListView_Item');
 
             var iReturn = _Callback_.call(
-                    this,  'insert',  $_Clone,  iValue,  Index
+                    this,  'insert',  $_Item,  iValue,  Index
                 );
             this.data.splice(
                 Index,  0,  (iReturn === undefined) ? iValue : iReturn
             );
 
-            this.length++ ;
-
-            return $_Clone;
+            return $_Item;
         },
         render:     function (iData, DetachTemplate) {
             iData = $.likeArray(iData) ? iData : [iData];
 
             for (var i = 0;  i < iData.length;  i++)
-                this.insert( iData[i] );
+                this.insert(iData[i], i);
 
-            if (DetachTemplate)  this.$_Template.detach();
+            _Callback_.call(this, 'afterRender', iData);
 
             return this;
         },
         remove:     function (Index) {
-            Index = parseInt(Index);
-            if (isNaN( Index ))  return;
-
             var $_Item = this.indexOf(Index);
 
-            if (false === _Callback_.call(
-                this,  'remove',  $_Item,  this.data[Index],  Index
-            ))
-                return;
+            if (typeof $_Item == 'number')
+                $_Item = $([Index,  Index = $_Item][0]);
 
-            this.data.splice(Index, 1);
-            $_Item.remove();
+            if (
+                $_Item.length  &&
+                (false !== _Callback_.call(
+                    this,  'remove',  $_Item,  this.data[Index],  Index
+                ))
+            ) {
+                this.data.splice(Index, 1);
+                $_Item.remove();
+                this.splice(Index, 1);
+            }
+
+            return this;
         },
         valueOf:    function () {
             var iValue = this.data[Number( arguments[0] )];

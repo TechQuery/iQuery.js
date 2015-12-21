@@ -2,7 +2,7 @@
 //              >>>  jQuery+  <<<
 //
 //
-//    [Version]     v5.5  (2015-12-16)
+//    [Version]     v5.8  (2015-12-17)
 //
 //    [Based on]    jQuery  v1.9+
 //
@@ -280,18 +280,25 @@
         return true;
     };
 
-/* ---------- 字符串切割扩展（类 PHP） v0.1 ---------- */
+/* ---------- 字符串扩展（借鉴 PHP） v0.2 ---------- */
 
-    $.split = function (iString, iSplit, iLimit, iJoin) {
-        iString = iString.split(iSplit);
-        if (iLimit) {
-            iString[iLimit - 1] = iString.slice(iLimit - 1).join(
-                (typeof iJoin == 'string') ? iJoin : iSplit
-            );
-            iString.length = iLimit;
+    $.extend({
+        split:         function (iString, iSplit, iLimit, iJoin) {
+            iString = iString.split(iSplit);
+            if (iLimit) {
+                iString[iLimit - 1] = iString.slice(iLimit - 1).join(
+                    (typeof iJoin == 'string') ? iJoin : iSplit
+                );
+                iString.length = iLimit;
+            }
+            return iString;
+        },
+        byteLength:    function () {
+            return  arguments[0].replace(
+                /[^\u0033-\u007e\uff61-\uffef]/g,  'xx'
+            ).length;
         }
-        return iString;
-    };
+    });
 
 /* ---------- URL 处理扩展  v0.2 ---------- */
 
@@ -565,10 +572,20 @@
         return Pseudo_Rule;
     };
 
+/* ---------- DOM 选中区域获取  v0.1 ---------- */
+
+    $.fn.selection = function (iContent) {
+        var iSelection = (this[0].ownerDocument || this[0]).getSelection();
+
+        if (_Type_(this[0]) in Type_Info.DOM.root) {
+            if (iContent === undefined)  return iSelection;
+        } else if ( $.contains(this[0], iSelection.focusNode) )
+            return iSelection;
+    };
 
 /* ---------- DOM UI 数据读写  v0.4 ---------- */
 
-    var RE_URL = /^(\w+:)?\/\/[\u0033-\u007e\uff61-\uffef]+$/;
+    var RE_URL = /^(\w+:)?\/\/[\u0021-\u007e\uff61-\uffef]+$/;
 
     function Value_Operator(iValue) {
         var $_This = $(this),
@@ -808,7 +825,9 @@
                         iDHR.responseText = $_Content.find('body').text();
                         iDHR.status = 200;
                         iDHR.readyState = 4;
-                        iDHR.onready.call($_Form[0],  iDHR.responseAny(),  $_Content);
+                        iDHR.onready.call(
+                            $_Form[0],  iDHR.responseAny(),  $_Content,  iDHR
+                        );
                     } catch (iError) { }
                 });
             }).attr('name', iTarget);
@@ -830,7 +849,7 @@
                     if (iDHR.readyState) {
                         iDHR.status = 200;
                         iDHR.readyState = 4;
-                        iDHR.onready.apply(iDHR, arguments);
+                        iDHR.onready.call(iDHR, arguments[0], 'success', iDHR);
                     }
                     delete this[_UUID_];
                     iDHR.$_DOM.remove();
@@ -1035,14 +1054,16 @@
 /* ---------- 文字输入事件  v0.1 ---------- */
 
     function TypeBack(iHandler, iEvent, iKey) {
-        var iValue = this[iKey];
+        if (false !== iHandler.call(
+            iEvent.target,  iEvent,  this[iKey]
+        ))
+            return;
 
-        var iReturn = iHandler.call(iEvent.target, iEvent, iValue);
-
-        if (iReturn !== false)
-            $(this).data('_Last_Value_', iValue);
-        else
-            this[iKey] = $(this).data('_Last_Value_');
+        var iValue = this[iKey].split('');
+        iValue.splice(
+            BOM.getSelection().getRangeAt(0).startOffset - 1,  1
+        );
+        this[iKey] = iValue.join('');
     }
 
     $.fn.input = function (iHandler) {
@@ -1093,7 +1114,15 @@
         } else
             $.extend(this, iType);
 
-        if (iSource)  $.extend(this, iSource.dataset);
+        if (iSource)  return;
+
+        $.extend(this,  $.map(iSource.dataset,  function (iValue) {
+            if (typeof iValue == 'string')  try {
+                return  $.parseJSON(iValue);
+            } catch (iError) { }
+
+            return iValue;
+        }));
     }
 
     CrossPageEvent.prototype.valueOf = function () {
@@ -1193,9 +1222,14 @@
         return true;
     };
 
+})(self.jQuery || self.Zepto);
+
+
+(function (BOM, DOM, $) {
+
     /* ----- HTML 5 元素数据集  v0.1 ----- */
 
-    if ($.browser.modern)  return;
+    if (! ($.browser.msie < 11))  return;
 
     function DOMStringMap(iElement) {
         for (var i = 0, iAttr;  i < iElement.attributes.length;  i++) {
@@ -1212,4 +1246,37 @@
         set:    function () { }
     });
 
-})(self.jQuery || self.Zepto);
+    /* ----- DOM Selection 对象  v0.1 ----- */
+
+    if ($.browser.modern)  return;
+
+    function Selection(_DOM_) {
+        this._origin_ = _DOM_.selection;
+
+        this.type = this.getRangeAt().text ? 'Range' : 'Caret';
+        this.isCollapsed = true;
+        this.rangeCount = 1;
+
+        this.anchorNode = _DOM_.activeElement;
+        this.anchorOffset = 0;
+        this.focusNode = _DOM_.activeElement;
+        this.focusOffset = 0;
+    }
+
+    $.extend(Selection.prototype, {
+        getRangeAt:            function () {
+            return  this._origin_.createRange();
+        },
+        toString:              function () {
+            return  this.getRangeAt().text;
+        },
+        deleteFromDocument:    function () {
+            if (this.type == 'Range')  this.focusNode.innerText = '';
+        }
+    });
+
+    BOM.getSelection = DOM.getSelection = function () {
+        return  new Selection(this.document || this);
+    };
+
+})(self,  self.document,  self.jQuery || self.Zepto);

@@ -2,7 +2,7 @@
 //                >>>  iQuery.js  <<<
 //
 //
-//      [Version]    v1.0  (2015-12-16)  Stable
+//      [Version]    v1.0  (2015-12-21)  Stable
 //
 //      [Usage]      A Light-weight jQuery Compatible API
 //                   with IE 8+ compatibility.
@@ -958,6 +958,11 @@
             }
             return iString;
         },
+        byteLength:       function () {
+            return  arguments[0].replace(
+                /[^\u0021-\u007e\uff61-\uffef]/g,  'xx'
+            ).length;
+        },
         parseJSON:        BOM.JSON.parseAll,
         parseXML:         function (iString) {
             iString = iString.trim();
@@ -1479,7 +1484,7 @@
             if (! DOM.documentElement.classList)
                 return  ((' ' + this.attr('class') + ' ').indexOf(' ' + iClass + ' ') > -1);
             else
-                return  this[0].classList.contains(iClass);
+                return  (!! this[0])  &&  this[0].classList.contains(iClass);
         },
         bind:               function (iType, iCallback) {
             iType = iType.trim().split(/\s+/);
@@ -1711,7 +1716,7 @@
 
 
 /* ----- DOM UI Data Operator ----- */
-    var RE_URL = /^(\w+:)?\/\/[^\s]+$/;
+    var RE_URL = /^(\w+:)?\/\/[\u0021-\u007e\uff61-\uffef]+$/;
 
     function Value_Operator(iValue) {
         var $_This = $(this),
@@ -1901,6 +1906,17 @@
         });
 
         return Pseudo_Rule;
+    };
+
+/* ---------- Range of Selection ---------- */
+
+    $.fn.selection = function (iContent) {
+        var iSelection = (this[0].ownerDocument || this[0]).getSelection();
+
+        if ($.type(this[0]) in Type_Info.DOM.root) {
+            if (iContent === undefined)  return iSelection;
+        } else if ( $.contains(this[0], iSelection.focusNode) )
+            return iSelection;
     };
 
 })(self, self.document);
@@ -2238,6 +2254,37 @@
     });
 
 
+    /* ----- DOM Selection ----- */
+    function Selection(_DOM_) {
+        this._origin_ = _DOM_.selection;
+
+        this.type = this.getRangeAt().text ? 'Range' : 'Caret';
+        this.isCollapsed = true;
+        this.rangeCount = 1;
+
+        this.anchorNode = _DOM_.activeElement;
+        this.anchorOffset = 0;
+        this.focusNode = _DOM_.activeElement;
+        this.focusOffset = 0;
+    }
+
+    $.extend(Selection.prototype, {
+        getRangeAt:            function () {
+            return  this._origin_.createRange();
+        },
+        toString:              function () {
+            return  this.getRangeAt().text;
+        },
+        deleteFromDocument:    function () {
+            if (this.type == 'Range')  this.focusNode.innerText = '';
+        }
+    });
+
+    BOM.getSelection = DOM.getSelection = function () {
+        return  new Selection(this.document || this);
+    };
+
+
     /* ----- XML DOM Parser ----- */
     var IE_DOMParser = (function (MS_Version) {
             for (var i = 0; i < MS_Version.length; i++)  try {
@@ -2401,14 +2448,16 @@
     /* ----- Text Input Event ----- */
 
     function TypeBack(iHandler, iEvent, iKey) {
-        var iValue = this[iKey];
+        if (false !== iHandler.call(
+            iEvent.target,  iEvent,  this[iKey]
+        ))
+            return;
 
-        var iReturn = iHandler.call(iEvent.target, iEvent, iValue);
-
-        if (iReturn !== false)
-            $(this).data('_Last_Value_', iValue);
-        else
-            this[iKey] = $(this).data('_Last_Value_');
+        var iValue = this[iKey].split('');
+        iValue.splice(
+            BOM.getSelection().getRangeAt(0).startOffset - 1,  1
+        );
+        this[iKey] = iValue.join('');
     }
 
     $.fn.input = function (iHandler) {
@@ -2459,7 +2508,15 @@
         } else
             $.extend(this, iType);
 
-        if (iSource)  $.extend(this, iSource.dataset);
+        if (iSource)  return;
+
+        $.extend(this,  $.map(iSource.dataset,  function (iValue) {
+            if (typeof iValue == 'string')  try {
+                return  $.parseJSON(iValue);
+            } catch (iError) { }
+
+            return iValue;
+        }));
     }
 
     CrossPageEvent.prototype.valueOf = function () {
@@ -2729,7 +2786,7 @@
                 if (! (iXHR.crossDomain || (iXHR.readyState == 4)))  return;
 
                 if (typeof iXHR.onready == 'function')
-                    iXHR.onready.call(iXHR, iXHR.responseAny());
+                    iXHR.onready.call(iXHR, iXHR.responseAny(), 'complete', iXHR);
                 iXHR = null;
             };
             XHR_Open.apply(this,  this.requestArgs = arguments);
@@ -2826,7 +2883,9 @@
                         iDHR.responseText = $_Content.find('body').text();
                         iDHR.status = 200;
                         iDHR.readyState = 4;
-                        iDHR.onready.call($_Form[0],  iDHR.responseAny(),  $_Content);
+                        iDHR.onready.call(
+                            $_Form[0],  iDHR.responseAny(),  $_Content,  iDHR
+                        );
                     } catch (iError) { }
                 });
             }).attr('name', iTarget);
@@ -2848,7 +2907,7 @@
                     if (iDHR.readyState) {
                         iDHR.status = 200;
                         iDHR.readyState = 4;
-                        iDHR.onready.apply(iDHR, arguments);
+                        iDHR.onready.call(iDHR, arguments[0], 'success', iDHR);
                     }
                     delete this[_UUID_];
                     iDHR.$_DOM.remove();

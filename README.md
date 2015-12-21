@@ -43,6 +43,7 @@
  - 新增 **对象值相等**判断方法 —— $.isEqual()
  - 新增 **纯数据类型**判断方法 —— $.isData()
  - 新增 **字符串部分分割**方法 —— $.split()（借鉴 PHP）
+ - 新增 **字符串字节长度**方法 —— $.byteLength()
  - 新增 **URL 参数对象化**方法（$.param() 的逆方法）—— $.paramJSON()，其返回值自带的 .toString() 有 **JSON 格式化（美化）输出**能力
  - 更智能的 $.get()、$.post()：支持 form 元素、FormData 对象的请求数据形式，整合 XHR、XDR、JSONP、iframe **自适应 跨域请求**，**自动转换响应内容**为 JSON 或 XML 对象实例
  - 新增 **$.delete()、$.put()**，方便实现基于 RESTful API 的单页应用
@@ -62,6 +63,7 @@
  - 新增 **DOM 元素 z-index 集成方法** —— $.fn.zIndex()，集“**取实际值、赋值、同辈置顶/沉底**”功能于一身
  - 新增 **.cssRule() 静态/实例方法**，便于就近声明 DOM 元素的 CSS 规则
  - 新增 **伪类/元素 CSS 规则对象 提取方法** —— $.cssPseudo()
+ - 新增 DOM 元素选区方法 —— $.fn.selection()
  - 封装 **Animate.css** 为 $.fn.cssAnimate()，其调用参数 兼容 $.fn.animate()
  - 封装了**触屏单指手势事件**（tap、press、swipe），并为桌面端、移动端提供一致的操作体验
  - 统一 **mousewheel 事件**，并新增其快捷方法
@@ -98,6 +100,7 @@
  - 自带 **CSSStyleDeclaration 对象**，为 IE 8 提供 **getComputedStyle** 支持，并封装了 M$ DirectX 滤镜属性转换
  - 自带 **HTMLEvents、CustomEvent 对象**，为 IE 8 提供 **W3C Event API** 支持
  - 自带 **HTML 5 Form API**，为 IE 8、iOS WebKit 提供兼容支持
+ - 自带 Selection 对象，为 IE 8 提供 选中文本读取支持
  - 自带 DOMParser 对象，为 IE 8 提供 **XML 文档解析**支持
 
 
