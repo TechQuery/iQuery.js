@@ -2,7 +2,7 @@
 //              >>>  iQuery+  <<<
 //
 //
-//    [Version]     v0.6  (2015-12-19)  Stable
+//    [Version]     v0.6  (2015-12-23)  Stable
 //
 //    [Based on]    jQuery  v1.9+
 //
@@ -26,7 +26,7 @@
         $_View = $($_View);
         if (typeof $_Item == 'function') {
             onInsert = $_Item;
-            $_Item = undefined;
+            $_Item = [undefined];
         }
 
         iView = $_View.data('_LVI_');
@@ -44,11 +44,15 @@
         this.$_View = $_View.data('_LVI_', this);
         this.data = [ ];
 
-        var $_List = this.$_View.children($_Item);
-        $.extend(this, $.makeArray($_List));
-        this.length = $_List.length;
+        this.selector = $_Item;
+        this.length = 0;
 
-        this.$_Template = $(this[0]).clone(true);
+        for (;  ;  this.length++) {
+            this[this.length] = this.itemOf(this.length);
+
+            if (! this[this.length].length)  break;
+        }
+        this.$_Template = this[0].clone(true);
 
 //        this.limit = parseInt( this.$_View.attr('max') )  ||  Infinity;
 //        this.limit = (this.data.length > this.limit) ? this.limit : this.data.length;
@@ -69,22 +73,42 @@
     }
 
     function New_Item($_Item, Index) {
-        $_Item.after( this.$_Template.clone(true)[0] );
+        var $_Clone = this.$_Template.clone(true);
 
-        $_Item = $($_Item[0].nextElementSibling);
-        this.splice(Index, 0, $_Item[0]);
+        if ($_Item.length)
+            $_Item.after($_Clone);
+        else {
+            this.$_View.append($_Clone);
+            Index = 0
+        }
 
-        return $_Item;
+        this.splice(Index, 0, $_Clone);
+
+        return $_Clone;
     }
 
     $.extend(ListView.prototype, {
+        itemOf:     function (Index) {
+            Index = Index || 0;
+
+            var $_Item = [ ];
+
+            for (var i = 0, _Item_;  i < this.selector.length;  i++) {
+                _Item_ = this.$_View.children( this.selector[i] )[Index];
+                if (_Item_)  $_Item[i] = _Item_;
+            }
+            return  $.extend($(), $_Item, {
+                length:    $_Item.length
+            });
+        },
         slice:      Array.prototype.slice,
         splice:     Array.prototype.splice,
-        destroy:    function () {
+        clear:      function () {
             this.data = [ ];
+            this.splice(0, this.length);
+            this.$_View.empty();
 
-            return  this.$_View.empty().append( this.$_Template )
-                    .data('_LVI_', null);
+            return this;
         },
         on:         function (iType, iCallback) {
             if (
@@ -98,7 +122,7 @@
         indexOf:    function (Index) {
             return  isNaN(parseInt( Index ))  ?
                 [ ].indexOf.call(this, Index)  :
-                $(this.slice(Index,  ++Index ? Index : undefined));
+                $(this.slice(Index,  ++Index ? Index : undefined)[0]);
         },
         insert:     function (iValue, Index) {
             iValue = (iValue === undefined)  ?  { }  :  iValue;
@@ -132,16 +156,23 @@
 
             return this;
         },
+        valueOf:    function (Index) {
+            var iValue = this.data.slice(
+                    Index,  ++Index ? Index : undefined
+                );
+            return  (iValue === undefined) ? $.makeArray(this.data) : iValue;
+        },
         remove:     function (Index) {
             var $_Item = this.indexOf(Index);
 
-            if (typeof $_Item == 'number')
-                $_Item = $([Index,  Index = $_Item][0]);
-
+            if (typeof $_Item == 'number') {
+                Index = $_Item;
+                $_Item = this.indexOf(Index);
+            }
             if (
                 $_Item.length  &&
                 (false !== _Callback_.call(
-                    this,  'remove',  $_Item,  this.data[Index],  Index
+                    this,  'remove',  $_Item,  this.valueOf(Index),  Index
                 ))
             ) {
                 this.data.splice(Index, 1);
@@ -150,11 +181,6 @@
             }
 
             return this;
-        },
-        valueOf:    function () {
-            var iValue = this.data[Number( arguments[0] )];
-
-            return  (iValue === undefined) ? $.makeArray(this.data) : iValue;
         }
     });
 

@@ -2,7 +2,7 @@
 //                >>>  iQuery.js  <<<
 //
 //
-//      [Version]    v1.0  (2015-12-21)  Stable
+//      [Version]    v1.0  (2015-12-17)  Stable
 //
 //      [Usage]      A Light-weight jQuery Compatible API
 //                   with IE 8+ compatibility.
@@ -2508,7 +2508,7 @@
         } else
             $.extend(this, iType);
 
-        if (iSource)  return;
+        if (! (iSource instanceof Element))  return;
 
         $.extend(this,  $.map(iSource.dataset,  function (iValue) {
             if (typeof iValue == 'string')  try {
@@ -2705,7 +2705,7 @@
     }
 
     function XD_Request(iData) {
-        this.withCredentials = true;
+//        this.withCredentials = true;
 
         if (typeof iData == 'string')
             this.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');

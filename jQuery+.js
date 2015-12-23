@@ -1114,7 +1114,7 @@
         } else
             $.extend(this, iType);
 
-        if (iSource)  return;
+        if (! (iSource instanceof Element))  return;
 
         $.extend(this,  $.map(iSource.dataset,  function (iValue) {
             if (typeof iValue == 'string')  try {
