@@ -2,7 +2,7 @@
 //                >>>  iQuery.js  <<<
 //
 //
-//      [Version]    v1.0  (2015-12-17)  Stable
+//      [Version]    v1.0  (2015-12-24)  Stable
 //
 //      [Usage]      A Light-weight jQuery Compatible API
 //                   with IE 8+ compatibility.
@@ -1477,14 +1477,11 @@
             });
         },
         hasClass:           function (iClass) {
-            if (typeof iClass != 'string')  return false;
-
-            iClass = iClass.trim();
-
-            if (! DOM.documentElement.classList)
-                return  ((' ' + this.attr('class') + ' ').indexOf(' ' + iClass + ' ') > -1);
-            else
-                return  (!! this[0])  &&  this[0].classList.contains(iClass);
+            return (
+                (typeof iClass == 'string')  &&
+                this[0]  &&
+                this[0].classList.contains( iClass.trim() )
+            );
         },
         bind:               function (iType, iCallback) {
             iType = iType.trim().split(/\s+/);
@@ -2705,7 +2702,7 @@
     }
 
     function XD_Request(iData) {
-//        this.withCredentials = true;
+        this.withCredentials = true;
 
         if (typeof iData == 'string')
             this.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
@@ -3148,6 +3145,34 @@
             helpURL:    'https://msdn.microsoft.com/en-us/library/1dk3k160(VS.85).aspx'
         });
     };
+
+    /* ----- DOM Class List ----- */
+
+    function DOMTokenList() {
+        var iClass = arguments[0].getAttribute('class').trim().split(/\s+/);
+
+        $.extend(this, iClass);
+
+        this.length = iClass.length;
+    }
+
+    DOMTokenList.prototype.contains = function (iClass) {
+        if (iClass.match(/\s+/))
+            throw  new DOMException([
+                "Failed to execute 'contains' on 'DOMTokenList': The token provided (",
+                iClass,
+                ") contains HTML space characters, which are not valid in tokens."
+            ].join("'"));
+
+        return  (Array.prototype.indexOf.call(this, iClass) > -1);
+    };
+
+    Object.defineProperty(Element.prototype, 'classList', {
+        get:    function () {
+            return  new DOMTokenList(this);
+        },
+        set:    function () { }
+    });
 
     /* ----- History API ----- */
 

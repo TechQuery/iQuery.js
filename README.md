@@ -94,7 +94,8 @@
  - 重写 IE 8 Error 对象的 valueOf 方法，使之返回可查询的错误码（附带 官方文档 URL）
  - 新增 **DOMHttpRequest 对象**，封装了 **JSONP Get**、**iframe Post**
  - 自带 Element 对象的 `firstElementChild`、`lastElementChild`、`previousElementSibling`、`nextElementSibling` 属性
- - 自带 **DOMStringMap 对象**，为 IE 8/9 提供 **dataset** 支持
+ - 自带 **DOMTokenList 对象**，为 IE 8/9 提供 **classList** 支持
+ - 自带 **DOMStringMap 对象**，为 IE 8/9/10 提供 **dataset** 支持
  - 自带 **HTML 5 History API**，为 IE 8/9 提供兼容支持
  - 修正 IE 8- DOM Attribute 系列方法对 JavaScript 关键字的特殊处理
  - 自带 **CSSStyleDeclaration 对象**，为 IE 8 提供 **getComputedStyle** 支持，并封装了 M$ DirectX 滤镜属性转换
