@@ -1031,6 +1031,10 @@
             return  $.split(arguments[0] || BOM.location.href,  '?',  2)[0]
                     .split('/').slice(0, -1).join('/');
         },
+        urlDomain:        function () {
+            return  (arguments[0] || BOM.location.href)
+                    .split('/').slice(0, 3).join('/');
+        },
         data:             function (iElement, iName, iValue) {
             return  _DOM_.operate('Data', [iElement], iName, iValue);
         },
@@ -1476,12 +1480,12 @@
                 return  new_Class.join(' ');
             });
         },
-        hasClass:           function (iClass) {
-            return (
-                (typeof iClass == 'string')  &&
-                this[0]  &&
-                this[0].classList.contains( iClass.trim() )
-            );
+        hasClass:           function () {
+            try {
+                return this[0].classList.contains(arguments[0]);
+            } catch (iError) {
+                return false;
+            }
         },
         bind:               function (iType, iCallback) {
             iType = iType.trim().split(/\s+/);
@@ -1573,10 +1577,10 @@
             this.data('_trigger_', arguments[1]);
 
             return  this.each(function () {
-                _Type_ = (
-                    (('on' + iType)  in  this.constructor.prototype)  ||
-                    (iType in Type_Info.DOM_Event)
-                ) ? 'HTMLEvents' : 'CustomEvent';
+                var _Type_ = (
+                        (('on' + iType)  in  this.constructor.prototype)  ||
+                        (iType in Type_Info.DOM_Event)
+                    ) ? 'HTMLEvents' : 'CustomEvent';
 
                 var iEvent = DOM.createEvent(_Type_);
                 iEvent['init' + (

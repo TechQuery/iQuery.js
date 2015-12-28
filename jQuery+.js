@@ -333,6 +333,10 @@
         filePath:         function () {
             return  $.split(arguments[0] || BOM.location.href,  '?',  2)[0]
                     .split('/').slice(0, -1).join('/');
+        },
+        urlDomain:        function () {
+            return  (arguments[0] || BOM.location.href)
+                    .split('/').slice(0, 3).join('/');
         }
     });
 

@@ -2,7 +2,7 @@
 //              >>>  iQuery+  <<<
 //
 //
-//    [Version]     v0.6  (2015-12-23)  Stable
+//    [Version]     v0.7  (2015-12-28)  Stable
 //
 //    [Based on]    jQuery  v1.9+
 //
@@ -13,7 +13,7 @@
 
 (function (BOM, DOM, $) {
 
-/* ---------- ListView Interface  v0.4 ---------- */
+/* ---------- ListView Interface  v0.5 ---------- */
 
 //  Thanks "EasyWebApp" Project --- http://git.oschina.net/Tech_Query/EasyWebApp
 
@@ -48,9 +48,11 @@
         this.length = 0;
 
         for (;  ;  this.length++) {
-            this[this.length] = this.itemOf(this.length);
+            $_Item = this.itemOf(this.length);
 
-            if (! this[this.length].length)  break;
+            if (! $_Item.length)  break;
+
+            this[this.length] = $_Item;
         }
         this.$_Template = this[0].clone(true);
 
@@ -75,27 +77,37 @@
     function New_Item($_Item, Index) {
         var $_Clone = this.$_Template.clone(true);
 
-        if ($_Item.length)
-            $_Item.after($_Clone);
+        if (! Index)
+            this.$_View.prepend($_Clone);
         else {
-            this.$_View.append($_Clone);
-            Index = 0
+            if (! $_Item.length)
+                this.itemOf(Index - 1).slice(-1).after($_Clone);
+            else
+                $_Item.eq(0).before($_Clone);
         }
-
-        this.splice(Index, 0, $_Clone);
 
         return $_Clone;
     }
 
     $.extend(ListView.prototype, {
+        on:         function (iType, iCallback) {
+            if (
+                (typeof iType == 'string')  &&
+                (typeof iCallback == 'function')  &&
+                (this.callback[iType].indexOf(iCallback) == -1)
+            )
+                this.callback[iType].push(iCallback);
+
+            return this;
+        },
         itemOf:     function (Index) {
             Index = Index || 0;
 
             var $_Item = [ ];
 
             for (var i = 0, _Item_;  i < this.selector.length;  i++) {
-                _Item_ = this.$_View.children( this.selector[i] )[Index];
-                if (_Item_)  $_Item[i] = _Item_;
+                _Item_ = this.$_View.children( this.selector[i] ).eq(Index)[0];
+                if (_Item_)  $_Item.push(_Item_);
             }
             return  $.extend($(), $_Item, {
                 length:    $_Item.length
@@ -103,48 +115,41 @@
         },
         slice:      Array.prototype.slice,
         splice:     Array.prototype.splice,
-        clear:      function () {
-            this.data = [ ];
-            this.splice(0, this.length);
-            this.$_View.empty();
-
-            return this;
-        },
-        on:         function (iType, iCallback) {
-            if (
-                (typeof iType == 'string')  &&
-                (typeof iCallback == 'function')
-            )
-                this.callback[iType].push(iCallback);
-
-            return this;
-        },
         indexOf:    function (Index) {
-            return  isNaN(parseInt( Index ))  ?
-                [ ].indexOf.call(this, Index)  :
-                $(this.slice(Index,  ++Index ? Index : undefined)[0]);
+            if (! isNaN(parseInt( Index )))
+                return  $(this.slice(Index,  ++Index ? Index : undefined)[0]);
+
+            var $_Item = $(Index);
+
+            for (var i = 0;  i < this.length;  i++)
+                if (this[i].index($_Item[0]) > -1)
+                    return i;
+            return -1;
         },
         insert:     function (iValue, Index) {
             iValue = (iValue === undefined)  ?  { }  :  iValue;
-            Index = Index || 0;
 
-            var $_Item = this.indexOf(Index),  iArgs;
+            Index = parseInt(Index) || 0;
+            Index = (Index < this.length)  ?  Index  :  this.length;
 
-            if (! $_Item.length)
-                $_Item = New_Item.call(this, this.indexOf(--Index), Index);
-            else if ( $_Item.hasClass('ListView_Item') )
+            var $_Item = this.itemOf(Index);
+
+            if ((! $_Item.length)  ||  $_Item.hasClass('ListView_Item'))
                 $_Item = New_Item.call(this, $_Item, Index);
 
-            $_Item.addClass('ListView_Item');
+            var _Index_ = (Index < 0)  ?  (Index - 1)  :  Index;
 
             var iReturn = _Callback_.call(
-                    this,  'insert',  $_Item,  iValue,  Index
+                    this,  'insert',  $_Item,  iValue,  _Index_
                 );
+            this.splice(
+                Index,  0,  this.itemOf(_Index_).addClass('ListView_Item')
+            );
             this.data.splice(
                 Index,  0,  (iReturn === undefined) ? iValue : iReturn
             );
 
-            return $_Item;
+            return this.indexOf(_Index_);
         },
         render:     function (iData, DetachTemplate) {
             iData = $.likeArray(iData) ? iData : [iData];
@@ -159,13 +164,14 @@
         valueOf:    function (Index) {
             var iValue = this.data.slice(
                     Index,  ++Index ? Index : undefined
-                );
+                )[0];
             return  (iValue === undefined) ? $.makeArray(this.data) : iValue;
         },
         remove:     function (Index) {
             var $_Item = this.indexOf(Index);
 
             if (typeof $_Item == 'number') {
+                if ($_Item < 0)  return this;
                 Index = $_Item;
                 $_Item = this.indexOf(Index);
             }
@@ -179,6 +185,32 @@
                 $_Item.remove();
                 this.splice(Index, 1);
             }
+
+            return this;
+        },
+        clear:      function () {
+            this.data = [ ];
+            this.splice(0, this.length);
+            this.$_View.empty();
+
+            return this;
+        },
+        focus:      function () {
+            var $_Item = this.indexOf( arguments[0] );
+
+            if (typeof $_Item == 'number') {
+                if ($_Item < 0)  return this;
+                $_Item = this.indexOf($_Item);
+            }
+            if (this.$_View.css('position') == 'static')
+                this.$_View.css('position', 'relative');
+
+            var iCoord = $_Item.position();
+
+            this.$_View.animate({
+                scrollTop:     iCoord.top,
+                scrollLeft:    iCoord.left
+            });
 
             return this;
         }
