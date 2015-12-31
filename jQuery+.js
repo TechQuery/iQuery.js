@@ -2,7 +2,7 @@
 //              >>>  jQuery+  <<<
 //
 //
-//    [Version]     v5.8  (2015-12-17)
+//    [Version]     v5.8  (2015-12-31)
 //
 //    [Based on]    jQuery  v1.9+
 //
@@ -1058,16 +1058,16 @@
 /* ---------- 文字输入事件  v0.1 ---------- */
 
     function TypeBack(iHandler, iEvent, iKey) {
-        if (false !== iHandler.call(
-            iEvent.target,  iEvent,  this[iKey]
-        ))
+        var iValue = this[iKey]();
+
+        if (false  !==  iHandler.call(iEvent.target, iEvent, iValue))
             return;
 
-        var iValue = this[iKey].split('');
+        iValue = iValue.split('');
         iValue.splice(
             BOM.getSelection().getRangeAt(0).startOffset - 1,  1
         );
-        this[iKey] = iValue.join('');
+        this[iKey]( iValue.join('') );
     }
 
     $.fn.input = function (iHandler) {
@@ -1077,7 +1077,7 @@
                 if ((! $.browser.modern)  &&  (iEvent.propertyName != 'value'))
                     return;
 
-                TypeBack.call(this, iHandler, iEvent, 'value');
+                TypeBack.call($(this), iHandler, iEvent, 'val');
             }
         );
 
@@ -1103,7 +1103,7 @@
             if (iEvent.ctrlKey || iEvent.shiftKey || iEvent.altKey)
                 return;
 
-            TypeBack.call(iEvent.target, iHandler, iEvent, 'innerText');
+            TypeBack.call($(iEvent.target), iHandler, iEvent, 'text');
         });
 
         return this;
@@ -1155,20 +1155,21 @@
 
         var _Event_ = new CrossPageEvent(iType,  ($_Source || { })[0]);
 
-        $_BOM.on('message',  function (iEvent) {
-            iEvent = iEvent.originalEvent || iEvent;
+        if (typeof iCallback == 'function')
+            $_BOM.on('message',  function (iEvent) {
+                iEvent = iEvent.originalEvent || iEvent;
 
-            var iReturn = new CrossPageEvent(iEvent.data);
+                var iReturn = new CrossPageEvent(iEvent.data);
 
-            if (
-                (iEvent.source === iTarget)  &&
-                (iReturn.type == iType)  &&
-                $.isEqual(iReturn, _Event_)
-            ) {
-                iCallback.call($_Source ? $_Source[0] : this,  iReturn);
-                $_BOM.off('message', arguments.callee);
-            }
-        });
+                if (
+                    (iEvent.source === iTarget)  &&
+                    (iReturn.type == iType)  &&
+                    $.isEqual(iReturn, _Event_)
+                ) {
+                    iCallback.call($_Source ? $_Source[0] : this,  iReturn);
+                    $_BOM.off('message', arguments.callee);
+                }
+            });
 
         iTarget.postMessage(
             $.extend({data: iData},  _Event_.valueOf()),  '*'
@@ -1239,16 +1240,20 @@
         for (var i = 0, iAttr;  i < iElement.attributes.length;  i++) {
             iAttr = iElement.attributes[i];
             if (iAttr.nodeName.slice(0, 5) == 'data-')
-                this[ iAttr.nodeName.toCamelCase() ] = iAttr.nodeValue;
+                this[ iAttr.nodeName.slice(5).toCamelCase() ] = iAttr.nodeValue;
         }
     }
+    try {
+        Element.prototype.dataset;
 
-    Object.defineProperty(Element.prototype, 'dataset', {
-        get:    function () {
-            return  new DOMStringMap(this);
-        },
-        set:    function () { }
-    });
+        Object.defineProperty(Element.prototype, 'dataset', {
+            get:    function () {
+                return  new DOMStringMap(this);
+            },
+            set:    function () { }
+        });
+    } catch (iError) { }
+
 
     /* ----- DOM Selection 对象  v0.1 ----- */
 

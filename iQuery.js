@@ -2,7 +2,7 @@
 //                >>>  iQuery.js  <<<
 //
 //
-//      [Version]    v1.0  (2015-12-24)  Stable
+//      [Version]    v1.0  (2015-12-31)  Stable
 //
 //      [Usage]      A Light-weight jQuery Compatible API
 //                   with IE 8+ compatibility.
@@ -1250,8 +1250,9 @@
             var $_Result = [ ];
 
             for (var i = 0;  i < this.length;  i++)
-                $_Result = $_Result.concat( Object_Seek.call(this[i], 'parentNode') );
-
+                $_Result = $_Result.concat(
+                    Object_Seek.call(this[i], 'parentNode').slice(0, -1)
+                );
             $_Result = $( $.unique($_Result) );
 
             return this.pushStack(
@@ -1490,43 +1491,36 @@
         bind:               function (iType, iCallback) {
             iType = iType.trim().split(/\s+/);
 
-            return  this.each(function () {
-                var $_This = $(this);
+            return  this.data('_event_',  function () {
+                var Event_Data = arguments[1] || { };
 
-                for (var i = 0;  i < iType.length;  i++)
-                    $_This.data('_event_',  function () {
-                        var Event_Data = arguments[1] || { };
-
-                        if (! Event_Data[iType[i]]) {
-                            Event_Data[iType[i]] = [ ];
-                            this.addEventListener(iType[i], Proxy_Handler);
-                        }
-                        Event_Data[iType[i]].push(iCallback);
-
-                        return Event_Data;
-                    });
+                for (var i = 0;  i < iType.length;  i++) {
+                    if (! Event_Data[iType[i]]) {
+                        Event_Data[iType[i]] = [ ];
+                        this.addEventListener(iType[i], Proxy_Handler);
+                    }
+                    Event_Data[iType[i]].push(iCallback);
+                }
+                return Event_Data;
             });
         },
         unbind:             function (iType, iCallback) {
             iType = iType.trim().split(/\s+/);
 
-            return  this.each(function () {
-                var $_This = $(this);
+            return  this.data('_event_',  function () {
+                var Event_Data = arguments[1] || { };
 
-                for (var i = 0;  i < iType.length;  i++)
-                    $_This.data('_event_',  function () {
-                        var Event_Data = arguments[1] || { };
-                        var This_Event = Event_Data[iType[i]];
+                for (var i = 0, iHandler;  i < iType.length;  i++) {
+                    iHandler = Event_Data[iType[i]];
 
-                        if (iCallback)
-                            This_Event.splice(This_Event.indexOf(iCallback), 1);
-                        if ((! iCallback) || (! This_Event.length))
-                            Event_Data[iType[i]] = null;
-                        if (! Event_Data[iType[i]])
-                            this.removeEventListener(iType[i], Proxy_Handler);
-
-                        return Event_Data;
-                    });
+                    if (iCallback)
+                        iHandler.splice(iHandler.indexOf(iCallback), 1);
+                    if (! (iCallback && iHandler.length))
+                        Event_Data[iType[i]] = null;
+                    if (! Event_Data[iType[i]])
+                        this.removeEventListener(iType[i], Proxy_Handler);
+                }
+                return Event_Data;
             });
         },
         on:                 function (iType, iFilter, iCallback) {
@@ -2449,16 +2443,16 @@
     /* ----- Text Input Event ----- */
 
     function TypeBack(iHandler, iEvent, iKey) {
-        if (false !== iHandler.call(
-            iEvent.target,  iEvent,  this[iKey]
-        ))
+        var iValue = this[iKey]();
+
+        if (false  !==  iHandler.call(iEvent.target, iEvent, iValue))
             return;
 
-        var iValue = this[iKey].split('');
+        iValue = iValue.split('');
         iValue.splice(
             BOM.getSelection().getRangeAt(0).startOffset - 1,  1
         );
-        this[iKey] = iValue.join('');
+        this[iKey]( iValue.join('') );
     }
 
     $.fn.input = function (iHandler) {
@@ -2468,7 +2462,7 @@
                 if ((! $.browser.modern)  &&  (iEvent.propertyName != 'value'))
                     return;
 
-                TypeBack.call(this, iHandler, iEvent, 'value');
+                TypeBack.call($(this), iHandler, iEvent, 'val');
             }
         );
 
@@ -2494,7 +2488,7 @@
             if (iEvent.ctrlKey || iEvent.shiftKey || iEvent.altKey)
                 return;
 
-            TypeBack.call(iEvent.target, iHandler, iEvent, 'innerText');
+            TypeBack.call($(iEvent.target), iHandler, iEvent, 'text');
         });
 
         return this;
@@ -2546,18 +2540,19 @@
 
         var _Event_ = new CrossPageEvent(iType,  ($_Source || { })[0]);
 
-        $_BOM.on('message',  function (iEvent) {
-            var iReturn = new CrossPageEvent(iEvent.data);
+        if (typeof iCallback == 'function')
+            $_BOM.on('message',  function (iEvent) {
+                var iReturn = new CrossPageEvent(iEvent.data);
 
-            if (
-                (iEvent.source === iTarget)  &&
-                (iReturn.type == iType)  &&
-                $.isEqual(iReturn, _Event_)
-            ) {
-                iCallback.call($_Source ? $_Source[0] : this,  iReturn);
-                $_BOM.off('message', arguments.callee);
-            }
-        });
+                if (
+                    (iEvent.source === iTarget)  &&
+                    (iReturn.type == iType)  &&
+                    $.isEqual(iReturn, _Event_)
+                ) {
+                    iCallback.call($_Source ? $_Source[0] : this,  iReturn);
+                    $_BOM.off('message', arguments.callee);
+                }
+            });
 
         iTarget.postMessage(
             $.extend({data: iData},  _Event_.valueOf()),  '*'
@@ -2773,34 +2768,39 @@
             }
         };
 
-    var XHR_Open = BOM.XMLHttpRequest.prototype.open,
-        XHR_Send = BOM.XMLHttpRequest.prototype.send;
+    function XHR_Extend(XHR_Proto, iMore) {
+        var XHR_Open = XHR_Proto.open,  XHR_Send = XHR_Proto.send;
 
-    $.extend(BOM.XMLHttpRequest.prototype, XHR_Extension, {
-        open:           function () {
-            this.crossDomain = X_Domain(arguments[1]);
+        $.extend(XHR_Proto, XHR_Extension, {
+            open:           function () {
+                this.crossDomain = X_Domain(arguments[1]);
 
-            var iXHR = this;
-            this[
-                this.crossDomain ? 'onload' : 'onreadystatechange'
-            ] = function () {
-                if (! (iXHR.crossDomain || (iXHR.readyState == 4)))  return;
+                var iXHR = this;
+                this[
+                    this.crossDomain ? 'onload' : 'onreadystatechange'
+                ] = function () {
+                    if (! (iXHR.crossDomain || (iXHR.readyState == 4)))  return;
 
-                if (typeof iXHR.onready == 'function')
-                    iXHR.onready.call(iXHR, iXHR.responseAny(), 'complete', iXHR);
-                iXHR = null;
-            };
-            XHR_Open.apply(this,  this.requestArgs = arguments);
-        },
-        send:    function () {
-            XHR_Send.call(this,  this.requestData = arguments[0]);
-        }
-    });
+                    if (typeof iXHR.onready == 'function')
+                        iXHR.onready.call(iXHR, iXHR.responseAny(), 'complete', iXHR);
+                    iXHR = null;
+                };
+                XHR_Open.apply(this,  this.requestArgs = arguments);
+            },
+            send:    function () {
+                XHR_Send.call(this,  this.requestData = arguments[0]);
+            }
+        }, iMore);
+    }
+
+    XHR_Extend(BOM.XMLHttpRequest.prototype);
 
     if ($.browser.msie < 10)
-        BOM.XDomainRequest.prototype.setRequestHeader = function () {
-            console.warn("IE 8/9 XDR doesn't support Changing HTTP Headers...");
-        };
+        XHR_Extend(BOM.XDomainRequest.prototype, {
+            setRequestHeader:    function () {
+                console.warn("IE 8/9 XDR doesn't support Changing HTTP Headers...");
+            }
+        });
 
     /* ----- HTML DOM SandBox ----- */
     $.fn.sandBox = function () {
@@ -3123,7 +3123,7 @@
         for (var i = 0, iAttr;  i < iElement.attributes.length;  i++) {
             iAttr = iElement.attributes[i];
             if (iAttr.nodeName.slice(0, 5) == 'data-')
-                this[ iAttr.nodeName.toCamelCase() ] = iAttr.nodeValue;
+                this[ iAttr.nodeName.slice(5).toCamelCase() ] = iAttr.nodeValue;
         }
     }
 

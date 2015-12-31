@@ -205,11 +205,13 @@
             if (this.$_View.css('position') == 'static')
                 this.$_View.css('position', 'relative');
 
-            var iCoord = $_Item.position();
+            this.$_View.children().removeClass('active');
+
+            var iCoord = $_Item.addClass('active').position();
 
             this.$_View.animate({
-                scrollTop:     iCoord.top,
-                scrollLeft:    iCoord.left
+                scrollTop:     this.$_View.scrollTop() + iCoord.top,
+                scrollLeft:    this.$_View.scrollLeft() + iCoord.left
             });
 
             return this;
