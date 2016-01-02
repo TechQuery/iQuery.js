@@ -2,12 +2,12 @@
 //              >>>  jQuery+  <<<
 //
 //
-//    [Version]     v5.8  (2015-12-31)
+//    [Version]     v5.8  (2016-01-03)
 //
 //    [Based on]    jQuery  v1.9+
 //
 //
-//        (C)2014-2015  shiy2008@gmail.com
+//        (C)2014-2016  shiy2008@gmail.com
 //
 
 
@@ -774,21 +774,20 @@
                 return iContent;
             },
             retry:          function (Wait_Seconds) {
-                var iXHR = new this.constructor,
-                    iData = this.requestData;
-                iXHR.onready = this.onready;
-                iXHR.open.apply(iXHR, this.requestArgs);
+                this.open.apply(this, this.requestArgs);
+
+                var iXHR = this;
 
                 $.wait(Wait_Seconds, function () {
                     iXHR.withCredentials = true;
 
-                    if (typeof iData == 'string')
+                    if (typeof iXHR.requestData == 'string')
                         iXHR.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
                     if (! iXHR.crossDomain) {
                         iXHR.setRequestHeader('X-Requested-With', 'XMLHttpRequest');
                         iXHR.setRequestHeader('Accept', '*/*');
                     }
-                    iXHR.send(iData);
+                    iXHR.send(iXHR.requestData);
                 });
             }
         };

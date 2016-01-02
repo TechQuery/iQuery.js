@@ -2,13 +2,13 @@
 //                >>>  iQuery.js  <<<
 //
 //
-//      [Version]    v1.0  (2015-12-31)  Stable
+//      [Version]    v1.0  (2016-01-03)  Stable
 //
 //      [Usage]      A Light-weight jQuery Compatible API
 //                   with IE 8+ compatibility.
 //
 //
-//            (C)2015    shiy2008@gmail.com
+//          (C)2015-2016    shiy2008@gmail.com
 //
 
 
@@ -844,6 +844,41 @@
             '(.*?)' + _Pseudo_ + "([>\\+~\\s]*.*)"
         );
 
+    var DOM_Sort = (_Browser_.msie < 11) ?
+            function (iSet) {
+                var $_Temp = [ ],  $_Result = [ ];
+
+                for (var i = 0;  i < iSet.length;  i++) {
+                    $_Temp[i] = new String(iSet[i].sourceIndex);
+                    $_Temp[i].DOM = iSet[i];
+                }
+                $_Temp.sort();
+
+                for (var i = 0, j = 0;  i < $_Temp.length;  i++) {
+                    if (i  &&  ($_Temp[i].valueOf() == $_Temp[i - 1].valueOf()))
+                        continue;
+
+                    $_Result[j++] = $_Temp[i].DOM;
+                }
+
+                return $_Result;
+            } :
+            function (iSet) {
+                iSet.sort(function (A, B) {
+                    return  A.compareDocumentPosition(B) & 2;
+                });
+
+                var $_Result = [ ];
+
+                for (var i = 0, j = 0;  i < iSet.length;  i++) {
+                    if (i  &&  (iSet[i] === iSet[i - 1]))  continue;
+
+                    $_Result[j++] = iSet[i];
+                }
+
+                return $_Result;
+            };
+
     function DOM_Search(iRoot, iSelector) {
         var _Self_ = arguments.callee;
 
@@ -859,14 +894,12 @@
                 _Selector_[1] = _Selector_[1] || '*';
                 _Selector_[1] += (_Selector_[1].match(/[\s>\+~]\s*$/) ? '*' : '');
 
-                return _Object_.unique(
-                    _Object_.map(
-                        _Self_(iRoot, _Selector_[1]),
-                        function (iDOM) {
-                            if ( iPseudo[_Pseudo_].filter(iDOM) )
-                                return  _Selector_[2]  ?  _Self_(iDOM,  '*' + _Selector_[2])  :  iDOM;
-                        }
-                    )
+                return _Object_.map(
+                    _Self_(iRoot, _Selector_[1]),
+                    function (iDOM) {
+                        if ( iPseudo[_Pseudo_].filter(iDOM) )
+                            return  _Selector_[2]  ?  _Self_(iDOM,  '*' + _Selector_[2])  :  iDOM;
+                    }
                 );
             }
         });
@@ -892,6 +925,8 @@
                 this.context = iContext || DOM;
                 this.selector = Element_Set;
                 Element_Set = DOM_Search(this.context, Element_Set);
+                Element_Set = (Element_Set.length < 2)  ?
+                    Element_Set  :  DOM_Sort(Element_Set);
             } else
                 Element_Set = DOM_Create(
                     Element_Set,  _Object_.isPlainObject(iContext) && iContext
@@ -1131,21 +1166,9 @@
         splice:             Array.prototype.splice,
         jquery:             '1.9.1',
         iquery:             '1.0',
-        pushStack:          function () {
-            var $_New = Array.prototype.sort.call($(arguments[0]),  function (A, B) {
-                    var $_A = Object_Seek.call(A, 'parentNode').reverse(),
-                        $_B = Object_Seek.call(B, 'parentNode').reverse();
+        pushStack:          function ($_New) {
+            $_New = $(DOM_Sort($_New));
 
-                    if ($_A.length != $_B.length)
-                        return  $_B.length - $_A.length;
-
-                    for (var i = 0;  i < $_A.length;  i++)
-                        if ($_A[i] !== $_B[i])
-                            return (
-                                Object_Seek.call($_A[i], 'previousElementSibling').length  -
-                                Object_Seek.call($_B[i], 'previousElementSibling').length
-                            );
-                });
             $_New.prevObject = this;
 
             return $_New;
@@ -1253,10 +1276,9 @@
                 $_Result = $_Result.concat(
                     Object_Seek.call(this[i], 'parentNode').slice(0, -1)
                 );
-            $_Result = $( $.unique($_Result) );
 
             return this.pushStack(
-                arguments[0]  ?  $_Result.filter(arguments[0])  :  $_Result
+                arguments[0]  ?  $($_Result).filter(arguments[0])  :  $_Result
             );
         },
         sameParents:        function () {
@@ -1323,7 +1345,6 @@
                 $_Result = $_Result.concat(
                     Object_Seek.call(this[i], 'nextElementSibling')
                 );
-            $_Result = $.unique($_Result);
 
             return this.pushStack(
                 arguments[0]  ?  $($_Result).filter(arguments[0])  :  $_Result
@@ -1336,7 +1357,7 @@
                 $_Result = $_Result.concat(
                     Object_Seek.call(this[i], 'previousElementSibling')
                 );
-            $_Result = $.unique($_Result).reverse();
+            $_Result.reverse();
 
             return this.pushStack(
                 arguments[0]  ?  $($_Result).filter(arguments[0])  :  $_Result
@@ -1355,7 +1376,7 @@
             for (var i = 0;  i < this.length;  i++)
                 $_Result = Array_Concat($_Result,  $(arguments[0], this[i]));
 
-            return  this.pushStack( $.unique($_Result) );
+            return  this.pushStack($_Result);
         },
         detach:             function () {
             for (var i = 0;  i < this.length;  i++)
@@ -2684,19 +2705,13 @@
 (function (BOM, DOM, $) {
 
     /* ----- XML HTTP Request ----- */
-    function X_Domain(Target_URL) {
-        var iPort = BOM.location.port || (
-                (BOM.location.protocol == 'http:')  &&  80
-            ) || (
-                (BOM.location.protocol == 'https:')  &&  443
-            );
-        Target_URL = Target_URL.match(/^(\w+?(s)?:)?\/\/([\w\d:]+@)?([^\/\:\@]+)(:(\d+))?/);
+    function X_Domain() {
+        var iPort = BOM.location.port  ?  (':' + BOM.location.port)  :  '';
 
-        if (! Target_URL)  return false;
         return (
-            (Target_URL[1]  &&  (Target_URL[1] != BOM.location.protocol))  ||
-            (Target_URL[4]  &&  (Target_URL[4] != BOM.location.hostname))  ||
-            (Target_URL[6]  &&  (Target_URL[6] != iPort))
+            $.urlDomain( arguments[0] )  ==  [
+                BOM.location.protocol, '//', DOM.domain, iPort
+            ].join('')
         );
     }
 
@@ -2757,13 +2772,11 @@
                 return iContent;
             },
             retry:          function (Wait_Seconds) {
-                var iXHR = new this.constructor,
-                    iData = this.requestData;
-                iXHR.onready = this.onready;
-                iXHR.open.apply(iXHR, this.requestArgs);
+                this.open.apply(this, this.requestArgs);
 
+                var iXHR = this;
                 $.wait(Wait_Seconds, function () {
-                    XD_Request.call(iXHR, iData);
+                    XD_Request.call(iXHR, iXHR.requestData);
                 });
             }
         };
