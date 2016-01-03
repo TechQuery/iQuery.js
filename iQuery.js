@@ -737,13 +737,13 @@
                 _DOM_.operate('Attribute', iNew, iKey, iValue);
             });
 
-        if (iNew[0].parentNode)
-            iNew = _Object_.map(iNew,  function (iDOM, _Index_) {
-                iNew[_Index_].parentNode.removeChild(iDOM);
-                return iDOM;
-            });
-
-        return iNew;
+        return  iNew[0].parentNode ?
+            _Object_.map(iNew,  function (iDOM, _Index_) {
+                if (iDOM.nodeType == 1) {
+                    iNew[_Index_].parentNode.removeChild(iDOM);
+                    return iDOM;
+                }
+            }) : iNew;
     }
 
 
@@ -825,7 +825,6 @@
                 }
             }
         };
-
     _Object_.extend(iPseudo, {
         ':hidden':    {
             filter:    function () {
@@ -844,6 +843,33 @@
             '(.*?)' + _Pseudo_ + "([>\\+~\\s]*.*)"
         );
 
+    function DOM_Search(iRoot, iSelector) {
+        var _Self_ = arguments.callee;
+
+        return  _Object_.map(iSelector.split(/\s*,\s*/),  function () {
+            try {
+                return  _Object_.makeArray( iRoot.querySelectorAll(arguments[0] || '*') );
+            } catch (iError) {
+                var _Selector_;
+                for (var _Pseudo_ in iPseudo) {
+                    _Selector_ = arguments[0].match(iPseudo[_Pseudo_].regexp);
+                    if (_Selector_)  break;
+                };
+                if (! _Selector_)  return;
+
+                _Selector_[1] = _Selector_[1] || '*';
+                _Selector_[1] += (_Selector_[1].match(/[\s>\+~]\s*$/) ? '*' : '');
+
+                return _Object_.map(
+                    _Self_(iRoot, _Selector_[1]),
+                    function (iDOM) {
+                        if ( iPseudo[_Pseudo_].filter(iDOM) )
+                            return  _Selector_[2]  ?  _Self_(iDOM,  '*' + _Selector_[2])  :  iDOM;
+                    }
+                );
+            }
+        });
+    }
     var DOM_Sort = (_Browser_.msie < 11) ?
             function (iSet) {
                 var $_Temp = [ ],  $_Result = [ ];
@@ -879,31 +905,6 @@
                 return $_Result;
             };
 
-    function DOM_Search(iRoot, iSelector) {
-        var _Self_ = arguments.callee;
-
-        return  _Object_.map(iSelector.split(/\s*,\s*/),  function () {
-            try {
-                return  _Object_.makeArray( iRoot.querySelectorAll(arguments[0] || '*') );
-            } catch (iError) {
-                var _Selector_;
-                for (var _Pseudo_ in iPseudo) {
-                    _Selector_ = arguments[0].match(iPseudo[_Pseudo_].regexp);
-                    if (_Selector_)  break;
-                };
-                _Selector_[1] = _Selector_[1] || '*';
-                _Selector_[1] += (_Selector_[1].match(/[\s>\+~]\s*$/) ? '*' : '');
-
-                return _Object_.map(
-                    _Self_(iRoot, _Selector_[1]),
-                    function (iDOM) {
-                        if ( iPseudo[_Pseudo_].filter(iDOM) )
-                            return  _Selector_[2]  ?  _Self_(iDOM,  '*' + _Selector_[2])  :  iDOM;
-                    }
-                );
-            }
-        });
-    }
 /* ---------- jQuery API ---------- */
 
     function iQuery(Element_Set, iContext) {
@@ -920,7 +921,9 @@
 
         if (! Element_Set) return;
 
-        if (typeof Element_Set == 'string') {
+        var iType = _Object_.type(Element_Set);
+
+        if (iType == 'String') {
             if (Element_Set[0] != '<') {
                 this.context = iContext || DOM;
                 this.selector = Element_Set;
@@ -931,35 +934,21 @@
                 Element_Set = DOM_Create(
                     Element_Set,  _Object_.isPlainObject(iContext) && iContext
                 );
-        }
-        this.add( Element_Set );
+        } else if (iType in Type_Info.DOM.element)
+            Element_Set = [ Element_Set ];
+
+        if (! _Object_.likeArray(Element_Set))
+            return;
+
+        _Object_.extend(this, Element_Set, {
+            length:     Element_Set.length,
+            context:    (Element_Set.length == 1)  ?
+                Element_Set[0].ownerDocument  :  this.context
+        });
     }
 
     var $ = BOM.iQuery = iQuery;
     $.fn = $.prototype;
-
-    $.fn.add = function (Element_Set) {
-        var iType = _Object_.type(Element_Set);
-
-        if (iType == 'String')
-            Element_Set = $(Element_Set, arguments[1]);
-        else if (iType in Type_Info.DOM.element)
-            Element_Set = [ Element_Set ];
-
-        if (_Object_.likeArray( Element_Set )) {
-            for (var i = 0;  i < Element_Set.length;  i++)
-                if (Element_Set[i] && (
-                    (Element_Set[i].nodeType == 1) ||
-                    (_Object_.type(Element_Set[i]) in Type_Info.DOM.root)
-                ))
-                    Array.prototype.push.call(this, Element_Set[i]);
-
-            if (this.length == 1)
-                this.context = this[0].ownerDocument;
-        }
-
-        return this;
-    };
 
     if (typeof BOM.jQuery != 'function')
         BOM.jQuery = BOM.$ = $;
@@ -1167,8 +1156,9 @@
         jquery:             '1.9.1',
         iquery:             '1.0',
         pushStack:          function ($_New) {
-            $_New = $(DOM_Sort($_New));
-
+            $_New = $(DOM_Sort(
+                ($_New instanceof Array)  ?  $_New  :  $.makeArray($_New)
+            ));
             $_New.prevObject = this;
 
             return $_New;
@@ -1182,6 +1172,11 @@
                 $_New = this.prevObject.pushStack($_New);
 
             return $_New;
+        },
+        add:                function () {
+            return this.pushStack(
+                Array_Concat(this,  $.apply(BOM, arguments))
+            );
         },
         slice:              function () {
             return  this.pushStack( [ ].slice.apply(this, arguments) );
