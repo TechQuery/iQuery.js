@@ -2,7 +2,7 @@
 //              >>>  jQuery+  <<<
 //
 //
-//    [Version]     v5.8  (2016-01-03)
+//    [Version]     v5.8  (2016-01-04)
 //
 //    [Based on]    jQuery  v1.9+
 //
@@ -219,7 +219,9 @@
         )
             return 'Window';
 
-        if (iVar.defaultView || iVar.documentElement)
+        if (iVar.location && (
+            iVar.location  ===  (iVar.defaultView || { }).location
+        ))
             return 'Document';
 
         if (

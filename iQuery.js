@@ -2,7 +2,7 @@
 //                >>>  iQuery.js  <<<
 //
 //
-//      [Version]    v1.0  (2016-01-03)  Stable
+//      [Version]    v1.0  (2016-01-04)  Stable
 //
 //      [Usage]      A Light-weight jQuery Compatible API
 //                   with IE 8+ compatibility.
@@ -204,22 +204,30 @@
             isPlainObject:    function (iValue) {
                 return  iValue && (iValue.constructor === Object);
             },
+            likeArray:        function (iObject) {
+                return (
+                    iObject  &&
+                    (typeof iObject.length == 'number')  &&
+                    (typeof iObject.valueOf() != 'string')
+                );
+            },
             each:             function (Arr_Obj, iEvery) {
-                if (Arr_Obj)
-                    if (typeof Arr_Obj.length == 'number')
-                        for (var i = 0;  i < Arr_Obj.length;  i++)  try {
-                            if (iEvery.call(Arr_Obj[i], i, Arr_Obj[i]) === false)
-                                break;
-                        } catch (iError) {
-                            console.dir( iError.valueOf() );
-                        }
-                    else
-                        for (var iKey in Arr_Obj)  try {
-                            if (iEvery.call(Arr_Obj[iKey], iKey, Arr_Obj[iKey]) === false)
-                                break;
-                        } catch (iError) {
-                            console.dir( iError.valueOf() );
-                        }
+                if (this.likeArray( Arr_Obj ))
+                    for (var i = 0;  i < Arr_Obj.length;  i++)  try {
+                        if (false  ===  iEvery.call(Arr_Obj[i], i, Arr_Obj[i]))
+                            break;
+                    } catch (iError) {
+                        console.dir( iError.valueOf() );
+                    }
+                else
+                    for (var iKey in Arr_Obj)  try {
+                        if (false === iEvery.call(
+                            Arr_Obj[iKey],  iKey,  Arr_Obj[iKey]
+                        ))
+                            break;
+                    } catch (iError) {
+                        console.dir( iError.valueOf() );
+                    }
                 return Arr_Obj;
             },
             extend:           function () {
@@ -245,7 +253,9 @@
 
                             if (iDeep)  try {
                                 if ((iValue instanceof Array)  ||  _Object_.isPlainObject(iValue))
-                                    iTarget[iKey] = arguments.callee.call(this, true, undefined, iValue);
+                                    iTarget[iKey] = arguments.callee.call(
+                                        this,  true,  undefined,  iValue
+                                    );
                             } catch (iError) { }
                         }
                 return iTarget;
@@ -253,7 +263,7 @@
             map:              function (iSource, iCallback) {
                 var iTarget = { },  iArray;
 
-                if (typeof iSource.length == 'number') {
+                if (this.likeArray( iSource )) {
                     iTarget = [ ];
                     iArray = true;
                 }
@@ -272,13 +282,6 @@
                     });
 
                 return iTarget;
-            },
-            likeArray:        function (iObject) {
-                return (
-                    iObject  &&
-                    (typeof iObject.length == 'number')  &&
-                    (typeof iObject.valueOf() != 'string')
-                );
             },
             makeArray:        _Browser_.modern ?
                 function () {
@@ -384,7 +387,9 @@
         )
             return 'Window';
 
-        if (iVar.defaultView || iVar.documentElement)
+        if (iVar.location && (
+            iVar.location  ===  (iVar.defaultView || { }).location
+        ))
             return 'Document';
 
         if (
@@ -847,10 +852,21 @@
         var _Self_ = arguments.callee;
 
         return  _Object_.map(iSelector.split(/\s*,\s*/),  function () {
+            var _Selector_;
             try {
-                return  _Object_.makeArray( iRoot.querySelectorAll(arguments[0] || '*') );
+                _Selector_ = arguments[0] || '*';
+                var _EID_ = iRoot.id;
+
+                if (_Object_.type(iRoot) != 'Document') {
+                    iRoot.id = (_EID_ || '').trim()  ||  _Time_.uuid();
+                    _Selector_ = '#'  +  iRoot.id  +  ' '  +  _Selector_;
+                }
+                $_Result = _Object_.makeArray(iRoot.querySelectorAll(_Selector_));
+
+                if (iRoot.id != _EID_)  iRoot.id = _EID_;
+
+                return $_Result;
             } catch (iError) {
-                var _Selector_;
                 for (var _Pseudo_ in iPseudo) {
                     _Selector_ = arguments[0].match(iPseudo[_Pseudo_].regexp);
                     if (_Selector_)  break;
@@ -864,13 +880,14 @@
                     _Self_(iRoot, _Selector_[1]),
                     function (iDOM) {
                         if ( iPseudo[_Pseudo_].filter(iDOM) )
-                            return  _Selector_[2]  ?  _Self_(iDOM,  '*' + _Selector_[2])  :  iDOM;
+                            return  _Selector_[2]  ?
+                                _Self_(iDOM,  '*' + _Selector_[2])  :  iDOM;
                     }
                 );
             }
         });
     }
-    var DOM_Sort = (_Browser_.msie < 11) ?
+    var DOM_Sort = _Browser_.msie ?
             function (iSet) {
                 var $_Temp = [ ],  $_Result = [ ];
 
@@ -880,12 +897,11 @@
                 }
                 $_Temp.sort();
 
-                for (var i = 0, j = 0;  i < $_Temp.length;  i++) {
-                    if (i  &&  ($_Temp[i].valueOf() == $_Temp[i - 1].valueOf()))
-                        continue;
-
-                    $_Result[j++] = $_Temp[i].DOM;
-                }
+                for (var i = 0, j = 0;  i < $_Temp.length;  i++)
+                    if ((! i)  ||  ($_Temp[i] == 0)  ||  (
+                        $_Temp[i].valueOf() != $_Temp[i - 1].valueOf()
+                    ))
+                        $_Result[j++] = $_Temp[i].DOM;
 
                 return $_Result;
             } :
@@ -1069,6 +1085,15 @@
                 return  !!(iParent.compareDocumentPosition(iChild) & 16);
             else
                 return  (iParent !== iChild) && iParent.contains(iChild);
+        },
+        proxy:            function (iFunction, iContext) {
+            var iArgs = $.makeArray(arguments).slice(2);
+
+            return  function () {
+                return  iFunction.apply(
+                    iContext || this,  Array_Concat(iArgs, arguments)
+                );
+            };
         }
     });
 
@@ -1148,6 +1173,8 @@
             );
         return iSource;
     }
+
+    var Array_Reverse = Array.prototype.reverse;
 
     $.fn.extend = $.extend;
 
@@ -1272,14 +1299,15 @@
                     Object_Seek.call(this[i], 'parentNode').slice(0, -1)
                 );
 
-            return this.pushStack(
+            return  Array_Reverse.call(this.pushStack(
                 arguments[0]  ?  $($_Result).filter(arguments[0])  :  $_Result
-            );
+            ));
         },
         sameParents:        function () {
             if (this.length < 2)  return this.parents();
 
-            var iMin = Object_Seek.call(this[0], 'parentNode'),  iPrev;
+            var iMin = Object_Seek.call(this[0], 'parentNode').slice(0, -1),
+                iPrev;
 
             for (var i = 1, iLast;  i < this.length;  i++) {
                 iLast = Object_Seek.call(this[i], 'parentNode');
@@ -1297,14 +1325,14 @@
                     $_Result = iMin.slice(i);
                     break;
                 }
-            return this.pushStack(
+            return  Array_Reverse.call(this.pushStack(
                 arguments[0]  ?  $($_Result).filter(arguments[0])  :  $_Result
-            );
+            ));
         },
         parentsUntil:       function () {
-            return  this.parents().not(
-                    $(arguments[0]).parents().addBack()
-                );
+            return  Array_Reverse.call(
+                this.parents().not( $(arguments[0]).parents().addBack() )
+            );
         },
         children:           function () {
             var $_Result = [ ];
@@ -1455,6 +1483,8 @@
                 return this.css($.extend({
                     position:    'fixed'
                 }, iCoordinate));
+
+            if (! this[0].ownerDocument)  return;
 
             var _BOM_ = this[0].ownerDocument.defaultView,
                 iBCR = this[0].getBoundingClientRect();
@@ -2770,6 +2800,7 @@
                 this.open.apply(this, this.requestArgs);
 
                 var iXHR = this;
+
                 $.wait(Wait_Seconds, function () {
                     XD_Request.call(iXHR, iXHR.requestData);
                 });
@@ -3161,7 +3192,7 @@
     /* ----- DOM Class List ----- */
 
     function DOMTokenList() {
-        var iClass = arguments[0].getAttribute('class').trim().split(/\s+/);
+        var iClass = (arguments[0].getAttribute('class') || '').trim().split(/\s+/);
 
         $.extend(this, iClass);
 
