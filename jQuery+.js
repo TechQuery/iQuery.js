@@ -2,7 +2,7 @@
 //              >>>  jQuery+  <<<
 //
 //
-//    [Version]     v5.8  (2016-01-04)
+//    [Version]     v5.8  (2016-01-08)
 //
 //    [Based on]    jQuery  v1.9+
 //
@@ -650,7 +650,9 @@
 
             Value_Operator.call(
                 $_Name[i],
-                Data_Set  ?  iFiller[iName]  :  iFiller.call($_Name[i], iName)
+                Data_Set  ?  iFiller[iName]  :  iFiller.call(
+                    $_Name[i],  iName,  i,  $_Name
+                )
             );
         }
         return this;
@@ -1097,11 +1099,9 @@
 
             if (
                 (iKey < 48)  ||  (iKey > 105)  ||
-                ((iKey > 90)  &&  (iKey < 96))
+                ((iKey > 90)  &&  (iKey < 96))  ||
+                iEvent.ctrlKey  ||  iEvent.shiftKey  ||  iEvent.altKey
             )
-                return;
-
-            if (iEvent.ctrlKey || iEvent.shiftKey || iEvent.altKey)
                 return;
 
             TypeBack.call($(iEvent.target), iHandler, iEvent, 'text');

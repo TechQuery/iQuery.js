@@ -2,7 +2,7 @@
 //                >>>  iQuery.js  <<<
 //
 //
-//      [Version]    v1.0  (2016-01-07)  Stable
+//      [Version]    v1.0  (2016-01-08)  Stable
 //
 //      [Usage]      A Light-weight jQuery Compatible API
 //                   with IE 8+ compatibility.
@@ -427,8 +427,8 @@
         return iResult;
     }
 
-
 /* ---------- DOM Info Operator - Get first, Set all. ---------- */
+
     var _DOM_ = {
             Get_Name_Type:    _inKey_('String', 'Array'),
             operate:          function (iType, iElement, iName, iValue) {
@@ -438,7 +438,10 @@
                             this[iType].clear(iElement[i], iName);
                     return iElement;
                 }
-                if ((iValue === undefined) && (_Object_.type(iName) in this.Get_Name_Type)) {
+                if (
+                    (iValue === undefined)  &&
+                    (_Object_.type(iName) in this.Get_Name_Type)
+                ) {
                     if (! iElement.length)
                         return;
                     else if (typeof iName == 'string')
@@ -449,29 +452,28 @@
                             iData[iName[i]] = this[iType].get(iElement[0], iName[i]);
                         return iData;
                     }
-                } else {
-                    var iResult;
-
-                    if (typeof iName == 'string') {
-                        if (typeof iValue == 'function') {
-                            for (var i = 0;  i < iElement.length;  i++)
-                                iResult = this[iType].set(iElement[i], iName, iValue.call(
-                                    iElement[i],  i,  this[iType].get(iElement[i], iName)
-                                ));
-                            return  iResult || iElement;
-                        } else {
-                            iResult = { };
-                            iResult[iName] = iValue;
-                            iName = iResult;
-                            iResult = undefined;
-                        }
-                    }
-                    for (var i = 0;  i < iElement.length;  i++)
-                        for (var iKey in iName)
-                            iResult = this[iType].set(iElement[i], iKey, iName[iKey]);
-
-                    return  iResult || iElement;
                 }
+                var iResult;
+
+                if (typeof iName == 'string') {
+                    if (typeof iValue == 'function') {
+                        for (var i = 0;  i < iElement.length;  i++)
+                            iResult = this[iType].set(iElement[i], iName, iValue.call(
+                                iElement[i],  i,  this[iType].get(iElement[i], iName)
+                            ));
+                        return  iResult || iElement;
+                    } else {
+                        iResult = { };
+                        iResult[iName] = iValue;
+                        iName = iResult;
+                        iResult = undefined;
+                    }
+                }
+                for (var i = 0;  i < iElement.length;  i++)
+                    for (var iKey in iName)
+                        iResult = this[iType].set(iElement[i], iKey, iName[iKey]);
+
+                return  iResult || iElement;
             }
         };
 
@@ -941,7 +943,9 @@
         for (var i = 1;  i < arguments.length;  i++)
             iSource = Array.prototype.concat.apply(
                 iSource,
-                $.likeArray( arguments[i] )  ?  arguments[i]  :  [arguments[i]]
+                $.likeArray( arguments[i] )  ?
+                    ($.browser.modern ? arguments[i] : $.makeArray(arguments[i]))  :
+                    [arguments[i]]
             );
         return iSource;
     }
@@ -1094,6 +1098,15 @@
             }
         };
     }
+    function Scroll_DOM() {
+        return (
+            ($.browser.webkit || (
+                (this.tagName || '').toLowerCase()  !=  'body'
+            )) ?
+            this : this.ownerDocument.documentElement
+        );
+    }
+
     function DOM_Scroll(iName) {
         iName = {
             scroll:    'scroll' + iName,
@@ -1104,23 +1117,25 @@
             iPX = parseInt(iPX);
 
             if ( isNaN(iPX) ) {
-                iPX = this[0][iName.scroll];
+                iPX = Scroll_DOM.call(this[0])[iName.scroll];
+
                 return  (iPX !== undefined) ? iPX : (
                     this[0].documentElement[iName.scroll] ||
                     this[0].defaultView[iName.offset] ||
                     this[0].body[iName.scroll]
                 );
             }
-            for (var i = 0;  i < this.length;  i++)
-                if (this[i][iName.scroll] !== undefined)
-                    this[i][iName.scroll] = iPX;
-                else
-                    this[i].documentElement[iName.scroll] =
+            for (var i = 0;  i < this.length;  i++) {
+                if (this[i][iName.scroll] !== undefined) {
+                    Scroll_DOM.call(this[i])[iName.scroll] = iPX;
+                    continue;
+                }
+                this[i].documentElement[iName.scroll] =
                     this[i].defaultView[iName.offset] =
                     this[i].body[iName.scroll] = iPX;
+            }
         };
     }
-
     function DOM_Insert(iName) {
         return  function () {
             if (this.length) {
@@ -1624,7 +1639,9 @@
 
             Value_Operator.call(
                 $_Name[i],
-                Data_Set  ?  iFiller[iName]  :  iFiller.call($_Name[i], iName)
+                Data_Set  ?  iFiller[iName]  :  iFiller.call(
+                    $_Name[i],  iName,  i,  $_Name
+                )
             );
         }
         return this;
@@ -1701,32 +1718,32 @@
         }
         var CSS_Text = CSS_Rule2Text(iRule);
 
-        return  $('<style />', {
-            type:       'text/css',
-            'class':    'jQuery_CSS-Rule',
-            text:       (! iMedia) ? CSS_Text : [
-                '@media ' + iMedia + ' {',
-                CSS_Text.replace(/\n/m, "\n    "),
-                '}'
-            ].join("\n")
-        }).appendTo(DOM.head)[0].sheet;
+        var $_Style = $('<style />', {
+                type:       'text/css',
+                'class':    'jQuery_CSS-Rule',
+                text:       (! iMedia) ? CSS_Text : [
+                    '@media ' + iMedia + ' {',
+                    CSS_Text.replace(/\n/m, "\n    "),
+                    '}'
+                ].join("\n")
+            }).appendTo(DOM.head);
+
+        return  ($_Style[0].sheet || $_Style[0].styleSheet);
     };
 
     $.fn.cssRule = function (iRule, iCallback) {
         return  this.each(function () {
             var $_This = $(this);
-            var _UUID_ = $_This.data('css') || $.uuid();
+
+            var _UUID_ = $_This.data('css') || $.uuid(),  _Rule_ = { };
+
+            for (var iSelector in iRule)
+                _Rule_['*[data-css="' + _UUID_ + '"]' + iSelector] = iRule[iSelector];
 
             $(this).attr('data-css', _UUID_);
-            for (var iSelector in iRule) {
-                iRule['*[data-css="' + _UUID_ + '"]' + iSelector] = iRule[iSelector];
-                delete iRule[iSelector];
-            }
+            var iSheet = $.cssRule(_Rule_);
 
-            var iSheet = $.cssRule(iRule);
-
-            if (iCallback)
-                iCallback.call(this, iSheet);
+            if (typeof iCallback == 'function')  iCallback.call(this, iSheet);
         });
     };
 
@@ -1770,37 +1787,39 @@
 
 /* ---------- jQuery Event System ---------- */
 
-    function W3C_Event_Object(iType, iCustom) {
-        var iEvent = DOM.createEvent(iCustom ? 'CustomEvent' : 'HTMLEvents');
-
-        iEvent['init' + (iCustom ? 'CustomEvent' : 'Event')](
-            iType,  true,  true,  0
-        );
-        return iEvent;
-    }
-
-    function IE_Event_Fix() {
-        var iOffset = $(this.target).offset() || { };
+    function IE_Event_Fix(iEvent) {
+        var iOffset = $(iEvent.target).offset() || { };
 
         $.extend(this, {
-            type:               this.type,
-            bubbles:            true,
-            cancelable:         true,
-            isTrusted:          true,
             clientX:            iOffset.left,
             clientY:            iOffset.top,
             relatedTarget:      ({
-                mouseover:     this.fromElement,
-                mouseout:      this.toElement,
-                mouseenter:    this.fromElement || this.toElement,
-                mouseleave:    this.toElement || this.fromElement
-            })[this.type],
-            which:              (this.type && (this.type.slice(0, 3) == 'key'))  ?
-                this.keyCode  :  [0, 1, 3, 0, 2, 0, 0, 0][this.button],
-            detail:             0,
-            view:               BOM,
-            eventPhase:         3
+                mouseover:     iEvent.fromElement,
+                mouseout:      iEvent.toElement,
+                mouseenter:    iEvent.fromElement || iEvent.toElement,
+                mouseleave:    iEvent.toElement || iEvent.fromElement
+            })[iEvent.type],
+            which:              (iEvent.type && (iEvent.type.slice(0, 3) == 'key'))  ?
+                iEvent.keyCode  :  [0, 1, 3, 0, 2, 0, 0, 0][iEvent.button],
         });
+    }
+
+    function isOriginalEvent() {
+        return (
+            ('on' + this.type)  in
+            (this.target || DOM.documentElement).constructor.prototype
+        ) || (
+            $.browser.modern  &&  (this.type in Type_Info.DOM_Event)
+        );
+    }
+
+    function W3C_Event_Object(iType, iCustom, iDetail) {
+        var iEvent = DOM.createEvent(iCustom ? 'CustomEvent' : 'HTMLEvents');
+
+        iEvent['init' + (iCustom ? 'CustomEvent' : 'Event')](
+            iType,  true,  true,  iDetail
+        );
+        return iEvent;
     }
 
     $.Event = function (iEvent, iProperty) {
@@ -1812,36 +1831,38 @@
         if (! (this instanceof _Self_))
             return  new _Self_(iEvent, iProperty);
 
-        //  Event Property
+        //  Default Property
+        $.extend(this, {
+            bubbles:       true,
+            cancelable:    true,
+            isTrusted:     true,
+            detail:        0,
+            view:          BOM,
+            eventPhase:    3
+        });
+
+        //  Special Property
         var iCreate = (typeof iEvent == 'string');
 
         if (! iCreate) {
-            for (var iKey in iEvent)
-                if ((typeof iEvent[iKey] != 'function')  &&  (iKey[0] > 'Z'))
-                    this[iKey] = iEvent[iKey];
+            if ($.browser.modern) {
+                for (var iKey in iEvent)
+                    if ((typeof iEvent[iKey] != 'function')  &&  (iKey[0] > 'Z'))
+                        this[iKey] = iEvent[iKey];
+            } else
+                IE_Event_Fix.call(this, iEvent);
         }
         if ($.isPlainObject( iProperty ))  $.extend(this, iProperty);
 
         this.type = iCreate ? iEvent : this.type;
         this.target = this.target || this.srcElement;
-        this.isCustom = (this.type in Type_Info.DOM_Event)  ||  (
-            ('on' + this.type)  in
-            (this.target || DOM.documentElement).constructor.prototype
-        );
-        this.isCustom = (! this.isCustom);
+        this.isCustom = (! isOriginalEvent.call(this));
         this.originalEvent = (iCreate || $.isPlainObject(iEvent))  ?
             (
                 $.browser.modern ?
-                    W3C_Event_Object(this.type, this.isCustom)  :
+                    W3C_Event_Object(this.type, this.isCustom, this.detail)  :
                     (this.isCustom || DOM.createEventObject())
             ) : iEvent;
-
-        if (! $.browser.modern)  IE_Event_Fix.call(this);
-
-        if ($.browser.ff  &&  (this.type == 'DOMMouseScroll')) {
-            this.type = 'mousewheel';
-            this.wheelDelta = this.detail * -40;
-        }
     };
 
     $.extend($.Event.prototype, {
@@ -1891,14 +1912,20 @@
     function JE_Dispatch(iEvent, iFilter) {
         iEvent = $.Event(iEvent || BOM.event);
 
-        var $_Path = $(iEvent.target).parents().addBack();
+        var iTarget = iEvent.target;
+        var $_Path = $(iTarget).parents().addBack();
         var _Path_ = $.makeArray($_Path);
 
-        var Index = _Path_.indexOf( $_Path.filter(iFilter).slice(-1)[0] );
-
-        if (Index == -1)  return;
-
-        $_Path = iFilter ? _Path_.slice(Index) : _Path_.concat(DOM, BOM);
+        if (iFilter) {
+            var Index = _Path_.indexOf( $_Path.filter(iFilter).slice(-1)[0] );
+            if (Index == -1)  return;
+            _Path_ = _Path_.slice(Index);
+        }
+        $_Path = $(_Path_.concat(
+            ($.type(iTarget) == 'Document')  ?  [iTarget.defaultView]  :  [
+                iTarget.ownerDocument, iTarget.ownerDocument.defaultView
+            ]
+        ));
 
         for (var i = 0;  i < $_Path.length;  i++)
             if (
@@ -1934,7 +1961,7 @@
     }
 
     $.fn.extend({
-        bind:       function (iType, iCallback) {
+        bind:              function (iType, iCallback) {
             iType = iType.trim().split(/\s+/);
 
             return  this.data('_event_',  function () {
@@ -1945,7 +1972,10 @@
                         Event_Data[iType[i]] = [ ];
                         if ($.browser.modern)
                             this.addEventListener(iType[i], Proxy_Handler, false);
-                        else
+                        else if (isOriginalEvent({
+                            type:      iType[i],
+                            target:    this
+                        }))
                             this.attachEvent(
                                 iType[i],  $.proxy(IE_Event_Handler, this, Proxy_Handler)
                             );
@@ -1955,7 +1985,7 @@
                 return Event_Data;
             });
         },
-        unbind:     function (iType, iCallback) {
+        unbind:            function (iType, iCallback) {
             iType = iType.trim().split(/\s+/);
 
             return  this.data('_event_',  function () {
@@ -1963,18 +1993,20 @@
 
                 for (var i = 0, iHandler;  i < iType.length;  i++) {
                     iHandler = Event_Data[iType[i]];
+                    if (! iHandler)  continue;
 
-                    if (iCallback)
+                    if (typeof iCallback == 'function')
                         iHandler.splice(iHandler.indexOf(iCallback), 1);
-                    if (! (iCallback && iHandler.length))
-                        Event_Data[iType[i]] = null;
+                    else
+                        delete Event_Data[iType[i]];
+
                     if (! Event_Data[iType[i]])
                         this.removeEventListener(iType[i], Proxy_Handler);
                 }
                 return Event_Data;
             });
         },
-        on:         function (iType, iFilter, iCallback) {
+        on:                function (iType, iFilter, iCallback) {
             if (typeof iFilter != 'string')
                 return  this.bind.apply(this, arguments);
 
@@ -1994,37 +2026,41 @@
                         );
             });
         },
-        one:        function () {
-            var iArgs = $.makeArray(arguments);
+        one:               function () {
+            var iArgs = $.makeArray(arguments),  $_This = this;
             var iCallback = iArgs[iArgs.length - 1];
 
             iArgs.splice(-1,  1,  function () {
-                $.fn.unbind.apply($(this), iArgs);
-
+                $.fn.unbind.apply($_This, (
+                    (iArgs.length > 2)  ?  [iArgs[0], iArgs[2]]  :  iArgs
+                ));
                 return  iCallback.apply(this, arguments);
             });
 
             return  this.on.apply(this, iArgs);
         },
-        trigger:    function () {
+        trigger:           function () {
             this.data('_trigger_', arguments[1]);
 
-            for (var i = 0, iEvent, _Event_;  i < this.length;  i++) {
+            for (var i = 0, iEvent;  i < this.length;  i++) {
                 iEvent = $.Event(arguments[0],  {target: this[i]});
-                _Event_ = $.extend(iEvent.originalEvent, iEvent);
 
                 if ($.browser.modern) {
-                    this[i].dispatchEvent(_Event_);
+                    this[i].dispatchEvent(
+                        $.extend(iEvent.originalEvent, iEvent)
+                    );
                     continue;
                 }
                 if (! iEvent.isCustom)
-                    this[i].fireEvent(iEvent.type, _Event_);
+                    this[i].fireEvent(
+                        iEvent.type,  $.extend(iEvent.originalEvent, iEvent)
+                    );
                 else
-                    this[i]['on' + iEvent.type] = $.now();
+                    JE_Dispatch.call(this, iEvent);
             }
             return this;
         },
-        triggerHandler:     function () {
+        triggerHandler:    function () {
             var iHandler = $(this[0]).data('_event_'),  iReturn;
 
             iHandler = iHandler && iHandler[arguments[0]];
@@ -2037,7 +2073,7 @@
 
             return iReturn;
         },
-        clone:      function (iDeep) {
+        clone:             function (iDeep) {
             var $_Result = [ ];
 
             for (var i = 0, iEvent;  i < this.length;  i++) {
@@ -2385,21 +2421,24 @@
         };
 
     $.fn.hover = function (iEnter, iLeave) {
-        return  this.bind('mouseover', function () {
-                if (
-                    $.contains(this, arguments[0].relatedTarget) ||
-                    ($(arguments[0].target).css('position') in _Float_)
-                )
-                    return false;
-                iEnter.apply(this, arguments);
-            }).bind('mouseout', function () {
-                if (
-                    $.contains(this, arguments[0].relatedTarget) ||
-                    ($(arguments[0].target).css('position') in _Float_)
-                )
-                    return false;
-                (iLeave || iEnter).apply(this, arguments);
-            });
+        return  this.bind('mouseover',  function () {
+            if (
+                $.contains(this, arguments[0].relatedTarget) ||
+                ($(arguments[0].target).css('position') in _Float_)
+            )
+                return false;
+
+            iEnter.apply(this, arguments);
+
+        }).bind('mouseout',  function () {
+            if (
+                $.contains(this, arguments[0].relatedTarget) ||
+                ($(arguments[0].target).css('position') in _Float_)
+            )
+                return false;
+
+            (iLeave || iEnter).apply(this, arguments);
+        });
     };
 
     /* ----- Single Finger Touch ----- */
@@ -2495,11 +2534,9 @@
 
             if (
                 (iKey < 48)  ||  (iKey > 105)  ||
-                ((iKey > 90)  &&  (iKey < 96))
+                ((iKey > 90)  &&  (iKey < 96))  ||
+                iEvent.ctrlKey  ||  iEvent.shiftKey  ||  iEvent.altKey
             )
-                return;
-
-            if (iEvent.ctrlKey || iEvent.shiftKey || iEvent.altKey)
                 return;
 
             TypeBack.call($(iEvent.target), iHandler, iEvent, 'text');
@@ -2702,7 +2739,7 @@
         var iPort = BOM.location.port  ?  (':' + BOM.location.port)  :  '';
 
         return (
-            $.urlDomain( arguments[0] )  ==  [
+            $.urlDomain( arguments[0] )  !=  [
                 BOM.location.protocol, '//', DOM.domain, iPort
             ].join('')
         );
