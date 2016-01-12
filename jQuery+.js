@@ -2,7 +2,7 @@
 //              >>>  jQuery+  <<<
 //
 //
-//    [Version]     v5.8  (2016-01-08)
+//    [Version]     v5.8  (2016-01-12)
 //
 //    [Based on]    jQuery  v1.9+
 //
@@ -635,15 +635,11 @@
 
     $.fn.value = function (iFiller) {
         var $_Name = this.filter('*[name]');
-        if (! $_Name.length)
-            $_Name = this.find('*[name]');
+        $_Name = $_Name.length ? $_Name : this.find('*[name]');
 
-        if (! iFiller)
-            return Value_Operator.call($_Name[0]);
-        else if ( $.isPlainObject(iFiller) )
-            var Data_Set = true;
+        if (! iFiller)  return Value_Operator.call($_Name[0]);
 
-        var $_This = this;
+        var $_This = this,  Data_Set = (typeof iFiller != 'function');
 
         for (var i = 0, iName;  i < $_Name.length;  i++) {
             iName = $_Name[i].getAttribute('name');
@@ -1160,8 +1156,10 @@
             $_BOM.on('message',  function (iEvent) {
                 iEvent = iEvent.originalEvent || iEvent;
 
-                var iReturn = new CrossPageEvent(iEvent.data);
-
+                var iReturn = new CrossPageEvent(
+                        (typeof iEvent.data == 'string')  ?
+                            $.parseJSON(iEvent.data) : iEvent.data
+                    );
                 if (
                     (iEvent.source === iTarget)  &&
                     (iReturn.type == iType)  &&
@@ -1171,9 +1169,10 @@
                     $_BOM.off('message', arguments.callee);
                 }
             });
+        iData = $.extend({data: iData},  _Event_.valueOf());
 
         iTarget.postMessage(
-            $.extend({data: iData},  _Event_.valueOf()),  '*'
+            ($.browser.msie < 10) ? BOM.JSON.stringify(iData) : iData,  '*'
         );
     };
 

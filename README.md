@@ -4,9 +4,9 @@
 
 **iQuery** 是一个**普适**而**轻巧**的 **DOM/JavaScript 开发库** —— **支持 IE 8+ 的 jQuery/W3C 兼容 API**，包含 最常用的 jQuery 静态/实例 属性、方法，适合替代逻辑简单的网页中体积很大的 jQuery，或作为“**Web 前端开发基础库**”嵌入各种 独立发布（不能有外部依赖、自闭合、有兼容性要求）的 JavaScript 库。
 
-若 Zepto 相当于 jQuery v2.x 的精简版，那 iQuery 就相当于 **jQuery v1.x 的精简版**；而且 iQuery 在与 Zepto 接近的 **Minimized 体积**中提供了 IE 8/9 的兼容、**更贴近官方的 jQuery 对象实现** 以及 **更多的实用扩展**（见下文）。
+若 Zepto 相当于 jQuery v2.x 的精简版，那 iQuery 就相当于 **jQuery v1.x 的精简版**；而且 iQuery 在与 Zepto 接近的 **Minimized 体积**中提供了 IE 8/9 的兼容、**更贴近官方的 jQuery 对象实现** 以及 **更多的实用扩展**（1200+ 行，超三分之一的体量，详见下文）。
 
-在 API 形态上尽力兼容 jQuery 的同时，iQuery 在内部实现上采取**“面向未来，向前兼容”的 Shim 策略** —— 核心逻辑（1800 行左右）尽力基于 **W3C、ECMA 最新标准中的优秀 API**，老旧浏览器兼容代码（基于 jQuery API，400 行左右）尽力包装成与新 API 相同的形式（原型拓展），并独立为外部模块。这样做不但能复用 jQuery API 来高效实现，还方便开发人员自行裁剪。
+在 API 形态上尽力兼容 jQuery 的同时，iQuery 在内部实现上采取**“面向未来，向前兼容”的 Shim 策略** —— 核心逻辑（2600 行左右）尽力基于 **W3C、ECMA 最新标准中的优秀 API**，老旧浏览器兼容代码（基于 jQuery API，400 行左右）尽力包装成与新 API 相同的形式（原型拓展），并独立为外部模块。这样做不但能复用 jQuery API 来高效实现，还方便开发人员自行裁剪。
 
 【注】对 IE 的兼容仅限其“标准模式”，而非“兼容性视图”。
 
@@ -33,9 +33,12 @@
  4. [EasyWebApp](http://git.oschina.net/Tech_Query/EasyWebApp)
  5. 某公司 开放平台、业务后台
  6. 某公司 微信轻应用
+ 7. 某公司 WiFi 认证微官网
 
 
 ## 【对 jQuery（最新版）的增强】
+
+以下扩展已收录在本项目的 [**jQuery+.js**](/Tech_Query/iQuery/blob/master/jQuery+.js) 中，方便配合其它 jQuery API 实现 ——
  - 内置一个改进且向下兼容的 **$.browser 对象**，能通过**直接比较版本号**来区分浏览器
  - 新增 **计时相关方法（秒基准）**—— $.every()、$.wait()、$.start()、$.end()
  - 新增 **唯一串号生成器** —— $.uuid()
@@ -79,7 +82,6 @@
  - 不支持 **XPath 选择器**、操作 **XML 文档**
  - 构造 DOM 元素时的第二参数中不能调用与键名同名的实例方法，仅能设置 DOM 属性
  - 不支持一些不常用的 **jQuery 静态/实例方法**
- - **事件冒泡** 完全依赖 **浏览器自身实现**，不做抽象统一
  - 暂不支持 **动画队列**、**速度曲线函数**
 
 
@@ -94,12 +96,12 @@
  - 重写 IE 8 Error 对象的 valueOf 方法，使之返回可查询的错误码（附带 官方文档 URL）
  - 新增 **DOMHttpRequest 对象**，封装了 **JSONP Get**、**iframe Post**
  - 自带 Element 对象的 `firstElementChild`、`lastElementChild`、`previousElementSibling`、`nextElementSibling` 属性
+ - 自带 Element matches 标准草案方法
  - 自带 **DOMTokenList 对象**，为 IE 8/9 提供 **classList** 支持
  - 自带 **DOMStringMap 对象**，为 IE 8/9/10 提供 **dataset** 支持
  - 自带 **HTML 5 History API**，为 IE 8/9 提供兼容支持
  - 修正 IE 8- DOM Attribute 系列方法对 JavaScript 关键字的特殊处理
  - 自带 **CSSStyleDeclaration 对象**，为 IE 8 提供 **getComputedStyle** 支持，并封装了 M$ DirectX 滤镜属性转换
- - 自带 **HTMLEvents、CustomEvent 对象**，为 IE 8 提供 **W3C Event API** 支持
  - 自带 **HTML 5 Form API**，为 IE 8、iOS WebKit 提供兼容支持
  - 自带 Selection 对象，为 IE 8 提供 选中文本读取支持
  - 自带 DOMParser 对象，为 IE 8 提供 **XML 文档解析**支持
