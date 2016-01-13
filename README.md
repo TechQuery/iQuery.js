@@ -38,7 +38,7 @@
 
 ## 【对 jQuery（最新版）的增强】
 
-以下扩展已收录在本项目的 [**jQuery+.js**](/Tech_Query/iQuery/blob/master/jQuery+.js) 中，方便配合其它 jQuery API 实现 ——
+以下扩展已收录在本项目的 [**jQuery+.js**](/master/jQuery+.js) 中，方便配合其它 jQuery API 实现 ——
  - 内置一个改进且向下兼容的 **$.browser 对象**，能通过**直接比较版本号**来区分浏览器
  - 新增 **计时相关方法（秒基准）**—— $.every()、$.wait()、$.start()、$.end()
  - 新增 **唯一串号生成器** —— $.uuid()
@@ -95,6 +95,7 @@
  - 新增 **JSON format 格式化显示方法、parseAll 深度解析方法**（$.parseJSON() 被其增强）
  - 重写 IE 8 Error 对象的 valueOf 方法，使之返回可查询的错误码（附带 官方文档 URL）
  - 新增 **DOMHttpRequest 对象**，封装了 **JSONP Get**、**iframe Post**
+ - 自带 Element 对象的 `textContent` 属性
  - 自带 Element 对象的 `firstElementChild`、`lastElementChild`、`previousElementSibling`、`nextElementSibling` 属性
  - 自带 Element matches 标准草案方法
  - 自带 **DOMTokenList 对象**，为 IE 8/9 提供 **classList** 支持
