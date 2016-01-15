@@ -59,7 +59,8 @@
    - 新增 **:data 伪类** 来筛选有 data-* 属性的元素
    - 新增 **:list 伪类**，等价于 `ul, ol, dl`
  - 新增 jQuery 元素成员更新方法 —— $.fn.refresh 
- - 新增 **DOM 元素集合父元素交集方法** —— $.fn.sameParents()
+ - 新增 **祖先元素交集**方法 —— $.fn.sameParents()
+ - 新增 **有滚动条的祖先元素**方法 —— $.fn.scrollParents()
  - 新增 **DOM 对象通用 .value() 方法**，智能存取多种类型的值
  - .css() 取值时，会把 纯数字值、像素值 直接返回为 Number 类型
  - .css() 赋值一律默认 important 优先级，确保赋值的有效性

@@ -2,7 +2,7 @@
 //              >>>  jQuery+  <<<
 //
 //
-//    [Version]     v5.8  (2016-01-12)
+//    [Version]     v5.9  (2016-01-14)
 //
 //    [Based on]    jQuery  v1.9+
 //
@@ -366,6 +366,21 @@
         return $_New;
     };
 
+/* ---------- 有滚动条的祖先元素  v0.1 ---------- */
+
+    $.fn.scrollParents = function () {
+        return  this.pushStack(
+            $.map(this.parents(),  function () {
+                var $_This = $(arguments[0]);
+
+                if (
+                    ($_This.height() < $_This[0].scrollHeight)  ||
+                    ($_This.width() < $_This[0].scrollWidth)
+                )
+                    return $_This[0];
+            })
+        );
+    };
 /* ---------- jQuery 元素 z-index 独立方法  v0.2 ---------- */
 
     function Get_zIndex() {
@@ -888,7 +903,7 @@
 
         function AJAX_Ready() {
             $_Button.prop('disabled', false);
-            iCallback.call($_Form[0], arguments[0]);
+            iCallback.apply($_Form[0], arguments);
         }
 
         $_Form.on('submit',  function (iEvent) {
@@ -1056,8 +1071,9 @@
 
 /* ---------- 文字输入事件  v0.1 ---------- */
 
-    function TypeBack(iHandler, iEvent, iKey) {
-        var iValue = this[iKey]();
+    function TypeBack(iHandler, iKey, iEvent) {
+        var $_This = $(this);
+        var iValue = $_This[iKey]();
 
         if (false  !==  iHandler.call(iEvent.target, iEvent, iValue))
             return;
@@ -1066,17 +1082,15 @@
         iValue.splice(
             BOM.getSelection().getRangeAt(0).startOffset - 1,  1
         );
-        this[iKey]( iValue.join('') );
+        $_This[iKey]( iValue.join('') );
     }
 
     $.fn.input = function (iHandler) {
         this.filter('input, textarea').on(
             $.browser.modern ? 'input' : 'propertychange',
             function (iEvent) {
-                if ((! $.browser.modern)  &&  (iEvent.propertyName != 'value'))
-                    return;
-
-                TypeBack.call($(this), iHandler, iEvent, 'val');
+                if ($.browser.modern  ||  (iEvent.propertyName == 'value'))
+                    TypeBack.call(this, iHandler, 'val', iEvent);
             }
         );
 
@@ -1100,7 +1114,7 @@
             )
                 return;
 
-            TypeBack.call($(iEvent.target), iHandler, iEvent, 'text');
+            TypeBack.call(iEvent.target, iHandler, 'text', iEvent);
         });
 
         return this;
