@@ -337,8 +337,9 @@
                     .split('/').slice(0, -1).join('/');
         },
         urlDomain:        function () {
-            return  (arguments[0] || BOM.location.href)
-                    .split('/').slice(0, 3).join('/');
+            return (
+                (arguments[0] || BOM.location.href).match(/^(\w+:)?\/\/[^\/]+/)  ||  [ ]
+            )[0];
         }
     });
 
@@ -369,7 +370,7 @@
 /* ---------- 有滚动条的祖先元素  v0.1 ---------- */
 
     $.fn.scrollParents = function () {
-        return  this.pushStack(
+        return  Array_Reverse.call(this.pushStack(
             $.map(this.parents(),  function () {
                 var $_This = $(arguments[0]);
 
@@ -379,7 +380,7 @@
                 )
                     return $_This[0];
             })
-        );
+        ));
     };
 /* ---------- jQuery 元素 z-index 独立方法  v0.2 ---------- */
 
