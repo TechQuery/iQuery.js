@@ -2,7 +2,7 @@
 //              >>>  jQuery+  <<<
 //
 //
-//    [Version]     v5.9  (2016-01-14)
+//    [Version]     v6.0  (2016-01-15)
 //
 //    [Based on]    jQuery  v1.9+
 //
@@ -985,6 +985,21 @@
         return this.pushStack(
             arguments[0]  ?  $($_Result).filter(arguments[0])  :  $_Result
         );
+    };
+
+/* ---------- 通用聚焦事件  v0.1 ---------- */
+
+    var DOM_Focus = $.fn.focus,
+        iFocusable = [
+            'a[href], area',
+            'label, input, textarea, button, select, option',
+            '*[tabIndex], *[contentEditable]'
+        ].join(', ');
+
+    $.fn.focus = function () {
+        this.not(iFocusable).attr('tabIndex', -1).css('outline', 'none');
+
+        return  DOM_Focus.apply(this, arguments);
     };
 
 /* ---------- 鼠标滚轮事件  v0.1 ---------- */

@@ -69,14 +69,16 @@
  - 新增 **伪类/元素 CSS 规则对象 提取方法** —— $.cssPseudo()
  - 新增 DOM 元素选区方法 —— $.fn.selection()
  - 封装 **Animate.css** 为 $.fn.cssAnimate()，其调用参数 兼容 $.fn.animate()
- - 封装了**触屏单指手势事件**（tap、press、swipe），并为桌面端、移动端提供一致的操作体验
+ - .focus() 会让所有可见元素获得焦点
  - 统一 **mousewheel 事件**，并新增其快捷方法
+ - 封装了**触屏单指手势事件**（tap、press、swipe），并为桌面端、移动端提供一致的操作体验
  - 新增 **跨页面消息事件** onReply 方法（基于 `window.postMessage`）
 
 
 ## 【未实现的 jQuery（最新版）特性】
  - 没有 $.noConflict()，但不会强占 jQuery 变量
  - 不支持 浏览器**内置类型**（构造函数）相应的 $.isXXX() 方法（但 $.type() 均能返回与构造函数名一致的“类型名”）
+ - 不支持 **浏览器特性检测**
  - 暂不支持 $.ajax() 及相关的各种自定义选项
  - 不支持 $.Deferred()（正在尝试引入 ECMAScript 6 支持的 **Promise/A+ 规范**）
  - **jQuery 扩展伪类选择符**：只支持 常用且“难以用 **CSS 标准选择符** 或 jQuery API 实现其功能”的
