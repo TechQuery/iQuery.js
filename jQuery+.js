@@ -2,7 +2,7 @@
 //              >>>  jQuery+  <<<
 //
 //
-//    [Version]     v6.0  (2016-01-15)
+//    [Version]     v6.0  (2016-01-19)
 //
 //    [Based on]    jQuery  v1.9+
 //
@@ -168,28 +168,29 @@
 
 /* ---------- 类型判断+  v0.4 ---------- */
 
-    $.likeArray = function (iObject) {
-        return (
-            iObject  &&
-            (typeof iObject.length == 'number')  &&
-            (typeof iObject.valueOf() != 'string')
-        );
-    };
+    $.extend({
+        likeArray:    function (iObject) {
+            return (
+                iObject  &&
+                (typeof iObject.length == 'number')  &&
+                (typeof iObject.valueOf() != 'string')
+            );
+        },
+        makeSet:      function () {
+            var iSet = { };
 
-    function _inKey_() {
-        var iObject = { };
+            for (var i = 0;  i < arguments.length;  i++)
+                iSet[arguments[i]] = true;
 
-        for (var i = 0;  i < arguments.length;  i++)
-            iObject[arguments[i]] = true;
-
-        return iObject;
-    }
+            return iSet;
+        }
+    });
 
     var Type_Info = {
-            Data:    _inKey_('String', 'Number', 'Boolean', 'Null'),
-            BOM:     _inKey_('Window', 'DOMWindow', 'global'),
+            Data:    $.makeSet('String', 'Number', 'Boolean', 'Null'),
+            BOM:     $.makeSet('Window', 'DOMWindow', 'global'),
             DOM:     {
-                root:    _inKey_('Document', 'Window')
+                root:    $.makeSet('Document', 'Window')
             }
         };
 
@@ -448,7 +449,7 @@
         return iArgs.join('');
     }
 
-    var PX_Needed = _inKey_(
+    var PX_Needed = $.makeSet(
             'width',  'min-width',  'max-width',
             'height', 'min-height', 'max-height',
             'margin', 'padding',
@@ -1065,7 +1066,7 @@
             );
         }
     );
-    var iShortCut = _inKey_('mousewheel', 'tap', 'press', 'swipe');
+    var iShortCut = $.makeSet('mousewheel', 'tap', 'press', 'swipe');
 
     function Event_Method(iName) {
         return  function () {

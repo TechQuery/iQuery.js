@@ -43,6 +43,7 @@
  - 新增 **计时相关方法（秒基准）**—— $.every()、$.wait()、$.start()、$.end()
  - 新增 **唯一串号生成器** —— $.uuid()
  - 新增 **类数组对象**判断方法 —— $.likeArray()
+ - 新增 **集合对象**（可用于 in 操作符）生成方法 —— $.makeSet()
  - 新增 **对象值相等**判断方法 —— $.isEqual()
  - 新增 **纯数据类型**判断方法 —— $.isData()
  - 新增 **字符串部分分割**方法 —— $.split()（借鉴 PHP）
@@ -58,7 +59,8 @@
    - **:button** 还支持 `input[type="submit"], input[type="reset"], input[type="image"]`
    - 新增 **:data 伪类** 来筛选有 data-* 属性的元素
    - 新增 **:list 伪类**，等价于 `ul, ol, dl`
- - 新增 jQuery 元素成员更新方法 —— $.fn.refresh 
+ - 新增 jQuery 元素成员更新方法 —— $.fn.refresh
+ - 所有类型的 **DOM 信息读写器**（`.attr()`、`.prop()`、`.css()`、`.data()`）均支持“不传键名时返回 **信息全集**”特性；
  - 新增 **祖先元素交集**方法 —— $.fn.sameParents()
  - 新增 **有滚动条的祖先元素**方法 —— $.fn.scrollParents()
  - 新增 **DOM 对象通用 .value() 方法**，智能存取多种类型的值

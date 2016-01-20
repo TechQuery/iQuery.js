@@ -138,25 +138,29 @@
             Index = (Index < this.length)  ?  Index  :  this.length;
 
             var $_Item = this.itemOf(Index);
-
-            if ((! $_Item.length)  ||  $_Item.hasClass('ListView_Item'))
-                $_Item = New_Item.call(this, $_Item, Index);
+            var _Insert_ = (
+                    (! $_Item.length)  ||  $_Item.hasClass('ListView_Item')
+                );
+            if (_Insert_)  $_Item = New_Item.call(this, $_Item, Index);
 
             var _Index_ = (Index < 0)  ?  (Index - 1)  :  Index;
 
             var iReturn = _Callback_.call(
                     this,  'insert',  $_Item,  iValue,  _Index_
                 );
-            this.splice(
-                Index,  0,  this.itemOf(_Index_).addClass('ListView_Item')
-            );
+            if (_Insert_) {
+                $_Item = this.itemOf(_Index_);
+                this.splice(Index, 0, $_Item);
+            }
+            $_Item.addClass('ListView_Item');
+
             this.data.splice(
                 Index,  0,  (iReturn === undefined) ? iValue : iReturn
             );
 
             return this.indexOf(_Index_);
         },
-        render:     function (iData, DetachTemplate) {
+        render:     function (iData) {
             iData = $.likeArray(iData) ? iData : [iData];
 
             for (var i = 0;  i < iData.length;  i++)
