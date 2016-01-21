@@ -2,7 +2,7 @@
 //              >>>  iQuery+  <<<
 //
 //
-//    [Version]     v0.7  (2016-01-15)  Stable
+//    [Version]     v0.7  (2016-01-21)  Stable
 //
 //    [Based on]    iQuery  or  (jQuery with jQuery+)
 //
@@ -60,11 +60,15 @@
     }
 
     $.extend(ListView, {
-        getInstance:     function () {
+        getInstance:    function () {
             var _Instance_ = $(arguments[0]).data('_LVI_');
             return  ((_Instance_ instanceof this)  &&  _Instance_);
         },
-        listSelector:    'ul, ol, dl, tbody, *[multiple]'
+        findView:       function () {
+            return $(arguments[0]).find(
+                'ul, ol, dl, tbody, *[multiple]'
+            ).not('input[type="file"]');
+        }
     });
 
     function _Callback_(iType, $_Item, iValue, Index) {
@@ -108,15 +112,15 @@
         itemOf:     function (Index) {
             Index = Index || 0;
 
-            var $_Item = [ ];
+            var _This_ = this,  $_Item = this.$_View[0].children[Index];
 
-            for (var i = 0, _Item_;  i < this.selector.length;  i++) {
-                _Item_ = this.$_View.children( this.selector[i] ).eq(Index)[0];
-                if (_Item_)  $_Item.push(_Item_);
-            }
-            return  $.extend($(), $_Item, {
-                length:    $_Item.length
-            });
+            return $(
+                this.selector ?
+                    $.map(this.selector,  function () {
+                        return  _This_.$_View.children( arguments[0] )[Index];
+                    }) :
+                    ($_Item ? [$_Item] : [ ])
+            );
         },
         slice:      Array.prototype.slice,
         splice:     Array.prototype.splice,
@@ -160,7 +164,7 @@
 
             return this.indexOf(_Index_);
         },
-        render:     function (iData) {
+        render:     function (iData, DetachTemplate) {
             iData = $.likeArray(iData) ? iData : [iData];
 
             for (var i = 0;  i < iData.length;  i++)
@@ -218,12 +222,13 @@
             var iCoord = $_Item.addClass('active').offset(),
                 _Coord_ = $_Scroll.offset();
 
-            $_Scroll.animate({
-                scrollTop:
-                    $_Scroll.scrollTop()  +  (iCoord.top - _Coord_.top),
-                scrollLeft:
-                    $_Scroll.scrollLeft()  +  (iCoord.left - _Coord_.left)
-            });
+            if ($_Scroll.length)
+                $_Scroll.animate({
+                    scrollTop:
+                        $_Scroll.scrollTop()  +  (iCoord.top - _Coord_.top),
+                    scrollLeft:
+                        $_Scroll.scrollLeft()  +  (iCoord.left - _Coord_.left)
+                });
 
             return this;
         }
