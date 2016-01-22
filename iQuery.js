@@ -2,7 +2,7 @@
 //                >>>  iQuery.js  <<<
 //
 //
-//      [Version]    v1.0  (2016-01-21)  Stable
+//      [Version]    v1.0  (2016-01-22)  Stable
 //
 //      [Usage]      A Light-weight jQuery Compatible API
 //                   with IE 8+ compatibility.
@@ -205,10 +205,15 @@
                 return  iValue && (iValue.constructor === Object);
             },
             likeArray:        function (iObject) {
-                return (
+                if (! iObject)  return false;
+
+                iObject = (typeof iObject.valueOf == 'function')  ?
+                    iObject.valueOf() : iObject;
+
+                return Boolean(
                     iObject  &&
                     (typeof iObject.length == 'number')  &&
-                    (typeof iObject.valueOf() != 'string')
+                    (typeof iObject != 'string')
                 );
             },
             each:             function (Arr_Obj, iEvery) {
@@ -1078,7 +1083,7 @@
             if (isNaN( iValue ))  return  this[0][iName.client] + iFix;
 
             for (var i = 0;  i < this.length;  i++)
-                this[i][iName.client] = iValue - iFix;
+                this[i].style[iName.css] = iValue - iFix;
             return this;
         };
     }
@@ -1470,14 +1475,23 @@
                     position:    'fixed'
                 }, iCoordinate));
 
-            if (! (this[0] || { }).ownerDocument)  return;
+            var _DOM_ = (this[0] || { }).ownerDocument;
+            var _Body_ = _DOM_  &&  $('body', _DOM_)[0];
 
-            var _BOM_ = this[0].ownerDocument.defaultView,
-                iBCR = this[0].getBoundingClientRect();
+            if (!  (_DOM_  &&  _Body_  &&  $.contains(_Body_, this[0])))
+                return;
+
+            var _BOM_ = _DOM_.defaultView,  iBCR = this[0].getBoundingClientRect();
 
             return {
-                left:    parseFloat( (_BOM_.pageXOffset + iBCR.left).toFixed(4) ),
-                top:     parseFloat( (_BOM_.pageYOffset + iBCR.top).toFixed(4) )
+                left:    parseFloat((
+                    ($.browser.modern ? _BOM_.pageXOffset : _Body_.scrollLeft)  +
+                    iBCR.left
+                ).toFixed(4)),
+                top:     parseFloat((
+                    ($.browser.modern ? _BOM_.pageYOffset : _Body_.scrollTop)  +
+                    iBCR.top
+                ).toFixed(4))
             };
         },
         addClass:           function (new_Class) {
@@ -1796,7 +1810,7 @@
         var iDOM = this.document || this.ownerDocument || this;
 
         if (iDOM.activeElement.tagName.toLowerCase() == 'iframe')  try {
-            return  arguments.callee.call( iDOM.contentWindow );
+            return  arguments.callee.call( iDOM.activeElement.contentWindow );
         } catch (iError) { }
 
         var iSelection = W3C_Selection ? iDOM.getSelection() : iDOM.selection;
@@ -1820,7 +1834,9 @@
         return  this.each(function () {
             var iSelection = Find_Selection.call(this);
             var iNode = iSelection[1];
+
             iSelection = iSelection[0];
+            iNode = (iNode.nodeType == 1)  ?  iNode  :  iNode.parentNode;
 
             if (! W3C_Selection) {
                 iSelection = iSelection.createRange();
@@ -1837,7 +1853,7 @@
                 iStart = Math.min(iNode.selectionStart, iNode.selectionEnd);
                 iEnd = Math.max(iNode.selectionStart, iNode.selectionEnd);
             } else {
-                iProperty = (iNode.nodeType == 1)  ?  'innerHTML'  :  'nodeValue';
+                iProperty = 'innerHTML';
                 iStart = Math.min(iSelection.anchorOffset, iSelection.focusOffset);
                 iEnd = Math.max(iSelection.anchorOffset, iSelection.focusOffset);
             }
@@ -1855,260 +1871,8 @@
 
 
 
-/* ---------- IE 8- Patch to W3C ---------- */
-(function (BOM, DOM, $) {
-
-    if ($.browser.modern)  return;
-
-    /* ----- DOM ShortCut ----- */
-    var iGetter = {
-            firstElementChild:         function () {
-                return this.firstChild;
-            },
-            lastElementChild:          function () {
-                return this.lastChild;
-            },
-            previousElementSibling:    function () {
-                return this.previousSibling;
-            },
-            nextElementSibling:        function () {
-                return this.nextSibling;
-            }
-        };
-
-    for (var iName in iGetter)
-        Object.defineProperty(Element.prototype, iName, {
-            get:    iGetter[iName]
-        });
-
-
-    /* ----- DOM Text Content ----- */
-
-    Object.defineProperty(Element.prototype, 'textContent', {
-        get:    function () {
-            return this.innerText;
-        },
-        set:    function (iText) {
-            switch ( this.tagName.toLowerCase() ) {
-                case 'style':     return  this.styleSheet.cssText = iText;
-                case 'script':    return  this.text = iText;
-            }
-            this.innerText = iText;
-        }
-    });
-
-    /* ----- DOM Selector Match ----- */
-
-    Element.prototype.matches = function () {
-        if (! this.parentNode)  $('<div />')[0].appendChild(this);
-
-        return  (!! this.parentNode.querySelector(arguments[0]));
-    };
-
-    /* ----- DOM Attribute Name ----- */
-
-    var iAlias = {
-            'class':    'className',
-            'for':      'htmlFor'
-        },
-        Get_Attribute = Element.prototype.getAttribute,
-        Set_Attribute = Element.prototype.setAttribute,
-        Remove_Attribute = Element.prototype.removeAttribute;
-
-    $.extend(Element.prototype, {
-        getAttribute:    function (iName) {
-            return  Get_Attribute.call(this,  iAlias[iName] || iName,  0);
-        },
-        setAttribute:    function (iName) {
-            return  Set_Attribute.call(this,  iAlias[iName] || iName,  arguments[1],  0);
-        },
-        removeAttribute:    function (iName) {
-            return  Remove_Attribute.call(this,  iAlias[iName] || iName,  0);
-        }
-    });
-
-    /* ----- Computed Style ----- */
-
-    function CSSStyleDeclaration() {
-        $.extend(this, arguments[0].currentStyle, {
-            length:       0,
-            cssText:      '',
-            ownerNode:    arguments[0]
-        });
-
-        for (var iName in this) {
-            this[this.length++] = iName.toHyphenCase();
-            this.cssText += [
-                iName,  ': ',  this[iName],  '; '
-            ].join('');
-        }
-        this.cssText = this.cssText.trim();
-    }
-
-    var Code_Indent = ' '.repeat(4);
-
-    function toHexInt(iDec, iLength) {
-        var iHex = parseInt( Number(iDec).toFixed(0) ).toString(16);
-
-        if (iLength && (iLength > iHex.length))
-            iHex = '0'.repeat(iLength - iHex.length) + iHex;
-
-        return iHex;
-    }
-
-    function RGB_Hex(iRed, iGreen, iBlue) {
-        var iArgs = $.makeArray(arguments);
-
-        if ((iArgs.length == 1) && (typeof iArgs[0] == 'string'))
-            iArgs = iArgs[0].replace(/rgb\(([^\)]+)\)/i, '$1').replace(/,\s*/g, ',').split(',');
-
-        for (var i = 0;  i < 3;  i++)
-            iArgs[i] = toHexInt(iArgs[i], 2);
-        return iArgs.join('');
-    }
-
-    $.extend(CSSStyleDeclaration.prototype, {
-        getPropertyValue:    function (iName) {
-            var iScale = 1;
-
-            switch (iName) {
-                case 'opacity':    {
-                    iName = 'filter';
-                    iScale = 100;
-                }
-            }
-            var iStyle = this[ iName.toCamelCase() ];
-            var iNumber = parseFloat(iStyle);
-
-            return  isNaN(iNumber) ? iStyle : (iNumber / iScale);
-        },
-        setPropertyValue:    function (iName, iValue) {
-            this[this.length++] = iName;
-
-            var iString = '',  iWrapper,  iScale = 1,  iConvert;
-            if (typeof iValue == 'string')
-                var iRGBA = iValue.match(/\s*rgba\(([^\)]+),\s*(\d\.\d+)\)/i);
-
-            if (iName == 'opacity') {
-                iName = 'filter';
-                iWrapper = 'progid:DXImageTransform.Microsoft.Alpha(opacity={n})';
-                iScale = 100;
-            } else if (iRGBA) {
-                iString = iValue.replace(iRGBA[0], '');
-                if (iString)
-                    iString += arguments.callee.call(this, arguments[0], iName, iString);
-                if (iName != 'background')
-                    iString += arguments.callee.call(
-                        this,
-                        arguments[0],
-                        (iName.indexOf('-color') > -1) ? iName : (iName + '-color'),
-                        'rgb(' + iRGBA[1] + ')'
-                    );
-                iName = 'filter';
-                iWrapper = 'progid:DXImageTransform.Microsoft.Gradient(startColorStr=#{n},endColorStr=#{n})';
-                iConvert = function (iAlpha, iRGB) {
-                    return  toHexInt(parseFloat(iAlpha) * 256, 2) + RGB_Hex(iRGB);
-                };
-            }
-            if (iWrapper)
-                iValue = iWrapper.replace(/\{n\}/g,  iConvert ?
-                      iConvert(iRGBA[2], iRGBA[1]) :
-                      (iValue * iScale)
-                );
-
-            this[ this[this.length - 1].toCamelCase() ] = iValue + (arguments[2] ? ' !important' : '');
-
-            if (this.ownerNode)
-                this.ownerNode.style.setAttribute(iName,  iValue,  arguments[2] && 'important');
-            else
-                return  [iString, ";\n", iName, ':', Code_Indent, iValue].join('');
-        }
-    });
-
-    BOM.getComputedStyle = function () {
-        return  new CSSStyleDeclaration(arguments[0]);
-    };
-
-    /* ----- DOM Event ----- */
-
-    var $_DOM = $(DOM);
-
-    //  DOM Content Loading
-    if (BOM === BOM.top)
-        $.every(0.01, function () {
-            try {
-                DOM.documentElement.doScroll('left');
-                $_DOM.trigger('DOMContentLoaded');
-                return false;
-            } catch (iError) {
-                return;
-            }
-        });
-    //  Patch for Change Event
-    $_DOM.on('click',  'input[type="radio"], input[type="checkbox"]',  function () {
-        this.blur();
-        this.focus();
-    });
-
-    /* ----- XML DOM Parser ----- */
-
-    var IE_DOMParser = $.map([
-            'MSXML2.DOMDocument.6.0',
-            'MSXML2.DOMDocument.5.0',
-            'MSXML2.DOMDocument.4.0',
-            'MSXML2.DOMDocument.3.0',
-            'MSXML2.DOMDocument',
-            'Microsoft.XMLDOM'
-        ],  function () {
-            new ActiveXObject(arguments[0]);
-            return arguments[0];
-        })[0];
-
-    function XML_Create() {
-        var iXML = new ActiveXObject(IE_DOMParser);
-        iXML.async = false;
-        iXML.loadXML(arguments[0]);
-        return iXML;
-    }
-
-    BOM.DOMParser = function () { };
-
-    BOM.DOMParser.prototype.parseFromString = function () {
-        var iXML = XML_Create(arguments[0]);
-
-        if (iXML.parseError.errorCode)
-            iXML = XML_Create([
-                '<xml><parsererror><h3>This page contains the following errors:</h3><div>',
-                iXML.parseError.reason,
-                '</div></parsererror></xml>'
-            ].join(''));
-
-        return iXML;
-    };
-
-})(self, self.document, self.iQuery);
-
-
-
 /* ---------- jQuery Event System ---------- */
 (function (BOM, DOM, $) {
-
-    function IE_Event_Fix(iEvent) {
-        var iOffset = $(iEvent.target).offset() || { };
-
-        $.extend(this, {
-            clientX:            iOffset.left,
-            clientY:            iOffset.top,
-            relatedTarget:      ({
-                mouseover:     iEvent.fromElement,
-                mouseout:      iEvent.toElement,
-                mouseenter:    iEvent.fromElement || iEvent.toElement,
-                mouseleave:    iEvent.toElement || iEvent.fromElement
-            })[iEvent.type],
-            which:              (iEvent.type && (iEvent.type.slice(0, 3) == 'key'))  ?
-                iEvent.keyCode  :  [0, 1, 3, 0, 2, 0, 0, 0][iEvent.button],
-        });
-    }
 
     var Mutation_Event = $.makeSet(
             'DOMContentLoaded',
@@ -2138,6 +1902,34 @@
         return iEvent;
     }
 
+    var IE_Event = {
+            create:    function (iEvent) {
+                iEvent = (iEvent && (typeof iEvent == 'object'))  ?  iEvent  :  { };
+
+                return  this.isCustom ?
+                    $.extend({ }, iEvent, arguments[1])  :  DOM.createEventObject();
+            },
+            fix:       function (iEvent) {
+                var iOffset = $(iEvent.srcElement).offset() || { };
+
+                $.extend(this, {
+                    type:               iEvent.type,
+                    pageX:              iOffset.left,
+                    pageY:              iOffset.top,
+                    target:             iEvent.srcElement,
+                    relatedTarget:      ({
+                        mouseover:     iEvent.fromElement,
+                        mouseout:      iEvent.toElement,
+                        mouseenter:    iEvent.fromElement || iEvent.toElement,
+                        mouseleave:    iEvent.toElement || iEvent.fromElement
+                    })[iEvent.type],
+                    which:
+                        (iEvent.type && (iEvent.type.slice(0, 3) == 'key'))  ?
+                            iEvent.keyCode  :  [0, 1, 3, 0, 2, 0, 0, 0][iEvent.button],
+                });
+            }
+        };
+
     $.Event = function (iEvent, iProperty) {
         //  Instantiation without "new"
         var _Self_ = arguments.callee;
@@ -2166,18 +1958,17 @@
                     if ((typeof iEvent[iKey] != 'function')  &&  (iKey[0] > 'Z'))
                         this[iKey] = iEvent[iKey];
             } else
-                IE_Event_Fix.call(this, iEvent);
+                IE_Event.fix.call(this, iEvent);
         }
         if ($.isPlainObject( iProperty ))  $.extend(this, iProperty);
 
         this.type = iCreate ? iEvent : this.type;
-        this.target = this.target || this.srcElement;
         this.isCustom = (! isOriginalEvent.call(this));
         this.originalEvent = (iCreate || $.isPlainObject(iEvent))  ?
             (
                 $.browser.modern ?
                     W3C_Event_Object(this.type, this.isCustom, this.detail)  :
-                    (this.isCustom || DOM.createEventObject())
+                    IE_Event.create.apply(this, arguments)
             ) : iEvent;
     };
 
@@ -2201,7 +1992,7 @@
     });
 
     function Proxy_Handler(iEvent, iCallback) {
-        iEvent = $.Event(iEvent || BOM.event);
+        iEvent = $.Event(iEvent);
 
         var $_Target = $(iEvent.target);
         var iHandler = iCallback ?
@@ -2226,7 +2017,7 @@
     }
 
     function JE_Dispatch(iEvent, iFilter) {
-        iEvent = $.Event(iEvent || BOM.event);
+        iEvent = $.Event(iEvent);
 
         var iTarget = iEvent.target;
         var $_Path = $(iTarget).parents().addBack();
@@ -2253,29 +2044,53 @@
                 break;
     }
 
-    function IE_Event_Handler() {
-        var iEvent = BOM.event,  Loaded;
-        iEvent.currentTarget = this;
+    $.extend(IE_Event, {
+        type:       function (iType) {
+            if (
+                ((BOM !== BOM.top)  &&  (iType == 'DOMContentLoaded'))  ||
+                ((iType == 'load')  &&  ($.type(this) != 'Window'))
+            )
+                return 'onreadystatechange';
 
-        switch (iEvent.type) {
-            case 'readystatechange':    iEvent.type = 'load';
-//                Loaded = this.readyState.match(/loaded|complete/);  break;
-            case 'load':
-                Loaded = (this.readyState == 'loaded');  break;
-            case 'propertychange':      {
-                var iType = iEvent.propertyName.match(/^on(.+)/i);
-                if (iType  &&  (IE_Event_Type(iType[1]) == 'onpropertychange'))
-                    iEvent.type = iType[1];
-                else {
-                    iEvent.type = 'DOMAttrModified';
-                    iEvent.attrName = iEvent.propertyName;
+            iType = 'on' + iType;
+
+            if (! (iType in this.constructor.prototype))
+                return 'onpropertychange';
+
+            return iType;
+        },
+        handler:    function () {
+            var iEvent = $.Event(BOM.event),  Loaded;
+            iEvent.currentTarget = this;
+
+            switch (iEvent.type) {
+                case 'readystatechange':    iEvent.type = 'load';
+    //                Loaded = this.readyState.match(/loaded|complete/);  break;
+                case 'load':
+                    Loaded = (this.readyState == 'loaded');  break;
+                case 'propertychange':      {
+                    var iType = iEvent.propertyName.match(/^on(.+)/i);
+                    if (iType && (
+                        IE_Event.type.call(this, iType[1])  ==  'onpropertychange'
+                    ))
+                        iEvent.type = iType[1];
+                    else {
+                        iEvent.type = 'DOMAttrModified';
+                        iEvent.attrName = iEvent.propertyName;
+                    }
                 }
+                default:                    Loaded = true;
             }
-            default:                    Loaded = true;
+            if (Loaded)  arguments[0].call(this, iEvent);
+        },
+        bind:       function () {
+            this.attachEvent(
+                IE_Event.type.call(this, arguments[0]),
+                $.proxy(IE_Event.handler, this, arguments[1])
+            );
         }
-        if (Loaded)  arguments[0].call(this, iEvent);
-    }
-
+    });
+    
     $.fn.extend({
         bind:              function (iType, iCallback) {
             iType = iType.trim().split(/\s+/);
@@ -2292,9 +2107,7 @@
                             type:      iType[i],
                             target:    this
                         }))
-                            this.attachEvent(
-                                iType[i],  $.proxy(IE_Event_Handler, this, Proxy_Handler)
-                            );
+                            IE_Event.bind.call(this, iType[i], Proxy_Handler);
                     }
                     Event_Data[iType[i]].push(iCallback);
                 }
@@ -2337,9 +2150,7 @@
                     if ($.browser.modern)
                         this.addEventListener(iType[i], iProxy, false);
                     else
-                        this.attachEvent(
-                            iType[i],  $.proxy(IE_Event_Handler, this, iProxy)
-                        );
+                        IE_Event.bind.call(this, iType[i], iProxy);
             });
         },
         one:               function () {
@@ -2407,9 +2218,7 @@
                             $_New[i].addEventListener(iType, Proxy_Handler, false);
                             continue;
                         }
-                        $_New[i].attachEvent(
-                            iType,  $.proxy(IE_Event_Handler, this, Proxy_Handler)
-                        );
+                        IE_Event.bind.call($_New[i], iType, Proxy_Handler);
                     }
                 }
                 return $_New[0];
@@ -2713,6 +2522,245 @@
             wheelDelta:    -iEvent.detail * 40
         });
     });
+
+})(self, self.document, self.iQuery);
+
+
+
+/* ---------- IE 8- Patch to W3C ---------- */
+(function (BOM, DOM, $) {
+
+    if ($.browser.modern)  return;
+
+    /* ----- DOM ShortCut ----- */
+    var iGetter = {
+            firstElementChild:         function () {
+                return this.firstChild;
+            },
+            lastElementChild:          function () {
+                return this.lastChild;
+            },
+            previousElementSibling:    function () {
+                return this.previousSibling;
+            },
+            nextElementSibling:        function () {
+                return this.nextSibling;
+            }
+        };
+
+    for (var iName in iGetter)
+        Object.defineProperty(Element.prototype, iName, {
+            get:    iGetter[iName]
+        });
+
+
+    /* ----- DOM Text Content ----- */
+
+    Object.defineProperty(Element.prototype, 'textContent', {
+        get:    function () {
+            return this.innerText;
+        },
+        set:    function (iText) {
+            switch ( this.tagName.toLowerCase() ) {
+                case 'style':     return  this.styleSheet.cssText = iText;
+                case 'script':    return  this.text = iText;
+            }
+            this.innerText = iText;
+        }
+    });
+
+    /* ----- DOM Selector Match ----- */
+
+    Element.prototype.matches = function () {
+        if (! this.parentNode)  $('<div />')[0].appendChild(this);
+
+        return  (!! this.parentNode.querySelector(arguments[0]));
+    };
+
+    /* ----- DOM Attribute Name ----- */
+
+    var iAlias = {
+            'class':    'className',
+            'for':      'htmlFor'
+        },
+        Get_Attribute = Element.prototype.getAttribute,
+        Set_Attribute = Element.prototype.setAttribute,
+        Remove_Attribute = Element.prototype.removeAttribute;
+
+    $.extend(Element.prototype, {
+        getAttribute:    function (iName) {
+            return  iAlias[iName] ?
+                this[iAlias[iName]]  :  Get_Attribute.call(this, iName,  0);
+        },
+        setAttribute:    function (iName, iValue) {
+            if (iAlias[iName])
+                this[iAlias[iName]] = iValue;
+            else
+                Set_Attribute.call(this, iName, iValue,  0);
+        },
+        removeAttribute:    function (iName) {
+            return  Remove_Attribute.call(this,  iAlias[iName] || iName,  0);
+        }
+    });
+
+    /* ----- Computed Style ----- */
+
+    function CSSStyleDeclaration() {
+        $.extend(this, arguments[0].currentStyle, {
+            length:       0,
+            cssText:      '',
+            ownerNode:    arguments[0]
+        });
+
+        for (var iName in this) {
+            this[this.length++] = iName.toHyphenCase();
+            this.cssText += [
+                iName,  ': ',  this[iName],  '; '
+            ].join('');
+        }
+        this.cssText = this.cssText.trim();
+    }
+
+    var Code_Indent = ' '.repeat(4);
+
+    function toHexInt(iDec, iLength) {
+        var iHex = parseInt( Number(iDec).toFixed(0) ).toString(16);
+
+        if (iLength && (iLength > iHex.length))
+            iHex = '0'.repeat(iLength - iHex.length) + iHex;
+
+        return iHex;
+    }
+
+    function RGB_Hex(iRed, iGreen, iBlue) {
+        var iArgs = $.makeArray(arguments);
+
+        if ((iArgs.length == 1) && (typeof iArgs[0] == 'string'))
+            iArgs = iArgs[0].replace(/rgb\(([^\)]+)\)/i, '$1').replace(/,\s*/g, ',').split(',');
+
+        for (var i = 0;  i < 3;  i++)
+            iArgs[i] = toHexInt(iArgs[i], 2);
+        return iArgs.join('');
+    }
+
+    $.extend(CSSStyleDeclaration.prototype, {
+        getPropertyValue:    function (iName) {
+            var iScale = 1;
+
+            switch (iName) {
+                case 'opacity':    {
+                    iName = 'filter';
+                    iScale = 100;
+                }
+            }
+            var iStyle = this[ iName.toCamelCase() ];
+            var iNumber = parseFloat(iStyle);
+
+            return  isNaN(iNumber) ? iStyle : (iNumber / iScale);
+        },
+        setPropertyValue:    function (iName, iValue) {
+            this[this.length++] = iName;
+
+            var iString = '',  iWrapper,  iScale = 1,  iConvert;
+            if (typeof iValue == 'string')
+                var iRGBA = iValue.match(/\s*rgba\(([^\)]+),\s*(\d\.\d+)\)/i);
+
+            if (iName == 'opacity') {
+                iName = 'filter';
+                iWrapper = 'progid:DXImageTransform.Microsoft.Alpha(opacity={n})';
+                iScale = 100;
+            } else if (iRGBA) {
+                iString = iValue.replace(iRGBA[0], '');
+                if (iString)
+                    iString += arguments.callee.call(this, arguments[0], iName, iString);
+                if (iName != 'background')
+                    iString += arguments.callee.call(
+                        this,
+                        arguments[0],
+                        (iName.indexOf('-color') > -1) ? iName : (iName + '-color'),
+                        'rgb(' + iRGBA[1] + ')'
+                    );
+                iName = 'filter';
+                iWrapper = 'progid:DXImageTransform.Microsoft.Gradient(startColorStr=#{n},endColorStr=#{n})';
+                iConvert = function (iAlpha, iRGB) {
+                    return  toHexInt(parseFloat(iAlpha) * 256, 2) + RGB_Hex(iRGB);
+                };
+            }
+            if (iWrapper)
+                iValue = iWrapper.replace(/\{n\}/g,  iConvert ?
+                      iConvert(iRGBA[2], iRGBA[1]) :
+                      (iValue * iScale)
+                );
+
+            this[ this[this.length - 1].toCamelCase() ] = iValue + (arguments[2] ? ' !important' : '');
+
+            if (this.ownerNode)
+                this.ownerNode.style.setAttribute(iName,  iValue,  arguments[2] && 'important');
+            else
+                return  [iString, ";\n", iName, ':', Code_Indent, iValue].join('');
+        }
+    });
+
+    BOM.getComputedStyle = function () {
+        return  new CSSStyleDeclaration(arguments[0]);
+    };
+
+    /* ----- DOM Event ----- */
+
+    var $_DOM = $(DOM);
+
+    //  DOM Content Loading
+    if (BOM === BOM.top)
+        $.every(0.01, function () {
+            try {
+                DOM.documentElement.doScroll('left');
+                $_DOM.trigger('DOMContentLoaded');
+                return false;
+            } catch (iError) {
+                return;
+            }
+        });
+    //  Patch for Change Event
+    $_DOM.on('click',  'input[type="radio"], input[type="checkbox"]',  function () {
+        this.blur();
+        this.focus();
+    });
+
+    /* ----- XML DOM Parser ----- */
+
+    var IE_DOMParser = $.map([
+            'MSXML2.DOMDocument.6.0',
+            'MSXML2.DOMDocument.5.0',
+            'MSXML2.DOMDocument.4.0',
+            'MSXML2.DOMDocument.3.0',
+            'MSXML2.DOMDocument',
+            'Microsoft.XMLDOM'
+        ],  function () {
+            new ActiveXObject(arguments[0]);
+            return arguments[0];
+        })[0];
+
+    function XML_Create() {
+        var iXML = new ActiveXObject(IE_DOMParser);
+        iXML.async = false;
+        iXML.loadXML(arguments[0]);
+        return iXML;
+    }
+
+    BOM.DOMParser = function () { };
+
+    BOM.DOMParser.prototype.parseFromString = function () {
+        var iXML = XML_Create(arguments[0]);
+
+        if (iXML.parseError.errorCode)
+            iXML = XML_Create([
+                '<xml><parsererror><h3>This page contains the following errors:</h3><div>',
+                iXML.parseError.reason,
+                '</div></parsererror></xml>'
+            ].join(''));
+
+        return iXML;
+    };
 
 })(self, self.document, self.iQuery);
 

@@ -170,10 +170,15 @@
 
     $.extend({
         likeArray:    function (iObject) {
-            return (
+            if (! iObject)  return false;
+
+            iObject = (typeof iObject.valueOf == 'function')  ?
+                iObject.valueOf() : iObject;
+
+            return Boolean(
                 iObject  &&
                 (typeof iObject.length == 'number')  &&
-                (typeof iObject.valueOf() != 'string')
+                (typeof iObject != 'string')
             );
         },
         makeSet:      function () {
@@ -611,7 +616,7 @@
         var iDOM = this.document || this.ownerDocument || this;
 
         if (iDOM.activeElement.tagName.toLowerCase() == 'iframe')  try {
-            return  arguments.callee.call( iDOM.contentWindow );
+            return  arguments.callee.call( iDOM.activeElement.contentWindow );
         } catch (iError) { }
 
         var iSelection = W3C_Selection ? iDOM.getSelection() : iDOM.selection;
@@ -635,7 +640,9 @@
         return  this.each(function () {
             var iSelection = Find_Selection.call(this);
             var iNode = iSelection[1];
+
             iSelection = iSelection[0];
+            iNode = (iNode.nodeType == 1)  ?  iNode  :  iNode.parentNode;
 
             if (! W3C_Selection) {
                 iSelection = iSelection.createRange();
@@ -652,7 +659,7 @@
                 iStart = Math.min(iNode.selectionStart, iNode.selectionEnd);
                 iEnd = Math.max(iNode.selectionStart, iNode.selectionEnd);
             } else {
-                iProperty = (iNode.nodeType == 1)  ?  'innerHTML'  :  'nodeValue';
+                iProperty = 'innerHTML';
                 iStart = Math.min(iSelection.anchorOffset, iSelection.focusOffset);
                 iEnd = Math.max(iSelection.anchorOffset, iSelection.focusOffset);
             }
