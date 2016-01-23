@@ -2,7 +2,7 @@
 //              >>>  jQuery+  <<<
 //
 //
-//    [Version]     v6.0  (2016-01-21)
+//    [Version]     v6.1  (2016-01-23)
 //
 //    [Based on]    jQuery  v1.9+
 //
@@ -166,7 +166,7 @@
         }
     });
 
-/* ---------- 类型判断+  v0.4 ---------- */
+/* ---------- 对象工具方法  v0.5 ---------- */
 
     $.extend({
         likeArray:    function (iObject) {
@@ -188,6 +188,28 @@
                 iSet[arguments[i]] = true;
 
             return iSet;
+        },
+        trace:            function (iObject, iName, iCount, iCallback) {
+            if (typeof iCount == 'function')  iCallback = iCount;
+            iCount = parseInt(iCount);
+            iCount = isNaN(iCount) ? Infinity : iCount;
+
+            var iResult = [ ];
+
+            for (
+                var _Next_,  i = 0,  j = 0;
+                iObject[iName]  &&  (j < iCount);
+                iObject = _Next_,  i++
+            ) {
+                _Next_ = iObject[iName];
+                if (
+                    (typeof iCallback != 'function')  ||
+                    (iCallback.call(_Next_, i, _Next_)  !==  false)
+                )
+                    iResult[j++] = _Next_;
+            }
+
+            return iResult;
         }
     });
 

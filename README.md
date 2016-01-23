@@ -44,6 +44,7 @@
  - 新增 **唯一串号生成器** —— $.uuid()
  - 新增 **类数组对象**判断方法 —— $.likeArray()
  - 新增 **集合对象**（可用于 in 操作符）生成方法 —— $.makeSet()
+ - 新增 **对象链回溯**方法 —— $.trace()
  - 新增 **对象值相等**判断方法 —— $.isEqual()
  - 新增 **纯数据类型**判断方法 —— $.isData()
  - 新增 **字符串部分分割**方法 —— $.split()（借鉴 PHP）
@@ -101,6 +102,7 @@
  - 重写 IE 8 Error 对象的 valueOf 方法，使之返回可查询的错误码（附带 官方文档 URL）
  - 新增 **DOMHttpRequest 对象**，封装了 **JSONP Get**、**iframe Post**
  - 自带 Element 对象的 `textContent` 属性
+ - 自带 **HTMLCollection 对象**，修复 IE 8 `Element.prototype.children` 属性在其元素有 name 属性时的“数字键值缺失”Bug
  - 自带 Element 对象的 `firstElementChild`、`lastElementChild`、`previousElementSibling`、`nextElementSibling` 属性
  - 自带 Element matches 标准草案方法
  - 自带 **DOMTokenList 对象**，为 IE 8/9 提供 **classList** 支持
