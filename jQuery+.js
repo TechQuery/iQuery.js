@@ -2,7 +2,7 @@
 //              >>>  jQuery+  <<<
 //
 //
-//    [Version]     v6.1  (2016-01-23)
+//    [Version]     v6.1  (2016-01-27)
 //
 //    [Based on]    jQuery  v1.9+
 //
@@ -356,13 +356,15 @@
 
             return  Args_Str.length ? _Args_ : { };
         },
-        fileName:     function () {
-            return  (arguments[0] || BOM.location.pathname)
-                    .split('?')[0].split('/').slice(-1)[0];
+        fileName:         function () {
+            return (
+                arguments[0] || BOM.location.pathname
+            ).match(/([^\?\#]+)(\?|\#)?/)[1].split('/').slice(-1)[0];
         },
         filePath:         function () {
-            return  $.split(arguments[0] || BOM.location.href,  '?',  2)[0]
-                    .split('/').slice(0, -1).join('/');
+            return (
+                arguments[0] || BOM.location.pathname
+            ).match(/([^\?\#]+)(\?|\#)?/)[1].split('/').slice(0, -1).join('/');
         },
         urlDomain:        function () {
             return (

@@ -2,7 +2,7 @@
 //                >>>  iQuery.js  <<<
 //
 //
-//      [Version]    v1.0  (2016-01-24)  Stable
+//      [Version]    v1.0  (2016-01-27)  Stable
 //
 //      [Usage]      A Light-weight jQuery Compatible API
 //                   with IE 8+ compatibility.
@@ -517,17 +517,11 @@
 
     /* ----- DOM Property ----- */
     _DOM_.Property = {
-        alias:    {
-            'class':    'className',
-            'for':      'htmlFor'
+        get:    function (iElement, iName) {
+            return  iName ? iElement[iName] : iElement;
         },
-        get:      function (iElement, iName) {
-            return  iName ? iElement[
-                _Browser_.modern  ?  iName  :  (this.alias[iName] || iName)
-            ] : iElement;
-        },
-        set:      function (iElement, iName, iValue) {
-            iElement[this.alias[iName] || iName] = iValue;
+        set:    function (iElement, iName, iValue) {
+            iElement[iName] = iValue;
         }
     };
 
@@ -1026,12 +1020,14 @@
             return  Args_Str.length ? _Args_ : { };
         },
         fileName:         function () {
-            return  (arguments[0] || BOM.location.pathname)
-                    .split('?')[0].split('/').slice(-1)[0];
+            return (
+                arguments[0] || BOM.location.pathname
+            ).match(/([^\?\#]+)(\?|\#)?/)[1].split('/').slice(-1)[0];
         },
         filePath:         function () {
-            return  $.split(arguments[0] || BOM.location.href,  '?',  2)[0]
-                    .split('/').slice(0, -1).join('/');
+            return (
+                arguments[0] || BOM.location.pathname
+            ).match(/([^\?\#]+)(\?|\#)?/)[1].split('/').slice(0, -1).join('/');
         },
         urlDomain:        function () {
             return (
@@ -1941,7 +1937,9 @@
         //  Instantiation without "new"
         var _Self_ = arguments.callee;
 
-        if (iEvent instanceof _Self_)  return iEvent;
+        if (iEvent instanceof _Self_)
+            return  $.isPlainObject(iProperty) ?
+                $.extend(iEvent, iProperty)  :  iEvent;
 
         if (! (this instanceof _Self_))
             return  new _Self_(iEvent, iProperty);
@@ -1960,7 +1958,9 @@
         var iCreate = (typeof iEvent == 'string');
 
         if (! iCreate) {
-            if ($.browser.modern) {
+            if ($.isPlainObject( iEvent ))
+                $.extend(this, iEvent);
+            else if ($.browser.modern) {
                 for (var iKey in iEvent)
                     if ((typeof iEvent[iKey] != 'function')  &&  (iKey[0] > 'Z'))
                         this[iKey] = iEvent[iKey];
@@ -2213,8 +2213,11 @@
                     $_New = $_New.find('*').addBack();
                 }
                 for (var i = 0, iData;  i < $_Old.length;  i++) {
-                    iData = $($_Old[i]).data();
                     $_New[i].dataIndex = null;
+
+                    iData = $($_Old[i]).data();
+                    if ($.isEmptyObject( iData ))  continue;
+
                     $($_New[i]).data(iData);
 
                     for (var iType in iData._event_) {
@@ -2801,8 +2804,8 @@
         $.event.dispatch(
             ((iEvent instanceof $.Event)  &&  (iEvent.type == iType))  ?
                 iEvent : {
-                    type:          iType,
-                    srcElement:    this
+                    type:      iType,
+                    target:    this
                 }
         );
     }
