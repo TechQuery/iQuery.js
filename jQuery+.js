@@ -363,13 +363,13 @@
         },
         filePath:         function () {
             return (
-                arguments[0] || BOM.location.pathname
+                arguments[0] || BOM.location.href
             ).match(/([^\?\#]+)(\?|\#)?/)[1].split('/').slice(0, -1).join('/');
         },
         urlDomain:        function () {
-            return (
-                (arguments[0] || BOM.location.href).match(/^(\w+:)?\/\/[^\/]+/)  ||  [ ]
-            )[0];
+            return ((
+                arguments[0] || BOM.location.href
+            ).match(/^(\w+:)?\/\/[^\/]+/) || [ ])[0];
         }
     });
 
