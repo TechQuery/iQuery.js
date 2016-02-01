@@ -2,7 +2,7 @@
 //              >>>  jQuery+  <<<
 //
 //
-//    [Version]     v6.1  (2016-01-27)
+//    [Version]     v6.2  (2016-02-01)
 //
 //    [Based on]    jQuery  v1.9+
 //
@@ -453,7 +453,7 @@
     };
 
 
-/* ---------- CSS 规则操作  v0.7 ---------- */
+/* ---------- CSS 规则操作  v0.8 ---------- */
 
     var IE_CSS_Filter = ($.browser.msie < 9);
     var Code_Indent = (IE_CSS_Filter  ?  ' '.repeat(4)  :  '');
@@ -579,49 +579,63 @@
         }).appendTo(DOM.head)[0].sheet;
     };
 
-    $.fn.cssRule = function (iRule, iCallback) {
-        return  this.each(function () {
-                var $_This = $(this);
-                var _UUID_ = $_This.data('css') || $.uuid();
+    function CSS_Rule_Search(iStyleSheet, iFilter) {
+        return  $.map(iStyleSheet || DOM.styleSheets,  function () {
+            var iRule = arguments[0].cssRules,  _Self_ = arguments.callee;
+            if (! iRule)  return;
 
-                $(this).attr('data-css', _UUID_);
-                for (var iSelector in iRule) {
-                    iRule['*[data-css="' + _UUID_ + '"]' + iSelector] = iRule[iSelector];
-                    delete iRule[iSelector];
-                }
-
-                var iSheet = $.cssRule(iRule);
-
-                if (iCallback)
-                    iCallback.call(this, iSheet);
+            return  $.map(iRule,  function (_Rule_) {
+                return  (_Rule_.cssRules ? _Self_ : iFilter)(_Rule_);
             });
+        });
+    }
+
+    $.fn.cssRule = function (iRule, iCallback) {
+        if (! $.isPlainObject(iRule)) {
+            var $_This = this;
+
+            return  ($_This[0]  &&  CSS_Rule_Search(null,  function (_Rule_) {
+                if ((
+                    (typeof $_This.selector != 'string')  ||
+                    ($_This.selector != _Rule_.selectorText)
+                ) &&
+                    (! $_This[0].matches(_Rule_.selectorText))
+                )
+                    return;
+
+                if ((! iRule)  ||  (iRule && _Rule_.style[iRule]))
+                    return _Rule_;
+            }));
+        }
+        return  this.each(function () {
+            var $_This = $(this);
+
+            var _UUID_ = $_This.data('css') || $.uuid(),  _Rule_ = { };
+
+            for (var iSelector in iRule)
+                _Rule_['*[data-css="' + _UUID_ + '"]' + iSelector] = iRule[iSelector];
+
+            $(this).attr('data-css', _UUID_);
+            var iSheet = $.cssRule(_Rule_);
+
+            if (typeof iCallback == 'function')  iCallback.call(this, iSheet);
+        });
     };
 
     var Pseudo_RE = /:{1,2}[\w\-]+/g;
 
     $.cssPseudo = function () {
-        var Pseudo_Rule = [ ];
+        return  CSS_Rule_Search(arguments[0],  function (iRule) {
+            var iPseudo = iRule.cssText.match(Pseudo_RE);
+            if (! iPseudo)  return;
 
-        $.each(arguments[0] || DOM.styleSheets,  function () {
-            var iRule = this.cssRules;
-            if (! iRule)  return;
-
-            for (var i = 0, iPseudo;  i < iRule.length;  i++)
-                if (! iRule[i].cssRules) {
-                    iPseudo = iRule[i].cssText.match(Pseudo_RE);
-                    if (! iPseudo)  continue;
-
-                    for (var j = 0;  j < iPseudo.length;  j++)
-                        iPseudo[j] = iPseudo[j].split(':').slice(-1)[0];
-                    iRule[i].pseudo = iPseudo;
-                    iRule[i].selectorText = iRule[i].selectorText ||
-                        iRule[i].cssText.match(/^(.+?)\s*\{/)[1];
-                    Pseudo_Rule.push(iRule[i]);
-                } else
-                    arguments.callee.call(iRule[i], i, iRule[i]);
+            for (var j = 0;  j < iPseudo.length;  j++)
+                iPseudo[j] = iPseudo[j].split(':').slice(-1)[0];
+            iRule.pseudo = iPseudo;
+            iRule.selectorText = iRule.selectorText ||
+                iRule.cssText.match(/^(.+?)\s*\{/)[1];
+            return iRule;
         });
-
-        return Pseudo_Rule;
     };
 
 /* ---------- DOM 选中内容读写  v0.2 ---------- */

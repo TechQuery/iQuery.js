@@ -68,7 +68,8 @@
  - .css() 取值时，会把 纯数字值、像素值 直接返回为 Number 类型
  - .css() 赋值一律默认 important 优先级，确保赋值的有效性
  - 新增 **DOM 元素 z-index 集成方法** —— $.fn.zIndex()，集“**取实际值、赋值、同辈置顶/沉底**”功能于一身
- - 新增 **.cssRule() 静态/实例方法**，便于就近声明 DOM 元素的 CSS 规则
+ - 新增 **CSS 规则全局设置方法** —— $.cssRule()
+ - 新增 **DOM 元素 CSS 规则读写方法** —— $.fn.cssRule()
  - 新增 **伪类/元素 CSS 规则对象 提取方法** —— $.cssPseudo()
  - 新增 DOM 选中内容读写方法 —— $.fn.selection()
  - 封装 **Animate.css** 为 $.fn.cssAnimate()，其调用参数 兼容 $.fn.animate()
