@@ -67,10 +67,10 @@
  - 新增 **DOM 对象通用 .value() 方法**，智能存取多种类型的值
  - .css() 取值时，会把 纯数字值、像素值 直接返回为 Number 类型
  - .css() 赋值一律默认 important 优先级，确保赋值的有效性
+ - `$.fn.show()` 兼容 **元素非固有 display 属性值**，避免破坏 复杂布局
  - 新增 **DOM 元素 z-index 集成方法** —— $.fn.zIndex()，集“**取实际值、赋值、同辈置顶/沉底**”功能于一身
  - 新增 **CSS 规则全局设置方法** —— $.cssRule()
  - 新增 **DOM 元素 CSS 规则读写方法** —— $.fn.cssRule()
- - 新增 **伪类/元素 CSS 规则对象 提取方法** —— $.cssPseudo()
  - 新增 DOM 选中内容读写方法 —— $.fn.selection()
  - 封装 **Animate.css** 为 $.fn.cssAnimate()，其调用参数 兼容 $.fn.animate()
  - .focus() 会让所有可见元素获得焦点
@@ -111,6 +111,7 @@
  - 自带 **HTML 5 History API**，为 IE 8/9 提供兼容支持
  - 修正 IE 8- DOM Attribute 系列方法对 JavaScript 关键字的特殊处理
  - 自带 **CSSStyleDeclaration 对象**，为 IE 8 提供 **getComputedStyle** 支持，并封装了 M$ DirectX 滤镜属性转换
+ - 自带 Google Chrome **元素 CSS 规则对象 获取**方法 `getMatchedCSSRules()`
  - 自带 **HTML 5 Form API**，为 IE 8、iOS WebKit 提供兼容支持
  - 自带 DOMParser 对象，为 IE 8 提供 **XML 文档解析**支持
 

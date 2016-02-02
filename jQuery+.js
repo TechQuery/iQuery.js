@@ -2,7 +2,7 @@
 //              >>>  jQuery+  <<<
 //
 //
-//    [Version]     v6.2  (2016-02-01)
+//    [Version]     v6.3  (2016-02-02)
 //
 //    [Based on]    jQuery  v1.9+
 //
@@ -399,6 +399,8 @@
 
 /* ---------- 有滚动条的祖先元素  v0.1 ---------- */
 
+    var Array_Reverse = Array.prototype.reverse;
+
     $.fn.scrollParents = function () {
         return  Array_Reverse.call(this.pushStack(
             $.map(this.parents(),  function () {
@@ -590,6 +592,35 @@
         });
     }
 
+    function CSSRuleList() {
+        $.extend(this, arguments[0]);
+        this.length = arguments[0].length;
+    }
+
+    if (typeof BOM.getMatchedCSSRules != 'function')
+        BOM.getMatchedCSSRules = function (iElement, iPseudo) {
+            if (! (iElement instanceof Element))  return null;
+
+            if (typeof iPseudo == 'string') {
+                iPseudo = (iPseudo.match(/^\s*:{1,2}([\w\-]+)\s*$/) || [ ])[1];
+
+                if (! iPseudo)  return null;
+            } else if (iPseudo)
+                iPseudo = null;
+
+            return  new CSSRuleList(CSS_Rule_Search(null,  function (iRule) {
+                var iSelector = iRule.selectorText;
+
+                if (iPseudo) {
+                    iSelector = iSelector.replace(/:{1,2}([\w\-]+)$/,  function () {
+                        return  (arguments[1] == iPseudo)  ?  ''  :  arguments[0];
+                    });
+                    if (iSelector == iRule.selectorText)  return;
+                }
+                if (iElement.matches( iSelector ))  return iRule;
+            }));
+        };
+
     $.fn.cssRule = function (iRule, iCallback) {
         if (! $.isPlainObject(iRule)) {
             var $_This = this;
@@ -619,22 +650,6 @@
             var iSheet = $.cssRule(_Rule_);
 
             if (typeof iCallback == 'function')  iCallback.call(this, iSheet);
-        });
-    };
-
-    var Pseudo_RE = /:{1,2}[\w\-]+/g;
-
-    $.cssPseudo = function () {
-        return  CSS_Rule_Search(arguments[0],  function (iRule) {
-            var iPseudo = iRule.cssText.match(Pseudo_RE);
-            if (! iPseudo)  return;
-
-            for (var j = 0;  j < iPseudo.length;  j++)
-                iPseudo[j] = iPseudo[j].split(':').slice(-1)[0];
-            iRule.pseudo = iPseudo;
-            iRule.selectorText = iRule.selectorText ||
-                iRule.cssText.match(/^(.+?)\s*\{/)[1];
-            return iRule;
         });
     };
 
@@ -1319,6 +1334,20 @@
 /* ---------- W3C HTML 5  Shim ---------- */
 (function ($) {
 
+    /* ----- DOM 选择器匹配  v0.1 ----- */
+
+    var DOM_Proto = Element.prototype;
+
+    DOM_Proto.matches = DOM_Proto.matches || DOM_Proto.webkitMatchesSelector ||
+        DOM_Proto.msMatchesSelector || DOM_Proto.mozMatchesSelector ||
+        function () {
+            if (! this.parentNode)  $('<div />')[0].appendChild(this);
+
+            return  ($.inArray(
+                this,  this.parentNode.querySelectorAll( arguments[0] )
+            ) > -1);
+        };
+
     /* ----- HTML 5 表单验证  v0.1 ----- */
 
     if (! (($.browser.msie < 10)  ||  $.browser.ios))
@@ -1364,6 +1393,7 @@
     };
 
 })(self.jQuery || self.Zepto);
+
 
 
 (function (BOM, DOM, $) {
