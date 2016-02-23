@@ -2,9 +2,9 @@
 //              >>>  jQuery+  <<<
 //
 //
-//    [Version]     v6.3  (2016-02-02)
+//    [Version]    v6.4  (2016-02-23)
 //
-//    [Based on]    jQuery  v1.9+
+//    [Require]    jQuery  v1.9+
 //
 //
 //        (C)2014-2016  shiy2008@gmail.com
@@ -334,7 +334,10 @@
 
     $.extend($, {
         paramJSON:    function (Args_Str) {
-            Args_Str = (Args_Str || BOM.location.search).match(/[^\?&\s]+/g);
+            Args_Str = (
+                Args_Str  ?  $.split(Args_Str, '?', 2)[1]  :  BOM.location.search
+            ).match(/[^\?&\s]+/g);
+
             if (! Args_Str)  return { };
 
             var _Args_ = {
@@ -342,7 +345,6 @@
                         return  BOM.JSON.format(this);
                     }
                 };
-
             for (var i = 0, iValue; i < Args_Str.length; i++) {
                 Args_Str[i] = $.split(Args_Str[i], '=', 2);
 
@@ -397,23 +399,50 @@
         return $_New;
     };
 
-/* ---------- 有滚动条的祖先元素  v0.1 ---------- */
+/* ---------- 页面滚动相关操作  v0.2 ---------- */
 
     var Array_Reverse = Array.prototype.reverse;
 
-    $.fn.scrollParents = function () {
-        return  Array_Reverse.call(this.pushStack(
-            $.map(this.parents(),  function () {
-                var $_This = $(arguments[0]);
+    $.fn.extend({
+        scrollParents:    function () {
+            return  Array_Reverse.call(this.pushStack(
+                $.map(this.parents(),  function () {
+                    var $_This = $(arguments[0]);
 
-                if (
-                    ($_This.height() < $_This[0].scrollHeight)  ||
-                    ($_This.width() < $_This[0].scrollWidth)
-                )
-                    return $_This[0];
-            })
-        ));
-    };
+                    if (
+                        ($_This.height() < $_This[0].scrollHeight)  ||
+                        ($_This.width() < $_This[0].scrollWidth)
+                    )
+                        return $_This[0];
+                })
+            ));
+        },
+        scrollTo:         function ($_Target) {
+            $_Target = $($_Target);
+
+            this.has($_Target).each(function () {
+                var $_Scroll = $(this);
+
+                var iCoord = $($.map($_Target,  function () {
+                        if ( $.contains($_Scroll[0], arguments[0]) )
+                            return arguments[0];
+                    })).offset(),
+                    _Coord_ = $_Scroll.offset();
+
+                if (! $_Scroll.length)  return;
+
+                $_Scroll.animate({
+                    scrollTop:
+                        $_Scroll.scrollTop()  +  (iCoord.top - _Coord_.top),
+                    scrollLeft:
+                        $_Scroll.scrollLeft()  +  (iCoord.left - _Coord_.left)
+                });
+            });
+
+            return this;
+        }
+    });
+
 /* ---------- jQuery 元素 z-index 独立方法  v0.2 ---------- */
 
     function Get_zIndex() {
@@ -818,7 +847,9 @@
                 if (
                     (typeof iCallback == 'function')  &&
                     (false === iCallback.call(
-                        $_iFrame[0],  $('head style', _DOM_).add($_Content).clone(true)
+                        $_iFrame[0],  $($.merge(
+                            $.makeArray( $('head style', _DOM_) ),  $_Content
+                        ))
                     ))
                 )
                     $_iFrame.remove();
@@ -997,7 +1028,9 @@
                 this.requestData = arguments[0];
                 this.responseURL = iURL[1] + $.param(
                     $.extend({ }, arguments[0], $.paramJSON(
-                        iURL[2].replace(/(\w+)=\?/,  '$1=DOMHttpRequest.JSONP.' + _UUID_)
+                        '?' + iURL[2].replace(
+                            /(\w+)=\?/,  '$1=DOMHttpRequest.JSONP.' + _UUID_
+                        )
                     ))
                 );
                 this.$_DOM = $('<script />', {src:  this.responseURL}).appendTo(DOM.head);

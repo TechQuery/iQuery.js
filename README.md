@@ -63,6 +63,7 @@
  - 新增 jQuery 元素成员更新方法 —— `$.fn.refresh()`
  - 新增 **祖先元素交集**方法 —— `$.fn.sameParents()`
  - 新增 **有滚动条的祖先元素**方法 —— `$.fn.scrollParents()`
+ - 新增 **元素平滑滚动**方法 —— `$.fn.scrollTo()`
  - 所有类型的 **DOM 信息读写器**（`.attr()`、`.prop()`、`.css()`、`.data()`）均支持“不传键名时返回 **信息全集**”特性
  - 新增 **DOM 对象可见内容读写**方法 —— `$.fn.value()`，智能存取多种类型的值
  - .css() 取值时，会把 纯数字值、像素值 直接返回为 Number 类型
@@ -99,7 +100,7 @@
  - 新增 `String.prototype.repeat` 标准草案方法
  - 新增 String **toCamelCase**（驼峰命名法）、 **toHyphenCase**（连字符命名法） **书写格式转换**方法
  - 自带 `Date.now()` 标准方法
- - 新增 JSON **format 格式化显示**方法、**parseAll 深度解析**方法（$.parseJSON() 被其增强）
+ - 新增 JSON **format 格式化显示**方法、 **parseAll 深度解析**方法（$.parseJSON() 被其增强）
  - 重写 IE 8 Error 对象的 valueOf 方法，使之返回可查询的错误码（附带 官方文档 URL）
  - 新增 **DOMHttpRequest 对象**，封装了 **JSONP Get**、 **iframe Post**
  - 自带 `Element.prototype.textContent` 属性
