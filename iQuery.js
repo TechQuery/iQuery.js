@@ -2417,8 +2417,8 @@
             $(iEvent.target).trigger((iShift < 22)  ?
                 ((iTime > 300) ? 'press' : 'tap')  :  {
                     type:      'swipe',
-                    pageX:     swipeLeft,
-                    pageY:     swipeTop,
+                    deltaX:    swipeLeft,
+                    deltaY:    swipeTop,
                     detail:    iShift
                 }
             );

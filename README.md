@@ -29,11 +29,13 @@
 ### 【成功驱动的项目】
  1. EasyImport.js
  2. 某公司 JS-SDK
- 3. [EasyWebUI](http://git.oschina.net/Tech_Query/EasyWebUI)
- 4. [EasyWebApp](http://git.oschina.net/Tech_Query/EasyWebApp)
- 5. 某公司 开放平台、业务后台
- 6. 某公司 微信轻应用
- 7. 某公司 WiFi 认证微官网
+ 3. [EasyWebUI](http://git.oschina.net/Tech_Query/EasyWebUI/)
+ 4. [EasyWebApp](http://git.oschina.net/Tech_Query/EasyWebApp/)
+ 5. [jQuery-QRcode](https://larsjung.de/jquery-qrcode/)
+ 6. [EasyWiki](http://git.oschina.net/Tech_Query/EasyWiki/)
+ 7. 某公司 开放平台、业务后台
+ 8. 某公司 微信轻应用
+ 9. 某公司 WiFi 认证微官网
 
 
 ## 【对 jQuery（最新版）的增强】

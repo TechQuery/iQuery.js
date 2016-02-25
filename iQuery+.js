@@ -2,9 +2,9 @@
 //              >>>  iQuery+  <<<
 //
 //
-//    [Version]     v0.7  (2016-01-27)  Stable
+//    [Version]    v0.8  (2016-2-25)  Stable
 //
-//    [Based on]    iQuery  or  (jQuery with jQuery+)
+//    [Require]    iQuery  ||  jQuery with jQuery+
 //
 //
 //        (C)2015-2016  shiy2008@gmail.com
@@ -13,7 +13,7 @@
 
 (function (BOM, DOM, $) {
 
-/* ---------- ListView Interface  v0.5 ---------- */
+/* ---------- ListView Interface  v0.6 ---------- */
 
 //  Thanks "EasyWebApp" Project --- http://git.oschina.net/Tech_Query/EasyWebApp
 
@@ -222,18 +222,19 @@
 
             $_Item.siblings().removeClass('active');
 
-            var iCoord = $_Item.addClass('active').offset(),
-                _Coord_ = $_Scroll.offset();
-
-            if ($_Scroll.length)
-                $_Scroll.animate({
-                    scrollTop:
-                        $_Scroll.scrollTop()  +  (iCoord.top - _Coord_.top),
-                    scrollLeft:
-                        $_Scroll.scrollLeft()  +  (iCoord.left - _Coord_.left)
-                });
+            $_Scroll.scrollTo( $_Item.addClass('active') );
 
             return this;
+        },
+        fork:       function () {
+            var _Self_ = this.constructor,  $_View = this.$_View.clone(true);
+
+            $_View.data({_LVI_: '',  LV_Model: ''})[0].id = '';
+
+            var iFork = _Self_($_View.appendTo( arguments[0] ),  this.selector);
+            iFork.callback = this.callback;
+
+            return iFork;
         }
     });
 
