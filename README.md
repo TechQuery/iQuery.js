@@ -121,5 +121,6 @@
 
 ## 【iQuery+ 插件库】
  - 通用 **ListView 对象**生成方法 —— `$.ListView()`
+ - 通用 **TreeView 对象**生成方法 —— `$.TreeView()`
  - Base64 文本转 **二进制对象**方法 —— `$.toBlob()`
  - 基于 **现代浏览器 Crypto API** 的哈希方法 —— $.dataHash()

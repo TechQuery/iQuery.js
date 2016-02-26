@@ -1118,10 +1118,11 @@
     $.fn.sameParents = function () {
         if (this.length < 2)  return this.parents();
 
-        var iMin = Object_Seek.call(this[0], 'parentNode'),  iPrev;
+        var iMin = $.trace(this[0], 'parentNode').slice(0, -1),
+            iPrev;
 
         for (var i = 1, iLast;  i < this.length;  i++) {
-            iLast = Object_Seek.call(this[i], 'parentNode');
+            iLast = $.trace(this[i], 'parentNode').slice(0, -1);
             if (iLast.length < iMin.length) {
                 iPrev = iMin;
                 iMin = iLast;
@@ -1136,9 +1137,9 @@
                 $_Result = iMin.slice(i);
                 break;
             }
-        return this.pushStack(
+        return  Array_Reverse.call(this.pushStack(
             arguments[0]  ?  $($_Result).filter(arguments[0])  :  $_Result
-        );
+        ));
     };
 
 /* ---------- 通用聚焦事件  v0.1 ---------- */

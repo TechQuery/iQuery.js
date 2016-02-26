@@ -1291,7 +1291,7 @@
                 iPrev;
 
             for (var i = 1, iLast;  i < this.length;  i++) {
-                iLast = $.trace(this[i], 'parentNode');
+                iLast = $.trace(this[i], 'parentNode').slice(0, -1);
                 if (iLast.length < iMin.length) {
                     iPrev = iMin;
                     iMin = iLast;
