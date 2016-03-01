@@ -2,7 +2,7 @@
 //                >>>  iQuery.js  <<<
 //
 //
-//      [Version]    v1.0  (2016-02-23)  Stable
+//      [Version]    v1.0  (2016-02-26)  Stable
 //
 //      [Usage]      A Light-weight jQuery Compatible API
 //                   with IE 8+ compatibility.
@@ -1363,9 +1363,9 @@
                 );
             $_Result.reverse();
 
-            return this.pushStack(
+            return Array_Reverse.call(this.pushStack(
                 arguments[0]  ?  $($_Result).filter(arguments[0])  :  $_Result
-            );
+            ));
         },
         siblings:           function () {
             var $_Result = this.prevAll().add( this.nextAll() );
@@ -1477,17 +1477,15 @@
             if (!  (_DOM_  &&  _Body_  &&  $.contains(_Body_, this[0])))
                 return  {left: 0,  top: 0};
 
-            var _BOM_ = _DOM_.defaultView,  iBCR = this[0].getBoundingClientRect();
+            var $_DOM_ = $(_DOM_),  iBCR = this[0].getBoundingClientRect();
 
             return {
-                left:    parseFloat((
-                    ($.browser.modern ? _BOM_.pageXOffset : _Body_.scrollLeft)  +
-                    iBCR.left
-                ).toFixed(4)),
-                top:     parseFloat((
-                    ($.browser.modern ? _BOM_.pageYOffset : _Body_.scrollTop)  +
-                    iBCR.top
-                ).toFixed(4))
+                left:    parseFloat(
+                    ($_DOM_.scrollLeft() + iBCR.left).toFixed(4)
+                ),
+                top:     parseFloat(
+                    ($_DOM_.scrollTop() + iBCR.top).toFixed(4)
+                )
             };
         },
         addClass:           function (new_Class) {
