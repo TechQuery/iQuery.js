@@ -2,7 +2,7 @@
 //              >>>  jQuery+  <<<
 //
 //
-//    [Version]    v6.4  (2016-02-23)
+//    [Version]    v6.4  (2016-3-16)
 //
 //    [Require]    jQuery  v1.9+
 //
@@ -764,15 +764,14 @@
             End_Element = (! this.children.length);
 
         var _Set_ = iValue || $.isData(iValue),
-            iURL = (typeof iValue == 'string')  &&  iValue.trim().match(RE_URL);
+            iURL = (typeof iValue == 'string')  &&  iValue.trim();
+        var isURL = iURL && iURL.split('#')[0].match(RE_URL);
 
         switch ( this.tagName.toLowerCase() ) {
             case 'a':           {
                 if (_Set_) {
-                    if (iURL)
-                        $_This.attr('href', iURL[0]);
-                    if (End_Element)
-                        $_This.text(iValue);
+                    if (isURL)  $_This.attr('href', iURL);
+                    if (End_Element)  $_This.text(iValue);
                     return;
                 }
                 return  $_This.attr('href')  ||  (End_Element && $_This.text());
@@ -787,8 +786,8 @@
             }
             default:            {
                 if (_Set_) {
-                    if ((! End_Element)  &&  iURL)
-                        $_This.css('background-image',  'url("' + iValue + '")');
+                    if ((! End_Element)  &&  isURL)
+                        $_This.css('background-image',  'url("' + iURL + '")');
                     else
                         $_This.html(iValue);
                     return;
