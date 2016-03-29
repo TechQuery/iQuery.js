@@ -1625,9 +1625,14 @@
             case 'textarea':    ;
             case 'select':      ;
             case 'input':       {
+                var _Value_ = this.value;
+                try {
+                    _Value_ = JSON.parse(_Value_);
+                } catch (iError) { }
+
                 if (
                     (this.type || '').match(/radio|checkbox/i)  &&
-                    (JSON.parse(this.value) == iValue)
+                    (_Value_ == iValue)
                 )
                     this.checked = true;
 

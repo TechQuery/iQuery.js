@@ -2,7 +2,7 @@
 //              >>>  jQuery+  <<<
 //
 //
-//    [Version]    v6.4  (2016-3-16)
+//    [Version]    v6.4  (2016-3-28)
 //
 //    [Require]    jQuery  v1.9+
 //
@@ -780,8 +780,17 @@
             case 'textarea':    ;
             case 'select':      ;
             case 'input':       {
-                if ((this.type || '').match(/radio|checkbox/i)  &&  (this.value == iValue))
+                var _Value_ = this.value;
+                try {
+                    _Value_ = JSON.parse(_Value_);
+                } catch (iError) { }
+
+                if (
+                    (this.type || '').match(/radio|checkbox/i)  &&
+                    (_Value_ == iValue)
+                )
                     this.checked = true;
+
                 return $_This.val(iValue);
             }
             default:            {
@@ -847,7 +856,10 @@
                     (typeof iCallback == 'function')  &&
                     (false === iCallback.call(
                         $_iFrame[0],  $($.merge(
-                            $.makeArray( $('head style', _DOM_) ),  $_Content
+                            $.makeArray($(
+                                'head style, head link[rel="stylesheet"]',  _DOM_
+                            )),
+                            $_Content
                         ))
                     ))
                 )
@@ -1203,20 +1215,26 @@
 
             var swipeLeft = Touch_Data.pX - iTouch.pageX,
                 swipeTop = Touch_Data.pY - iTouch.pageY,
-                iTime = iEvent.timeStamp - Touch_Data.time;
+                iDuring = iEvent.timeStamp - Touch_Data.time;
 
             var iShift = Math.sqrt(
                     Math.pow(swipeLeft, 2)  +  Math.pow(swipeTop, 2)
-                );
+                ),
+                _Event_;
 
-            $(iEvent.target).trigger((iShift < 22)  ?
-                ((iTime > 300) ? 'press' : 'tap')  :  {
+            if (iDuring > 300)
+                _Event_ = 'press';
+            else if (iShift < 22)
+                _Event_ = 'tap';
+            else
+                _Event_ = {
                     type:      'swipe',
-                    pageX:     swipeLeft,
-                    pageY:     swipeTop,
+                    deltaX:    swipeLeft,
+                    deltaY:    swipeTop,
                     detail:    iShift
-                }
-            );
+                };
+
+            $(iEvent.target).trigger(_Event_);
         }
     );
     var iShortCut = $.makeSet('mousewheel', 'tap', 'press', 'swipe');
