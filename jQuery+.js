@@ -2,7 +2,7 @@
 //              >>>  jQuery+  <<<
 //
 //
-//    [Version]    v6.4  (2016-3-28)
+//    [Version]    v6.5  (2016-04-08)
 //
 //    [Require]    jQuery  v1.9+
 //
@@ -881,7 +881,7 @@
 
 
 /* ---------- HTTP Method 快捷方法  v0.1 ---------- */
-    function iHTTP(iMethod, iURL, iData, iCallback) {
+    function HTTP_Request(iMethod, iURL, iData, iCallback) {
         if (typeof iData == 'function') {
             iCallback = iData;
             iData = null;
@@ -898,21 +898,13 @@
         });
     }
 
-    $['delete'] = function () {
-        var iArgs = $.makeArray(arguments);
-        iArgs.unshift('DELETE');
+    var HTTP_Method = $.makeSet('PUT', 'DELETE');
 
-        return  iHTTP.apply(BOM, iArgs);
-    };
+    for (var iMethod in HTTP_Method)
+        $[ iMethod.toLowerCase() ] = $.proxy(HTTP_Request, BOM, iMethod);
 
-    $.put = function () {
-        var iArgs = $.makeArray(arguments);
-        iArgs.unshift('PUT');
 
-        return  iHTTP.apply(BOM, iArgs);
-    };
-
-/* ---------- Form 元素 无刷新提交  v0.5 ---------- */
+/* ---------- Form 元素 无刷新提交  v0.6 ---------- */
 
     /* ----- DOM HTTP 请求对象  v0.2 ----- */
     var XHR_Extension = {
@@ -969,7 +961,40 @@
                     iXHR.send(iXHR.requestData);
                 });
             }
+        },
+        $_DOM = $(DOM);
+
+    function onLoad(iProperty, iData) {
+        if (iProperty)  $.extend(this, iProperty);
+
+        if (
+            (! (this.crossDomain || (this.readyState == 4)))  ||
+            (typeof this.onready != 'function')
+        )
+            return;
+
+        var iError = (this.status > 399);
+
+        $_DOM.trigger('ajaxComplete', [this]);
+        $_DOM.trigger('ajax' + (iError ? 'Error' : 'Success'),  [this]);
+
+        this.onready(
+            iData || this.responseAny(),
+            iError ? 'error' : 'success',
+            this
+        );
+    }
+
+    var Success_State = {
+            readyState:    4,
+            status:        200,
+            statusText:    'OK'
         };
+
+    function beforeSend(iXHR) {
+        $_DOM.triggerHandler('ajaxPrefilter', [iXHR])
+        $_DOM.trigger('ajaxSend', [iXHR]);
+    }
 
     BOM.DOMHttpRequest = function () {
         this.status = 0;
@@ -984,15 +1009,18 @@
 
             //  <script />, JSONP
             if (this.method == 'GET') {
-                this.responseURL = iTarget;
+                this.url = iTarget;
                 return;
             }
 
             //  <iframe />
-            var iDHR = this,  $_Form = $(iTarget);
+            var $_Form = $(iTarget).submit(function () {
+                    if ( $(this).data('_AJAX_Submitting_') )  return false;
+                }),
+                iDHR = this;
 
-            var $_Button = $_Form.find(':button').attr('disabled', true),
-                iTarget = $_Form.attr('target');
+            var iTarget = $_Form.attr('target');
+
             if ((! iTarget)  ||  iTarget.match(/^_(top|parent|self|blank)$/i)) {
                 iTarget = $.uuid('iframe');
                 $_Form.attr('target', iTarget);
@@ -1000,16 +1028,13 @@
 
             $('iframe[name="' + iTarget + '"]').sandBox(function () {
                 $(this).on('load',  function () {
-                    $_Button.prop('disabled', false);
+                    $_Form.data('_AJAX_Submitting_', 0);
 
                     if (iDHR.readyState)  try {
-                        var $_Content = $(this).contents();
-                        iDHR.responseText = $_Content.find('body').text();
-                        iDHR.status = 200;
-                        iDHR.readyState = 4;
-                        iDHR.onready.call(
-                            $_Form[0],  iDHR.responseAny(),  $_Content,  iDHR
-                        );
+                        onLoad.call(iDHR, $.extend({
+                            responseText:
+                                $(this).contents().find('body').text()
+                        }, Success_State));
                     } catch (iError) { }
                 });
             }).attr('name', iTarget);
@@ -1018,33 +1043,32 @@
             this.requestArgs = arguments;
         },
         send:                function () {
+            beforeSend(this);
+
             if (this.method == 'POST')
                 this.$_DOM.submit();    //  <iframe />
             else {
                 //  <script />, JSONP
-                var iURL = this.responseURL.match(/([^\?=&]+\?|\?)?(\w.+)?/);
+                var iURL = this.url.match(/([^\?=&]+\?|\?)?(\w.+)?/);
                 if (! iURL)  throw 'Illegal URL !';
 
                 var _UUID_ = $.uuid(),  iDHR = this;
 
                 BOM.DOMHttpRequest.JSONP[_UUID_] = function () {
-                    if (iDHR.readyState) {
-                        iDHR.status = 200;
-                        iDHR.readyState = 4;
-                        iDHR.onready.call(iDHR, arguments[0], 'success', iDHR);
-                    }
+                    if (iDHR.readyState)
+                        onLoad.call(iDHR, Success_State, arguments[0]);
                     delete this[_UUID_];
                     iDHR.$_DOM.remove();
                 };
                 this.requestData = arguments[0];
-                this.responseURL = iURL[1] + $.param(
+                this.url = iURL[1] + $.param(
                     $.extend({ }, arguments[0], $.paramJSON(
                         '?' + iURL[2].replace(
                             /(\w+)=\?/,  '$1=DOMHttpRequest.JSONP.' + _UUID_
                         )
                     ))
                 );
-                this.$_DOM = $('<script />', {src:  this.responseURL}).appendTo(DOM.head);
+                this.$_DOM = $('<script />',  {src: this.url}).appendTo(DOM.head);
             }
             this.readyState = 1;
         },
@@ -1059,53 +1083,45 @@
     $.fn.ajaxSubmit = function (iCallback) {
         if (! this.length)  return this;
 
-        var $_Form = (
-                (this[0].tagName.toLowerCase() == 'form') ?
-                    this : this.find('form')
-            ).eq(0);
-        if (! $_Form.length)  return this;
+        function AJAX_Submit(iEvent) {
+            var $_Form = $(this);
 
-        var $_Button = $_Form.find(':button').attr('disabled', true);
+            if ((! this.checkValidity())  ||  $_Form.data('_AJAX_Submitting_'))
+                return false;
 
-        function AJAX_Ready() {
-            $_Button.prop('disabled', false);
-            iCallback.apply($_Form[0], arguments);
+            $_Form.data('_AJAX_Submitting_', 1);
+
+            if (
+                $_Form.find('input[type="file"]').length &&
+                ($.browser.msie < 10)
+            ) {
+                var iDHR = new BOM.DOMHttpRequest();
+                iDHR.open('POST', $_Form)
+                iDHR.onready = iCallback;
+                iDHR.send();
+                return;
+            }
+
+            var iMethod = (this.method || 'Get').toUpperCase();
+
+            if ((iMethod in HTTP_Method)  ||  (iMethod == 'GET'))
+                $[ iMethod.toLowerCase() ](
+                    this.action,
+                    $.paramJSON('?' + $_Form.serialize()),
+                    function () {
+                        $_Form.data('_AJAX_Submitting_', 0);
+                        iCallback.apply($_Form[0], arguments);
+                    }
+                );
+            return false;
         }
 
-        $_Form.on('submit',  function (iEvent) {
-            iEvent.preventDefault();
-            iEvent.stopPropagation();
-            $_Button.attr('disabled', true);
+        var $_Form = this.filter('form');
 
-            var iData = { };
-            if (! $_Form.find('input[type="file"]').length) {
-                var _Data_ = $_Form.serializeArray();
-                for (var i = 0;  i < _Data_.length;  i++)
-                    iData[_Data_[i].name] = _Data_[i].value;
-            } else {
-                if (! ($.browser.msie < 10))
-                    iData = new FormData($_Form[0]);
-                else {
-                    var iDHR = new BOM.DOMHttpRequest();
-                    iDHR.open('POST', $_Form)
-                    iDHR.onready = iCallback;
-                    iDHR.send();
-                    return;
-                }
-            }
-            var iMethod = ($_Form.attr('method') || 'Get').toLowerCase();
-
-            if ( this.checkValidity() )  switch (iMethod) {
-                case 'get':       ;
-                case 'delete':
-                    $[iMethod](this.action + $.param($_Form.serializeArray()),  AJAX_Ready);    break;
-                case 'post':      ;
-                case 'put':
-                    $[iMethod](this.action, this, AJAX_Ready);
-            } else
-                $_Button.prop('disabled', false);
-        });
-        $_Button.prop('disabled', false);
+        if ( $_Form[0] )
+            $_Form.submit(AJAX_Submit);
+        else
+            this.on('submit', 'form:visible', AJAX_Submit);
 
         return this;
     };
