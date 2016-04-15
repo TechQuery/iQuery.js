@@ -2,7 +2,7 @@
 //              >>>  jQuery+  <<<
 //
 //
-//    [Version]    v6.5  (2016-04-08)
+//    [Version]    v6.5  (2016-04-15)
 //
 //    [Require]    jQuery  v1.9+
 //
@@ -601,7 +601,7 @@
 
         return  $('<style />', {
             type:       'text/css',
-            'class':    'jQuery_CSS-Rule',
+            'class':    'iQuery_CSS-Rule',
             text:       (! iMedia) ? CSS_Text : [
                 '@media ' + iMedia + ' {',
                 CSS_Text.replace(/\n/m, "\n    "),
@@ -668,14 +668,13 @@
             }));
         }
         return  this.each(function () {
-            var $_This = $(this);
+            var _Rule_ = { };
 
-            var _UUID_ = $_This.data('css') || $.uuid(),  _Rule_ = { };
+            this.id = this.id || $.uuid();
 
             for (var iSelector in iRule)
-                _Rule_['*[data-css="' + _UUID_ + '"]' + iSelector] = iRule[iSelector];
+                _Rule_['#' + this.id + iSelector] = iRule[iSelector];
 
-            $(this).attr('data-css', _UUID_);
             var iSheet = $.cssRule(_Rule_);
 
             if (typeof iCallback == 'function')  iCallback.call(this, iSheet);
