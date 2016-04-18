@@ -2,7 +2,7 @@
 //              >>>  jQuery+  <<<
 //
 //
-//    [Version]    v6.5  (2016-04-15)
+//    [Version]    v6.6  (2016-04-18)
 //
 //    [Require]    jQuery  v1.9+
 //
@@ -166,7 +166,7 @@
         }
     });
 
-/* ---------- 对象工具方法  v0.5 ---------- */
+/* ---------- 对象工具方法  v0.7 ---------- */
 
     $.extend({
         likeArray:    function (iObject) {
@@ -180,6 +180,35 @@
                 (typeof iObject.length == 'number')  &&
                 (typeof iObject != 'string')
             );
+        },
+        isEqual:      function (iLeft, iRight) {
+            if (!  (iLeft && iRight))
+                return  (iLeft == iRight);
+
+            iLeft = iLeft.valueOf();
+            iRight = iRight.valueOf();
+
+            if (iLeft == iRight)  return true;
+            if (! (
+                (iLeft instanceof Object)  &&  (iRight instanceof Object)
+            ))
+                return false;
+
+            var Left_Key = Object.getOwnPropertyNames(iLeft),
+                Right_Key = Object.getOwnPropertyNames(iRight);
+
+            if (Left_Key.length != Right_Key.length)  return false;
+
+            for (var i = 0, _Key_;  i < Left_Key.length;  i++) {
+                _Key_ = Left_Key[i];
+
+                if (! (
+                    (_Key_ in iRight)  &&
+                    arguments.callee.call(this, iLeft[_Key_], iRight[_Key_])
+                ))
+                    return false;
+            }
+            return true;
         },
         makeSet:      function () {
             var iSet = { };
@@ -210,6 +239,25 @@
             }
 
             return iResult;
+        },
+        intersect:        function () {
+            if (arguments.length < 2)  return arguments[0];
+
+            var iArgs = this.makeArray( arguments );
+            var iArray = this.likeArray( iArgs[0] );
+
+            iArgs[0] = this.map(iArgs.shift(),  function (iValue, iKey) {
+                if ( iArray ) {
+                    if (iArgs.indexOf.call(iArgs[0], iValue)  >  -1)
+                        return iValue;
+                } else if (
+                    (iArgs[0][iKey] !== undefined)  &&
+                    (iArgs[0][iKey] === iValue)
+                )
+                    return iValue;
+            });
+
+            return  arguments.callee.apply(this, iArgs);
         }
     });
 
@@ -276,38 +324,6 @@
 
     $.isData = function () {
         return  (_Type_(arguments[0]) in Type_Info.Data);
-    };
-
-/* ---------- 对象值相等  v0.1 ---------- */
-
-    $.isEqual = function (iLeft, iRight) {
-        if (!  (iLeft && iRight))
-            return  (iLeft == iRight);
-
-        iLeft = iLeft.valueOf();
-        iRight = iRight.valueOf();
-
-        if (iLeft == iRight)  return true;
-        if (! (
-            (iLeft instanceof Object)  &&  (iRight instanceof Object)
-        ))
-            return false;
-
-        var Left_Key = Object.getOwnPropertyNames(iLeft),
-            Right_Key = Object.getOwnPropertyNames(iRight);
-
-        if (Left_Key.length != Right_Key.length)  return false;
-
-        for (var i = 0, _Key_;  i < Left_Key.length;  i++) {
-            _Key_ = Left_Key[i];
-
-            if (! (
-                (_Key_ in iRight)  &&
-                arguments.callee.call(this, iLeft[_Key_], iRight[_Key_])
-            ))
-                return false;
-        }
-        return true;
     };
 
 /* ---------- 字符串扩展（借鉴 PHP） v0.2 ---------- */
@@ -806,22 +822,26 @@
         }
     }
 
-    $.fn.value = function (iFiller) {
-        var $_Name = this.filter('*[name]');
-        $_Name = $_Name.length ? $_Name : this.find('*[name]');
+    $.fn.value = function (iAttr, iFiller) {
+        if (typeof iAttr == 'function') {
+            iFiller = iAttr;
+            iAttr = '';
+        }
+        var $_Value = iAttr  ?  this.filter('[' + iAttr + ']')  :  this;
+        $_Value = $_Value.length  ?  $_Value  :  this.find('[' + iAttr + ']');
 
-        if (! iFiller)  return Value_Operator.call($_Name[0]);
+        if (! iFiller)  return Value_Operator.call($_Value[0]);
 
-        var $_This = this,  Data_Set = (typeof iFiller != 'function');
+        var Data_Set = (typeof iFiller != 'function');
 
-        for (var i = 0, iName;  i < $_Name.length;  i++) {
-            iName = $_Name[i].getAttribute('name');
+        for (var i = 0, iKey;  i < $_Value.length;  i++) {
+            iKey = iAttr && $_Value[i].getAttribute(iAttr);
 
             Value_Operator.call(
-                $_Name[i],
-                Data_Set  ?  iFiller[iName]  :  iFiller.call(
-                    $_Name[i],  iName,  i,  $_Name
-                )
+                $_Value[i],
+                Data_Set  ?  iFiller[iKey]  :  iFiller.apply($_Value[i], [
+                    iKey || Value_Operator.call($_Value[i]),  i,  $_Value
+                ])
             );
         }
         return this;
@@ -847,21 +867,16 @@
                 if (! (_DOM_.body && _DOM_.body.childNodes.length))
                     return;
 
-                var $_Content = $(iSelector || 'body > *',  _DOM_);
-                if (! $_Content.length)
-                    $_Content = _DOM_.body.childNodes;
+                var $_Content = $(iSelector || 'body > *',  _DOM_).not('script');
 
-                if (
-                    (typeof iCallback == 'function')  &&
-                    (false === iCallback.call(
-                        $_iFrame[0],  $($.merge(
-                            $.makeArray($(
-                                'head style, head link[rel="stylesheet"]',  _DOM_
-                            )),
-                            $_Content
-                        ))
+                if (iCallback  &&  (false === iCallback.call(
+                    $_iFrame[0],  $($.merge(
+                        $.makeArray($(
+                            'head style, head link[rel="stylesheet"]',  _DOM_
+                        )),
+                        $_Content[0] ? $_Content : _DOM_.body.childNodes
                     ))
-                )
+                )))
                     $_iFrame.remove();
 
                 return false;
