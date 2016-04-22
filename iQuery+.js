@@ -2,7 +2,7 @@
 //              >>>  iQuery+  <<<
 //
 //
-//    [Version]    v1.2  (2016-04-15)  Stable
+//    [Version]    v1.3  (2016-04-18)  Stable
 //
 //    [Require]    iQuery  ||  jQuery with jQuery+
 //
@@ -13,7 +13,7 @@
 
 (function (BOM, DOM, $) {
 
-/* ---------- ListView Interface  v0.6 ---------- */
+/* ---------- ListView Interface  v0.7 ---------- */
 
 //  Thanks "EasyWebApp" Project --- http://git.oschina.net/Tech_Query/EasyWebApp
 
@@ -41,7 +41,6 @@
         if (iView !== this)  return iView;
 
         this.$_View = $_View.data('_LVI_', this);
-        this.data = [ ];
 
         this.selector = $_Item;
         this.length = 0;
@@ -54,9 +53,6 @@
             this[this.length] = $_Item;
         }
         this.$_Template = this[0].clone(true);
-
-//        this.limit = parseInt( this.$_View.attr('max') )  ||  Infinity;
-//        this.limit = (this.data.length > this.limit) ? this.limit : this.data.length;
     }
 
     $.extend(ListView, {
@@ -128,18 +124,19 @@
             );
         },
         slice:      Array.prototype.slice,
-        splice:     Array.prototype.splice,
-        indexOf:    function (Index) {
-            if (! isNaN(parseInt( Index )))
-                return  $(this.slice(Index,  ++Index ? Index : undefined)[0]);
+        indexOf:    function (Index, getInstance) {
+            if (! isNaN(Number( Index )))
+                return  this.slice(Index,  (Index + 1) || undefined)[0];
 
             var $_Item = $(Index);
 
             for (var i = 0;  i < this.length;  i++)
                 if (this[i].index($_Item[0]) > -1)
-                    return i;
-            return -1;
+                    return  getInstance  ?  arguments.callee.call(this, i)  :  i;
+
+            return  getInstance ? $() : -1;
         },
+        splice:     Array.prototype.splice,
         insert:     function (iValue, Index) {
             iValue = (iValue === undefined)  ?  { }  :  iValue;
 
@@ -163,7 +160,6 @@
             iValue = (iReturn === undefined) ? iValue : iReturn;
 
             $_Item.addClass('ListView_Item').data('LV_Model', iValue);
-            this.data.splice(Index, 0, iValue);
 
             return this.indexOf(_Index_);
         },
@@ -178,10 +174,18 @@
             return this;
         },
         valueOf:    function (Index) {
-            var iValue = this.data.slice(
-                    Index,  ++Index ? Index : undefined
-                )[0];
-            return  (iValue === undefined) ? $.makeArray(this.data) : iValue;
+            if (Index  ||  (Index == 0))
+                return  this.indexOf(arguments[0], true).data('LV_Model');
+
+            var iData = this.$_View.data('LV_Model');
+
+            if (! iData) {
+                iData = $.map(this,  function () {
+                    return arguments[0].data('LV_Model');
+                });
+                this.$_View.data('LV_Model', iData);
+            }
+            return iData;
         },
         remove:     function (Index) {
             var $_Item = this.indexOf(Index);
@@ -196,43 +200,39 @@
                 (false !== this.trigger(
                     'remove',  $_Item,  this.valueOf(Index),  Index
                 ))
-            ) {
-                $_Item.remove();
-                this.splice(Index, 1);
-                return  this.data.splice(Index, 1)[0];
-            }
+            )
+                this.splice(Index, 1)[0].remove();
+
+            return this;
         },
         clear:      function () {
-            this.data = [ ];
             this.splice(0, this.length);
             this.$_View.empty();
 
             return this;
         },
         focus:      function () {
-            var $_Item = this.indexOf( arguments[0] );
+            var $_Item = this.indexOf(arguments[0], true);
 
-            if (typeof $_Item == 'number') {
-                if ($_Item < 0)  return this;
-                $_Item = this.indexOf($_Item);
+            if ( $_Item[0] ) {
+                $_Item.siblings().removeClass('active');
+                $_Item.scrollParents().eq(0).focus().scrollTo(
+                    $_Item.addClass('active')
+                );
             }
-            var $_Scroll = $_Item.scrollParents().eq(0).focus();
-
-            $_Item.siblings().removeClass('active');
-
-            $_Scroll.scrollTo( $_Item.addClass('active') );
-
             return this;
         },
-        sort:       function () {
-            var _Item_ = this.$_View[0].children;
-            var $_Item = $.makeArray(_Item_);
+        sort:       function (iCallback) {
+            $($.merge.apply($, Array.prototype.sort.call(
+                this,
+                function ($_A, $_B) {
+                    return iCallback(
+                        $_A.data('LV_Model'),  $_B.data('LV_Model'),  $_A,  $_B
+                    );
+                }
+            ))).detach().appendTo( this.$_View );
 
-            $_Item.sort($.proxy(arguments[0], this));
-
-            for (var i = 0;  i < $_Item.length;  i++)
-                if ($_Item[i] !== _Item_[i])
-                    this.insert(this.remove( $_Item[i] ),  i);
+            return this;
         },
         fork:       function () {
             var _Self_ = this.constructor,  $_View = this.$_View.clone(true);
@@ -289,6 +289,8 @@
             branch:    [ ]
         };
         var iTree = this.on('branch', onFork);
+
+        iKey = iKey || 'list';
 
         this.unit = iListView.on('insert',  function ($_Item, iValue) {
             if ( iValue[iKey] )
