@@ -203,7 +203,8 @@
                 return  iValue && (iValue.constructor === Object);
             },
             likeArray:        function (iObject) {
-                if (! iObject)  return false;
+                if ((! iObject)  ||  (typeof iObject != 'object'))
+                    return false;
 
                 iObject = (typeof iObject.valueOf == 'function')  ?
                     iObject.valueOf() : iObject;
@@ -351,10 +352,19 @@
                 return true;
             },
             makeSet:          function () {
-                var iSet = { };
+                var iArgs = arguments,  iValue = true,  iSet = { };
 
-                for (var i = 0;  i < arguments.length;  i++)
-                    iSet[arguments[i]] = true;
+                if (this.likeArray( iArgs[1] )) {
+                    iValue = iArgs[0];
+                    iArgs = iArgs[1];
+                } else if (this.likeArray( iArgs[0] )) {
+                    iValue = iArgs[1];
+                    iArgs = iArgs[0];
+                }
+
+                for (var i = 0;  i < iArgs.length;  i++)
+                    iSet[ iArgs[i] ] = (typeof iValue == 'function')  ?
+                        iValue() : iValue;
 
                 return iSet;
             },
