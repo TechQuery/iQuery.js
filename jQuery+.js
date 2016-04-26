@@ -2,7 +2,7 @@
 //              >>>  jQuery+  <<<
 //
 //
-//    [Version]    v6.6  (2016-04-18)
+//    [Version]    v6.6  (2016-04-25)
 //
 //    [Require]    jQuery  v1.9+
 //
@@ -927,7 +927,8 @@
 
                 $.wait(iSecond, function () {
                     iXHR[
-                        (iXHR.$_DOM || iXHR.crossDomain)  ?  'onload'  :  'onreadystatechange'
+                        (iXHR.$_DOM || iXHR.option.crossDomain)  ?
+                            'onload'  :  'onreadystatechange'
                     ] = null;
                     iXHR.abort();
                     iCallback.call(iXHR);
@@ -958,22 +959,34 @@
 
                 return iContent;
             },
-            retry:          function (Wait_Seconds) {
-                this.open.apply(this, this.requestArgs);
+            retry:          function () {
+                $.wait(arguments[0],  $.proxy(function (iData) {
+                    var iOption = this.option;
 
-                var iXHR = this;
+                    this.open.call(this, iOption.type, iOption.url, true);
 
-                $.wait(Wait_Seconds, function () {
-                    iXHR.withCredentials = true;
+                    if (iOption.xhrFields)  $.extend(this, iOption.xhrFields);
 
-                    if (typeof iXHR.requestData == 'string')
-                        iXHR.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
-                    if (! iXHR.crossDomain) {
-                        iXHR.setRequestHeader('X-Requested-With', 'XMLHttpRequest');
-                        iXHR.setRequestHeader('Accept', '*/*');
-                    }
-                    iXHR.send(iXHR.requestData);
-                });
+                    if (! iOption.crossDomain)
+                        iOption.headers = $.extend(iOption.headers || { }, {
+                            'X-Requested-With':    'XMLHttpRequest',
+                            Accept:                '*/*'
+                        });
+
+                    for (var iKey in iOption.headers)
+                        this.setRequestHeader(iKey, iOption.headers[iKey]);
+
+                    if ((typeof iData == 'string')  ||  iOption.contentType)
+                        this.setRequestHeader('Content-Type', (
+                            iOption.contentType || 'application/x-www-form-urlencoded'
+                        ));
+
+                    this.send(
+                        ((iData instanceof Array)  ||  $.isPlainObject(iData))  ?
+                            $.param(iData) : iData
+                    );
+                    return this;
+                }, this));
             }
         },
         $_DOM = $(DOM);
@@ -982,7 +995,7 @@
         if (iProperty)  $.extend(this, iProperty);
 
         if (
-            (! (this.crossDomain || (this.readyState == 4)))  ||
+            (! (this.option.crossDomain || (this.readyState == 4)))  ||
             (typeof this.onready != 'function')
         )
             return;
@@ -1005,9 +1018,26 @@
             statusText:    'OK'
         };
 
-    function beforeSend(iXHR) {
-        $_DOM.triggerHandler('ajaxPrefilter', [iXHR])
-        $_DOM.trigger('ajaxSend', [iXHR]);
+    function X_Domain() {
+        var iDomain = $.urlDomain( arguments[0] );
+
+        return  iDomain && (
+            iDomain != [
+                BOM.location.protocol, '//', DOM.domain, (
+                    BOM.location.port  ?  (':' + BOM.location.port)  :  ''
+                )
+            ].join('')
+        );
+    }
+
+    function beforeOpen(iMethod, iURL, iData) {
+        this.option = {
+            type:           iMethod.toUpperCase(),
+            url:            iURL,
+            crossDomain:    X_Domain(iURL),
+            data:           iData
+        };
+        $_DOM.triggerHandler('ajaxPrefilter', [this]);
     }
 
     BOM.DOMHttpRequest = function () {
@@ -1019,11 +1049,10 @@
 
     $.extend(BOM.DOMHttpRequest.prototype, XHR_Extension, {
         open:                function (iMethod, iTarget) {
-            this.method = iMethod.toUpperCase();
-
             //  <script />, JSONP
-            if (this.method == 'GET') {
-                this.url = iTarget;
+            if (iMethod.match(/^Get$/i)) {
+                beforeOpen.apply(this, arguments);
+                this.responseURL = this.option.url;
                 return;
             }
 
@@ -1032,6 +1061,10 @@
                     if ( $(this).data('_AJAX_Submitting_') )  return false;
                 }),
                 iDHR = this;
+
+            beforeOpen.call(this, iMethod, $_Form[0].action);
+
+            $_Form[0].action = this.responseURL = this.option.url;
 
             var iTarget = $_Form.attr('target');
 
@@ -1054,16 +1087,15 @@
             }).attr('name', iTarget);
 
             this.$_DOM = $_Form;
-            this.requestArgs = arguments;
         },
         send:                function () {
-            beforeSend(this);
+            $_DOM.trigger('ajaxSend', [this]);
 
-            if (this.method == 'POST')
+            if (this.option.type == 'POST')
                 this.$_DOM.submit();    //  <iframe />
             else {
                 //  <script />, JSONP
-                var iURL = this.url.match(/([^\?=&]+\?|\?)?(\w.+)?/);
+                var iURL = this.responseURL.match(/([^\?=&]+\?|\?)?(\w.+)?/);
                 if (! iURL)  throw 'Illegal URL !';
 
                 var _UUID_ = $.uuid(),  iDHR = this;
@@ -1074,15 +1106,16 @@
                     delete this[_UUID_];
                     iDHR.$_DOM.remove();
                 };
-                this.requestData = arguments[0];
-                this.url = iURL[1] + $.param(
+                this.option.data = arguments[0];
+                this.responseURL = iURL[1] + $.param(
                     $.extend({ }, arguments[0], $.paramJSON(
                         '?' + iURL[2].replace(
                             /(\w+)=\?/,  '$1=DOMHttpRequest.JSONP.' + _UUID_
                         )
                     ))
                 );
-                this.$_DOM = $('<script />',  {src: this.url}).appendTo(DOM.head);
+                this.$_DOM = $('<script />',  {src: this.responseURL})
+                    .appendTo(DOM.head);
             }
             this.readyState = 1;
         },
