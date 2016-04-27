@@ -272,7 +272,7 @@
     });
 
     var Type_Info = {
-            Data:    $.makeSet('String', 'Number', 'Boolean', 'Null'),
+            Data:    $.makeSet('String', 'Number', 'Boolean'),
             BOM:     $.makeSet('Window', 'DOMWindow', 'global'),
             DOM:     {
                 root:    $.makeSet('Document', 'Window')
@@ -332,8 +332,8 @@
         return iType;
     }
 
-    $.isData = function () {
-        return  (_Type_(arguments[0]) in Type_Info.Data);
+    $.isData = function (iValue) {
+        return  Boolean(iValue)  ||  (_Type_(iValue) in Type_Info.Data);
     };
 
 /* ---------- 字符串扩展（借鉴 PHP） v0.2 ---------- */
@@ -356,7 +356,7 @@
         }
     });
 
-/* ---------- URL 处理扩展  v0.2 ---------- */
+/* ---------- URL 处理扩展  v0.3 ---------- */
 
     $.extend($, {
         paramJSON:    function (Args_Str) {
@@ -383,6 +383,22 @@
             }
 
             return  Args_Str.length ? _Args_ : { };
+        },
+        paramSign:        function (iData) {
+            iData = (typeof iData == 'string')  ?  $.paramJSON(iData)  :  iData;
+
+            return $.map(
+                Object.getOwnPropertyNames(iData).sort(),
+                function (iKey) {
+                    switch (typeof iData[iKey]) {
+                        case 'function':    return;
+                        case 'object':      try {
+                            return  iKey + '=' + JSON.stringify(iData[iKey]);
+                        } catch (iError) { }
+                    }
+                    return  iKey + '=' + iData[iKey];
+                }
+            ).join(arguments[1] || '&');
         },
         fileName:         function () {
             return (
@@ -803,7 +819,7 @@
             }
             case 'img':         return  $_This.attr('src', iValue);
             case 'textarea':    ;
-            case 'select':      ;
+            case 'option':      $_This.text(iValue);    break;
             case 'input':       {
                 var _Value_ = this.value;
                 try {
@@ -1159,7 +1175,7 @@
                 return;
             }
 
-            var iMethod = (this.method || 'Get').toUpperCase();
+            var iMethod = ($_Form.attr('method') || 'Get').toUpperCase();
 
             if ((iMethod in HTTP_Method)  ||  (iMethod == 'GET'))
                 $[ iMethod.toLowerCase() ](
