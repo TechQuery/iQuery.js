@@ -2,7 +2,7 @@
 //              >>>  jQuery+  <<<
 //
 //
-//    [Version]    v6.7  (2016-04-26)
+//    [Version]    v6.9  (2016-05-04)
 //
 //    [Require]    jQuery  v1.9+
 //
@@ -49,6 +49,21 @@
             });
         }
     });
+
+/* ---------- Array Patch  v0.1 ---------- */
+
+    if (! [ ].reduce)
+        Array.prototype.reduce = function () {
+            var iResult = arguments[1];
+
+            for (var i = 1;  i < this.length;  i++) {
+                if (i == 1)  iResult = this[0];
+
+                iResult = arguments[0](iResult, this[i], i, this);
+            }
+
+            return iResult;
+        };
 
 /* ---------- JSON Extension  v0.4 ---------- */
 
@@ -366,23 +381,20 @@
 
             if (! Args_Str)  return { };
 
-            var _Args_ = {
-                    toString:    function () {
-                        return  BOM.JSON.format(this);
-                    }
-                };
-            for (var i = 0, iValue; i < Args_Str.length; i++) {
+            var _Args_ = { };
+
+            for (var i = 0, iValue;  i < Args_Str.length;  i++) {
                 Args_Str[i] = $.split(Args_Str[i], '=', 2);
 
                 iValue = BOM.decodeURIComponent( Args_Str[i][1] );
                 try {
-                    iValue = BOM.JSON.parseAll(iValue);
+                    iValue = $.parseJSON(iValue);
                 } catch (iError) { }
 
                 _Args_[ Args_Str[i][0] ] = iValue;
             }
 
-            return  Args_Str.length ? _Args_ : { };
+            return _Args_;
         },
         paramSign:        function (iData) {
             iData = (typeof iData == 'string')  ?  $.paramJSON(iData)  :  iData;
@@ -796,6 +808,29 @@
         });
     };
 
+/* ---------- DOM UI 数据归并  v0.1 ---------- */
+
+    var iOperator = {
+            '+':    function () {
+                return  arguments[0] + arguments[1];
+            },
+            '-':    function () {
+                return  arguments[0] - arguments[1];
+            }
+        };
+
+    $.fn.reduce = function (iMethod, iKey, iCallback) {
+        if (arguments.length < 3) {
+            iCallback = iKey;
+            iKey = undefined;
+        }
+        if (typeof iCallback == 'string')  iCallback = iOperator[iCallback];
+
+        return  $.map(this,  function () {
+            return  $( arguments[0] )[iMethod](iKey);
+        }).reduce(iCallback);
+    };
+
 /* ---------- DOM UI 数据读写  v0.4 ---------- */
 
     var RE_URL = /^(\w+:)?\/\/[\u0021-\u007e\uff61-\uffef]+$/;
@@ -804,7 +839,7 @@
         var $_This = $(this),
             End_Element = (! this.children.length);
 
-        var _Set_ = iValue || $.isData(iValue),
+        var _Set_ = $.isData(iValue),
             iURL = (typeof iValue == 'string')  &&  iValue.trim();
         var isURL = iURL && iURL.split('#')[0].match(RE_URL);
 
@@ -826,13 +861,16 @@
                     _Value_ = JSON.parse(_Value_);
                 } catch (iError) { }
 
-                if (
-                    (this.type || '').match(/radio|checkbox/i)  &&
-                    (_Value_ == iValue)
-                )
-                    this.checked = true;
+                if ((this.type || '').match(/radio|checkbox/i)) {
+                    if (_Set_) {
+                        if (_Value_ === iValue)
+                            this.checked = true;
+                    } else
+                        return  this.checked && _Value_;
+                } else if (_Set_)
+                    this.value = iValue;
 
-                return $_This.val(iValue);
+                return _Value_;
             }
             default:            {
                 if (_Set_) {
@@ -842,7 +880,8 @@
                         $_This.html(iValue);
                     return;
                 }
-                iURL = $_This.css('background-image').match(/^url\(('|")?([^'"]+)('|")?\)/);
+                iURL = $_This.css('background-image')
+                    .match(/^url\(('|")?([^'"]+)('|")?\)/);
                 return  End_Element  ?  $_This.text()  :  (iURL && iURL[2]);
             }
         }
@@ -893,7 +932,7 @@
                 if (! (_DOM_.body && _DOM_.body.childNodes.length))
                     return;
 
-                var $_Content = $(iSelector || 'body > *',  _DOM_).not('script');
+                var $_Content = $(iSelector || 'body > *',  _DOM_);
 
                 if (iCallback  &&  (false === iCallback.call(
                     $_iFrame[0],  $($.merge(
@@ -1020,21 +1059,18 @@
     function onLoad(iProperty, iData) {
         if (iProperty)  $.extend(this, iProperty);
 
-        if (
-            (! (this.option.crossDomain || (this.readyState == 4)))  ||
-            (typeof this.onready != 'function')
-        )
+        if (! (this.option.crossDomain || (this.readyState == 4)))
             return;
 
-        var iError = (this.status > 399);
+        var iError = (this.status > 399),  iArgs = [this, this.option];
 
-        $_DOM.trigger('ajaxComplete', [this]);
-        $_DOM.trigger('ajax' + (iError ? 'Error' : 'Success'),  [this]);
+        $_DOM.trigger('ajaxComplete', iArgs);
+        $_DOM.trigger('ajax' + (iError ? 'Error' : 'Success'),  iArgs);
+
+        if (typeof this.onready != 'function')  return;
 
         this.onready(
-            iData || this.responseAny(),
-            iError ? 'error' : 'success',
-            this
+            iData || this.responseAny(),  iError ? 'error' : 'success',  this
         );
     }
 
@@ -1115,7 +1151,7 @@
             this.$_DOM = $_Form;
         },
         send:                function () {
-            $_DOM.trigger('ajaxSend', [this]);
+            $_DOM.trigger('ajaxSend',  [this, this.option]);
 
             if (this.option.type == 'POST')
                 this.$_DOM.submit();    //  <iframe />

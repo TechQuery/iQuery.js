@@ -70,7 +70,8 @@
  - 新增 **有滚动条的祖先元素**方法 —— `$.fn.scrollParents()`
  - 新增 **元素平滑滚动**方法 —— `$.fn.scrollTo()`
  - 所有类型的 **DOM 信息读写器**（`.attr()`、`.prop()`、`.css()`、`.data()`）均支持“不传键名时返回 **信息全集**”特性
- - 新增 **DOM 对象可见内容读写**方法 —— `$.fn.value()`，智能存取多种类型的值
+ - 新增 **DOM 数据归并**方法 —— `$.fn.reduce()`
+ - 新增 **DOM 可见内容读写**方法 —— `$.fn.value()`，智能存取多种类型的值
  - .css() 取值时，会把 纯数字值、像素值 直接返回为 Number 类型
  - .css() 赋值一律默认 important 优先级，确保赋值的有效性
  - `$.fn.show()` 兼容 **元素非固有 display 属性值**，避免破坏 复杂布局
@@ -100,6 +101,7 @@
 ## 【JavaScript、DOM、BOM 原生 API 扩展】
  - 自带 `Object.getOwnPropertyNames()` 标准方法
  - 自带 `Array.prototype.indexOf()` 标准方法
+ - 自带 `Array.prototype.reduce()` 标准方法
  - 自带 支持“非空白符”的 `String.prototype.trim()`（借鉴 PHP）
  - 新增 `String.prototype.repeat` 标准草案方法
  - 新增 String **toCamelCase**（驼峰命名法）、 **toHyphenCase**（连字符命名法） **书写格式转换**方法
