@@ -2,7 +2,7 @@
 //              >>>  iQuery+  <<<
 //
 //
-//    [Version]    v1.4  (2016-04-29)  Stable
+//    [Version]    v1.4  (2016-05-06)  Stable
 //
 //    [Require]    iQuery  ||  jQuery with jQuery+
 //
@@ -58,13 +58,26 @@
     $.extend(EventInterface.prototype, {
         on:         function (iType, iCallback) {
             if (
-                (typeof iType == 'string')  &&
                 (typeof iCallback == 'function')  &&
                 (this.callback[iType].indexOf(iCallback) == -1)
             )
                 this.callback[iType].push(iCallback);
 
             return this;
+        },
+        off:        function (iType, iCallback) {
+            var Index = this.callback[iType].indexOf(iCallback);
+
+            if (Index > -1)  this.callback[iType].splice(Index, 1);
+
+            return this;
+        },
+        one:        function (iType, iCallback) {
+            return  this.on(iType,  function () {
+                this.off(iType, arguments.callee);
+
+                return  iCallback.apply(this, arguments);
+            });
         },
         trigger:    function () {
             var iCallback = this.callback[ arguments[0] ],  iReturn;
@@ -78,6 +91,8 @@
             return iReturn;
         }
     });
+
+    $.EventInterface = EventInterface;
 
 /* ---------- ListView Interface  v0.7 ---------- */
 
@@ -267,16 +282,23 @@
             return this;
         },
         sort:           function (iCallback) {
-            $($.merge.apply($, Array.prototype.sort.call(
-                this,
-                function ($_A, $_B) {
-                    return iCallback(
-                        $_A.data('LV_Model'),  $_B.data('LV_Model'),  $_A,  $_B
-                    );
-                }
-            ))).detach().appendTo( this.$_View );
+            var iLV = this;
 
-            return this;
+            Array.prototype.sort.call(
+                iLV,
+                function ($_A, $_B) {
+                    return  iCallback.apply(iLV, [
+                        $_A.data('LV_Model'),  $_B.data('LV_Model'),  $_A,  $_B
+                    ]);
+                }
+            );
+            Array.prototype.unshift.call(iLV, [ ]);
+
+            $($.merge.apply($, iLV)).detach().appendTo( iLV.$_View );
+
+            Array.prototype.shift.call( iLV );
+
+            return iLV;
         },
         fork:           function () {
             var $_View = this.$_View.clone(true);
@@ -338,7 +360,7 @@
         iKey = iKey || 'list';
 
         this.unit = iListView.on('insert',  function ($_Item, iValue) {
-            if ( iValue[iKey] )
+            if ($.likeArray( iValue[iKey] )  &&  iValue[iKey][0])
                 iTree.branch(this, $_Item, iValue[iKey]);
         });
     }

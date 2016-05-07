@@ -2,7 +2,7 @@
 //              >>>  jQuery+  <<<
 //
 //
-//    [Version]    v6.9  (2016-05-04)
+//    [Version]    v7.1  (2016-05-07)
 //
 //    [Require]    jQuery  v1.9+
 //
@@ -857,13 +857,16 @@
             case 'option':      $_This.text(iValue);    break;
             case 'input':       {
                 var _Value_ = this.value;
-                try {
+
+                if (this.getAttribute('type') != 'tel')  try {
                     _Value_ = JSON.parse(_Value_);
                 } catch (iError) { }
 
                 if ((this.type || '').match(/radio|checkbox/i)) {
                     if (_Set_) {
-                        if (_Value_ === iValue)
+                        if ((! _Value_)  ||  (_Value_ == 'on'))
+                            this.value = iValue;
+                        else if (_Value_ === iValue)
                             this.checked = true;
                     } else
                         return  this.checked && _Value_;
@@ -983,9 +986,75 @@
         $[ iMethod.toLowerCase() ] = $.proxy(HTTP_Request, BOM, iMethod);
 
 
-/* ---------- Form 元素 无刷新提交  v0.6 ---------- */
+/* ---------- Form 元素 无刷新提交  v0.8 ---------- */
 
-    /* ----- DOM HTTP 请求对象  v0.2 ----- */
+    /* ----- AJAX 底层扩展  v0.2 ----- */
+
+    function onLoad(iProperty, iData) {
+        if (iProperty)  $.extend(this, iProperty);
+
+        if (! (this.option.crossDomain || (this.readyState == 4)))
+            return;
+
+        var iError = (this.status > 399),  iArgs = [this, this.option];
+
+        $_DOM.trigger('ajaxComplete', iArgs);
+        $_DOM.trigger('ajax' + (iError ? 'Error' : 'Success'),  iArgs);
+
+        if (typeof this.onready != 'function')  return;
+
+        this.onready(
+            iData || this.responseAny(),  iError ? 'error' : 'success',  this
+        );
+    }
+
+    var Success_State = {
+            readyState:    4,
+            status:        200,
+            statusText:    'OK'
+        },
+        $_DOM = $(DOM);
+
+    function XD_Request(iData) {
+        var iOption = this.option;
+
+        this.open.call(this, iOption.type, iOption.url, true);
+
+        this[this.option.crossDomain ? 'onload' : 'onreadystatechange'] = $.proxy(
+            onLoad,
+            this,
+            (! (this instanceof BOM.XMLHttpRequest))  &&  Success_State,
+            null
+        );
+
+        if (iOption.xhrFields)  $.extend(this, iOption.xhrFields);
+
+        if (! iOption.crossDomain)
+            iOption.headers = $.extend(iOption.headers || { }, {
+                'X-Requested-With':    'XMLHttpRequest',
+                Accept:                '*/*'
+            });
+
+        for (var iKey in iOption.headers)
+            this.setRequestHeader(iKey, iOption.headers[iKey]);
+
+        if ((iData instanceof Array)  ||  $.isPlainObject(iData))
+            iData = $.param(iData);
+
+        if ((typeof iData == 'string')  ||  iOption.contentType)
+            this.setRequestHeader('Content-Type', (
+                iOption.contentType || 'application/x-www-form-urlencoded'
+            ));
+
+        this.option.data = iData;
+
+        $_DOM.trigger('ajaxSend',  [this, this.option]);
+
+        this.send(iData);
+
+        return this;
+    }
+
     var XHR_Extension = {
             timeOut:        function (iSecond, iCallback) {
                 var iXHR = this;
@@ -1025,59 +1094,8 @@
                 return iContent;
             },
             retry:          function () {
-                $.wait(arguments[0],  $.proxy(function (iData) {
-                    var iOption = this.option;
-
-                    this.open.call(this, iOption.type, iOption.url, true);
-
-                    if (iOption.xhrFields)  $.extend(this, iOption.xhrFields);
-
-                    if (! iOption.crossDomain)
-                        iOption.headers = $.extend(iOption.headers || { }, {
-                            'X-Requested-With':    'XMLHttpRequest',
-                            Accept:                '*/*'
-                        });
-
-                    for (var iKey in iOption.headers)
-                        this.setRequestHeader(iKey, iOption.headers[iKey]);
-
-                    if ((typeof iData == 'string')  ||  iOption.contentType)
-                        this.setRequestHeader('Content-Type', (
-                            iOption.contentType || 'application/x-www-form-urlencoded'
-                        ));
-
-                    this.send(
-                        ((iData instanceof Array)  ||  $.isPlainObject(iData))  ?
-                            $.param(iData) : iData
-                    );
-                    return this;
-                }, this));
+                $.wait(arguments[0],  $.proxy(XD_Request, this));
             }
-        },
-        $_DOM = $(DOM);
-
-    function onLoad(iProperty, iData) {
-        if (iProperty)  $.extend(this, iProperty);
-
-        if (! (this.option.crossDomain || (this.readyState == 4)))
-            return;
-
-        var iError = (this.status > 399),  iArgs = [this, this.option];
-
-        $_DOM.trigger('ajaxComplete', iArgs);
-        $_DOM.trigger('ajax' + (iError ? 'Error' : 'Success'),  iArgs);
-
-        if (typeof this.onready != 'function')  return;
-
-        this.onready(
-            iData || this.responseAny(),  iError ? 'error' : 'success',  this
-        );
-    }
-
-    var Success_State = {
-            readyState:    4,
-            status:        200,
-            statusText:    'OK'
         };
 
     function X_Domain() {
@@ -1101,6 +1119,8 @@
         };
         $_DOM.triggerHandler('ajaxPrefilter', [this]);
     }
+
+    /* ----- DOM HTTP 请求对象  v0.2 ----- */
 
     BOM.DOMHttpRequest = function () {
         this.status = 0;
