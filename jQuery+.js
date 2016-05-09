@@ -2,7 +2,7 @@
 //              >>>  jQuery+  <<<
 //
 //
-//    [Version]    v7.1  (2016-05-07)
+//    [Version]    v7.1  (2016-05-09)
 //
 //    [Require]    jQuery  v1.9+
 //
@@ -722,12 +722,14 @@
             }));
         }
         return  this.each(function () {
-            var _Rule_ = { };
+            var _Rule_ = { },  _ID_ = this.getAttribute('id');
 
-            this.id = this.id || $.uuid();
-
+            if (! _ID_) {
+                _ID_ = $.uuid();
+                this.setAttribute('id', _ID_);
+            }
             for (var iSelector in iRule)
-                _Rule_['#' + this.id + iSelector] = iRule[iSelector];
+                _Rule_['#' + _ID_ + iSelector] = iRule[iSelector];
 
             var iSheet = $.cssRule(_Rule_);
 
@@ -939,9 +941,7 @@
 
                 if (iCallback  &&  (false === iCallback.call(
                     $_iFrame[0],  $($.merge(
-                        $.makeArray($(
-                            'head style, head link[rel="stylesheet"]',  _DOM_
-                        )),
+                        $.makeArray($('head style, head script',  _DOM_)),
                         $_Content[0] ? $_Content : _DOM_.body.childNodes
                     ))
                 )))
