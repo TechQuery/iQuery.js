@@ -115,7 +115,7 @@
  - 自带 `Element.prototype.matches` 标准草案方法
  - 自带 **DOMTokenList 对象**，为 IE 8/9 提供 **classList** 支持
  - 自带 **DOMStringMap 对象**，为 IE 8/9/10 提供 **dataset** 支持
- - 自带 **HTML 5 History API**，为 IE 8/9 提供兼容支持
+ - 自带 **HTML 5 History API**，为 IE 8/9 提供兼容支持（需 服务器端响应 `./blank.html` 或 404 页面）
  - 修正 IE 8- DOM Attribute 系列方法对 JavaScript 关键字的特殊处理
  - 自带 **CSSStyleDeclaration 对象**，为 IE 8 提供 **getComputedStyle** 支持，并封装了 M$ DirectX 滤镜属性转换
  - 自带 Google Chrome **元素 CSS 规则对象 获取**方法 `Window.getMatchedCSSRules()`

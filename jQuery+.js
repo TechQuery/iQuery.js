@@ -856,7 +856,8 @@
             }
             case 'img':         return  $_This.attr('src', iValue);
             case 'textarea':    ;
-            case 'option':      $_This.text(iValue);    break;
+            case 'select':      return $_This.val(iValue);
+            case 'option':      return $_This.text(iValue);
             case 'input':       {
                 var _Value_ = this.value;
 

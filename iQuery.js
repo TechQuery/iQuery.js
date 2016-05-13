@@ -2,7 +2,7 @@
 //                >>>  iQuery.js  <<<
 //
 //
-//      [Version]    v1.0  (2016-05-09)  Stable
+//      [Version]    v1.0  (2016-05-12)  Stable
 //
 //      [Usage]      A Light-weight jQuery Compatible API
 //                   with IE 8+ compatibility.
@@ -870,18 +870,23 @@
     function QuerySelector(iPath) {
         var iRoot = this;
 
-        if ((this.nodeType != 9)  &&  this.parentNode) {
-            var _ID_ = this.getAttribute('id');
+        if ((this.nodeType == 9)  ||  (! this.parentNode))
+            return iRoot.querySelectorAll(iPath);
 
-            if (! _ID_) {
-                _ID_ = _Time_.uuid();
-                this.setAttribute('id', _ID_);
-            }
-            iPath = '#' + _ID_ + ' ' + iPath;
-            iRoot = this.parentNode;
+        var _ID_ = this.getAttribute('id');
+
+        if (! _ID_) {
+            _ID_ = _Time_.uuid('iQS');
+            this.setAttribute('id', _ID_);
         }
+        iPath = '#' + _ID_ + ' ' + iPath;
+        iRoot = this.parentNode;
 
-        return iRoot.querySelectorAll(iPath);
+        iPath = iRoot.querySelectorAll(iPath);
+
+        if (_ID_.slice(0, 3)  ==  'iQS')  this.removeAttribute('id');
+
+        return iPath;
     }
 
     function DOM_Search(iRoot, iSelector) {
@@ -1731,7 +1736,8 @@
             }
             case 'img':         return  $_This.attr('src', iValue);
             case 'textarea':    ;
-            case 'option':      $_This.text(iValue);    break;
+            case 'select':      return $_This.val(iValue);
+            case 'option':      return $_This.text(iValue);
             case 'input':       {
                 var _Value_ = this.value;
 
@@ -3078,8 +3084,9 @@
 
     var Tag_Style = { },
         $_SandBox = $('<iframe />', {
-            src:      'about:blank',
-            style:    'display: none'
+            id:       '_iQuery_SandBox_',
+            style:    'display: none',
+            src:      ($.browser.msie < 10)  ?  'blank.html'  :  'about:blank'
         });
     $(DOM).ready(function () {
         $_SandBox.appendTo( this.body );
@@ -3856,9 +3863,32 @@
 
     /* ----- History API ----- */
 
-    var _State_ = [[null, DOM.title, DOM.URL]],
-        _Pushing_ = false,
-        $_BOM = $(BOM);
+    var _BOM_,      $_BOM = $(BOM),
+        _Pushing_,  _State_ = [[null, DOM.title, DOM.URL]];
+
+    $(DOM).ready(function () {
+        var iFrame = $('#_iQuery_SandBox_')[0];
+
+        _BOM_ = iFrame.contentWindow;
+
+        iFrame.onload = function () {
+            if (_Pushing_) {
+                _Pushing_ = false;
+                return;
+            }
+
+            var iState = _State_[ _BOM_.location.search.slice(7) ];
+            if (! iState)  return;
+
+            BOM.history.state = iState[0];
+            DOM.title = iState[1];
+
+            $_BOM.trigger({
+                type:     'popstate',
+                state:    iState[0]
+            });
+        };
+    });
 
     BOM.history.pushState = function (iState, iTitle, iURL) {
         for (var iKey in iState)
@@ -3868,33 +3898,15 @@
         if (typeof iTitle != 'string')
             throw TypeError("The History State needs a Title String !");
 
-        DOM.title = iTitle;
+        _BOM_.document.title = DOM.title = iTitle;
         _Pushing_ = true;
-        BOM.location.hash = '_' + (_State_.push(arguments) - 1);
+        _BOM_.location.search = 'index=' + (_State_.push(arguments) - 1);
     };
 
     BOM.history.replaceState = function () {
         _State_ = [ ];
         this.pushState.apply(this, arguments);
     };
-
-    $_BOM.on('hashchange',  function () {
-        if (_Pushing_) {
-            _Pushing_ = false;
-            return;
-        }
-
-        var iState = _State_[ BOM.location.hash.slice(2) ];
-        if (! iState)  return;
-
-        BOM.history.state = iState[0];
-        DOM.title = iState[1];
-
-        $_BOM.trigger({
-            type:     'popstate',
-            state:    iState[0]
-        });
-    });
 
 })(self, self.document, self.jQuery);
 
