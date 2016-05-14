@@ -10,3 +10,4 @@
             if (iExport && iExport.fn && iExport.fn.jquery)
                 iQuery = iExport;
         };
+
