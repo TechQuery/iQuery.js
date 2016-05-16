@@ -754,7 +754,7 @@ define(['ES-5'],  function () {
                 var $_Temp = [ ],  $_Result = [ ];
 
                 for (var i = 0;  i < iSet.length;  i++) {
-                    $_Temp[i] = new String(iSet[i].sourceIndex);
+                    $_Temp[i] = new String(iSet[i].sourceIndex + 1e8);
                     $_Temp[i].DOM = iSet[i];
                 }
                 $_Temp.sort();
@@ -829,8 +829,7 @@ define(['ES-5'],  function () {
         });
     }
 
-    var $ = iQuery;
-    $.fn = $.prototype;
+    var $ = BOM.iQuery = iQuery;
 
 
     /* ----- iQuery Static Method ----- */
@@ -1070,6 +1069,7 @@ define(['ES-5'],  function () {
     DOM_Proto.matches = DOM_Proto.matches || DOM_Proto.webkitMatchesSelector ||
         DOM_Proto.msMatchesSelector || DOM_Proto.mozMatchesSelector;
 
+    $.fn = $.prototype;
     $.fn.extend = $.extend;
 
     $.fn.extend({
@@ -1856,4 +1856,5 @@ define(['ES-5'],  function () {
     };
 
     return $;
+
 });

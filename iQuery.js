@@ -1,19 +1,14 @@
-//
-//                >>>  iQuery.js  <<<
-//
-//
-//      [Version]    v1.0  (2016-05-12)  Stable
-//
-//      [Usage]      A Light-weight jQuery Compatible API
-//                   with IE 8+ compatibility.
-//
-//
-//          (C)2015-2016    shiy2008@gmail.com
-//
+(function (iGlobal, iMain) {
+
+    if (typeof iGlobal.define == 'function')
+        iGlobal.define('iQuery', iMain);
+    else
+        iMain();
+
+})((window !== undefined) ? window : this,  function () {
 
 
-/* ---------- ECMAScript API  Patch & Extension ---------- */
-(function (BOM) {
+(function (BOM, DOM) {
 
     /* ----- Object Patch ----- */
 
@@ -165,11 +160,10 @@
     for (var i = 0;  i < Console_Method.length;  i++)
         BOM.console[ Console_Method[i] ] = _Notice_;
 
-})(self);
+})(self, self.document);
 
 
 
-/* ---------- iQuery Core & API ---------- */
 (function (BOM, DOM) {
 
 /* ---------- UA Check ---------- */
@@ -924,7 +918,7 @@
                 var $_Temp = [ ],  $_Result = [ ];
 
                 for (var i = 0;  i < iSet.length;  i++) {
-                    $_Temp[i] = new String(iSet[i].sourceIndex);
+                    $_Temp[i] = new String(iSet[i].sourceIndex + 1e8);
                     $_Temp[i].DOM = iSet[i];
                 }
                 $_Temp.sort();
@@ -1000,10 +994,6 @@
     }
 
     var $ = BOM.iQuery = iQuery;
-    $.fn = $.prototype;
-
-    if (typeof BOM.jQuery != 'function')
-        BOM.jQuery = BOM.$ = $;
 
 
     /* ----- iQuery Static Method ----- */
@@ -1243,6 +1233,7 @@
     DOM_Proto.matches = DOM_Proto.matches || DOM_Proto.webkitMatchesSelector ||
         DOM_Proto.msMatchesSelector || DOM_Proto.mozMatchesSelector;
 
+    $.fn = $.prototype;
     $.fn.extend = $.extend;
 
     $.fn.extend({
@@ -2028,12 +2019,15 @@
         });
     };
 
+    return $;
+
 })(self, self.document);
 
 
 
-/* ---------- jQuery Event System ---------- */
-(function (BOM, DOM, $) {
+(function ($) {
+
+    var BOM = self,  DOM = self.document;
 
     var Mutation_Event = $.makeSet(
             'DOMContentLoaded',
@@ -2708,12 +2702,13 @@
         });
     });
 
-})(self, self.document, self.iQuery);
+})(self.iQuery);
 
 
 
-/* ---------- IE 8- Patch to W3C ---------- */
-(function (BOM, DOM, $) {
+(function ($) {
+
+    var BOM = self,  DOM = self.document;
 
     if ($.browser.modern)  return;
 
@@ -3030,12 +3025,13 @@
         return iXML;
     };
 
-})(self, self.document, self.iQuery);
+})(self.iQuery);
 
 
 
-/* ---------- DOM/CSS Animation ---------- */
-(function (BOM, DOM, $) {
+(function ($) {
+
+    var BOM = self,  DOM = self.document;
 
     /* ----- Atom Effect ----- */
 
@@ -3344,12 +3340,13 @@
         return this;
     };
 
-})(self, self.document, self.iQuery);
+})(self.iQuery);
 
 
 
-/* ---------- HTTP Client ---------- */
-(function (BOM, DOM, $) {
+(function ($) {
+
+    var BOM = self,  DOM = self.document;
 
     /* ----- XML HTTP Request ----- */
 
@@ -3792,12 +3789,13 @@
         return this;
     };
 
-})(self, self.document, self.iQuery);
+})(self.iQuery);
 
 
 
-/* ---------- W3C HTML 5  Shim ---------- */
-(function (BOM, DOM, $) {
+(function ($) {
+
+    var BOM = self,  DOM = self.document;
 
     if (! ($.browser.msie < 11))  return;
 
@@ -3908,11 +3906,13 @@
         this.pushState.apply(this, arguments);
     };
 
-})(self, self.document, self.jQuery);
+})(self.iQuery);
 
 
 
-(function (BOM, DOM, $) {
+(function ($) {
+
+    var BOM = self,  DOM = self.document;
 
     if (! (($.browser.msie < 10)  ||  $.browser.ios))
         return;
@@ -3958,4 +3958,29 @@
         return true;
     };
 
-})(self, self.document, self.iQuery);
+})(self.iQuery);
+
+
+//
+//                >>>  iQuery.js  <<<
+//
+//
+//      [Version]    v1.0  (2016-05-16)  Stable
+//
+//      [Usage]      A Light-weight jQuery Compatible API
+//                   with IE 8+ compatibility.
+//
+//
+//          (C)2015-2016    shiy2008@gmail.com
+//
+
+
+
+(function ($) {
+    if (typeof self.jQuery != 'function')  self.$ = self.jQuery = $;
+
+    return $;
+})(self.iQuery);
+
+
+});

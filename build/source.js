@@ -1,10 +1,23 @@
 ({
-    baseUrl:     '../source',
-    name:        'iQuery',
-    out:         '../release/iQuery.js',
-    optimize:    'none',
-    wrap:        {
-        startFile:    'xWrap_0.frag',
-        endFile:      'xWrap_1.frag'
+    baseUrl:         '../source',
+    name:            'iQuery',
+    out:             '../iQuery.js',
+    optimize:        'none',
+    onBuildWrite:    function (iName) {
+        var fParameter = '$',  aParameter = 'self.iQuery';
+
+        if (iName  in  {'ES-5': 1, iCore: 1}) {
+            fParameter = 'BOM, DOM';
+            aParameter = 'self, self.document';
+            arguments[2] = arguments[2].replace(/\s+var BOM.+?;/, '');
+        }
+
+        return arguments[2]
+            .replace(/^define[\s\S]+?(function \()[^\)]*/m,  "\n($1" + fParameter)
+            .replace(/\}\).$/,  '})(' + aParameter + ");\n\n");
+    },
+    wrap:            {
+        startFile:    'xWrap_0.txt',
+        end:          '});'
     }
 });
