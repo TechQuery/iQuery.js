@@ -18,7 +18,11 @@ define([
     'iAnimation', 'iAJAX',
     'HTML-5', 'HTML-5_Form'
 ],  function ($) {
-    if (typeof self.jQuery != 'function')  self.$ = self.jQuery = $;
+
+    var BOM = self;
+
+    if (typeof BOM.jQuery != 'function')  BOM.$ = BOM.jQuery = $;
 
     return $;
+
 });

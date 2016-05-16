@@ -1,11 +1,10 @@
-(function (iGlobal, iMain) {
+if (typeof this.define != 'function')
+    this.define = function () {
+        return  arguments[arguments.length - 1]();
+    };
 
-    if (typeof iGlobal.define == 'function')
-        iGlobal.define('iQuery', iMain);
-    else
-        iMain();
+define('iQuery',  function () {
 
-})((window !== undefined) ? window : this,  function () {
 
 
 });

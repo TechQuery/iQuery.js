@@ -5,16 +5,20 @@
     generateSourceMaps:         true,
     preserveLicenseComments:    false,
     onBuildWrite:               function (iName) {
-        var fParameter = '$',  aParameter = 'self.iQuery';
+        var fParameter = 'BOM',  aParameter = 'self';
 
-        if (iName  in  {'ES-5': 1, iCore: 1}) {
-            fParameter = 'BOM, DOM';
-            aParameter = 'self, self.document';
-            arguments[2] = arguments[2].replace(/\s+var BOM.+?;/, '');
+        if (iName != 'ES-5') {
+            fParameter += ', DOM';
+            aParameter += ', self.document';
+
+            if (iName != 'iCore') {
+                fParameter += ', $';
+                aParameter += ', self.iQuery';
+            }
         }
-
         return arguments[2]
             .replace(/^define[\s\S]+?(function \()[^\)]*/m,  "\n($1" + fParameter)
+            .replace(/\s+var BOM.+?;/, '')
             .replace(/\}\).$/,  '})(' + aParameter + ");\n\n");
     },
     wrap:                       {

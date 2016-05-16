@@ -1,14 +1,12 @@
-(function (iGlobal, iMain) {
+if (typeof this.define != 'function')
+    this.define = function () {
+        return  arguments[arguments.length - 1]();
+    };
 
-    if (typeof iGlobal.define == 'function')
-        iGlobal.define('iQuery', iMain);
-    else
-        iMain();
-
-})((window !== undefined) ? window : this,  function () {
+define('iQuery',  function () {
 
 
-(function (BOM, DOM) {
+(function (BOM) {
 
     /* ----- Object Patch ----- */
 
@@ -160,7 +158,7 @@
     for (var i = 0;  i < Console_Method.length;  i++)
         BOM.console[ Console_Method[i] ] = _Notice_;
 
-})(self, self.document);
+})(self);
 
 
 
@@ -2025,9 +2023,7 @@
 
 
 
-(function ($) {
-
-    var BOM = self,  DOM = self.document;
+(function (BOM, DOM, $) {
 
     var Mutation_Event = $.makeSet(
             'DOMContentLoaded',
@@ -2702,13 +2698,11 @@
         });
     });
 
-})(self.iQuery);
+})(self, self.document, self.iQuery);
 
 
 
-(function ($) {
-
-    var BOM = self,  DOM = self.document;
+(function (BOM, DOM, $) {
 
     if ($.browser.modern)  return;
 
@@ -3025,13 +3019,11 @@
         return iXML;
     };
 
-})(self.iQuery);
+})(self, self.document, self.iQuery);
 
 
 
-(function ($) {
-
-    var BOM = self,  DOM = self.document;
+(function (BOM, DOM, $) {
 
     /* ----- Atom Effect ----- */
 
@@ -3340,13 +3332,11 @@
         return this;
     };
 
-})(self.iQuery);
+})(self, self.document, self.iQuery);
 
 
 
-(function ($) {
-
-    var BOM = self,  DOM = self.document;
+(function (BOM, DOM, $) {
 
     /* ----- XML HTTP Request ----- */
 
@@ -3789,13 +3779,11 @@
         return this;
     };
 
-})(self.iQuery);
+})(self, self.document, self.iQuery);
 
 
 
-(function ($) {
-
-    var BOM = self,  DOM = self.document;
+(function (BOM, DOM, $) {
 
     if (! ($.browser.msie < 11))  return;
 
@@ -3906,13 +3894,11 @@
         this.pushState.apply(this, arguments);
     };
 
-})(self.iQuery);
+})(self, self.document, self.iQuery);
 
 
 
-(function ($) {
-
-    var BOM = self,  DOM = self.document;
+(function (BOM, DOM, $) {
 
     if (! (($.browser.msie < 10)  ||  $.browser.ios))
         return;
@@ -3958,7 +3944,7 @@
         return true;
     };
 
-})(self.iQuery);
+})(self, self.document, self.iQuery);
 
 
 //
@@ -3976,11 +3962,13 @@
 
 
 
-(function ($) {
-    if (typeof self.jQuery != 'function')  self.$ = self.jQuery = $;
+(function (BOM, DOM, $) {
+
+    if (typeof BOM.jQuery != 'function')  BOM.$ = BOM.jQuery = $;
 
     return $;
-})(self.iQuery);
+
+})(self, self.document, self.iQuery);
 
 
 });
