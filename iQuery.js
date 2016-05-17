@@ -1,4 +1,4 @@
-if (typeof this.define != 'function')
+if ((typeof this.define != 'function')  ||  (! this.define.amd))
     this.define = function () {
         return  arguments[arguments.length - 1]();
     };
@@ -2156,11 +2156,11 @@ define('iQuery',  function () {
                 [iCallback] :
                 ($(this).data('_event_') || { })[iEvent.type],
             iArgs = [iEvent].concat( $_Target.data('_trigger_') ),
-            iThis = this,  iReturn;
+            iThis = this;
 
         if (! (iHandler && iHandler.length))  return;
 
-        for (var i = 0, _Return_;  i < iHandler.length;  i++)
+        for (var i = 0;  i < iHandler.length;  i++)
             if (false === (
                 iHandler[i]  &&  iHandler[i].apply(iThis, iArgs)
             )) {
@@ -2169,8 +2169,6 @@ define('iQuery',  function () {
             }
 
         $_Target.data('_trigger_', null);
-
-        return iReturn;
     }
 
     $.event = {
@@ -2196,14 +2194,11 @@ define('iQuery',  function () {
                 }
             }
 
-            for (var i = 0;  i < $_Path.length;  i++)
-                if (
-                    (false === Proxy_Handler.call(
-                        $_Path[i],  iEvent,  (! i) && arguments[2]
-                    )) ||
-                    iEvent.cancelBubble
-                )
-                    break;
+            for (var i = 0;  i < $_Path.length;  i++) {
+                Proxy_Handler.call($_Path[i],  iEvent,  (! i) && arguments[2]);
+
+                if (iEvent.cancelBubble)  break;
+            }
         }
     };
 

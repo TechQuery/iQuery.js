@@ -129,3 +129,25 @@
  - 通用 **TreeView 对象**生成方法 —— `$.TreeView()`
  - Base64 文本转 **二进制对象**方法 —— `$.toBlob()`
  - 基于 **现代浏览器 Crypto API** 的哈希方法 —— $.dataHash()
+
+
+## 【参与开发】
+
+### （〇）环境搭建
+ 1. 安装 **Git**（比 SVN 更适合 **开源团队**）
+ 2. 安装 **Node.JS** 最新 LTS 版
+
+### （一）从源码构建
+
+UNIX-Shell、Windows-CMD 通用脚本 ——
+
+```Shell
+npm install -g requirejs
+npm install -g uglify-js
+
+mkdir ./iQuery;
+git clone https://git.oschina.net/Tech_Query/iQuery.git ./iQuery
+
+node r.js -o build/source.js                                             #  iQuery.js
+uglifyjs iQuery.js -c -m -o iQuery.min.js --source-map=iQuery.min.map    #  iQuery.min.js  iQuery.min.map
+```
