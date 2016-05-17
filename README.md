@@ -148,6 +148,6 @@ npm install -g uglify-js
 mkdir ./iQuery;
 git clone https://git.oschina.net/Tech_Query/iQuery.git ./iQuery
 
-node r.js -o build/source.js                                             #  iQuery.js
-uglifyjs iQuery.js -c -m -o iQuery.min.js --source-map=iQuery.min.map    #  iQuery.min.js  iQuery.min.map
+node r.js -o build/source.js
+uglifyjs iQuery.js -c -m -o iQuery.min.js --source-map=iQuery.min.map
 ```
