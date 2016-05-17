@@ -1,4 +1,4 @@
-define(['jquery', 'iBrowser'],  function ($) {
+define(['jquery', 'extension/iBrowser'],  function ($) {
 
     var W3C_Selection = (! ($.browser.msie < 10));
 

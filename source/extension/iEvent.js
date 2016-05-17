@@ -1,6 +1,6 @@
 define(['jquery'],  function ($) {
 
-    var BOM = self,  $_DOM = $(self.document);
+    var BOM = self,  DOM = self.document;
 
     /* ----- Focus AnyWhere ----- */
 
@@ -34,7 +34,7 @@ define(['jquery'],  function ($) {
 
     var Touch_Data;
 
-    $_DOM.bind(
+    $(DOM).bind(
         $.browser.mobile ? 'touchstart MSPointerDown' : 'mousedown',
         function (iEvent) {
             var iTouch = get_Touch(iEvent);

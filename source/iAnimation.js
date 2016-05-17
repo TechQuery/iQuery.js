@@ -281,32 +281,4 @@ define(['iCore'],  function ($) {
 
     $.fx = {interval:  1000 / FPS};
 
-
-    /* ----- Smooth Scroll ----- */
-
-    $.fn.scrollTo = function ($_Target) {
-        $_Target = $($_Target);
-
-        this.has($_Target).each(function () {
-            var $_Scroll = $(this);
-
-            var iCoord = $($.map($_Target,  function () {
-                    if ( $.contains($_Scroll[0], arguments[0]) )
-                        return arguments[0];
-                })).offset(),
-                _Coord_ = $_Scroll.offset();
-
-            if (! $_Scroll.length)  return;
-
-            $_Scroll.animate({
-                scrollTop:
-                    $_Scroll.scrollTop()  +  (iCoord.top - _Coord_.top),
-                scrollLeft:
-                    $_Scroll.scrollLeft()  +  (iCoord.left - _Coord_.left)
-            });
-        });
-
-        return this;
-    };
-
 });

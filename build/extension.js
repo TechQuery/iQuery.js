@@ -1,12 +1,13 @@
 ({
-    name:            'jQuery+',
-    baseUrl:         '../source/extension',
+    name:            'extension/jQuery+',
+    baseUrl:         '../source/',
     paths:           {
         jquery:    'http://cdn.bootcss.com/jquery/1.12.3/jquery'
     },
-    out:             '../jQuery+.js',
-    onBuildWrite:    function (iName) {
-        var fParameter = 'BOM',  aParameter = 'self';
+    out:             '../source/jQuery+.js',
+    onBuildWrite:    function () {
+        var iName = arguments[0].split('/').slice(-1)[0],
+            fParameter = 'BOM',  aParameter = 'self';
 
         if (iName != 'ES-5') {
             fParameter += ', DOM';

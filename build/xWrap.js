@@ -5,6 +5,8 @@ if ((typeof this.define != 'function')  ||  (! this.define.amd))
 
 define('iQuery',  function () {
 
+    var iQuery = {fn:  { }};
+
 
 
 });

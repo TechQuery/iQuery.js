@@ -1,10 +1,13 @@
 ({
-    baseUrl:         '../source',
     name:            'iQuery',
+    baseUrl:         '../source',
+    paths:           {
+        jquery:    'http://cdn.bootcss.com/jquery/1.12.3/jquery'
+    },
     out:             '../iQuery.js',
-    optimize:        'none',
-    onBuildWrite:    function (iName) {
-        var fParameter = 'BOM',  aParameter = 'self';
+    onBuildWrite:    function () {
+        var iName = arguments[0].split('/')[1],
+            fParameter = 'BOM',  aParameter = 'self';
 
         if (iName != 'ES-5') {
             fParameter += ', DOM';
@@ -12,7 +15,7 @@
 
             if (iName != 'iCore') {
                 fParameter += ', $';
-                aParameter += ', self.iQuery';
+                aParameter += ', self.iQuery || iQuery';
             }
         }
         return arguments[2]
@@ -23,5 +26,6 @@
     wrap:            {
         startFile:    'xWrap_0.txt',
         end:          '});'
-    }
+    },
+    optimize:        'none'
 });

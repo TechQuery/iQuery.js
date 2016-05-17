@@ -33,8 +33,9 @@ define(['jquery'],  function ($) {
             return  (this.now() - _Timer_[iName]) / 1000;
         },
         uuid:       function () {
-            return  (arguments[0] || 'uuid')  +  '.'  +
-                (this.now() + Math.random()).toString(36).toUpperCase();
+            return  (arguments[0] || 'uuid')  +  '_'  +
+                (this.now() + Math.random()).toString(36)
+                    .replace('.', '').toUpperCase();
         }
     });
 

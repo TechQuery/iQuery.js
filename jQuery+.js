@@ -366,7 +366,7 @@
         },
         byteLength:    function () {
             return  arguments[0].replace(
-                /[^\u0033-\u007e\uff61-\uffef]/g,  'xx'
+                /[^\u0021-\u007e\uff61-\uffef]/g,  'xx'
             ).length;
         }
     });
@@ -511,9 +511,7 @@
         $_Parents.each(function () {
             var _Index_ = $(this).css('z-index');
 
-            _zIndex_ = _zIndex_ + (
-                (_Index_ == 'auto')  ?  1  :  parseInt(_Index_)
-            );
+            _zIndex_ += (_Index_ == 'auto')  ?  1  :  parseInt(_Index_);
         });
 
         return ++_zIndex_;
@@ -1258,19 +1256,6 @@
 
 
 /* ---------- jQuery 元素集合父元素交集  v0.1 ---------- */
-
-    function Object_Seek(iName, iCallback) {
-        var iResult = [ ];
-
-        for (var _This_ = this, _Next_, i = 0;  _This_[iName];  _This_ = _Next_, i++) {
-            _Next_ = _This_[iName];
-            iResult.push(_Next_);
-            if ( iCallback )
-                iCallback.call(_Next_, i, _Next_);
-        }
-
-        return iResult;
-    }
 
     $.fn.sameParents = function () {
         if (this.length < 2)  return this.parents();

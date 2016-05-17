@@ -1,4 +1,4 @@
-define(['iCore'],  function ($) {
+define(['jquery'],  function ($) {
 
     var BOM = self,  DOM = self.document;
 
