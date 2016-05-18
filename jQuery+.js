@@ -67,13 +67,6 @@
 
 /* ---------- JSON Extension  v0.4 ---------- */
 
-    if (! BOM.JSON)
-        BOM.JSON = {
-            parse:    function () {
-                return  $.parseJSON(arguments[0]);
-            }
-        };
-
     BOM.JSON.format = function () {
         return  this.stringify(arguments[0], null, 4)
             .replace(/(\s+"[^"]+":) ([^\s]+)/g, '$1    $2');

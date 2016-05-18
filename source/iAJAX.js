@@ -155,49 +155,6 @@ define(['iEvent'],  function ($) {
         $_DOM.triggerHandler('ajaxPrefilter', [this]);
     }
 
-    /* ----- HTML DOM SandBox ----- */
-    $.fn.sandBox = function () {
-        var iArgs = $.makeArray(arguments);
-
-        var iCallback = (typeof iArgs.slice(-1)[0] == 'function')  &&  iArgs.pop();
-        var iHTML = $.isSelector(iArgs[0]) ? '' : iArgs.shift();
-        var iSelector = iArgs[0];
-
-        var $_iFrame = this.filter('iframe').eq(0);
-        if (! $_iFrame.length)
-            $_iFrame = $('<iframe style="display: none"></iframe>');
-
-        $_iFrame.one('load',  function () {
-            var _DOM_ = this.contentWindow.document;
-
-            function Frame_Ready() {
-                if (! (_DOM_.body && _DOM_.body.childNodes.length))
-                    return;
-
-                var $_Content = $(iSelector || 'body > *',  _DOM_);
-
-                if (iCallback  &&  (false === iCallback.call(
-                    $_iFrame[0],  $($.merge(
-                        $.makeArray($('head style, head script',  _DOM_)),
-                        $_Content[0] ? $_Content : _DOM_.body.childNodes
-                    ))
-                )))
-                    $_iFrame.remove();
-
-                return false;
-            }
-
-            if (! iHTML)  Frame_Ready();
-
-            $.every(0.04, Frame_Ready);
-            _DOM_.write(iHTML);
-            _DOM_.close();
-
-        }).attr('src',  ((! iHTML.match(/<.+?>/)) && iHTML.trim())  ||  'about:blank');
-
-        return  $_iFrame[0].parentNode ? this : $_iFrame.appendTo(DOM.body);
-    };
-
     /* ----- DOM HTTP Request ----- */
     BOM.DOMHttpRequest = function () {
         this.status = 0;

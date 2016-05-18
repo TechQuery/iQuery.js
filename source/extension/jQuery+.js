@@ -2,7 +2,7 @@
 //              >>>  jQuery+  <<<
 //
 //
-//    [Version]    v7.1  (2016-05-17)
+//    [Version]    v7.1  (2016-05-18)
 //
 //    [Require]    jQuery  v1.9+
 //
@@ -14,7 +14,8 @@
 define([
     'jquery',
     'extension/iBrowser', 'extension/iObject', 'extension/iTimer', 'extension/iUtility',
-    'extension/iDOM', 'extension/iCSSRule', 'extension/iSelection', 'extension/iEvent',
+    'extension/IE-8',
+    'extension/iDOM', 'extension/iCSS', 'extension/iSelection', 'extension/iEvent',
     'extension/iAJAX', 'extension/HTML-5', 'extension/HTML-5_Form'
 ],  function ($) {
 

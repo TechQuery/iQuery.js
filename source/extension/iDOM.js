@@ -192,42 +192,48 @@ define(['jquery'],  function ($) {
         return this;
     };
 
-/* ---------- Smart zIndex ---------- */
+/* ---------- HTML DOM SandBox ---------- */
 
-    function Get_zIndex() {
-        var $_This = $(this);
+    $.fn.sandBox = function () {
+        var iArgs = $.makeArray(arguments);
 
-        var _zIndex_ = $_This.css('z-index');
-        if (_zIndex_ != 'auto')  return parseInt(_zIndex_);
+        var iCallback = (typeof iArgs.slice(-1)[0] == 'function')  &&  iArgs.pop();
+        var iHTML = $.isSelector(iArgs[0]) ? '' : iArgs.shift();
+        var iSelector = iArgs[0];
 
-        var $_Parents = $_This.parents();
-        _zIndex_ = 0;
+        var $_iFrame = this.filter('iframe').eq(0);
+        if (! $_iFrame.length)
+            $_iFrame = $('<iframe style="display: none"></iframe>');
 
-        $_Parents.each(function () {
-            var _Index_ = $(this).css('z-index');
+        $_iFrame.one('load',  function () {
+            var _DOM_ = this.contentWindow.document;
 
-            _zIndex_ += (_Index_ == 'auto')  ?  1  :  parseInt(_Index_);
-        });
+            function Frame_Ready() {
+                if (! (_DOM_.body && _DOM_.body.childNodes.length))
+                    return;
 
-        return ++_zIndex_;
-    }
+                var $_Content = $(iSelector || 'body > *',  _DOM_);
 
-    function Set_zIndex() {
-        var $_This = $(this),  _Index_ = 0;
+                if (iCallback  &&  (false === iCallback.call(
+                    $_iFrame[0],  $($.merge(
+                        $.makeArray($('head style, head script',  _DOM_)),
+                        $_Content[0] ? $_Content : _DOM_.body.childNodes
+                    ))
+                )))
+                    $_iFrame.remove();
 
-        $_This.siblings().addBack().filter(':visible').each(function () {
-            _Index_ = Math.max(_Index_, Get_zIndex.call(this));
-        });
-        $_This.css('z-index', ++_Index_);
-    }
+                return false;
+            }
 
-    $.fn.zIndex = function (new_Index) {
-        if (! $.isData(new_Index))
-            return  Get_zIndex.call(this[0]);
-        else if (new_Index == '+')
-            return  this.each(Set_zIndex);
-        else
-            return  this.css('z-index',  parseInt(new_Index) || 'auto');
+            if (! iHTML)  Frame_Ready();
+
+            $.every(0.04, Frame_Ready);
+            _DOM_.write(iHTML);
+            _DOM_.close();
+
+        }).attr('src',  ((! iHTML.match(/<.+?>/)) && iHTML.trim())  ||  'about:blank');
+
+        return  $_iFrame[0].parentNode ? this : $_iFrame.appendTo(DOM.body);
     };
 
 });

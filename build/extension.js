@@ -5,18 +5,14 @@
         jquery:    'http://cdn.bootcss.com/jquery/1.12.3/jquery'
     },
     out:             '../source/jQuery+.js',
-    onBuildWrite:    function () {
-        var iName = arguments[0].split('/').slice(-1)[0],
-            fParameter = 'BOM',  aParameter = 'self';
+    onBuildWrite:    function (iName) {
+        if (iName.indexOf('extension') < 0)  return '';
 
-        if (iName != 'ES-5') {
-            fParameter += ', DOM';
-            aParameter += ', self.document';
+        var fParameter = 'BOM',  aParameter = 'self';
 
-            if (iName != 'iCore') {
-                fParameter += ', $';
-                aParameter += ', iQuery';
-            }
+        if (iName != 'extension/ES-5') {
+            fParameter += ', DOM, $';
+            aParameter += ',  self.document,  self.jQuery';
         }
         return arguments[2]
             .replace(/^define[\s\S]+?(function \()[^\)]*/m,  "\n($1" + fParameter)

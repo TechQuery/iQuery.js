@@ -129,4 +129,42 @@ define(['jquery'],  function ($) {
         });
     };
 
+/* ---------- Smart zIndex ---------- */
+
+    function Get_zIndex() {
+        var $_This = $(this);
+
+        var _zIndex_ = $_This.css('z-index');
+        if (_zIndex_ != 'auto')  return parseInt(_zIndex_);
+
+        var $_Parents = $_This.parents();
+        _zIndex_ = 0;
+
+        $_Parents.each(function () {
+            var _Index_ = $(this).css('z-index');
+
+            _zIndex_ += (_Index_ == 'auto')  ?  1  :  parseInt(_Index_);
+        });
+
+        return ++_zIndex_;
+    }
+
+    function Set_zIndex() {
+        var $_This = $(this),  _Index_ = 0;
+
+        $_This.siblings().addBack().filter(':visible').each(function () {
+            _Index_ = Math.max(_Index_, Get_zIndex.call(this));
+        });
+        $_This.css('z-index', ++_Index_);
+    }
+
+    $.fn.zIndex = function (new_Index) {
+        if (! $.isData(new_Index))
+            return  Get_zIndex.call(this[0]);
+        else if (new_Index == '+')
+            return  this.each(Set_zIndex);
+        else
+            return  this.css('z-index',  parseInt(new_Index) || 'auto');
+    };
+
 });
