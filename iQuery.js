@@ -217,6 +217,35 @@ define('iQuery',  function () {
         );
     };
 
+    $.makeSet = function () {
+        var iArgs = arguments,  iValue = true,  iSet = { };
+
+        if (this.likeArray( iArgs[1] )) {
+            iValue = iArgs[0];
+            iArgs = iArgs[1];
+        } else if (this.likeArray( iArgs[0] )) {
+            iValue = iArgs[1];
+            iArgs = iArgs[0];
+        }
+
+        for (var i = 0;  i < iArgs.length;  i++)
+            iSet[ iArgs[i] ] = (typeof iValue == 'function')  ?
+                iValue() : iValue;
+
+        return iSet;
+    };
+
+    var DataType = $.makeSet('string', 'number', 'boolean');
+
+    $.isData = function (iValue) {
+        var iType = typeof iValue;
+
+        return  Boolean(iValue)  ||  (iType in DataType)  ||  (
+            (iValue !== null)  &&  (iType == 'object')  &&
+            (typeof iValue.valueOf() in DataType)
+        );
+    };
+
     $.isEqual = function (iLeft, iRight) {
         if (!  (iLeft && iRight))
             return  (iLeft == iRight);
@@ -245,24 +274,6 @@ define('iQuery',  function () {
                 return false;
         }
         return true;
-    };
-
-    $.makeSet = function () {
-        var iArgs = arguments,  iValue = true,  iSet = { };
-
-        if (this.likeArray( iArgs[1] )) {
-            iValue = iArgs[0];
-            iArgs = iArgs[1];
-        } else if (this.likeArray( iArgs[0] )) {
-            iValue = iArgs[1];
-            iArgs = iArgs[0];
-        }
-
-        for (var i = 0;  i < iArgs.length;  i++)
-            iSet[ iArgs[i] ] = (typeof iValue == 'function')  ?
-                iValue() : iValue;
-
-        return iSet;
     };
 
     $.trace = function (iObject, iName, iCount, iCallback) {
@@ -489,9 +500,8 @@ define('iQuery',  function () {
 /* ---------- Object Base ---------- */
 
     var Type_Info = {
-            Data:         $.makeSet('String', 'Number', 'Boolean'),
-            BOM:          $.makeSet('Window', 'DOMWindow', 'global'),
-            DOM:          {
+            BOM:    $.makeSet('Window', 'DOMWindow', 'global'),
+            DOM:    {
                 set:        $.makeSet(
                     'Array', 'HTMLCollection', 'NodeList', 'jQuery', 'iQuery'
                 ),
@@ -551,10 +561,6 @@ define('iQuery',  function () {
         }
 
         return iType;
-    };
-
-    $.isData = function (iValue) {
-        return  Boolean(iValue)  ||  (this.type(iValue) in Type_Info.Data);
     };
 
 /* ---------- DOM Info Operator - Get first, Set all. ---------- */
@@ -636,15 +642,12 @@ define('iQuery',  function () {
     };
 
     /* ----- DOM Style ----- */
-    var Code_Indent = $.browser.modern ? '' : ' '.repeat(4);
+    $.cssPX = RegExp([
+        'width', 'height', 'padding', 'border-radius', 'margin',
+        'top', 'right', 'bottom',  'left'
+    ].join('|'));
 
     _DOM_.Style = {
-        PX_Needed:
-            RegExp([
-                'width', 'height', 'margin', 'padding',
-                'top', 'right', 'bottom',  'left',
-                'border-radius'
-            ].join('|')),
         get:           function (iElement, iName) {
             if ((! iElement)  ||  ($.type(iElement) in Type_Info.DOM.root))
                 return;
@@ -655,7 +658,7 @@ define('iQuery',  function () {
                 iStyle = iStyle.getPropertyValue(iName);
 
                 if (! iStyle) {
-                    if (iName.match( this.PX_Needed ))
+                    if (iName.match( $.cssPX ))
                         iStyle = 0;
                 } else if (iStyle.indexOf(' ') == -1) {
                     var iNumber = parseFloat(iStyle);
@@ -668,13 +671,10 @@ define('iQuery',  function () {
         set:           function (iElement, iName, iValue) {
             if ($.type(iElement) in Type_Info.DOM.root)  return false;
 
-            if ((! isNaN( Number(iValue) ))  &&  iName.match(this.PX_Needed))
+            if ((! isNaN( Number(iValue) ))  &&  iName.match($.cssPX))
                 iValue += 'px';
 
-            if (iElement)
-                iElement.style[this.Set_Method](iName, String(iValue), 'important');
-            else
-                return  [iName, ':', Code_Indent, iValue].join('');
+            iElement.style[this.Set_Method](iName, String(iValue), 'important');
         }
     };
 
@@ -1571,50 +1571,6 @@ define('iQuery',  function () {
         }
     });
 
-/* ---------- CSS Rule ---------- */
-
-    function CSS_Rule2Text(iRule) {
-        var Rule_Text = [''],  Rule_Block,  _Rule_Block_;
-
-        $.each(iRule,  function (iSelector) {
-            Rule_Block = iSelector + ' {';
-            _Rule_Block_ = [ ];
-
-            for (var iAttribute in this)
-                _Rule_Block_.push(
-                    _DOM_.operate('Style', [null], iAttribute, this[iAttribute])
-                        .replace(/^(\w)/m,  Code_Indent + '$1')
-                );
-
-            Rule_Text.push(
-                [Rule_Block, _Rule_Block_.join(";\n"), '}'].join("\n")
-            );
-        });
-        Rule_Text.push('');
-
-        return Rule_Text.join("\n");
-    }
-
-    $.cssRule = function (iMedia, iRule) {
-        if (typeof iMedia != 'string') {
-            iRule = iMedia;
-            iMedia = null;
-        }
-        var CSS_Text = CSS_Rule2Text(iRule);
-
-        var $_Style = $('<style />', {
-                type:       'text/css',
-                'class':    'iQuery_CSS-Rule',
-                text:       (! iMedia) ? CSS_Text : [
-                    '@media ' + iMedia + ' {',
-                    CSS_Text.replace(/\n/m, "\n    "),
-                    '}'
-                ].join("\n")
-            }).appendTo(DOM.head);
-
-        return  ($_Style[0].sheet || $_Style[0].styleSheet);
-    };
-
     return $;
 
 })(self, self.document, self.iQuery || iQuery);
@@ -2342,8 +2298,7 @@ define('iQuery',  function () {
     $.fn.onReply = function (iType, iData, iCallback) {
         var iTarget = this[0],  $_Source;
 
-        if ((iTarget === BOM)  ||  ($.type(iTarget) != 'Window'))
-            return this;
+        if (typeof iTarget.postMessage != 'function')  return this;
 
         if (arguments.length == 4) {
             $_Source = $(iData);
@@ -2723,7 +2678,8 @@ define('iQuery',  function () {
                 return  arguments[0] - arguments[1];
             }
         },
-        Array_Reverse = Array.prototype.reverse;
+        Array_Reverse = Array.prototype.reverse,
+        Rolling_Style = $.makeSet('auto', 'scroll', 'hidden');
 
     $.fn.extend({
         reduce:           function (iMethod, iKey, iCallback) {
@@ -2775,14 +2731,23 @@ define('iQuery',  function () {
         },
         scrollParents:    function () {
             return Array_Reverse.call(this.pushStack(
-                $.map(this.parents(),  function () {
-                    var $_This = $(arguments[0]);
+                $.map(this.parents(),  function (_DOM_) {
+                    var iCSS = $(_DOM_).css([
+                            'width', 'max-width', 'height', 'max-height',
+                            'overflow-x', 'overflow-y'
+                        ]);
 
                     if (
-                        ($_This.height() < $_This[0].scrollHeight)  ||
-                        ($_This.width() < $_This[0].scrollWidth)
+                        (
+                            (iCSS.width || iCSS['max-width'])  &&
+                            (iCSS['overflow-x'] in Rolling_Style)
+                        )  ||
+                        (
+                            (iCSS.height || iCSS['max-height'])  &&
+                            (iCSS['overflow-y'] in Rolling_Style)
+                        )
                     )
-                        return $_This[0];
+                        return _DOM_;
                 })
             ));
         },
@@ -2940,6 +2905,57 @@ define('iQuery',  function () {
 
 
 (function (BOM, DOM, $) {
+
+    var Code_Indent = $.browser.modern ? '' : ' '.repeat(4);
+
+    function CSS_Attribute(iName, iValue) {
+        if ((! isNaN( Number(iValue) ))  &&  iName.match($.cssPX))
+            iValue += 'px';
+
+        return  [iName, ':', Code_Indent, iValue].join('');
+    }
+
+    function CSS_Rule2Text(iRule) {
+        var Rule_Text = [''],  Rule_Block,  _Rule_Block_;
+
+        $.each(iRule,  function (iSelector) {
+            Rule_Block = iSelector + ' {';
+            _Rule_Block_ = [ ];
+
+            for (var iName in this)
+                _Rule_Block_.push(
+                    CSS_Attribute(iName, this[iName])
+                        .replace(/^(\w)/m,  Code_Indent + '$1')
+                );
+
+            Rule_Text.push(
+                [Rule_Block, _Rule_Block_.join(";\n"), '}'].join("\n")
+            );
+        });
+        Rule_Text.push('');
+
+        return Rule_Text.join("\n");
+    }
+
+    $.cssRule = function (iMedia, iRule) {
+        if (typeof iMedia != 'string') {
+            iRule = iMedia;
+            iMedia = null;
+        }
+        var CSS_Text = CSS_Rule2Text(iRule);
+
+        var $_Style = $('<style />', {
+                type:       'text/css',
+                'class':    'iQuery_CSS-Rule',
+                text:       (! iMedia) ? CSS_Text : [
+                    '@media ' + iMedia + ' {',
+                    CSS_Text.replace(/\n/m, "\n    "),
+                    '}'
+                ].join("\n")
+            }).appendTo(DOM.head);
+
+        return  ($_Style[0].sheet || $_Style[0].styleSheet);
+    };
 
     function CSS_Rule_Search(iStyleSheet, iFilter) {
         return  $.map(iStyleSheet || DOM.styleSheets,  function () {

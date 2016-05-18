@@ -163,8 +163,7 @@ define(['jquery'],  function ($) {
     $.fn.onReply = function (iType, iData, iCallback) {
         var iTarget = this[0],  $_Source;
 
-        if ((iTarget === BOM)  ||  ($.type(iTarget) != 'Window'))
-            return this;
+        if (typeof iTarget.postMessage != 'function')  return this;
 
         if (arguments.length == 4) {
             $_Source = $(iData);

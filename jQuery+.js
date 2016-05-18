@@ -2,7 +2,7 @@
 //              >>>  jQuery+  <<<
 //
 //
-//    [Version]    v7.1  (2016-05-09)
+//    [Version]    v7.1  (2016-05-18)
 //
 //    [Require]    jQuery  v1.9+
 //
@@ -173,11 +173,9 @@
             return  ($.now() - iTimer[arguments[0]]) / 1000;
         },
         uuid:      function () {
-            return  [
-                    (arguments[0] || 'uuid'),  '_',
-                    $.now().toString(16),
-                    Math.random().toString(16).slice(2)
-                ].join('');
+            return  (arguments[0] || 'uuid')  +  '_'  +
+                (this.now() + Math.random()).toString(36)
+                    .replace('.', '').toUpperCase();
         }
     });
 
@@ -374,7 +372,7 @@
 /* ---------- URL 处理扩展  v0.3 ---------- */
 
     $.extend($, {
-        paramJSON:    function (Args_Str) {
+        paramJSON:    function (Args_Str, iRaw) {
             Args_Str = (
                 Args_Str  ?  $.split(Args_Str, '?', 2)[1]  :  BOM.location.search
             ).match(/[^\?&\s]+/g);
@@ -384,10 +382,11 @@
             var _Args_ = { };
 
             for (var i = 0, iValue;  i < Args_Str.length;  i++) {
-                Args_Str[i] = $.split(Args_Str[i], '=', 2);
+                Args_Str[i] = this.split(Args_Str[i], '=', 2);
 
                 iValue = BOM.decodeURIComponent( Args_Str[i][1] );
-                try {
+
+                if (! iRaw)  try {
                     iValue = $.parseJSON(iValue);
                 } catch (iError) { }
 
@@ -455,19 +454,29 @@
 
 /* ---------- 页面滚动相关操作  v0.2 ---------- */
 
-    var Array_Reverse = Array.prototype.reverse;
+    var Array_Reverse = Array.prototype.reverse,
+        Rolling_Style = $.makeSet('auto', 'scroll', 'hidden');
 
     $.fn.extend({
         scrollParents:    function () {
-            return  Array_Reverse.call(this.pushStack(
-                $.map(this.parents(),  function () {
-                    var $_This = $(arguments[0]);
+            return Array_Reverse.call(this.pushStack(
+                $.map(this.parents(),  function (_DOM_) {
+                    var iCSS = $(_DOM_).css([
+                            'width', 'max-width', 'height', 'max-height',
+                            'overflow-x', 'overflow-y'
+                        ]);
 
                     if (
-                        ($_This.height() < $_This[0].scrollHeight)  ||
-                        ($_This.width() < $_This[0].scrollWidth)
+                        (
+                            (iCSS.width || iCSS['max-width'])  &&
+                            (iCSS['overflow-x'] in Rolling_Style)
+                        )  ||
+                        (
+                            (iCSS.height || iCSS['max-height'])  &&
+                            (iCSS['overflow-y'] in Rolling_Style)
+                        )
                     )
-                        return $_This[0];
+                        return _DOM_;
                 })
             ));
         },

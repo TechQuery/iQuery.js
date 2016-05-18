@@ -1,5 +1,56 @@
 define(['jquery'],  function ($) {
 
+    var Code_Indent = $.browser.modern ? '' : ' '.repeat(4);
+
+    function CSS_Attribute(iName, iValue) {
+        if ((! isNaN( Number(iValue) ))  &&  iName.match($.cssPX))
+            iValue += 'px';
+
+        return  [iName, ':', Code_Indent, iValue].join('');
+    }
+
+    function CSS_Rule2Text(iRule) {
+        var Rule_Text = [''],  Rule_Block,  _Rule_Block_;
+
+        $.each(iRule,  function (iSelector) {
+            Rule_Block = iSelector + ' {';
+            _Rule_Block_ = [ ];
+
+            for (var iName in this)
+                _Rule_Block_.push(
+                    CSS_Attribute(iName, this[iName])
+                        .replace(/^(\w)/m,  Code_Indent + '$1')
+                );
+
+            Rule_Text.push(
+                [Rule_Block, _Rule_Block_.join(";\n"), '}'].join("\n")
+            );
+        });
+        Rule_Text.push('');
+
+        return Rule_Text.join("\n");
+    }
+
+    $.cssRule = function (iMedia, iRule) {
+        if (typeof iMedia != 'string') {
+            iRule = iMedia;
+            iMedia = null;
+        }
+        var CSS_Text = CSS_Rule2Text(iRule);
+
+        var $_Style = $('<style />', {
+                type:       'text/css',
+                'class':    'iQuery_CSS-Rule',
+                text:       (! iMedia) ? CSS_Text : [
+                    '@media ' + iMedia + ' {',
+                    CSS_Text.replace(/\n/m, "\n    "),
+                    '}'
+                ].join("\n")
+            }).appendTo(DOM.head);
+
+        return  ($_Style[0].sheet || $_Style[0].styleSheet);
+    };
+
     function CSS_Rule_Search(iStyleSheet, iFilter) {
         return  $.map(iStyleSheet || DOM.styleSheets,  function () {
             var iRule = arguments[0].cssRules,  _Self_ = arguments.callee;

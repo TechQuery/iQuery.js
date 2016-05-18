@@ -8,7 +8,8 @@ define(['jquery'],  function ($) {
                 return  arguments[0] - arguments[1];
             }
         },
-        Array_Reverse = Array.prototype.reverse;
+        Array_Reverse = Array.prototype.reverse,
+        Rolling_Style = $.makeSet('auto', 'scroll', 'hidden');
 
     $.fn.extend({
         reduce:           function (iMethod, iKey, iCallback) {
@@ -60,14 +61,23 @@ define(['jquery'],  function ($) {
         },
         scrollParents:    function () {
             return Array_Reverse.call(this.pushStack(
-                $.map(this.parents(),  function () {
-                    var $_This = $(arguments[0]);
+                $.map(this.parents(),  function (_DOM_) {
+                    var iCSS = $(_DOM_).css([
+                            'width', 'max-width', 'height', 'max-height',
+                            'overflow-x', 'overflow-y'
+                        ]);
 
                     if (
-                        ($_This.height() < $_This[0].scrollHeight)  ||
-                        ($_This.width() < $_This[0].scrollWidth)
+                        (
+                            (iCSS.width || iCSS['max-width'])  &&
+                            (iCSS['overflow-x'] in Rolling_Style)
+                        )  ||
+                        (
+                            (iCSS.height || iCSS['max-height'])  &&
+                            (iCSS['overflow-y'] in Rolling_Style)
+                        )
                     )
-                        return $_This[0];
+                        return _DOM_;
                 })
             ));
         },

@@ -6,9 +6,8 @@ define(['iObject'],  function ($) {
 /* ---------- Object Base ---------- */
 
     var Type_Info = {
-            Data:         $.makeSet('String', 'Number', 'Boolean'),
-            BOM:          $.makeSet('Window', 'DOMWindow', 'global'),
-            DOM:          {
+            BOM:    $.makeSet('Window', 'DOMWindow', 'global'),
+            DOM:    {
                 set:        $.makeSet(
                     'Array', 'HTMLCollection', 'NodeList', 'jQuery', 'iQuery'
                 ),
@@ -68,10 +67,6 @@ define(['iObject'],  function ($) {
         }
 
         return iType;
-    };
-
-    $.isData = function (iValue) {
-        return  Boolean(iValue)  ||  (this.type(iValue) in Type_Info.Data);
     };
 
 /* ---------- DOM Info Operator - Get first, Set all. ---------- */
@@ -153,15 +148,12 @@ define(['iObject'],  function ($) {
     };
 
     /* ----- DOM Style ----- */
-    var Code_Indent = $.browser.modern ? '' : ' '.repeat(4);
+    $.cssPX = RegExp([
+        'width', 'height', 'padding', 'border-radius', 'margin',
+        'top', 'right', 'bottom',  'left'
+    ].join('|'));
 
     _DOM_.Style = {
-        PX_Needed:
-            RegExp([
-                'width', 'height', 'margin', 'padding',
-                'top', 'right', 'bottom',  'left',
-                'border-radius'
-            ].join('|')),
         get:           function (iElement, iName) {
             if ((! iElement)  ||  ($.type(iElement) in Type_Info.DOM.root))
                 return;
@@ -172,7 +164,7 @@ define(['iObject'],  function ($) {
                 iStyle = iStyle.getPropertyValue(iName);
 
                 if (! iStyle) {
-                    if (iName.match( this.PX_Needed ))
+                    if (iName.match( $.cssPX ))
                         iStyle = 0;
                 } else if (iStyle.indexOf(' ') == -1) {
                     var iNumber = parseFloat(iStyle);
@@ -185,13 +177,10 @@ define(['iObject'],  function ($) {
         set:           function (iElement, iName, iValue) {
             if ($.type(iElement) in Type_Info.DOM.root)  return false;
 
-            if ((! isNaN( Number(iValue) ))  &&  iName.match(this.PX_Needed))
+            if ((! isNaN( Number(iValue) ))  &&  iName.match($.cssPX))
                 iValue += 'px';
 
-            if (iElement)
-                iElement.style[this.Set_Method](iName, String(iValue), 'important');
-            else
-                return  [iName, ':', Code_Indent, iValue].join('');
+            iElement.style[this.Set_Method](iName, String(iValue), 'important');
         }
     };
 
@@ -1087,50 +1076,6 @@ define(['iObject'],  function ($) {
             return  $.param( this.serializeArray() );
         }
     });
-
-/* ---------- CSS Rule ---------- */
-
-    function CSS_Rule2Text(iRule) {
-        var Rule_Text = [''],  Rule_Block,  _Rule_Block_;
-
-        $.each(iRule,  function (iSelector) {
-            Rule_Block = iSelector + ' {';
-            _Rule_Block_ = [ ];
-
-            for (var iAttribute in this)
-                _Rule_Block_.push(
-                    _DOM_.operate('Style', [null], iAttribute, this[iAttribute])
-                        .replace(/^(\w)/m,  Code_Indent + '$1')
-                );
-
-            Rule_Text.push(
-                [Rule_Block, _Rule_Block_.join(";\n"), '}'].join("\n")
-            );
-        });
-        Rule_Text.push('');
-
-        return Rule_Text.join("\n");
-    }
-
-    $.cssRule = function (iMedia, iRule) {
-        if (typeof iMedia != 'string') {
-            iRule = iMedia;
-            iMedia = null;
-        }
-        var CSS_Text = CSS_Rule2Text(iRule);
-
-        var $_Style = $('<style />', {
-                type:       'text/css',
-                'class':    'iQuery_CSS-Rule',
-                text:       (! iMedia) ? CSS_Text : [
-                    '@media ' + iMedia + ' {',
-                    CSS_Text.replace(/\n/m, "\n    "),
-                    '}'
-                ].join("\n")
-            }).appendTo(DOM.head);
-
-        return  ($_Style[0].sheet || $_Style[0].styleSheet);
-    };
 
     return $;
 

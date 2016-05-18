@@ -14,6 +14,35 @@ define(['jquery', 'extension/ES-5', 'extension/iBrowser'],  function ($) {
         );
     };
 
+    $.makeSet = function () {
+        var iArgs = arguments,  iValue = true,  iSet = { };
+
+        if (this.likeArray( iArgs[1] )) {
+            iValue = iArgs[0];
+            iArgs = iArgs[1];
+        } else if (this.likeArray( iArgs[0] )) {
+            iValue = iArgs[1];
+            iArgs = iArgs[0];
+        }
+
+        for (var i = 0;  i < iArgs.length;  i++)
+            iSet[ iArgs[i] ] = (typeof iValue == 'function')  ?
+                iValue() : iValue;
+
+        return iSet;
+    };
+
+    var DataType = $.makeSet('string', 'number', 'boolean');
+
+    $.isData = function (iValue) {
+        var iType = typeof iValue;
+
+        return  Boolean(iValue)  ||  (iType in DataType)  ||  (
+            (iValue !== null)  &&  (iType == 'object')  &&
+            (typeof iValue.valueOf() in DataType)
+        );
+    };
+
     $.isEqual = function (iLeft, iRight) {
         if (!  (iLeft && iRight))
             return  (iLeft == iRight);
@@ -42,24 +71,6 @@ define(['jquery', 'extension/ES-5', 'extension/iBrowser'],  function ($) {
                 return false;
         }
         return true;
-    };
-
-    $.makeSet = function () {
-        var iArgs = arguments,  iValue = true,  iSet = { };
-
-        if (this.likeArray( iArgs[1] )) {
-            iValue = iArgs[0];
-            iArgs = iArgs[1];
-        } else if (this.likeArray( iArgs[0] )) {
-            iValue = iArgs[1];
-            iArgs = iArgs[0];
-        }
-
-        for (var i = 0;  i < iArgs.length;  i++)
-            iSet[ iArgs[i] ] = (typeof iValue == 'function')  ?
-                iValue() : iValue;
-
-        return iSet;
     };
 
     $.trace = function (iObject, iName, iCount, iCallback) {

@@ -26,7 +26,7 @@ define(['jquery'],  function ($) {
                 /[^\u0021-\u007e\uff61-\uffef]/g,  'xx'
             ).length;
         },
-        paramJSON:        function (Args_Str) {
+        paramJSON:        function (Args_Str, iRaw) {
             Args_Str = (
                 Args_Str  ?  $.split(Args_Str, '?', 2)[1]  :  BOM.location.search
             ).match(/[^\?&\s]+/g);
@@ -39,7 +39,8 @@ define(['jquery'],  function ($) {
                 Args_Str[i] = this.split(Args_Str[i], '=', 2);
 
                 iValue = BOM.decodeURIComponent( Args_Str[i][1] );
-                try {
+
+                if (! iRaw)  try {
                     iValue = $.parseJSON(iValue);
                 } catch (iError) { }
 
