@@ -16,7 +16,7 @@ define([
     'extension/iBrowser', 'iObject', 'iUtility', 'extension/iUtility',
     'iCore', 'iEvent', 'extension/iEvent', 'extension/IE-8',
     'extension/iDOM', 'extension/iCSS', 'extension/iSelection',
-    'iAnimation', 'iAJAX',
+    'iAnimation', 'iAJAX', 'extension/iAJAX',
     'extension/HTML-5', 'extension/HTML-5_Form'
 ],  function ($) {
 
