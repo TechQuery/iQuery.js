@@ -154,7 +154,7 @@ define(['iCore'],  function ($) {
 
             var iTarget = iEvent.target,  $_Path;
 
-            switch ( $.type(iTarget) ) {
+            switch ( $.Type(iTarget) ) {
                 case 'HTMLElement':    {
                     $_Path = $(iTarget).parents().addBack();
                     $_Path = iFilter ?
@@ -183,7 +183,7 @@ define(['iCore'],  function ($) {
         type:       function (iType) {
             if (
                 ((BOM !== BOM.top)  &&  (iType == 'DOMContentLoaded'))  ||
-                ((iType == 'load')  &&  ($.type(this) != 'Window'))
+                ((iType == 'load')  &&  ($.Type(this) != 'Window'))
             )
                 return 'onreadystatechange';
 
@@ -431,7 +431,7 @@ define(['iCore'],  function ($) {
     $(BOM).one('load', DOM_Ready_Event);
 
     $.fn.ready = function (iCallback) {
-        if ($.type(this[0]) != 'Document')
+        if ($.Type(this[0]) != 'Document')
             throw 'The Ready Method is only used for Document Object !';
 
         if (! DOM.isReady)

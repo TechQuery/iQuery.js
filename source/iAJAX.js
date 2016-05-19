@@ -249,7 +249,7 @@ define(['iEvent'],  function ($) {
                 (X_Domain(iURL) && ($.browser.msie < 10))  ?  'XDomainRequest' : 'XMLHttpRequest'
             ];
 
-        if ($.type(iData) == 'HTMLElement') {
+        if ($.Type(iData) == 'HTMLElement') {
             var $_Form = $(iData);
             iData = { };
 

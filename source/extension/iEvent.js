@@ -32,9 +32,9 @@ define(['jquery'],  function ($) {
         }
     }
 
-    var Touch_Data;
+    var Touch_Data,  $_DOM = $(DOM);
 
-    $(DOM).bind(
+    $_DOM.bind(
         $.browser.mobile ? 'touchstart MSPointerDown' : 'mousedown',
         function (iEvent) {
             var iTouch = get_Touch(iEvent);

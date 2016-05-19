@@ -2,7 +2,56 @@ define(['jquery'],  function ($) {
 
     var BOM = self,  DOM = self.document;
 
+    var WindowType = $.makeSet('Window', 'DOMWindow', 'Global');
+
     $.extend({
+        Type:    function (iVar) {
+            var iType;
+
+            try {
+                iType = $.type( iVar );
+
+                iType = (iType == 'object')  ?  iVar.constructor.name  :  (
+                    iType[0].toUpperCase() + iType.slice(1)
+                );
+            } catch (iError) {
+                return 'Window';
+            }
+
+            if (! iVar)
+                return  (isNaN(iVar)  &&  (iVar !== iVar))  ?  'NaN'  :  iType;
+
+            if (WindowType[iType] || (
+                (iVar == iVar.document) && (iVar.document != iVar)    //  IE 9- Hack
+            ))
+                return 'Window';
+
+            if (iVar.location && (
+                iVar.location  ===  (iVar.defaultView || { }).location
+            ))
+                return 'Document';
+
+            if (
+                iType.match(/HTML\w+?Element$/) ||
+                (typeof iVar.tagName == 'string')
+            )
+                return 'HTMLElement';
+
+            if ( this.likeArray(iVar) ) {
+                iType = 'Array';
+                if (! $.browser.modern)  try {
+                    iVar.item();
+                    try {
+                        iVar.namedItem();
+                        return 'HTMLCollection';
+                    } catch (iError) {
+                        return 'NodeList';
+                    }
+                } catch (iError) { }
+            }
+
+            return iType;
+        },
         isSelector:       function () {
             try {
                 DOM.querySelector(arguments[0])

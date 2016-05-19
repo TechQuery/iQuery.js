@@ -1,4 +1,4 @@
-define(['extension/iBrowser'],  function ($) {
+define(['extension/iObject'],  function ($) {
 
     $.isPlainObject = function (iValue) {
         return  iValue && (iValue.constructor === Object);
@@ -36,6 +36,15 @@ define(['extension/iBrowser'],  function ($) {
     };
 
     $.extend({
+        type:             function (iValue) {
+            if (iValue === null)  return 'null';
+
+            var iType = typeof  (iValue ? iValue.valueOf() : iValue);
+
+            return  (iType != 'object')  ?  iType  :
+                Object.prototype.toString.call(iValue)
+                    .split(' ')[1].slice(0, -1).toLowerCase();
+        },
         isEmptyObject:    function () {
             for (var iKey in arguments[0])
                 return false;

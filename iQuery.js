@@ -361,6 +361,15 @@ define('iQuery',  function () {
     };
 
     $.extend({
+        type:             function (iValue) {
+            if (iValue === null)  return 'null';
+
+            var iType = typeof  (iValue ? iValue.valueOf() : iValue);
+
+            return  (iType != 'object')  ?  iType  :
+                Object.prototype.toString.call(iValue)
+                    .split(' ')[1].slice(0, -1).toLowerCase();
+        },
         isEmptyObject:    function () {
             for (var iKey in arguments[0])
                 return false;
@@ -451,6 +460,206 @@ define('iQuery',  function () {
 
 (function (BOM, DOM, $) {
 
+    $.extend({
+        trim:             function () {
+            return  arguments[0].trim();
+        },
+        parseJSON:        BOM.JSON.parseAll,
+        parseXML:         function (iString) {
+            iString = iString.trim();
+            if ((iString[0] != '<') || (iString[iString.length - 1] != '>'))
+                throw 'Illegal XML Format...';
+
+            var iXML = (new BOM.DOMParser()).parseFromString(iString, 'text/xml');
+
+            var iError = iXML.getElementsByTagName('parsererror');
+            if (iError.length)
+                throw  new SyntaxError(1, iError[0].childNodes[1].nodeValue);
+            iXML.cookie;    //  for old WebKit core to throw Error
+
+            return iXML;
+        },
+        param:            function (iObject) {
+            var iParameter = [ ],  iValue;
+
+            if ($.isPlainObject( iObject ))
+                for (var iName in iObject) {
+                    iValue = iObject[iName];
+
+                    if ( $.isPlainObject(iValue) )
+                        iValue = BOM.JSON.stringify(iValue);
+                    else if (! $.isData(iValue))
+                        continue;
+
+                    iParameter.push(iName + '=' + BOM.encodeURIComponent(iValue));
+                }
+            else if ($.likeArray( iObject ))
+                for (var i = 0, j = 0;  i < iObject.length;  i++)
+                    iParameter[j++] = iObject[i].name + '=' +
+                        BOM.encodeURIComponent( iObject[i].value );
+
+            return iParameter.join('&');
+        },
+        contains:         function (iParent, iChild) {
+            if (! iChild)  return false;
+
+            if ($.browser.modern)
+                return  !!(iParent.compareDocumentPosition(iChild) & 16);
+            else
+                return  (iParent !== iChild) && iParent.contains(iChild);
+        },
+        proxy:            function (iFunction, iContext) {
+            var iArgs = $.makeArray(arguments).slice(2);
+
+            return  function () {
+                return  iFunction.apply(
+                    iContext || this,  $.merge(iArgs, arguments)
+                );
+            };
+        }
+    });
+
+})(self,  self.document,  self.iQuery || iQuery);
+
+
+
+(function (BOM, DOM, $) {
+
+    var WindowType = $.makeSet('Window', 'DOMWindow', 'Global');
+
+    $.extend({
+        Type:    function (iVar) {
+            var iType;
+
+            try {
+                iType = $.type( iVar );
+
+                iType = (iType == 'object')  ?  iVar.constructor.name  :  (
+                    iType[0].toUpperCase() + iType.slice(1)
+                );
+            } catch (iError) {
+                return 'Window';
+            }
+
+            if (! iVar)
+                return  (isNaN(iVar)  &&  (iVar !== iVar))  ?  'NaN'  :  iType;
+
+            if (WindowType[iType] || (
+                (iVar == iVar.document) && (iVar.document != iVar)    //  IE 9- Hack
+            ))
+                return 'Window';
+
+            if (iVar.location && (
+                iVar.location  ===  (iVar.defaultView || { }).location
+            ))
+                return 'Document';
+
+            if (
+                iType.match(/HTML\w+?Element$/) ||
+                (typeof iVar.tagName == 'string')
+            )
+                return 'HTMLElement';
+
+            if ( this.likeArray(iVar) ) {
+                iType = 'Array';
+                if (! $.browser.modern)  try {
+                    iVar.item();
+                    try {
+                        iVar.namedItem();
+                        return 'HTMLCollection';
+                    } catch (iError) {
+                        return 'NodeList';
+                    }
+                } catch (iError) { }
+            }
+
+            return iType;
+        },
+        isSelector:       function () {
+            try {
+                DOM.querySelector(arguments[0])
+            } catch (iError) {
+                return false;
+            }
+            return true;
+        },
+        split:            function (iString, iSplit, iLimit, iJoin) {
+            iString = iString.split(iSplit);
+            if (iLimit) {
+                iString[iLimit - 1] = iString.slice(iLimit - 1).join(
+                    (typeof iJoin == 'string') ? iJoin : iSplit
+                );
+                iString.length = iLimit;
+            }
+            return iString;
+        },
+        byteLength:       function () {
+            return  arguments[0].replace(
+                /[^\u0021-\u007e\uff61-\uffef]/g,  'xx'
+            ).length;
+        },
+        paramJSON:        function (Args_Str, iRaw) {
+            Args_Str = (
+                Args_Str  ?  $.split(Args_Str, '?', 2)[1]  :  BOM.location.search
+            ).match(/[^\?&\s]+/g);
+
+            if (! Args_Str)  return { };
+
+            var _Args_ = { };
+
+            for (var i = 0, iValue;  i < Args_Str.length;  i++) {
+                Args_Str[i] = this.split(Args_Str[i], '=', 2);
+
+                iValue = BOM.decodeURIComponent( Args_Str[i][1] );
+
+                if (! iRaw)  try {
+                    iValue = $.parseJSON(iValue);
+                } catch (iError) { }
+
+                _Args_[ Args_Str[i][0] ] = iValue;
+            }
+
+            return _Args_;
+        },
+        paramSign:        function (iData) {
+            iData = (typeof iData == 'string')  ?  this.paramJSON(iData)  :  iData;
+
+            return $.map(
+                Object.getOwnPropertyNames(iData).sort(),
+                function (iKey) {
+                    switch (typeof iData[iKey]) {
+                        case 'function':    return;
+                        case 'object':      try {
+                            return  iKey + '=' + JSON.stringify(iData[iKey]);
+                        } catch (iError) { }
+                    }
+                    return  iKey + '=' + iData[iKey];
+                }
+            ).join(arguments[1] || '&');
+        },
+        fileName:         function () {
+            return (
+                arguments[0] || BOM.location.pathname
+            ).match(/([^\?\#]+)(\?|\#)?/)[1].split('/').slice(-1)[0];
+        },
+        filePath:         function () {
+            return (
+                arguments[0] || BOM.location.href
+            ).match(/([^\?\#]+)(\?|\#)?/)[1].split('/').slice(0, -1).join('/');
+        },
+        urlDomain:        function () {
+            return ((
+                arguments[0] || BOM.location.href
+            ).match(/^(\w+:)?\/\/[^\/]+/) || [ ])[0];
+        }
+    });
+
+})(self,  self.document,  self.iQuery || iQuery);
+
+
+
+(function (BOM, DOM, $) {
+
     var _Timer_ = { };
 
     $.extend({
@@ -497,75 +706,13 @@ define('iQuery',  function () {
 (function (BOM, DOM, $) {
 
 
-/* ---------- Object Base ---------- */
-
-    var Type_Info = {
-            BOM:    $.makeSet('Window', 'DOMWindow', 'global'),
-            DOM:    {
-                set:        $.makeSet(
-                    'Array', 'HTMLCollection', 'NodeList', 'jQuery', 'iQuery'
-                ),
-                element:    $.makeSet('Window', 'Document', 'HTMLElement'),
-                root:       $.makeSet('Document', 'Window')
-            }
-        };
-
-    $.type = function (iVar) {
-        var iType = typeof iVar;
-
-        try {
-            iType = (iType == 'object') ? (
-                (iVar && iVar.constructor.name) ||
-                Object.prototype.toString.call(iVar).match(/\[object\s+([^\]]+)\]/i)[1]
-            ) : (
-                iType[0].toUpperCase() + iType.slice(1)
-            );
-        } catch (iError) {
-            return 'Window';
-        }
-
-        if (! iVar)  switch (true) {
-            case (isNaN(iVar)  &&  (iVar !== iVar)):    return 'NaN';
-            case (iVar === null):                       return 'Null';
-            default:                                    return iType;
-        }
-
-        if (
-            Type_Info.BOM[iType] ||
-            ((iVar == iVar.document) && (iVar.document != iVar))
-        )
-            return 'Window';
-
-        if (iVar.location && (
-            iVar.location  ===  (iVar.defaultView || { }).location
-        ))
-            return 'Document';
-
-        if (
-            iType.match(/HTML\w+?Element$/) ||
-            (typeof iVar.tagName == 'string')
-        )
-            return 'HTMLElement';
-
-        if ( this.likeArray(iVar) ) {
-            iType = 'Array';
-            if (! $.browser.modern)  try {
-                iVar.item();
-                try {
-                    iVar.namedItem();
-                    return 'HTMLCollection';
-                } catch (iError) {
-                    return 'NodeList';
-                }
-            } catch (iError) { }
-        }
-
-        return iType;
-    };
-
 /* ---------- DOM Info Operator - Get first, Set all. ---------- */
 
     var _DOM_ = {
+            TypeMap:          {
+                element:    $.makeSet('Window', 'Document', 'HTMLElement'),
+                root:       $.makeSet('Document', 'Window')
+            },
             Get_Name_Type:    $.makeSet('String', 'Array', 'Undefined'),
             operate:          function (iType, iElement, iName, iValue) {
                 if (iValue === null) {
@@ -576,7 +723,7 @@ define('iQuery',  function () {
                 }
                 if (
                     (iValue === undefined)  &&
-                    ($.type(iName) in this.Get_Name_Type)
+                    ($.Type(iName) in this.Get_Name_Type)
                 ) {
                     if (! iElement.length)  return;
 
@@ -615,7 +762,7 @@ define('iQuery',  function () {
     /* ----- DOM Attribute ----- */
     _DOM_.Attribute = {
         get:      function (iElement, iName) {
-            if ($.type(iElement) in Type_Info.DOM.root)  return;
+            if ($.Type(iElement) in _DOM_.TypeMap.root)  return;
 
             if (! iName)  return iElement.attributes;
 
@@ -623,7 +770,7 @@ define('iQuery',  function () {
             if (iValue !== null)  return iValue;
         },
         set:      function (iElement, iName, iValue) {
-            return  ($.type(iElement) in Type_Info.DOM.root) ?
+            return  ($.Type(iElement) in _DOM_.TypeMap.root) ?
                     false  :  iElement.setAttribute(iName, iValue);
         },
         clear:    function (iElement, iName) {
@@ -649,7 +796,7 @@ define('iQuery',  function () {
 
     _DOM_.Style = {
         get:           function (iElement, iName) {
-            if ((! iElement)  ||  ($.type(iElement) in Type_Info.DOM.root))
+            if ((! iElement)  ||  ($.Type(iElement) in _DOM_.TypeMap.root))
                 return;
 
             var iStyle = DOM.defaultView.getComputedStyle(iElement, null);
@@ -669,7 +816,7 @@ define('iQuery',  function () {
         },
         Set_Method:    $.browser.modern ? 'setProperty' : 'setAttribute',
         set:           function (iElement, iName, iValue) {
-            if ($.type(iElement) in Type_Info.DOM.root)  return false;
+            if ($.Type(iElement) in _DOM_.TypeMap.root)  return false;
 
             if ((! isNaN( Number(iValue) ))  &&  iName.match($.cssPX))
                 iValue += 'px';
@@ -984,7 +1131,7 @@ define('iQuery',  function () {
 
         if (! Element_Set) return;
 
-        var iType = $.type(Element_Set);
+        var iType = $.Type(Element_Set);
 
         if (iType == 'String') {
             Element_Set = Element_Set.trim();
@@ -999,7 +1146,7 @@ define('iQuery',  function () {
                 Element_Set = DOM_Create(
                     Element_Set,  $.isPlainObject(iContext) && iContext
                 );
-        } else if (iType in Type_Info.DOM.element)
+        } else if (iType in _DOM_.TypeMap.element)
             Element_Set = [ Element_Set ];
 
         if (! $.likeArray(Element_Set))
@@ -1015,67 +1162,11 @@ define('iQuery',  function () {
     /* ----- iQuery Static Method ----- */
 
     $ = BOM.iQuery = $.extend(iQuery, $, {
-        trim:             function () {
-            return  arguments[0].trim();
-        },
-        parseJSON:        BOM.JSON.parseAll,
-        parseXML:         function (iString) {
-            iString = iString.trim();
-            if ((iString[0] != '<') || (iString[iString.length - 1] != '>'))
-                throw 'Illegal XML Format...';
-
-            var iXML = (new BOM.DOMParser()).parseFromString(iString, 'text/xml');
-
-            var iError = iXML.getElementsByTagName('parsererror');
-            if (iError.length)
-                throw  new SyntaxError(1, iError[0].childNodes[1].nodeValue);
-            iXML.cookie;    //  for old WebKit core to throw Error
-
-            return iXML;
-        },
-        globalEval:       function () {
-            this('<script />').prop('text', arguments[0]).appendTo('head');
-        },
-        param:            function (iObject) {
-            var iParameter = [ ],  iValue;
-
-            if ( $.isPlainObject(iObject) )
-                for (var iName in iObject) {
-                    iValue = iObject[iName];
-
-                    if ( $.isPlainObject(iValue) )
-                        iValue = BOM.JSON.stringify(iValue);
-                    else if (! $.isData(iValue))
-                        continue;
-
-                    iParameter.push(iName + '=' + BOM.encodeURIComponent(iValue));
-                }
-            else if ($.type(iObject) in Type_Info.DOM.set)
-                for (var i = 0, j = 0;  i < iObject.length;  i++)
-                    iParameter[j++] = iObject[i].name + '=' +
-                        BOM.encodeURIComponent( iObject[i].value );
-
-            return iParameter.join('&');
-        },
         data:             function (iElement, iName, iValue) {
             return  _DOM_.operate('Data', [iElement], iName, iValue);
         },
-        contains:         function (iParent, iChild) {
-            if (! iChild)  return false;
-
-            if ($.browser.modern)
-                return  !!(iParent.compareDocumentPosition(iChild) & 16);
-            else
-                return  (iParent !== iChild) && iParent.contains(iChild);
-        },
-        proxy:            function (iFunction, iContext) {
-            var iArgs = $.makeArray(arguments).slice(2);
-
-            return  function () {
-                return  iFunction.apply(
-                    iContext || this,  $.merge(iArgs, arguments)
-                );
-            };
+        globalEval:    function () {
+            this('<script />').prop('text', arguments[0]).appendTo('head');
         }
     });
 
@@ -1091,7 +1182,7 @@ define('iQuery',  function () {
         return  function () {
             if (! this[0])  return  arguments.length ? this : 0;
 
-            switch ( $.type(this[0]) ) {
+            switch ( $.Type(this[0]) ) {
                 case 'Document':
                     return  Math.max(
                         this[0].documentElement[iName.scroll],
@@ -1204,15 +1295,17 @@ define('iQuery',  function () {
             if (! iTarget)
                 return  $.trace(this[0], 'previousElementSibling').length;
 
-            var iType = $.type(iTarget);
+            var iType = $.Type(iTarget);
+
             switch (true) {
                 case (iType == 'String'):
                     return  $.inArray(this[0], $(iTarget));
-                case ((iType in Type_Info.DOM.set)  &&  (!! iTarget.length)):    {
-                    iTarget = iTarget[0];
-                    iType = $.type(iTarget);
-                }
-                case (iType in Type_Info.DOM.element):
+                case ($.likeArray( iTarget )):
+                    if (! (iType in _DOM_.TypeMap.element)) {
+                        iTarget = iTarget[0];
+                        iType = $.Type(iTarget);
+                    }
+                case (iType in _DOM_.TypeMap.element):
                     return  $.inArray(iTarget, this);
             }
             return -1;
@@ -1326,7 +1419,7 @@ define('iQuery',  function () {
                     (this[i].tagName.toLowerCase() != 'iframe') ?
                         this[i].childNodes : this[i].contentWindow.document
                 );
-            if ($.type(Type_Filter) == 'Number')
+            if ($.Type(Type_Filter) == 'Number')
                 for (var i = 0;  i < $_Result.length;  i++)
                     if ($_Result[i].nodeType != Type_Filter)
                         $_Result[i] = null;
@@ -1579,92 +1672,6 @@ define('iQuery',  function () {
 
 (function (BOM, DOM, $) {
 
-    $.extend({
-        isSelector:       function () {
-            try {
-                DOM.querySelector(arguments[0])
-            } catch (iError) {
-                return false;
-            }
-            return true;
-        },
-        split:            function (iString, iSplit, iLimit, iJoin) {
-            iString = iString.split(iSplit);
-            if (iLimit) {
-                iString[iLimit - 1] = iString.slice(iLimit - 1).join(
-                    (typeof iJoin == 'string') ? iJoin : iSplit
-                );
-                iString.length = iLimit;
-            }
-            return iString;
-        },
-        byteLength:       function () {
-            return  arguments[0].replace(
-                /[^\u0021-\u007e\uff61-\uffef]/g,  'xx'
-            ).length;
-        },
-        paramJSON:        function (Args_Str, iRaw) {
-            Args_Str = (
-                Args_Str  ?  $.split(Args_Str, '?', 2)[1]  :  BOM.location.search
-            ).match(/[^\?&\s]+/g);
-
-            if (! Args_Str)  return { };
-
-            var _Args_ = { };
-
-            for (var i = 0, iValue;  i < Args_Str.length;  i++) {
-                Args_Str[i] = this.split(Args_Str[i], '=', 2);
-
-                iValue = BOM.decodeURIComponent( Args_Str[i][1] );
-
-                if (! iRaw)  try {
-                    iValue = $.parseJSON(iValue);
-                } catch (iError) { }
-
-                _Args_[ Args_Str[i][0] ] = iValue;
-            }
-
-            return _Args_;
-        },
-        paramSign:        function (iData) {
-            iData = (typeof iData == 'string')  ?  this.paramJSON(iData)  :  iData;
-
-            return $.map(
-                Object.getOwnPropertyNames(iData).sort(),
-                function (iKey) {
-                    switch (typeof iData[iKey]) {
-                        case 'function':    return;
-                        case 'object':      try {
-                            return  iKey + '=' + JSON.stringify(iData[iKey]);
-                        } catch (iError) { }
-                    }
-                    return  iKey + '=' + iData[iKey];
-                }
-            ).join(arguments[1] || '&');
-        },
-        fileName:         function () {
-            return (
-                arguments[0] || BOM.location.pathname
-            ).match(/([^\?\#]+)(\?|\#)?/)[1].split('/').slice(-1)[0];
-        },
-        filePath:         function () {
-            return (
-                arguments[0] || BOM.location.href
-            ).match(/([^\?\#]+)(\?|\#)?/)[1].split('/').slice(0, -1).join('/');
-        },
-        urlDomain:        function () {
-            return ((
-                arguments[0] || BOM.location.href
-            ).match(/^(\w+:)?\/\/[^\/]+/) || [ ])[0];
-        }
-    });
-
-})(self,  self.document,  self.iQuery || iQuery);
-
-
-
-(function (BOM, DOM, $) {
-
     var Mutation_Event = $.makeSet(
             'DOMContentLoaded',
             'DOMAttrModified', 'DOMAttributeNameChanged',
@@ -1817,7 +1824,7 @@ define('iQuery',  function () {
 
             var iTarget = iEvent.target,  $_Path;
 
-            switch ( $.type(iTarget) ) {
+            switch ( $.Type(iTarget) ) {
                 case 'HTMLElement':    {
                     $_Path = $(iTarget).parents().addBack();
                     $_Path = iFilter ?
@@ -1846,7 +1853,7 @@ define('iQuery',  function () {
         type:       function (iType) {
             if (
                 ((BOM !== BOM.top)  &&  (iType == 'DOMContentLoaded'))  ||
-                ((iType == 'load')  &&  ($.type(this) != 'Window'))
+                ((iType == 'load')  &&  ($.Type(this) != 'Window'))
             )
                 return 'onreadystatechange';
 
@@ -2094,7 +2101,7 @@ define('iQuery',  function () {
     $(BOM).one('load', DOM_Ready_Event);
 
     $.fn.ready = function (iCallback) {
-        if ($.type(this[0]) != 'Document')
+        if ($.Type(this[0]) != 'Document')
             throw 'The Ready Method is only used for Document Object !';
 
         if (! DOM.isReady)
@@ -2168,9 +2175,9 @@ define('iQuery',  function () {
         }
     }
 
-    var Touch_Data;
+    var Touch_Data,  $_DOM = $(DOM);
 
-    $(DOM).bind(
+    $_DOM.bind(
         $.browser.mobile ? 'touchstart MSPointerDown' : 'mousedown',
         function (iEvent) {
             var iTouch = get_Touch(iEvent);
@@ -3695,7 +3702,7 @@ define('iQuery',  function () {
                 (X_Domain(iURL) && ($.browser.msie < 10))  ?  'XDomainRequest' : 'XMLHttpRequest'
             ];
 
-        if ($.type(iData) == 'HTMLElement') {
+        if ($.Type(iData) == 'HTMLElement') {
             var $_Form = $(iData);
             iData = { };
 
@@ -4018,7 +4025,7 @@ define('iQuery',  function () {
 //                >>>  iQuery.js  <<<
 //
 //
-//      [Version]    v1.0  (2016-05-18)  Stable
+//      [Version]    v1.0  (2016-05-19)  Stable
 //
 //      [Usage]      A Light-weight jQuery Compatible API
 //                   with IE 8+ compatibility.
