@@ -2,7 +2,26 @@ define(['jquery'],  function ($) {
 
     var BOM = self,  DOM = self.document;
 
-    /* ----- Focus AnyWhere ----- */
+/* ---------- Event from Pseudo ---------- */
+
+    $.Event.prototype.isPseudo = function () {
+        var $_This = $(this.currentTarget);
+
+        var iOffset = $_This.offset();
+
+        return Boolean(
+            (this.pageX  &&  (
+                (this.pageX < iOffset.left)  ||
+                (this.pageX  >  (iOffset.left + $_This.width()))
+            ))  ||
+            (this.pageY  &&  (
+                (this.pageY < iOffset.top)  ||
+                (this.pageY  >  (iOffset.top + $_This.height()))
+            ))
+        );
+    };
+
+/* ---------- Focus AnyWhere ---------- */
 
     var DOM_Focus = $.fn.focus,
         iFocusable = [
@@ -17,7 +36,7 @@ define(['jquery'],  function ($) {
         return  DOM_Focus.apply(this, arguments);
     };
 
-    /* ----- Single Finger Touch ----- */
+/* ---------- Single Finger Touch ---------- */
 
     function get_Touch(iEvent) {
         if (! iEvent.timeStamp)
@@ -77,7 +96,7 @@ define(['jquery'],  function ($) {
         }
     );
 
-    /* ----- Text Input Event ----- */
+/* ---------- Text Input Event ---------- */
 
     function TypeBack(iHandler, iKey, iEvent) {
         var $_This = $(this);
@@ -128,7 +147,7 @@ define(['jquery'],  function ($) {
         return this;
     };
 
-    /* ----- Cross Page Event ----- */
+/* ---------- Cross Page Event ---------- */
 
     function CrossPageEvent(iType, iSource) {
         if (typeof iType == 'string') {
@@ -197,7 +216,7 @@ define(['jquery'],  function ($) {
         );
     };
 
-    /* ----- Mouse Wheel Event ----- */
+/* ---------- Mouse Wheel Event ---------- */
 
     if (! $.browser.mozilla)  return;
 

@@ -235,16 +235,22 @@ define(['iCore'],  function ($) {
         fadeIn:     {opacity:  1},
         fadeOut:    {opacity:  0},
         slideUp:    {
-            overflow:    'hidden',
-            height:      0,
-            padding:     0,
-            opacity:     0
+            overflow:            'hidden',
+            height:              0,
+            'padding-left':      0,
+            'padding-right':     0,
+            'padding-top':       0,
+            'padding-bottom':    0,
+            opacity:             0
         },
         slideDown:    {
-            overflow:    'auto',
-            height:      'auto',
-            padding:     'auto',
-            opacity:     1
+            overflow:            'auto',
+            height:              'auto',
+            'padding-left':      'auto',
+            'padding-right':     'auto',
+            'padding-top':       'auto',
+            'padding-bottom':    'auto',
+            opacity:             1
         }
     },  function (CSS_Next) {
         return  function () {

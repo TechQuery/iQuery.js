@@ -1,28 +1,5 @@
 define(['jquery'],  function ($) {
 
-/* ---------- RESTful API ---------- */
-
-    function HTTP_Request(iMethod, iURL, iData, iCallback) {
-        if (typeof iData == 'function') {
-            iCallback = iData;
-            iData = null;
-        }
-        return  $.ajax({
-            method:         iMethod,
-            url:            iURL,
-            data:           iData,
-            complete:       iCallback,
-            crossDomain:    true
-        });
-    }
-
-    if (! $.fn.iquery) {
-        var HTTP_Method = $.makeSet('PUT', 'DELETE');
-
-        for (var iMethod in HTTP_Method)
-            $[ iMethod.toLowerCase() ] = $.proxy(HTTP_Request, BOM, iMethod);
-    }
-
 /* ---------- Form Element AJAX Submit ---------- */
 
     $.fn.ajaxSubmit = function (iCallback) {
@@ -47,10 +24,10 @@ define(['jquery'],  function ($) {
                 return;
             }
 
-            var iMethod = ($_Form.attr('method') || 'Get').toUpperCase();
+            var iMethod = ($_Form.attr('method') || 'Get').toLowerCase();
 
-            if ((iMethod in HTTP_Method)  ||  (iMethod == 'GET'))
-                $[ iMethod.toLowerCase() ](
+            if (typeof $[iMethod] == 'function')
+                $[iMethod](
                     this.action,
                     $.paramJSON('?' + $_Form.serialize()),
                     function () {

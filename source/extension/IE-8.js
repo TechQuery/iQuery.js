@@ -1,4 +1,4 @@
-define(['iCore'],  function ($) {
+define(['jquery'],  function ($) {
 
     var BOM = self,  DOM = self.document;
 
@@ -151,7 +151,9 @@ define(['iCore'],  function ($) {
             var iStyle = this[ iName.toCamelCase() ];
             var iNumber = parseFloat(iStyle);
 
-            return  isNaN(iNumber) ? iStyle : (iNumber / iScale);
+            return  isNaN(iNumber) ? iStyle : (
+                (iNumber / iScale)  +  ($.cssPX[iName] ? 'px' : '')
+            );
         },
         setPropertyValue:    function (iName, iValue) {
             this[this.length++] = iName;

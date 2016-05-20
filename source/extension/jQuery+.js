@@ -2,7 +2,7 @@
 //              >>>  jQuery+  <<<
 //
 //
-//    [Version]    v7.1  (2016-05-19)
+//    [Version]    v7.1  (2016-05-20)
 //
 //    [Require]    jQuery  v1.9+
 //
@@ -16,7 +16,7 @@ define([
     'extension/iBrowser', 'extension/iObject', 'extension/iTimer', 'extension/iUtility',
     'extension/IE-8',
     'extension/iDOM', 'extension/iCSS', 'extension/iSelection', 'extension/iEvent',
-    'extension/HTML-5', 'extension/HTML-5_Form', 'extension/iAJAX'
+    'extension/HTML-5', 'extension/HTML-5_Form', 'extension/iRESTful', 'extension/iAJAX'
 ],  function ($) {
 
     var BOM = self;

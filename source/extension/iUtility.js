@@ -11,9 +11,10 @@ define(['jquery'],  function ($) {
             try {
                 iType = $.type( iVar );
 
-                iType = (iType == 'object')  ?  iVar.constructor.name  :  (
-                    iType[0].toUpperCase() + iType.slice(1)
-                );
+                if ((iType == 'object')  &&  iVar.constructor.name)
+                    iType = iVar.constructor.name;
+                else
+                    iType = iType[0].toUpperCase() + iType.slice(1);
             } catch (iError) {
                 return 'Window';
             }
@@ -128,7 +129,11 @@ define(['jquery'],  function ($) {
             return ((
                 arguments[0] || BOM.location.href
             ).match(/^(\w+:)?\/\/[^\/]+/) || [ ])[0];
-        }
+        },
+        cssPX:            RegExp([
+            'width', 'height', 'padding', 'border-radius', 'margin',
+            'top', 'right', 'bottom',  'left'
+        ].join('|'))
     });
 
 });

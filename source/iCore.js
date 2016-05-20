@@ -86,11 +86,6 @@ define(['extension/iTimer'],  function ($) {
     };
 
     /* ----- DOM Style ----- */
-    $.cssPX = RegExp([
-        'width', 'height', 'padding', 'border-radius', 'margin',
-        'top', 'right', 'bottom',  'left'
-    ].join('|'));
-
     _DOM_.Style = {
         get:           function (iElement, iName) {
             if ((! iElement)  ||  ($.Type(iElement) in _DOM_.TypeMap.root))

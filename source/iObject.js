@@ -39,8 +39,9 @@ define(['extension/iObject'],  function ($) {
         type:             function (iValue) {
             if (iValue === null)  return 'null';
 
-            var iType = typeof  (iValue ? iValue.valueOf() : iValue);
-
+            var iType = typeof (
+                    (iValue && iValue.valueOf)  ?  iValue.valueOf()  :  iValue
+                );
             return  (iType != 'object')  ?  iType  :
                 Object.prototype.toString.call(iValue)
                     .split(' ')[1].slice(0, -1).toLowerCase();

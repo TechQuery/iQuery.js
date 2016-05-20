@@ -172,6 +172,8 @@ define(['iCore'],  function ($) {
             }
 
             for (var i = 0;  i < $_Path.length;  i++) {
+                iEvent.currentTarget = $_Path[i];
+
                 Proxy_Handler.call($_Path[i],  iEvent,  (! i) && arguments[2]);
 
                 if (iEvent.cancelBubble)  break;
