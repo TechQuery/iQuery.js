@@ -156,7 +156,7 @@ define(['jquery'],  function ($) {
         } else
             $.extend(this, iType);
 
-        if (! (iSource instanceof Element))  return;
+        if (! (iSource && (iSource instanceof Element)))  return;
 
         $.extend(this,  $.map(iSource.dataset,  function (iValue) {
             if (typeof iValue == 'string')  try {

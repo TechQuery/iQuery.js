@@ -27,9 +27,9 @@ define(['jquery'],  function ($) {
             ))
                 return 'Window';
 
-            if (iVar.location && (
-                iVar.location  ===  (iVar.defaultView || { }).location
-            ))
+            if (iVar.location  &&  (iVar.location === (
+                iVar.defaultView || iVar.parentWindow || { }
+            ).location))
                 return 'Document';
 
             if (

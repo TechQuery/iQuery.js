@@ -2,7 +2,7 @@
 //              >>>  jQuery+  <<<
 //
 //
-//    [Version]    v7.1  (2016-05-18)
+//    [Version]    v7.1  (2016-05-21)
 //
 //    [Require]    jQuery  v1.9+
 //
@@ -285,62 +285,59 @@
             }
         };
 
-    function _Type_(iVar) {
-        var iType = typeof iVar;
+    $.extend({
+        Type:      function (iVar) {
+            var iType;
 
-        try {
-            iType = (iType == 'object') ? (
-                (iVar && iVar.constructor.name) ||
-                Object.prototype.toString.call(iVar).match(/\[object\s+([^\]]+)\]/i)[1]
-            ) : (
-                iType[0].toUpperCase() + iType.slice(1)
-            );
-        } catch (iError) {
-            return 'Window';
+            try {
+                iType = $.type( iVar );
+
+                if ((iType == 'object')  &&  iVar.constructor.name)
+                    iType = iVar.constructor.name;
+                else
+                    iType = iType[0].toUpperCase() + iType.slice(1);
+            } catch (iError) {
+                return 'Window';
+            }
+
+            if (! iVar)
+                return  (isNaN(iVar)  &&  (iVar !== iVar))  ?  'NaN'  :  iType;
+
+            if (WindowType[iType] || (
+                (iVar == iVar.document) && (iVar.document != iVar)    //  IE 9- Hack
+            ))
+                return 'Window';
+
+            if (iVar.location  &&  (iVar.location === (
+                iVar.defaultView || iVar.parentWindow || { }
+            ).location))
+                return 'Document';
+
+            if (
+                iType.match(/HTML\w+?Element$/) ||
+                (typeof iVar.tagName == 'string')
+            )
+                return 'HTMLElement';
+
+            if ( this.likeArray(iVar) ) {
+                iType = 'Array';
+                if (! $.browser.modern)  try {
+                    iVar.item();
+                    try {
+                        iVar.namedItem();
+                        return 'HTMLCollection';
+                    } catch (iError) {
+                        return 'NodeList';
+                    }
+                } catch (iError) { }
+            }
+
+            return iType;
+        },
+        isData:    function (iValue) {
+            return  Boolean(iValue)  ||  (_Type_(iValue) in Type_Info.Data);
         }
-
-        if (! iVar)  switch (true) {
-            case (isNaN(iVar)  &&  (iVar !== iVar)):    return 'NaN';
-            case (iVar === null):                       return 'Null';
-            default:                                    return iType;
-        }
-
-        if (
-            Type_Info.BOM[iType] ||
-            ((iVar == iVar.document) && (iVar.document != iVar))
-        )
-            return 'Window';
-
-        if (iVar.location && (
-            iVar.location  ===  (iVar.defaultView || { }).location
-        ))
-            return 'Document';
-
-        if (
-            iType.match(/HTML\w+?Element$/) ||
-            (typeof iVar.tagName == 'string')
-        )
-            return 'HTMLElement';
-
-        if ( $.likeArray(iVar) ) {
-            iType = 'Array';
-            if (! $.browser.modern)  try {
-                iVar.item();
-                try {
-                    iVar.namedItem();
-                    return 'HTMLCollection';
-                } catch (iError) {
-                    return 'NodeList';
-                }
-            } catch (iError) { }
-        }
-
-        return iType;
-    }
-
-    $.isData = function (iValue) {
-        return  Boolean(iValue)  ||  (_Type_(iValue) in Type_Info.Data);
-    };
+    });
 
 /* ---------- 字符串扩展（借鉴 PHP） v0.2 ---------- */
 
@@ -1450,7 +1447,7 @@
         } else
             $.extend(this, iType);
 
-        if (! (iSource instanceof Element))  return;
+        if (! (iSource && (iSource instanceof Element)))  return;
 
         $.extend(this,  $.map(iSource.dataset,  function (iValue) {
             if (typeof iValue == 'string')  try {
