@@ -5,7 +5,7 @@ define(['jquery'],  function ($) {
     if (! (($.browser.msie < 10)  ||  $.browser.ios))
         return;
 
-    /* ----- Form API ----- */
+/* ---------- Form Element API ---------- */
 
     function Value_Check() {
         var $_This = $(this);
@@ -45,5 +45,22 @@ define(['jquery'],  function ($) {
                 return false;
         return true;
     };
+
+/* ---------- Form Data Object ---------- */
+
+    if (! ($.browser.msie < 10))  return;
+
+    BOM.FormData = function () {
+        this.ownerNode = arguments[0];
+    };
+
+    $.extend(BOM.FormData.prototype, {
+        append:      function () {
+            this[ arguments[0] ] = arguments[1];
+        },
+        toString:    function () {
+            return $(this.ownerNode).serialize();
+        }
+    });
 
 });

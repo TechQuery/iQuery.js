@@ -130,6 +130,17 @@ define(['jquery'],  function ($) {
                 arguments[0] || BOM.location.href
             ).match(/^(\w+:)?\/\/[^\/]+/) || [ ])[0];
         },
+        isCrossDomain:    function X_Domain() {
+            var iDomain = this.urlDomain( arguments[0] );
+
+            return  iDomain && (
+                iDomain != [
+                    BOM.location.protocol, '//', DOM.domain, (
+                        BOM.location.port  ?  (':' + BOM.location.port)  :  ''
+                    )
+                ].join('')
+            );
+        },
         cssPX:            RegExp([
             'width', 'height', 'padding', 'border-radius', 'margin',
             'top', 'right', 'bottom',  'left'
