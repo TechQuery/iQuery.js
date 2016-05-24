@@ -1,102 +1,130 @@
-//
-//              >>>  iQuery+  <<<
-//
-//
-//    [Version]    v1.4  (2016-05-20)  Stable
-//
-//    [Require]    iQuery  ||  jQuery with jQuery+
-//
-//
-//        (C)2015-2016  shiy2008@gmail.com
-//
+if ((typeof this.define != 'function')  ||  (! this.define.amd))
+    this.define = function () {
+        return  arguments[arguments.length - 1]();
+    };
+
+define('iQuery+',  function () {
 
 
 (function (BOM, DOM, $) {
 
-/* ---------- Class Generator  v0.1 ---------- */
-
-    $.iClass = function (iConstructor, iPrototype) {
-        var iPrivate = function () {
-                iConstructor.apply(this, arguments);
-                $.extend(this,  iPrototype || { });
-            },
-            iPublic = function () { };
-
-        iPrivate.prototype = $.extend(new iPublic(), {
-            constructor:    iPublic,
-            valueOf:        function () {
-                return this.constructor.prototype;
-            },
-            pubData:        function (iKey, iValue) {
-                this.constructor.prototype[iKey] = iValue;
-
-                return this;
-            }
-        });
-
-        iPrivate.pubMethod = function (iKey, iValue) {
-            var Pub_Proto = this.prototype;
-
-            delete Pub_Proto.constructor;
-
-            Pub_Proto.constructor.prototype[iKey] = iValue;
-
-            Pub_Proto.constructor = this;
-        };
-
-        return iPrivate;
-    };
-
-/* ---------- Event Interface  v0.1 ---------- */
-
-    function EventInterface() {
-        this.callback = $.makeSet(arguments, Array);
+    function Observer() {
+        this.requireArgs = arguments[0] || 0;
+        this.filter = arguments[1] || [ ];
+        this.table = [[ ]];
 
         return this;
     }
 
-    $.extend(EventInterface.prototype, {
-        on:         function (iType, iCallback) {
-            if (
-                (typeof iCallback == 'function')  &&
-                (this.callback[iType].indexOf(iCallback) == -1)
-            )
-                this.callback[iType].push(iCallback);
+    function Each_Row() {
+        var _This_ = this,  iArgs = $.makeArray(arguments);
 
+        if (typeof iArgs[iArgs.length - 1]  !=  'function')  return;
+
+        var iCallback = iArgs.pop();
+
+        $.each(this.table[0],  function (Index) {
+            if (this == null)  return;
+
+            for (var i = 0, _Condition_;  i < iArgs.length;  i++) {
+                _Condition_ = _This_.table[i + 1][Index];
+
+                if (_Condition_ === undefined) {
+
+                    if (i < _This_.requireArgs)  return;
+
+                } else if (
+                    (_Condition_ != iArgs[i])  ||
+                    (! iArgs[i].match(_Condition_))  ||  (
+                        (typeof _This_.filter[i] == 'function')  &&
+                        (false === _This_.filter[i].call(
+                            _This_,  _Condition_,  iArgs[i]
+                        ))
+                    )
+                )
+                    return;
+            }
+
+            if (false  ===  iCallback.call(_This_, this))
+                _This_.table[0][Index] = null;
+        });
+    }
+
+    $.extend(Observer.prototype, {
+        on:         function () {
+            var iArgs = $.makeArray(arguments);
+
+            if (typeof iArgs[iArgs.length - 1]  ==  'function') {
+                var Index = this.table[0].push( iArgs.pop() )  -  1;
+
+                for (var i = 0;  i < iArgs.length;  i++) {
+                    if (! this.table[i + 1])
+                        this.table[i + 1] = [ ];
+
+                    this.table[i + 1][Index] = iArgs[i];
+                }
+            }
             return this;
         },
-        off:        function (iType, iCallback) {
-            var Index = this.callback[iType].indexOf(iCallback);
+        off:        function () {
+            var _This_ = this,  iArgs = $.makeArray(arguments);
 
-            if (Index > -1)  this.callback[iType].splice(Index, 1);
+            var iCallback = (typeof iArgs[iArgs.length - 1]  ==  'function')  &&
+                    iArgs.pop();
 
-            return this;
-        },
-        one:        function (iType, iCallback) {
-            return  this.on(iType,  function () {
-                this.off(iType, arguments.callee);
-
-                return  iCallback.apply(this, arguments);
+            iArgs.push(function () {
+                return  (iCallback !== false)  &&  (iCallback !== arguments[0]);
             });
+
+            Each_Row.apply(this, iArgs);
+
+            return this;
+        },
+        one:        function () {
+            var _This_ = this,  iArgs = $.makeArray(arguments);
+
+            if (typeof iArgs[iArgs.length - 1]  ==  'function') {
+                var iCallback = iArgs.pop();
+
+                iArgs.push(function () {
+                    this.off.apply(this, iArgs);
+
+                    return  iCallback.apply(this, arguments);
+                });
+
+                this.on.apply(this, iArgs);
+            }
+
+            return this;
         },
         trigger:    function () {
-            var iCallback = this.callback[ arguments[0] ],  iReturn;
+            var iArgs = $.makeArray(arguments),  iReturn;
 
-            for (var i = 0, _Return_;  i < iCallback.length;  i++) {
-                _Return_ = iCallback[i].apply(
-                    this,  $.makeArray(arguments).slice(1)
-                );
-                if ($.isData(_Return_))  iReturn = _Return_;
-            }
+            var iData = $.likeArray(iArgs[iArgs.length - 1])  &&  iArgs.pop();
+
+            iArgs.push(function () {
+                var _Return_ = arguments[0].apply(this, iData);
+
+                iReturn = $.isData(_Return_) ? _Return_ : iReturn;
+            });
+
+            Each_Row.apply(this, iArgs);
+
             return iReturn;
         }
     });
 
-    $.EventInterface = EventInterface;
+    $.Observer = Observer;
+
+})(self, self.document, self.jQuery);
+
 
 /* ---------- ListView Interface  v0.7 ---------- */
 
 //  Thanks "EasyWebApp" Project --- http://git.oschina.net/Tech_Query/EasyWebApp
+
+
+(function (BOM, DOM, $) {
 
     var Click_Type = $.browser.mobile ? 'tap' : 'click';
 
@@ -112,9 +140,8 @@
             $_Item = null;
         }
 
-        var iView = _Self_.getInstance($_View) || EventInterface.call(
-                this, 'insert', 'remove', 'afterRender'
-            );
+        var iView = _Self_.getInstance($_View) || $.Observer.call(this, 1);
+
         if (onInsert)  iView.on('insert', onInsert);
 
         if (iView !== this)  return iView;
@@ -184,7 +211,7 @@
         return $_Clone;
     }
 
-    ListView.prototype = $.extend(new EventInterface(),  {
+    ListView.prototype = $.extend(new $.Observer(),  {
         constructor:    ListView,
         getSelector:    function () {
             return  this.selector ?
@@ -235,7 +262,7 @@
 
             var _Index_ = (Index < 0)  ?  (Index - 1)  :  Index;
 
-            var iReturn = this.trigger('insert',  $_Item,  iValue,  _Index_);
+            var iReturn = this.trigger('insert',  [$_Item, iValue, _Index_]);
 
             if (_Insert_) {
                 $_Item = this.itemOf(_Index_);
@@ -253,7 +280,7 @@
             for (var i = 0;  i < iData.length;  i++)
                 this.insert(iData[i], i);
 
-            this.trigger('afterRender', iData);
+            this.trigger('afterRender', [iData]);
 
             return this;
         },
@@ -281,9 +308,9 @@
             }
             if (
                 $_Item.length  &&
-                (false !== this.trigger(
-                    'remove',  $_Item,  this.valueOf(Index),  Index
-                ))
+                (false  !==  this.trigger('remove', [
+                    $_Item,  this.valueOf(Index),  Index
+                ]))
             )
                 this.splice(Index, 1)[0].remove();
 
@@ -340,8 +367,13 @@
 
     $.ListView = ListView;
 
+})(self, self.document, self.jQuery);
+
 
 /* ---------- TreeView Interface  v0.3 ---------- */
+
+
+(function (BOM, DOM, $) {
 
     function TreeView(iListView, iKey, onFork, onFocus) {
         var _Self_ = arguments.callee;
@@ -349,7 +381,7 @@
         if (!  (this instanceof _Self_))
             return  new _Self_(iListView, iKey, onFork, onFocus);
 
-        var _This_ = EventInterface.call(this, 'branch').on('branch', onFork);
+        var _This_ = $.Observer.call(this, 1).on('branch', onFork);
 
         iKey = iKey || 'list';
 
@@ -359,7 +391,7 @@
         });
 
         this.listener = [
-            Click_Type,
+            $.browser.mobile ? 'tap' : 'click',
             iListView.getSelector(),
             function (iEvent) {
                 if ( $(iEvent.target).is(':input') )  return;
@@ -383,7 +415,7 @@
         $.fn.on.apply(iListView.$_View.addClass('TreeNode'), this.listener);
     }
 
-    TreeView.prototype = $.extend(new EventInterface(),  {
+    TreeView.prototype = $.extend(new $.Observer(),  {
         constructor:    TreeView,
         branch:         function (iListView, $_Item, iData) {
             var iFork = iListView.fork($_Item).clear().render(iData);
@@ -392,7 +424,7 @@
 
             this.depth = iFork.$_View.parentsUntil( this.unit.$_View )
                 .filter('TreeNode').length + 1;
-            this.trigger('branch', iFork, iData, this.depth);
+            this.trigger('branch',  [iFork, iData, this.depth]);
 
             $.fn.off.apply(iFork.$_View.addClass('TreeNode'), this.listener);
 
@@ -448,6 +480,11 @@
 
     $.TreeView = TreeView;
 
+})(self, self.document, self.jQuery);
+
+
+
+(function (BOM, DOM, $) {
 
 /* ---------- Base64 to Blob  v0.1 ---------- */
 
@@ -530,3 +567,25 @@
     };
 
 })(self, self.document, self.jQuery);
+
+
+//
+//              >>>  iQuery+  <<<
+//
+//
+//    [Version]    v1.5  (2016-5-24)  Stable
+//
+//    [Require]    iQuery  ||  jQuery with jQuery+
+//
+//
+//        (C)2015-2016  shiy2008@gmail.com
+//
+
+
+
+(function (BOM, DOM, $) {
+
+})(self, self.document, self.jQuery);
+
+
+});
