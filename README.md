@@ -126,7 +126,7 @@
 
 
 ## 【iQuery+ 插件库】
- - 通用 **EventInterface 基础对象**（供其它对象的构造函数继承）
+ - 通用 **Observer 基础对象**（供其它对象的构造函数继承）
  - 通用 **ListView 对象**生成方法 —— `$.ListView()`
  - 通用 **TreeView 对象**生成方法 —— `$.TreeView()`
  - Base64 文本转 **二进制对象**方法 —— `$.toBlob()`

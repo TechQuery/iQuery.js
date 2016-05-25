@@ -59,7 +59,7 @@ define(['jquery'],  function ($) {
             return this;
         },
         off:        function () {
-            var _This_ = this,  iArgs = $.makeArray(arguments);
+            var iArgs = $.makeArray(arguments);
 
             var iCallback = (typeof iArgs[iArgs.length - 1]  ==  'function')  &&
                     iArgs.pop();
@@ -73,7 +73,7 @@ define(['jquery'],  function ($) {
             return this;
         },
         one:        function () {
-            var _This_ = this,  iArgs = $.makeArray(arguments);
+            var iArgs = $.makeArray(arguments);
 
             if (typeof iArgs[iArgs.length - 1]  ==  'function') {
                 var iCallback = iArgs.pop();

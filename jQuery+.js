@@ -1,20 +1,16 @@
-//
-//              >>>  jQuery+  <<<
-//
-//
-//    [Version]    v7.1  (2016-05-21)
-//
-//    [Require]    jQuery  v1.9+
-//
-//
-//        (C)2014-2016  shiy2008@gmail.com
-//
+if ((typeof this.define != 'function')  ||  (! this.define.amd))
+    this.define = function () {
+        return  arguments[arguments.length - 1]();
+    };
+
+define('jQuery+',  function () {
+
+    var iQuery = {fn:  { }};
 
 
-/* ---------- ECMAScript API  Patch & Extension ---------- */
-(function (BOM, $) {
+(function (BOM) {
 
-/* ---------- Object Patch  v0.1 ---------- */
+    /* ----- Object Patch ----- */
 
     if (! Object.getOwnPropertyNames)
         Object.getOwnPropertyNames = function (iObject) {
@@ -27,30 +23,57 @@
             return iKey;
         };
 
-/* ---------- String Extension  v0.3 ---------- */
+    /* ----- String Extension ----- */
+
+    if (! ''.trim)
+        var Blank_Char = /(^\s*)|(\s*$)/g;
+    else
+        var _Trim_ = ''.trim;
+
+    String.prototype.trim = function (iChar) {
+        if (! iChar)
+            return  Blank_Char ? this.replace(Blank_Char, '') : _Trim_.call(this);
+        else {
+            for (var i = 0, a = 0, b;  i < iChar.length;  i++) {
+                if ((this[0] == iChar[i]) && (! a))
+                    a = 1;
+                if ((this[this.length - 1] == iChar[i]) && (! b))
+                    b = -1;
+            }
+            return this.slice(a, b);
+        }
+    };
 
     if (! ''.repeat)
         String.prototype.repeat = function (Times) {
             return  (new Array(Times + 1)).join(this);
         };
 
-    $.extend(String.prototype, {
-        toCamelCase:     function () {
-            var iName = this.split(arguments[0] || '-');
+    String.prototype.toCamelCase = function () {
+        var iName = this.split(arguments[0] || '-');
 
-            for (var i = 1;  i < iName.length;  i++)
-                iName[i] = iName[i][0].toUpperCase() + iName[i].slice(1);
+        for (var i = 1;  i < iName.length;  i++)
+            iName[i] = iName[i][0].toUpperCase() + iName[i].slice(1);
 
-            return iName.join('');
-        },
-        toHyphenCase:    function () {
-            return  this.replace(/([a-z0-9])[\s_]?([A-Z])/g,  function () {
-                return  arguments[1] + '-' + arguments[2].toLowerCase();
-            });
-        }
-    });
+        return iName.join('');
+    };
 
-/* ---------- Array Patch  v0.1 ---------- */
+    String.prototype.toHyphenCase = function () {
+        return  this.replace(/([a-z0-9])[\s_]?([A-Z])/g,  function () {
+            return  arguments[1] + '-' + arguments[2].toLowerCase();
+        });
+    };
+
+    /* ----- Array Extension ----- */
+
+    if (! [ ].indexOf)
+        Array.prototype.indexOf = function () {
+            for (var i = 0;  i < this.length;  i++)
+                if (arguments[0] === this[i])
+                    return i;
+
+            return -1;
+        };
 
     if (! [ ].reduce)
         Array.prototype.reduce = function () {
@@ -65,7 +88,14 @@
             return iResult;
         };
 
-/* ---------- JSON Extension  v0.4 ---------- */
+    /* ----- Date Extension ----- */
+
+    if (! Date.now)
+        Date.now = function () {
+            return  (new Date()).getTime();
+        };
+
+    /* ----- JSON Extension  v0.4 ----- */
 
     BOM.JSON.format = function () {
         return  this.stringify(arguments[0], null, 4)
@@ -82,16 +112,61 @@
         });
     };
 
-})(self,  self.jQuery || self.Zepto);
+    /* ----- BOM/DOM Fix  v0.4 ----- */
+
+    BOM.new_Window_Fix = function (Fix_More) {
+        if (! this)  return false;
+
+        try {
+            var _Window_ = this.opener,
+                This_DOM = this.document;
+
+            This_DOM.defaultView = this;
+
+            if (_Window_ && (this.location.href == 'about:blank'))
+                This_DOM.domain = _Window_.document.domain;
+
+            if ((_Window_ || this).navigator.userAgent.match(/MSIE 8/i))
+                This_DOM.head = This_DOM.documentElement.firstChild;
+        } catch (iError) {
+            return false;
+        }
+        if (Fix_More)  Fix_More.call(this);
+
+        return true;
+    };
+
+    BOM.new_Window_Fix();
+
+
+    if (console)  return;
+
+    function _Notice_() {
+        var iString = [ ];
+
+        for (var i = 0, j = 0;  i < arguments.length;  i++)  try {
+            iString[j++] = BOM.JSON.stringify( arguments[i].valueOf() );
+        } catch (iError) {
+            iString[j++] = arguments[i];
+        }
+
+        BOM.status = iString.join(' ');
+    }
+
+    BOM.console = { };
+
+    var Console_Method = ['log', 'info', 'warn', 'error', 'dir'];
+
+    for (var i = 0;  i < Console_Method.length;  i++)
+        BOM.console[ Console_Method[i] ] = _Notice_;
+
+})(self);
 
 
 
-/* ---------- iQuery Core  Patch ---------- */
 (function (BOM, DOM, $) {
 
-/* ---------- $.browser+  v0.2 ---------- */
-
-    var UA = navigator.userAgent;
+    var UA = BOM.navigator.userAgent;
 
     var is_Trident = UA.match(/MSIE (\d+)|Trident[^\)]+rv:(\d+)/i),
         is_Gecko = UA.match(/; rv:(\d+)[^\/]+Gecko\/\d+/),
@@ -111,7 +186,7 @@
 
     $.browser = {
         msie:             IE_Ver,
-        ff:               FF_Ver,
+        mozilla:          FF_Ver,
         webkit:           WK_Ver,
         modern:           !  (IE_Ver < 9),
         mobile:           !! is_Mobile,
@@ -122,171 +197,183 @@
         versionNumber:    IE_Ver || FF_Ver || WK_Ver
     };
 
+})(self, self.document, iQuery);
 
-/* ---------- 计时器+  v0.3 ---------- */
 
-    var $_BOM = $(BOM).data('_timer_',  { });
 
-    $.extend($, {
-        _Root_:    BOM,
-        every:     function (iSecond, iCallback) {
+(function (BOM, DOM, $) {
+
+    $.likeArray = function (iObject) {
+        if ((! iObject)  ||  (typeof iObject != 'object'))
+            return false;
+
+        iObject = (typeof iObject.valueOf == 'function')  ?
+            iObject.valueOf() : iObject;
+
+        return Boolean(
+            iObject  &&
+            (typeof iObject.length == 'number')  &&
+            (typeof iObject != 'string')
+        );
+    };
+
+    $.makeSet = function () {
+        var iArgs = arguments,  iValue = true,  iSet = { };
+
+        if (this.likeArray( iArgs[1] )) {
+            iValue = iArgs[0];
+            iArgs = iArgs[1];
+        } else if (this.likeArray( iArgs[0] )) {
+            iValue = iArgs[1];
+            iArgs = iArgs[0];
+        }
+
+        for (var i = 0;  i < iArgs.length;  i++)
+            iSet[ iArgs[i] ] = (typeof iValue == 'function')  ?
+                iValue() : iValue;
+
+        return iSet;
+    };
+
+    var DataType = $.makeSet('string', 'number', 'boolean');
+
+    $.isData = function (iValue) {
+        var iType = typeof iValue;
+
+        return  Boolean(iValue)  ||  (iType in DataType)  ||  (
+            (iValue !== null)  &&  (iType == 'object')  &&
+            (typeof iValue.valueOf() in DataType)
+        );
+    };
+
+    $.isEqual = function (iLeft, iRight) {
+        if (!  (iLeft && iRight))
+            return  (iLeft == iRight);
+
+        iLeft = iLeft.valueOf();
+        iRight = iRight.valueOf();
+
+        if (iLeft == iRight)  return true;
+        if (! (
+            (iLeft instanceof Object)  &&  (iRight instanceof Object)
+        ))
+            return false;
+
+        var Left_Key = Object.getOwnPropertyNames(iLeft),
+            Right_Key = Object.getOwnPropertyNames(iRight);
+
+        if (Left_Key.length != Right_Key.length)  return false;
+
+        for (var i = 0, _Key_;  i < Left_Key.length;  i++) {
+            _Key_ = Left_Key[i];
+
+            if (! (
+                (_Key_ in iRight)  &&
+                arguments.callee.call(this, iLeft[_Key_], iRight[_Key_])
+            ))
+                return false;
+        }
+        return true;
+    };
+
+    $.trace = function (iObject, iName, iCount, iCallback) {
+        if (typeof iCount == 'function')  iCallback = iCount;
+        iCount = parseInt(iCount);
+        iCount = isNaN(iCount) ? Infinity : iCount;
+
+        var iResult = [ ];
+
+        for (
+            var _Next_,  i = 0,  j = 0;
+            iObject[iName]  &&  (j < iCount);
+            iObject = _Next_,  i++
+        ) {
+            _Next_ = iObject[iName];
+            if (
+                (typeof iCallback != 'function')  ||
+                (iCallback.call(_Next_, i, _Next_)  !==  false)
+            )
+                iResult[j++] = _Next_;
+        }
+
+        return iResult;
+    };
+
+    $.intersect = function () {
+        if (arguments.length < 2)  return arguments[0];
+
+        var iArgs = this.makeArray( arguments );
+        var iArray = this.likeArray( iArgs[0] );
+
+        iArgs[0] = this.map(iArgs.shift(),  function (iValue, iKey) {
+            if ( iArray ) {
+                if (iArgs.indexOf.call(iArgs[0], iValue)  >  -1)
+                    return iValue;
+            } else if (
+                (iArgs[0][iKey] !== undefined)  &&
+                (iArgs[0][iKey] === iValue)
+            )
+                return iValue;
+        });
+
+        return  arguments.callee.apply(this, iArgs);
+    };
+
+})(self, self.document, iQuery);
+
+
+
+(function (BOM, DOM, $) {
+
+    var _Timer_ = { };
+
+    $.extend({
+        _Root_:     BOM,
+        now:        Date.now,
+        every:      function (iSecond, iCallback) {
             var _BOM_ = this._Root_,
                 iTimeOut = (iSecond || 1) * 1000,
-                iTimer, iReturn, Index = 0,
-                iStart = $.now(), iDuring;
+                iStart = this.now(),
+                Index = 0;
 
-            iTimer = _BOM_.setTimeout(function () {
-                iDuring = (Date.now() - iStart) / 1000;
-                iReturn = iCallback.call(_BOM_, ++Index, iDuring);
-                if ((typeof iReturn == 'undefined') || iReturn)
+            return  _BOM_.setTimeout(function () {
+                var iDuring = (Date.now() - iStart) / 1000;
+
+                var iReturn = iCallback.call(_BOM_, ++Index, iDuring);
+
+                if ((typeof iReturn == 'undefined')  ||  iReturn)
                     _BOM_.setTimeout(arguments.callee, iTimeOut);
             }, iTimeOut);
-
-            return iTimer;
         },
-        wait:      function (iSecond, iCallback) {
+        wait:       function (iSecond, iCallback) {
             return  this.every(iSecond, function () {
                 iCallback.apply(this, arguments);
                 return false;
             });
         },
-        start:     function (iName) {
-            var Time_Stamp;
-
-            $_BOM.data('_timer_',  function (_Index_, iTimer) {
-                iTimer = iTimer || { };
-                Time_Stamp = iTimer[iName] = $.now();
-                return iTimer;
-            });
-
-            return Time_Stamp;
+        start:      function (iName) {
+            return  (_Timer_[iName] = this.now());
         },
-        end:       function () {
-            var iTimer = $_BOM.data('_timer_');
-            return  ($.now() - iTimer[arguments[0]]) / 1000;
+        end:        function (iName) {
+            return  (this.now() - _Timer_[iName]) / 1000;
         },
-        uuid:      function () {
+        uuid:       function () {
             return  (arguments[0] || 'uuid')  +  '_'  +
                 (this.now() + Math.random()).toString(36)
                     .replace('.', '').toUpperCase();
         }
     });
 
-/* ---------- 对象工具方法  v0.8 ---------- */
+})(self, self.document, iQuery);
+
+
+
+(function (BOM, DOM, $) {
+
+    var WindowType = $.makeSet('Window', 'DOMWindow', 'Global');
 
     $.extend({
-        likeArray:    function (iObject) {
-            if ((! iObject)  ||  (typeof iObject != 'object'))
-                return false;
-
-            iObject = (typeof iObject.valueOf == 'function')  ?
-                iObject.valueOf() : iObject;
-
-            return Boolean(
-                iObject  &&
-                (typeof iObject.length == 'number')  &&
-                (typeof iObject != 'string')
-            );
-        },
-        isEqual:      function (iLeft, iRight) {
-            if (!  (iLeft && iRight))
-                return  (iLeft == iRight);
-
-            iLeft = iLeft.valueOf();
-            iRight = iRight.valueOf();
-
-            if (iLeft == iRight)  return true;
-            if (! (
-                (iLeft instanceof Object)  &&  (iRight instanceof Object)
-            ))
-                return false;
-
-            var Left_Key = Object.getOwnPropertyNames(iLeft),
-                Right_Key = Object.getOwnPropertyNames(iRight);
-
-            if (Left_Key.length != Right_Key.length)  return false;
-
-            for (var i = 0, _Key_;  i < Left_Key.length;  i++) {
-                _Key_ = Left_Key[i];
-
-                if (! (
-                    (_Key_ in iRight)  &&
-                    arguments.callee.call(this, iLeft[_Key_], iRight[_Key_])
-                ))
-                    return false;
-            }
-            return true;
-        },
-        makeSet:      function () {
-            var iArgs = arguments,  iValue = true,  iSet = { };
-
-            if (this.likeArray( iArgs[1] )) {
-                iValue = iArgs[0];
-                iArgs = iArgs[1];
-            } else if (this.likeArray( iArgs[0] )) {
-                iValue = iArgs[1];
-                iArgs = iArgs[0];
-            }
-
-            for (var i = 0;  i < iArgs.length;  i++)
-                iSet[ iArgs[i] ] = (typeof iValue == 'function')  ?
-                    iValue() : iValue;
-
-            return iSet;
-        },
-        trace:            function (iObject, iName, iCount, iCallback) {
-            if (typeof iCount == 'function')  iCallback = iCount;
-            iCount = parseInt(iCount);
-            iCount = isNaN(iCount) ? Infinity : iCount;
-
-            var iResult = [ ];
-
-            for (
-                var _Next_,  i = 0,  j = 0;
-                iObject[iName]  &&  (j < iCount);
-                iObject = _Next_,  i++
-            ) {
-                _Next_ = iObject[iName];
-                if (
-                    (typeof iCallback != 'function')  ||
-                    (iCallback.call(_Next_, i, _Next_)  !==  false)
-                )
-                    iResult[j++] = _Next_;
-            }
-
-            return iResult;
-        },
-        intersect:        function () {
-            if (arguments.length < 2)  return arguments[0];
-
-            var iArgs = this.makeArray( arguments );
-            var iArray = this.likeArray( iArgs[0] );
-
-            iArgs[0] = this.map(iArgs.shift(),  function (iValue, iKey) {
-                if ( iArray ) {
-                    if (iArgs.indexOf.call(iArgs[0], iValue)  >  -1)
-                        return iValue;
-                } else if (
-                    (iArgs[0][iKey] !== undefined)  &&
-                    (iArgs[0][iKey] === iValue)
-                )
-                    return iValue;
-            });
-
-            return  arguments.callee.apply(this, iArgs);
-        }
-    });
-
-    var Type_Info = {
-            Data:    $.makeSet('String', 'Number', 'Boolean'),
-            BOM:     $.makeSet('Window', 'DOMWindow', 'global'),
-            DOM:     {
-                root:    $.makeSet('Document', 'Window')
-            }
-        };
-
-    $.extend({
-        Type:      function (iVar) {
+        Type:    function (iVar) {
             var iType;
 
             try {
@@ -334,15 +421,15 @@
 
             return iType;
         },
-        isData:    function (iValue) {
-            return  Boolean(iValue)  ||  (_Type_(iValue) in Type_Info.Data);
-        }
-    });
-
-/* ---------- 字符串扩展（借鉴 PHP） v0.2 ---------- */
-
-    $.extend({
-        split:         function (iString, iSplit, iLimit, iJoin) {
+        isSelector:       function () {
+            try {
+                DOM.querySelector(arguments[0])
+            } catch (iError) {
+                return false;
+            }
+            return true;
+        },
+        split:            function (iString, iSplit, iLimit, iJoin) {
             iString = iString.split(iSplit);
             if (iLimit) {
                 iString[iLimit - 1] = iString.slice(iLimit - 1).join(
@@ -352,17 +439,12 @@
             }
             return iString;
         },
-        byteLength:    function () {
+        byteLength:       function () {
             return  arguments[0].replace(
                 /[^\u0021-\u007e\uff61-\uffef]/g,  'xx'
             ).length;
-        }
-    });
-
-/* ---------- URL 处理扩展  v0.3 ---------- */
-
-    $.extend($, {
-        paramJSON:    function (Args_Str, iRaw) {
+        },
+        paramJSON:        function (Args_Str, iRaw) {
             Args_Str = (
                 Args_Str  ?  $.split(Args_Str, '?', 2)[1]  :  BOM.location.search
             ).match(/[^\?&\s]+/g);
@@ -386,7 +468,7 @@
             return _Args_;
         },
         paramSign:        function (iData) {
-            iData = (typeof iData == 'string')  ?  $.paramJSON(iData)  :  iData;
+            iData = (typeof iData == 'string')  ?  this.paramJSON(iData)  :  iData;
 
             return $.map(
                 Object.getOwnPropertyNames(iData).sort(),
@@ -415,39 +497,412 @@
             return ((
                 arguments[0] || BOM.location.href
             ).match(/^(\w+:)?\/\/[^\/]+/) || [ ])[0];
+        },
+        isCrossDomain:    function X_Domain() {
+            var iDomain = this.urlDomain( arguments[0] );
+
+            return  iDomain && (
+                iDomain != [
+                    BOM.location.protocol, '//', DOM.domain, (
+                        BOM.location.port  ?  (':' + BOM.location.port)  :  ''
+                    )
+                ].join('')
+            );
+        },
+        cssPX:            RegExp([
+            'width', 'height', 'padding', 'border-radius', 'margin',
+            'top', 'right', 'bottom',  'left'
+        ].join('|'))
+    });
+
+})(self, self.document, iQuery);
+
+
+
+(function (BOM, DOM, $) {
+
+    if ($.browser.modern)  return;
+
+    /* ----- DOM ShortCut ----- */
+    var _Children_ = Object.getOwnPropertyDescriptor(
+            Element.prototype,  'children'
+        );
+
+    function HTMLCollection() {
+        var iChildren = _Children_.get.call( arguments[0] );
+
+        for (var i = 0;  i < iChildren.length;  i++) {
+            this[i] = iChildren[i] || iChildren.item(i);
+            if (this[i].name)  this[this[i].name] = this[i];
+        }
+        this.length = i;
+    }
+
+    var iGetter = {
+            children:                  function () {
+                return  new HTMLCollection(this);
+            },
+            firstElementChild:         function () {
+                return this.children[0];
+            },
+            lastElementChild:          function () {
+                return  this.children[this.children.length - 1];
+            },
+            previousElementSibling:    function () {
+                return  $.trace(this,  'previousSibling',  1,  function () {
+                    return  (this.nodeType == 1);
+                })[0];
+            },
+            nextElementSibling:        function () {
+                return  $.trace(this,  'nextSibling',  function () {
+                    return  (this.nodeType == 1);
+                })[0];
+            }
+        };
+
+    for (var iName in iGetter)
+        Object.defineProperty(Element.prototype, iName, {
+            get:    iGetter[iName]
+        });
+
+
+    /* ----- DOM Text Content ----- */
+
+    Object.defineProperty(Element.prototype, 'textContent', {
+        get:    function () {
+            return this.innerText;
+        },
+        set:    function (iText) {
+            switch ( this.tagName.toLowerCase() ) {
+                case 'style':     return  this.styleSheet.cssText = iText;
+                case 'script':    return  this.text = iText;
+            }
+            this.innerText = iText;
         }
     });
 
-/* ---------- jQuery 选择符合法性判断  v0.2 ---------- */
+    /* ----- DOM Selector Match ----- */
 
-    $.isSelector = function () {
-        try {
-            DOM.querySelector(arguments[0])
-        } catch (iError) {
-            return false;
+    Element.prototype.matches = function () {
+        if (! this.parentNode)  $('<div />')[0].appendChild(this);
+
+        return  ($.inArray(
+            this,  this.parentNode.querySelectorAll( arguments[0] )
+        ) > -1);
+    };
+
+    /* ----- DOM Attribute Name ----- */
+
+    var iAlias = {
+            'class':    'className',
+            'for':      'htmlFor'
+        },
+        Get_Attribute = Element.prototype.getAttribute,
+        Set_Attribute = Element.prototype.setAttribute,
+        Remove_Attribute = Element.prototype.removeAttribute;
+
+    $.extend(Element.prototype, {
+        getAttribute:    function (iName) {
+            return  iAlias[iName] ?
+                this[iAlias[iName]]  :  Get_Attribute.call(this, iName,  0);
+        },
+        setAttribute:    function (iName, iValue) {
+            if (iAlias[iName])
+                this[iAlias[iName]] = iValue;
+            else
+                Set_Attribute.call(this, iName, iValue,  0);
+        },
+        removeAttribute:    function (iName) {
+            return  Remove_Attribute.call(this,  iAlias[iName] || iName,  0);
         }
-        return true;
+    });
+
+    /* ----- Computed Style ----- */
+
+    function CSSStyleDeclaration() {
+        $.extend(this, arguments[0].currentStyle, {
+            length:       0,
+            cssText:      '',
+            ownerNode:    arguments[0]
+        });
+
+        for (var iName in this) {
+            this[this.length++] = iName.toHyphenCase();
+            this.cssText += [
+                iName,  ': ',  this[iName],  '; '
+            ].join('');
+        }
+        this.cssText = this.cssText.trim();
+    }
+
+    var Code_Indent = ' '.repeat(4);
+
+    function toHexInt(iDec, iLength) {
+        var iHex = parseInt( Number(iDec).toFixed(0) ).toString(16);
+
+        if (iLength && (iLength > iHex.length))
+            iHex = '0'.repeat(iLength - iHex.length) + iHex;
+
+        return iHex;
+    }
+
+    function RGB_Hex(iRed, iGreen, iBlue) {
+        var iArgs = $.makeArray(arguments);
+
+        if ((iArgs.length == 1) && (typeof iArgs[0] == 'string'))
+            iArgs = iArgs[0].replace(/rgb\(([^\)]+)\)/i, '$1').replace(/,\s*/g, ',').split(',');
+
+        for (var i = 0;  i < 3;  i++)
+            iArgs[i] = toHexInt(iArgs[i], 2);
+        return iArgs.join('');
+    }
+
+    $.extend(CSSStyleDeclaration.prototype, {
+        getPropertyValue:    function (iName) {
+            var iScale = 1;
+
+            switch (iName) {
+                case 'opacity':    {
+                    iName = 'filter';
+                    iScale = 100;
+                }
+            }
+            var iStyle = this[ iName.toCamelCase() ];
+            var iNumber = parseFloat(iStyle);
+
+            return  isNaN(iNumber) ? iStyle : (
+                (iNumber / iScale)  +  ($.cssPX[iName] ? 'px' : '')
+            );
+        },
+        setPropertyValue:    function (iName, iValue) {
+            this[this.length++] = iName;
+
+            var iString = '',  iWrapper,  iScale = 1,  iConvert;
+            if (typeof iValue == 'string')
+                var iRGBA = iValue.match(/\s*rgba\(([^\)]+),\s*(\d\.\d+)\)/i);
+
+            if (iName == 'opacity') {
+                iName = 'filter';
+                iWrapper = 'progid:DXImageTransform.Microsoft.Alpha(opacity={n})';
+                iScale = 100;
+            } else if (iRGBA) {
+                iString = iValue.replace(iRGBA[0], '');
+                if (iString)
+                    iString += arguments.callee.call(this, arguments[0], iName, iString);
+                if (iName != 'background')
+                    iString += arguments.callee.call(
+                        this,
+                        arguments[0],
+                        (iName.indexOf('-color') > -1) ? iName : (iName + '-color'),
+                        'rgb(' + iRGBA[1] + ')'
+                    );
+                iName = 'filter';
+                iWrapper = 'progid:DXImageTransform.Microsoft.Gradient(startColorStr=#{n},endColorStr=#{n})';
+                iConvert = function (iAlpha, iRGB) {
+                    return  toHexInt(parseFloat(iAlpha) * 256, 2) + RGB_Hex(iRGB);
+                };
+            }
+            if (iWrapper)
+                iValue = iWrapper.replace(/\{n\}/g,  iConvert ?
+                      iConvert(iRGBA[2], iRGBA[1]) :
+                      (iValue * iScale)
+                );
+
+            this[ this[this.length - 1].toCamelCase() ] = iValue + (arguments[2] ? ' !important' : '');
+
+            if (this.ownerNode)
+                this.ownerNode.style.setAttribute(iName,  iValue,  arguments[2] && 'important');
+            else
+                return  [iString, ";\n", iName, ':', Code_Indent, iValue].join('');
+        }
+    });
+
+    BOM.getComputedStyle = function () {
+        return  new CSSStyleDeclaration(arguments[0]);
     };
 
-/* ---------- jQuery 元素成员更新  v0.1 ---------- */
+    /* ----- DOM Event ----- */
 
-    $.fn.refresh = function () {
-        if (! this.selector)  return this;
+    var $_DOM = $(DOM);
 
-        var $_New = $(this.selector, this.context);
+    //  DOM Content Loading
+    if (BOM === BOM.top)
+        $.every(0.01, function () {
+            try {
+                DOM.documentElement.doScroll('left');
+                $_DOM.trigger('DOMContentLoaded');
+                return false;
+            } catch (iError) {
+                return;
+            }
+        });
+    //  Patch for Change Event
+    var $_Change_Target = 'input[type="radio"], input[type="checkbox"]';
 
-        if (this.prevObject instanceof $)
-            $_New = this.prevObject.pushStack($_New);
+    $_DOM.on('click',  $_Change_Target,  function () {
+        this.blur();
+        this.focus();
+    }).on('click',  'label',  function () {
+        var $_This = $(this);
+        var _ID_ = $_This.attr('for');
 
-        return $_New;
+        if (_ID_)
+            $('input[id="' + _ID_ + '"]')[0].click();
+        else
+            $_This.find($_Change_Target).click();
+    });
+
+    //  Submit & Reset  Bubble
+    function Event_Hijack(iEvent) {
+        iEvent.preventDefault();
+
+        this[iEvent.type]();
+    }
+
+    $_DOM.on('click',  'input, button',  function () {
+
+        if ( this.type.match(/submit|reset/) )
+            $(this.form).one(this.type, Event_Hijack);
+
+    }).on('keydown',  'form input, form select',  function () {
+
+        if ((this.type != 'button')  &&  (arguments[0].which == 13))
+            $(this.form).one((this.type == 'reset') ? 'reset' : 'submit',  Event_Hijack);
+    });
+
+    var $_BOM = $(BOM),
+        _Submit_ = HTMLFormElement.prototype.submit,
+        _Reset_ = HTMLFormElement.prototype.reset;
+
+    function Fake_Bubble(iType, iMethod) {
+        var $_This = $(this);
+
+        $_BOM.on(iType,  function (iEvent) {
+            if (iEvent.target !== $_This[0])  return;
+
+            if (! iEvent.defaultPrevented)  iMethod.call(iEvent.target);
+
+            $_BOM.off(iType, arguments.callee);
+        });
+
+        var iEvent = arguments.callee.caller.arguments[0];
+
+        BOM.setTimeout(function () {
+            $.event.dispatch(
+                ((iEvent instanceof $.Event)  &&  (iEvent.type == iType))  ?
+                    iEvent : {
+                        type:      iType,
+                        target:    $_This[0]
+                    }
+            );
+        });
+    }
+    $.extend(HTMLFormElement.prototype, {
+        submit:    $.proxy(Fake_Bubble, null, 'submit', _Submit_),
+        reset:     $.proxy(Fake_Bubble, null, 'reset', _Reset_)
+    });
+
+    /* ----- XML DOM Parser ----- */
+
+    var IE_DOMParser = $.map([
+            'MSXML2.DOMDocument.6.0',
+            'MSXML2.DOMDocument.5.0',
+            'MSXML2.DOMDocument.4.0',
+            'MSXML2.DOMDocument.3.0',
+            'MSXML2.DOMDocument',
+            'Microsoft.XMLDOM'
+        ],  function () {
+            new ActiveXObject(arguments[0]);
+            return arguments[0];
+        })[0];
+
+    function XML_Create() {
+        var iXML = new ActiveXObject(IE_DOMParser);
+        iXML.async = false;
+        iXML.loadXML(arguments[0]);
+        return iXML;
+    }
+
+    BOM.DOMParser = function () { };
+
+    BOM.DOMParser.prototype.parseFromString = function () {
+        var iXML = XML_Create(arguments[0]);
+
+        if (iXML.parseError.errorCode)
+            iXML = XML_Create([
+                '<xml><parsererror><h3>This page contains the following errors:</h3><div>',
+                iXML.parseError.reason,
+                '</div></parsererror></xml>'
+            ].join(''));
+
+        return iXML;
     };
 
-/* ---------- 页面滚动相关操作  v0.2 ---------- */
+})(self, self.document, iQuery);
 
-    var Array_Reverse = Array.prototype.reverse,
+
+
+(function (BOM, DOM, $) {
+
+    var iOperator = {
+            '+':    function () {
+                return  arguments[0] + arguments[1];
+            },
+            '-':    function () {
+                return  arguments[0] - arguments[1];
+            }
+        },
+        Array_Reverse = Array.prototype.reverse,
         Rolling_Style = $.makeSet('auto', 'scroll', 'hidden');
 
     $.fn.extend({
+        reduce:           function (iMethod, iKey, iCallback) {
+            if (arguments.length < 3) {
+                iCallback = iKey;
+                iKey = undefined;
+            }
+            if (typeof iCallback == 'string')  iCallback = iOperator[iCallback];
+
+            return  $.map(this,  function () {
+                return  $( arguments[0] )[iMethod](iKey);
+            }).reduce(iCallback);
+        },
+        refresh:          function () {
+            if (! this.selector)  return this;
+
+            var $_New = $(this.selector, this.context);
+
+            if (this.prevObject instanceof $)
+                $_New = this.prevObject.pushStack($_New);
+
+            return $_New;
+        },
+        sameParents:      function () {
+            if (this.length < 2)  return this.parents();
+
+            var iMin = $.trace(this[0], 'parentNode').slice(0, -1),
+                iPrev;
+
+            for (var i = 1, iLast;  i < this.length;  i++) {
+                iLast = $.trace(this[i], 'parentNode').slice(0, -1);
+                if (iLast.length < iMin.length) {
+                    iPrev = iMin;
+                    iMin = iLast;
+                }
+            }
+            iPrev = iPrev || iLast;
+
+            var iDiff = iPrev.length - iMin.length,  $_Result = [ ];
+
+            for (var i = 0;  i < iMin.length;  i++)
+                if (iMin[i]  ===  iPrev[i + iDiff]) {
+                    $_Result = iMin.slice(i);
+                    break;
+                }
+            return Array_Reverse.call(this.pushStack(
+                arguments[0]  ?  $($_Result).filter(arguments[0])  :  $_Result
+            ));
+        },
         scrollParents:    function () {
             return Array_Reverse.call(this.pushStack(
                 $.map(this.parents(),  function (_DOM_) {
@@ -496,341 +951,7 @@
         }
     });
 
-/* ---------- jQuery 元素 z-index 独立方法  v0.2 ---------- */
-
-    function Get_zIndex() {
-        var $_This = $(this);
-
-        var _zIndex_ = $_This.css('z-index');
-        if (_zIndex_ != 'auto')  return parseInt(_zIndex_);
-
-        var $_Parents = $_This.parents();
-        _zIndex_ = 0;
-
-        $_Parents.each(function () {
-            var _Index_ = $(this).css('z-index');
-
-            _zIndex_ += (_Index_ == 'auto')  ?  1  :  parseInt(_Index_);
-        });
-
-        return ++_zIndex_;
-    }
-
-    function Set_zIndex() {
-        var $_This = $(this),  _Index_ = 0;
-
-        $_This.siblings().addBack().filter(':visible').each(function () {
-            _Index_ = Math.max(_Index_, Get_zIndex.call(this));
-        });
-        $_This.css('z-index', ++_Index_);
-    }
-
-    $.fn.zIndex = function (new_Index) {
-        if (! $.isData(new_Index))
-            return  Get_zIndex.call(this[0]);
-        else if (new_Index == '+')
-            return  this.each(Set_zIndex);
-        else
-            return  this.css('z-index',  parseInt(new_Index) || 'auto');
-    };
-
-
-/* ---------- CSS 规则操作  v0.8 ---------- */
-
-    var IE_CSS_Filter = ($.browser.msie < 9);
-    var Code_Indent = (IE_CSS_Filter  ?  ' '.repeat(4)  :  '');
-
-    function toHexInt(iDec, iLength) {
-        var iHex = parseInt( Number(iDec).toFixed(0) ).toString(16);
-
-        if (iLength && (iLength > iHex.length))
-            iHex = '0'.repeat(iLength - iHex.length) + iHex;
-
-        return iHex;
-    }
-
-    function RGB_Hex(iRed, iGreen, iBlue) {
-        var iArgs = $.extend([ ], arguments);
-
-        if ((iArgs.length == 1) && (typeof iArgs[0] == 'string'))
-            iArgs = iArgs[0].replace(/rgb\(([^\)]+)\)/i, '$1').replace(/,\s*/g, ',').split(',');
-
-        for (var i = 0; i < 3; i++)
-            iArgs[i] = toHexInt(iArgs[i], 2);
-        return iArgs.join('');
-    }
-
-    var PX_Needed = $.makeSet(
-            'width',  'min-width',  'max-width',
-            'height', 'min-height', 'max-height',
-            'margin', 'padding',
-            'top',    'left',
-            'border-radius'
-        );
-
-    function Set_Style(iElement, iName, iValue) {
-        if (_Type_(iElement) in Type_Info.DOM.root)  return false;
-
-        if (IE_CSS_Filter) {
-            var iString = '',  iWrapper,  iScale = 1,  iConvert;
-            if (typeof iValue == 'string')
-                var iRGBA = iValue.match(/\s*rgba\(([^\)]+),\s*(\d\.\d+)\)/i);
-
-            if (iName == 'opacity') {
-                iName = 'filter';
-                iWrapper = 'progid:DXImageTransform.Microsoft.Alpha(opacity={n})';
-                iScale = 100;
-            } else if (!! iRGBA) {
-                iString = iValue.replace(iRGBA[0], '');
-                if (iString)
-                    iString += arguments.callee(arguments[0], iName, iString);
-                if (iName != 'background')
-                    iString += arguments.callee(
-                        arguments[0],
-                        (iName.indexOf('-color') > -1) ? iName : (iName + '-color'),
-                        'rgb(' + iRGBA[1] + ')'
-                    );
-                iName = 'filter';
-                iWrapper = 'progid:DXImageTransform.Microsoft.Gradient(startColorStr=#{n},endColorStr=#{n})';
-                iConvert = function (iAlpha, iRGB) {
-                    return  toHexInt(parseFloat(iAlpha) * 256, 2) + RGB_Hex(iRGB);
-                };
-            }
-        }
-
-        if ((! isNaN( Number(iValue) ))  &&  PX_Needed[iName])
-            iValue += 'px';
-        if (iWrapper)
-            iValue = iWrapper.replace(/\{n\}/g,  iConvert ?
-                  iConvert(iRGBA[2], iRGBA[1]) :
-                  (iValue * iScale)
-            );
-
-        if (iElement)
-            iElement.style[
-                IE_CSS_Filter ? 'setAttribute' : 'setProperty'
-            ](
-                iName,
-                ($.browser.msie != 9) ? iValue : iValue.toString(),
-                'important'
-            );
-        else  return [
-                iString ? (iString + ";\n") : ''
-            ].concat([
-                iName,  ':',  Code_Indent,  iValue
-            ]).join('');
-    }
-
-    function CSS_Rule2Text(iRule) {
-        var Rule_Text = [''],  Rule_Block,  _Rule_Block_;
-
-        $.each(iRule,  function (iSelector) {
-            Rule_Block = iSelector + ' {';
-            _Rule_Block_ = [ ];
-
-            for (var iAttribute in this)
-                _Rule_Block_.push(
-                    Set_Style(null, iAttribute, this[iAttribute])
-                        .replace(/^(\w)/m,  Code_Indent + '$1')
-                );
-
-            Rule_Text.push(
-                [Rule_Block, _Rule_Block_.join(";\n"), '}'].join("\n")
-            );
-        });
-        Rule_Text.push('');
-
-        return Rule_Text.join("\n");
-    }
-
-    $.cssRule = function (iMedia, iRule) {
-        if (typeof iMedia != 'string') {
-            iRule = iMedia;
-            iMedia = null;
-        }
-        var CSS_Text = CSS_Rule2Text(iRule);
-
-        return  $('<style />', {
-            type:       'text/css',
-            'class':    'iQuery_CSS-Rule',
-            text:       (! iMedia) ? CSS_Text : [
-                '@media ' + iMedia + ' {',
-                CSS_Text.replace(/\n/m, "\n    "),
-                '}'
-            ].join("\n")
-        }).appendTo(DOM.head)[0].sheet;
-    };
-
-    function CSS_Rule_Search(iStyleSheet, iFilter) {
-        return  $.map(iStyleSheet || DOM.styleSheets,  function () {
-            var iRule = arguments[0].cssRules,  _Self_ = arguments.callee;
-            if (! iRule)  return;
-
-            return  $.map(iRule,  function (_Rule_) {
-                return  (_Rule_.cssRules ? _Self_ : iFilter)(_Rule_);
-            });
-        });
-    }
-
-    function CSSRuleList() {
-        $.extend(this, arguments[0]);
-        this.length = arguments[0].length;
-    }
-
-    if (typeof BOM.getMatchedCSSRules != 'function')
-        BOM.getMatchedCSSRules = function (iElement, iPseudo) {
-            if (! (iElement instanceof Element))  return null;
-
-            if (typeof iPseudo == 'string') {
-                iPseudo = (iPseudo.match(/^\s*:{1,2}([\w\-]+)\s*$/) || [ ])[1];
-
-                if (! iPseudo)  return null;
-            } else if (iPseudo)
-                iPseudo = null;
-
-            return  new CSSRuleList(CSS_Rule_Search(null,  function (iRule) {
-                var iSelector = iRule.selectorText;
-
-                if (iPseudo) {
-                    iSelector = iSelector.replace(/:{1,2}([\w\-]+)$/,  function () {
-                        return  (arguments[1] == iPseudo)  ?  ''  :  arguments[0];
-                    });
-                    if (iSelector == iRule.selectorText)  return;
-                }
-                if (iElement.matches( iSelector ))  return iRule;
-            }));
-        };
-
-    $.fn.cssRule = function (iRule, iCallback) {
-        if (! $.isPlainObject(iRule)) {
-            var $_This = this;
-
-            return  ($_This[0]  &&  CSS_Rule_Search(null,  function (_Rule_) {
-                if ((
-                    (typeof $_This.selector != 'string')  ||
-                    ($_This.selector != _Rule_.selectorText)
-                ) &&
-                    (! $_This[0].matches(_Rule_.selectorText))
-                )
-                    return;
-
-                if ((! iRule)  ||  (iRule && _Rule_.style[iRule]))
-                    return _Rule_;
-            }));
-        }
-        return  this.each(function () {
-            var _Rule_ = { },  _ID_ = this.getAttribute('id');
-
-            if (! _ID_) {
-                _ID_ = $.uuid();
-                this.setAttribute('id', _ID_);
-            }
-            for (var iSelector in iRule)
-                _Rule_['#' + _ID_ + iSelector] = iRule[iSelector];
-
-            var iSheet = $.cssRule(_Rule_);
-
-            if (typeof iCallback == 'function')  iCallback.call(this, iSheet);
-        });
-    };
-
-/* ---------- DOM 选中内容读写  v0.2 ---------- */
-
-    var W3C_Selection = (! ($.browser.msie < 10));
-
-    function Select_Node(iSelection) {
-        var iFocus = W3C_Selection ?
-                iSelection.focusNode : iSelection.createRange().parentElement();
-        var iActive = iFocus.ownerDocument.activeElement;
-
-        return  $.contains(iActive, iFocus)  ?  iFocus  :  iActive;
-    }
-
-    function Find_Selection() {
-        var iDOM = this.document || this.ownerDocument || this;
-
-        if (iDOM.activeElement.tagName.toLowerCase() == 'iframe')  try {
-            return  arguments.callee.call( iDOM.activeElement.contentWindow );
-        } catch (iError) { }
-
-        var iSelection = W3C_Selection ? iDOM.getSelection() : iDOM.selection;
-        var iNode = Select_Node(iSelection);
-
-        return  $.contains(
-            (this instanceof Element)  ?  this  :  iDOM,  iNode
-        ) && [
-            iSelection, iNode
-        ];
-    }
-
-    $.fn.selection = function (iContent) {
-        if (iContent === undefined) {
-            var iSelection = Find_Selection.call(this[0])[0];
-
-            return  W3C_Selection ?
-                iSelection.toString() : iSelection.createRange().htmlText;
-        }
-
-        return  this.each(function () {
-            var iSelection = Find_Selection.call(this);
-            var iNode = iSelection[1];
-
-            iSelection = iSelection[0];
-            iNode = (iNode.nodeType == 1)  ?  iNode  :  iNode.parentNode;
-
-            if (! W3C_Selection) {
-                iSelection = iSelection.createRange();
-
-                return  iSelection.text = (
-                    (typeof iContent == 'function')  ?
-                        iContent.call(iNode, iSelection.text)  :  iContent
-                );
-            }
-            var iProperty, iStart, iEnd;
-
-            if ((iNode.tagName || '').match(/input|textarea/i)) {
-                iProperty = 'value';
-                iStart = Math.min(iNode.selectionStart, iNode.selectionEnd);
-                iEnd = Math.max(iNode.selectionStart, iNode.selectionEnd);
-            } else {
-                iProperty = 'innerHTML';
-                iStart = Math.min(iSelection.anchorOffset, iSelection.focusOffset);
-                iEnd = Math.max(iSelection.anchorOffset, iSelection.focusOffset);
-            }
-
-            var iValue = iNode[iProperty];
-
-            iNode[iProperty] = iValue.slice(0, iStart)  +  (
-                (typeof iContent == 'function')  ?
-                    iContent.call(iNode, iValue.slice(iStart, iEnd))  :  iContent
-            )  +  iValue.slice(iEnd);
-        });
-    };
-
-/* ---------- DOM UI 数据归并  v0.1 ---------- */
-
-    var iOperator = {
-            '+':    function () {
-                return  arguments[0] + arguments[1];
-            },
-            '-':    function () {
-                return  arguments[0] - arguments[1];
-            }
-        };
-
-    $.fn.reduce = function (iMethod, iKey, iCallback) {
-        if (arguments.length < 3) {
-            iCallback = iKey;
-            iKey = undefined;
-        }
-        if (typeof iCallback == 'string')  iCallback = iOperator[iCallback];
-
-        return  $.map(this,  function () {
-            return  $( arguments[0] )[iMethod](iKey);
-        }).reduce(iCallback);
-    };
-
-/* ---------- DOM UI 数据读写  v0.4 ---------- */
+/* ----- DOM UI Data Operator ----- */
 
     var RE_URL = /^(\w+:)?\/\/[\u0021-\u007e\uff61-\uffef]+$/;
 
@@ -915,8 +1036,8 @@
         return this;
     };
 
+/* ---------- HTML DOM SandBox ---------- */
 
-/* ---------- HTML DOM 沙盒  v0.2 ---------- */
     $.fn.sandBox = function () {
         var iArgs = $.makeArray(arguments);
 
@@ -959,331 +1080,282 @@
         return  $_iFrame[0].parentNode ? this : $_iFrame.appendTo(DOM.body);
     };
 
+})(self, self.document, iQuery);
 
-/* ---------- HTTP Method 快捷方法  v0.1 ---------- */
-    function HTTP_Request(iMethod, iURL, iData, iCallback) {
-        if (typeof iData == 'function') {
-            iCallback = iData;
-            iData = null;
+
+
+(function (BOM, DOM, $) {
+
+    var Code_Indent = $.browser.modern ? '' : ' '.repeat(4);
+
+    function CSS_Attribute(iName, iValue) {
+        if ((! isNaN( Number(iValue) ))  &&  iName.match($.cssPX))
+            iValue += 'px';
+
+        return  [iName, ':', Code_Indent, iValue].join('');
+    }
+
+    function CSS_Rule2Text(iRule) {
+        var Rule_Text = [''],  Rule_Block,  _Rule_Block_;
+
+        $.each(iRule,  function (iSelector) {
+            Rule_Block = iSelector + ' {';
+            _Rule_Block_ = [ ];
+
+            for (var iName in this)
+                _Rule_Block_.push(
+                    CSS_Attribute(iName, this[iName])
+                        .replace(/^(\w)/m,  Code_Indent + '$1')
+                );
+
+            Rule_Text.push(
+                [Rule_Block, _Rule_Block_.join(";\n"), '}'].join("\n")
+            );
+        });
+        Rule_Text.push('');
+
+        return Rule_Text.join("\n");
+    }
+
+    $.cssRule = function (iMedia, iRule) {
+        if (typeof iMedia != 'string') {
+            iRule = iMedia;
+            iMedia = null;
         }
-        return  $.ajax({
-            method:         iMethod,
-            url:            iURL,
-            data:           iData,
-            complete:       iCallback,
-            crossDomain:    true,
-            xhrFields:      {
-                withCredentials:    true
-            }
+        var CSS_Text = CSS_Rule2Text(iRule);
+
+        var $_Style = $('<style />', {
+                type:       'text/css',
+                'class':    'iQuery_CSS-Rule',
+                text:       (! iMedia) ? CSS_Text : [
+                    '@media ' + iMedia + ' {',
+                    CSS_Text.replace(/\n/m, "\n    "),
+                    '}'
+                ].join("\n")
+            }).appendTo(DOM.head);
+
+        return  ($_Style[0].sheet || $_Style[0].styleSheet);
+    };
+
+    function CSS_Rule_Search(iStyleSheet, iFilter) {
+        return  $.map(iStyleSheet || DOM.styleSheets,  function () {
+            var iRule = arguments[0].cssRules,  _Self_ = arguments.callee;
+            if (! iRule)  return;
+
+            return  $.map(iRule,  function (_Rule_) {
+                return  (_Rule_.cssRules ? _Self_ : iFilter)(_Rule_);
+            });
         });
     }
 
-    var HTTP_Method = $.makeSet('PUT', 'DELETE');
-
-    for (var iMethod in HTTP_Method)
-        $[ iMethod.toLowerCase() ] = $.proxy(HTTP_Request, BOM, iMethod);
-
-
-/* ---------- Form 元素 无刷新提交  v0.8 ---------- */
-
-    /* ----- AJAX 底层扩展  v0.2 ----- */
-
-    function onLoad(iProperty, iData) {
-        if (iProperty)  $.extend(this, iProperty);
-
-        if (! (this.option.crossDomain || (this.readyState == 4)))
-            return;
-
-        var iError = (this.status > 399),  iArgs = [this, this.option];
-
-        $_DOM.trigger('ajaxComplete', iArgs);
-        $_DOM.trigger('ajax' + (iError ? 'Error' : 'Success'),  iArgs);
-
-        if (typeof this.onready != 'function')  return;
-
-        this.onready(
-            iData || this.responseAny(),  iError ? 'error' : 'success',  this
-        );
+    function CSSRuleList() {
+        $.extend(this, arguments[0]);
+        this.length = arguments[0].length;
     }
 
-    var Success_State = {
-            readyState:    4,
-            status:        200,
-            statusText:    'OK'
-        },
-        $_DOM = $(DOM);
+    var DOM_Proto = Element.prototype;
 
-    function XD_Request(iData) {
-        var iOption = this.option;
+    DOM_Proto.matches = DOM_Proto.matches || DOM_Proto.webkitMatchesSelector ||
+        DOM_Proto.msMatchesSelector || DOM_Proto.mozMatchesSelector;
 
-        this.open.call(this, iOption.type, iOption.url, true);
+    if (typeof BOM.getMatchedCSSRules != 'function')
+        BOM.getMatchedCSSRules = function (iElement, iPseudo) {
+            if (! (iElement instanceof Element))  return null;
 
-        this[this.option.crossDomain ? 'onload' : 'onreadystatechange'] = $.proxy(
-            onLoad,
-            this,
-            (! (this instanceof BOM.XMLHttpRequest))  &&  Success_State,
-            null
-        );
+            if (typeof iPseudo == 'string') {
+                iPseudo = (iPseudo.match(/^\s*:{1,2}([\w\-]+)\s*$/) || [ ])[1];
 
-        if (iOption.xhrFields)  $.extend(this, iOption.xhrFields);
+                if (! iPseudo)  return null;
+            } else if (iPseudo)
+                iPseudo = null;
 
-        if (! iOption.crossDomain)
-            iOption.headers = $.extend(iOption.headers || { }, {
-                'X-Requested-With':    'XMLHttpRequest',
-                Accept:                '*/*'
-            });
+            return  new CSSRuleList(CSS_Rule_Search(null,  function (iRule) {
+                var iSelector = iRule.selectorText;
 
-        for (var iKey in iOption.headers)
-            this.setRequestHeader(iKey, iOption.headers[iKey]);
-
-        if ((iData instanceof Array)  ||  $.isPlainObject(iData))
-            iData = $.param(iData);
-
-        if ((typeof iData == 'string')  ||  iOption.contentType)
-            this.setRequestHeader('Content-Type', (
-                iOption.contentType || 'application/x-www-form-urlencoded'
-            ));
-
-        this.option.data = iData;
-
-        $_DOM.trigger('ajaxSend',  [this, this.option]);
-
-        this.send(iData);
-
-        return this;
-    }
-
-    var XHR_Extension = {
-            timeOut:        function (iSecond, iCallback) {
-                var iXHR = this;
-
-                $.wait(iSecond, function () {
-                    iXHR[
-                        (iXHR.$_DOM || iXHR.option.crossDomain)  ?
-                            'onload'  :  'onreadystatechange'
-                    ] = null;
-                    iXHR.abort();
-                    iCallback.call(iXHR);
-                    iXHR = null;
-                });
-            },
-            responseAny:    function () {
-                var iContent = this.responseText,
-                    iType = this.responseType || 'text/plain';
-
-                switch ( iType.split('/')[1] ) {
-                    case 'plain':    ;
-                    case 'json':     {
-                        var _Content_ = iContent.trim();
-                        try {
-                            iContent = BOM.JSON.parseAll(_Content_);
-                            this.responseType = 'application/json';
-                        } catch (iError) {
-                            if ($.browser.msie != 9)  try {
-                                iContent = $.parseXML(_Content_);
-                                this.responseType = 'text/xml';
-                            } catch (iError) { }
-                        }
-                        break;
-                    }
-                    case 'xml':      iContent = this.responseXML;
+                if (iPseudo) {
+                    iSelector = iSelector.replace(/:{1,2}([\w\-]+)$/,  function () {
+                        return  (arguments[1] == iPseudo)  ?  ''  :  arguments[0];
+                    });
+                    if (iSelector == iRule.selectorText)  return;
                 }
-
-                return iContent;
-            },
-            retry:          function () {
-                $.wait(arguments[0],  $.proxy(XD_Request, this));
-            }
+                if (iElement.matches( iSelector ))  return iRule;
+            }));
         };
 
-    function X_Domain() {
-        var iDomain = $.urlDomain( arguments[0] );
+    $.fn.cssRule = function (iRule, iCallback) {
+        if (! $.isPlainObject(iRule)) {
+            var $_This = this;
 
-        return  iDomain && (
-            iDomain != [
-                BOM.location.protocol, '//', DOM.domain, (
-                    BOM.location.port  ?  (':' + BOM.location.port)  :  ''
+            return  ($_This[0]  &&  CSS_Rule_Search(null,  function (_Rule_) {
+                if ((
+                    (typeof $_This.selector != 'string')  ||
+                    ($_This.selector != _Rule_.selectorText)
+                ) &&
+                    (! $_This[0].matches(_Rule_.selectorText))
                 )
-            ].join('')
-        );
-    }
+                    return;
 
-    function beforeOpen(iMethod, iURL, iData) {
-        this.option = {
-            type:           iMethod.toUpperCase(),
-            url:            iURL,
-            crossDomain:    X_Domain(iURL),
-            data:           iData
-        };
-        $_DOM.triggerHandler('ajaxPrefilter', [this]);
-    }
+                if ((! iRule)  ||  (iRule && _Rule_.style[iRule]))
+                    return _Rule_;
+            }));
+        }
+        return  this.each(function () {
+            var _Rule_ = { },  _ID_ = this.getAttribute('id');
 
-    /* ----- DOM HTTP 请求对象  v0.2 ----- */
+            if (! _ID_) {
+                _ID_ = $.uuid();
+                this.setAttribute('id', _ID_);
+            }
+            for (var iSelector in iRule)
+                _Rule_['#' + _ID_ + iSelector] = iRule[iSelector];
 
-    BOM.DOMHttpRequest = function () {
-        this.status = 0;
-        this.readyState = 0;
-        this.responseType = 'text/plain';
+            var iSheet = $.cssRule(_Rule_);
+
+            if (typeof iCallback == 'function')  iCallback.call(this, iSheet);
+        });
     };
-    BOM.DOMHttpRequest.JSONP = { };
 
-    $.extend(BOM.DOMHttpRequest.prototype, XHR_Extension, {
-        open:                function (iMethod, iTarget) {
-            //  <script />, JSONP
-            if (iMethod.match(/^Get$/i)) {
-                beforeOpen.apply(this, arguments);
-                this.responseURL = this.option.url;
-                return;
-            }
+/* ---------- Smart zIndex ---------- */
 
-            //  <iframe />
-            var $_Form = $(iTarget).submit(function () {
-                    if ( $(this).data('_AJAX_Submitting_') )  return false;
-                }),
-                iDHR = this;
+    function Get_zIndex() {
+        var $_This = $(this);
 
-            beforeOpen.call(this, iMethod, $_Form[0].action);
+        var _zIndex_ = $_This.css('z-index');
+        if (_zIndex_ != 'auto')  return parseInt(_zIndex_);
 
-            $_Form[0].action = this.responseURL = this.option.url;
+        var $_Parents = $_This.parents();
+        _zIndex_ = 0;
 
-            var iTarget = $_Form.attr('target');
+        $_Parents.each(function () {
+            var _Index_ = $(this).css('z-index');
 
-            if ((! iTarget)  ||  iTarget.match(/^_(top|parent|self|blank)$/i)) {
-                iTarget = $.uuid('iframe');
-                $_Form.attr('target', iTarget);
-            }
+            _zIndex_ += (_Index_ == 'auto')  ?  1  :  parseInt(_Index_);
+        });
 
-            $('iframe[name="' + iTarget + '"]').sandBox(function () {
-                $(this).on('load',  function () {
-                    $_Form.data('_AJAX_Submitting_', 0);
+        return ++_zIndex_;
+    }
 
-                    if (iDHR.readyState)  try {
-                        onLoad.call(iDHR, $.extend({
-                            responseText:
-                                $(this).contents().find('body').text()
-                        }, Success_State));
-                    } catch (iError) { }
-                });
-            }).attr('name', iTarget);
+    function Set_zIndex() {
+        var $_This = $(this),  _Index_ = 0;
 
-            this.$_DOM = $_Form;
-        },
-        send:                function () {
-            $_DOM.trigger('ajaxSend',  [this, this.option]);
+        $_This.siblings().addBack().filter(':visible').each(function () {
+            _Index_ = Math.max(_Index_, Get_zIndex.call(this));
+        });
+        $_This.css('z-index', ++_Index_);
+    }
 
-            if (this.option.type == 'POST')
-                this.$_DOM.submit();    //  <iframe />
-            else {
-                //  <script />, JSONP
-                var iURL = this.responseURL.match(/([^\?=&]+\?|\?)?(\w.+)?/);
-                if (! iURL)  throw 'Illegal URL !';
-
-                var _UUID_ = $.uuid(),  iDHR = this;
-
-                BOM.DOMHttpRequest.JSONP[_UUID_] = function () {
-                    if (iDHR.readyState)
-                        onLoad.call(iDHR, Success_State, arguments[0]);
-                    delete this[_UUID_];
-                    iDHR.$_DOM.remove();
-                };
-                this.option.data = arguments[0];
-                this.responseURL = iURL[1] + $.param(
-                    $.extend({ }, arguments[0], $.paramJSON(
-                        '?' + iURL[2].replace(
-                            /(\w+)=\?/,  '$1=DOMHttpRequest.JSONP.' + _UUID_
-                        )
-                    ))
-                );
-                this.$_DOM = $('<script />',  {src: this.responseURL})
-                    .appendTo(DOM.head);
-            }
-            this.readyState = 1;
-        },
-        setRequestHeader:    function () {
-            console.warn("JSONP/iframe doesn't support Changing HTTP Headers...");
-        },
-        abort:               function () {
-            this.readyState = 0;
-        }
-    });
-
-    $.fn.ajaxSubmit = function (iCallback) {
-        if (! this.length)  return this;
-
-        function AJAX_Submit(iEvent) {
-            var $_Form = $(this);
-
-            if ((! this.checkValidity())  ||  $_Form.data('_AJAX_Submitting_'))
-                return false;
-
-            $_Form.data('_AJAX_Submitting_', 1);
-
-            if (
-                $_Form.find('input[type="file"]').length &&
-                ($.browser.msie < 10)
-            ) {
-                var iDHR = new BOM.DOMHttpRequest();
-                iDHR.open('POST', $_Form)
-                iDHR.onready = iCallback;
-                iDHR.send();
-                return;
-            }
-
-            var iMethod = ($_Form.attr('method') || 'Get').toUpperCase();
-
-            if ((iMethod in HTTP_Method)  ||  (iMethod == 'GET'))
-                $[ iMethod.toLowerCase() ](
-                    this.action,
-                    $.paramJSON('?' + $_Form.serialize()),
-                    function () {
-                        $_Form.data('_AJAX_Submitting_', 0);
-                        iCallback.apply($_Form[0], arguments);
-                    }
-                );
-            return false;
-        }
-
-        var $_Form = this.filter('form');
-
-        if ( $_Form[0] )
-            $_Form.submit(AJAX_Submit);
+    $.fn.zIndex = function (new_Index) {
+        if (! $.isData(new_Index))
+            return  Get_zIndex.call(this[0]);
+        else if (new_Index == '+')
+            return  this.each(Set_zIndex);
         else
-            this.on('submit', 'form:visible', AJAX_Submit);
-
-        return this;
+            return  this.css('z-index',  parseInt(new_Index) || 'auto');
     };
 
+})(self, self.document, iQuery);
 
-/* ---------- jQuery 元素集合父元素交集  v0.1 ---------- */
 
-    $.fn.sameParents = function () {
-        if (this.length < 2)  return this.parents();
 
-        var iMin = $.trace(this[0], 'parentNode').slice(0, -1),
-            iPrev;
+(function (BOM, DOM, $) {
 
-        for (var i = 1, iLast;  i < this.length;  i++) {
-            iLast = $.trace(this[i], 'parentNode').slice(0, -1);
-            if (iLast.length < iMin.length) {
-                iPrev = iMin;
-                iMin = iLast;
-            }
+    var W3C_Selection = (! ($.browser.msie < 10));
+
+    function Select_Node(iSelection) {
+        var iFocus = W3C_Selection ?
+                iSelection.focusNode : iSelection.createRange().parentElement();
+        var iActive = iFocus.ownerDocument.activeElement;
+
+        return  $.contains(iActive, iFocus)  ?  iFocus  :  iActive;
+    }
+
+    function Find_Selection() {
+        var iDOM = this.document || this.ownerDocument || this;
+
+        if (iDOM.activeElement.tagName.toLowerCase() == 'iframe')  try {
+            return  arguments.callee.call( iDOM.activeElement.contentWindow );
+        } catch (iError) { }
+
+        var iSelection = W3C_Selection ? iDOM.getSelection() : iDOM.selection;
+        var iNode = Select_Node(iSelection);
+
+        return  $.contains(
+            (this instanceof Element)  ?  this  :  iDOM,  iNode
+        ) && [
+            iSelection, iNode
+        ];
+    }
+
+    $.fn.selection = function (iContent) {
+        if (iContent === undefined) {
+            var iSelection = Find_Selection.call(this[0])[0];
+
+            return  W3C_Selection ?
+                iSelection.toString() : iSelection.createRange().htmlText;
         }
-        iPrev = iPrev || iLast;
 
-        var iDiff = iPrev.length - iMin.length,  $_Result = [ ];
+        return  this.each(function () {
+            var iSelection = Find_Selection.call(this);
+            var iNode = iSelection[1];
 
-        for (var i = 0;  i < iMin.length;  i++)
-            if (iMin[i]  ===  iPrev[i + iDiff]) {
-                $_Result = iMin.slice(i);
-                break;
+            iSelection = iSelection[0];
+            iNode = (iNode.nodeType == 1)  ?  iNode  :  iNode.parentNode;
+
+            if (! W3C_Selection) {
+                iSelection = iSelection.createRange();
+
+                return  iSelection.text = (
+                    (typeof iContent == 'function')  ?
+                        iContent.call(iNode, iSelection.text)  :  iContent
+                );
             }
-        return  Array_Reverse.call(this.pushStack(
-            arguments[0]  ?  $($_Result).filter(arguments[0])  :  $_Result
-        ));
+            var iProperty, iStart, iEnd;
+
+            if ((iNode.tagName || '').match(/input|textarea/i)) {
+                iProperty = 'value';
+                iStart = Math.min(iNode.selectionStart, iNode.selectionEnd);
+                iEnd = Math.max(iNode.selectionStart, iNode.selectionEnd);
+            } else {
+                iProperty = 'innerHTML';
+                iStart = Math.min(iSelection.anchorOffset, iSelection.focusOffset);
+                iEnd = Math.max(iSelection.anchorOffset, iSelection.focusOffset);
+            }
+
+            var iValue = iNode[iProperty];
+
+            iNode[iProperty] = iValue.slice(0, iStart)  +  (
+                (typeof iContent == 'function')  ?
+                    iContent.call(iNode, iValue.slice(iStart, iEnd))  :  iContent
+            )  +  iValue.slice(iEnd);
+        });
     };
 
-/* ---------- 通用聚焦事件  v0.1 ---------- */
+})(self, self.document, iQuery);
+
+
+
+(function (BOM, DOM, $) {
+
+/* ---------- Event from Pseudo ---------- */
+
+    $.Event.prototype.isPseudo = function () {
+        var $_This = $(this.currentTarget);
+
+        var iOffset = $_This.offset();
+
+        return Boolean(
+            (this.pageX  &&  (
+                (this.pageX < iOffset.left)  ||
+                (this.pageX  >  (iOffset.left + $_This.width()))
+            ))  ||
+            (this.pageY  &&  (
+                (this.pageY < iOffset.top)  ||
+                (this.pageY  >  (iOffset.top + $_This.height()))
+            ))
+        );
+    };
+
+/* ---------- Focus AnyWhere ---------- */
 
     var DOM_Focus = $.fn.focus,
         iFocusable = [
@@ -1298,17 +1370,7 @@
         return  DOM_Focus.apply(this, arguments);
     };
 
-/* ---------- 鼠标滚轮事件  v0.1 ---------- */
-
-    if ( $.browser.ff )
-        $(DOM).on('DOMMouseScroll',  function (iEvent) {
-            $(iEvent.target).trigger({
-                type:          'mousewheel',
-                wheelDelta:    -iEvent.detail * 40
-            });
-        });
-
-/* ---------- 单点手势事件  v0.2 ---------- */
+/* ---------- Single Finger Touch ---------- */
 
     function get_Touch(iEvent) {
         if (! iEvent.timeStamp)
@@ -1323,9 +1385,9 @@
         }
     }
 
-    var Touch_Data;
+    var Touch_Data,  $_DOM = $(DOM);
 
-    $(DOM).bind(
+    $_DOM.bind(
         $.browser.mobile ? 'touchstart MSPointerDown' : 'mousedown',
         function (iEvent) {
             var iTouch = get_Touch(iEvent);
@@ -1367,27 +1429,8 @@
             $(iEvent.target).trigger(_Event_);
         }
     );
-    var iShortCut = $.makeSet('mousewheel', 'tap', 'press', 'swipe');
 
-    function Event_Method(iName) {
-        return  function () {
-                if (! arguments[0]) {
-                    for (var i = 0;  i < this.length;  i++)
-                        $(this[i]).trigger(iName);
-                } else
-                    this.bind(iName, arguments[0]);
-
-                return this;
-            };
-    }
-
-    for (var iName in iShortCut)
-        $.fn[iName] = Event_Method(iName);
-
-    if ($.browser.mobile)  $.fn.click = $.fn.tap;
-
-
-/* ---------- 文字输入事件  v0.1 ---------- */
+/* ---------- Text Input Event ---------- */
 
     function TypeBack(iHandler, iKey, iEvent) {
         var $_This = $(this);
@@ -1438,7 +1481,7 @@
         return this;
     };
 
-/* ---------- 跨页面事件  v0.2 ---------- */
+/* ---------- Cross Page Event ---------- */
 
     function CrossPageEvent(iType, iSource) {
         if (typeof iType == 'string') {
@@ -1473,8 +1516,7 @@
     $.fn.onReply = function (iType, iData, iCallback) {
         var iTarget = this[0],  $_Source;
 
-        if ((iTarget === BOM)  ||  (_Type_(iTarget) != 'Window'))
-            return this;
+        if (typeof iTarget.postMessage != 'function')  return this;
 
         if (arguments.length == 4) {
             $_Source = $(iData);
@@ -1504,35 +1546,146 @@
         iData = $.extend({data: iData},  _Event_.valueOf());
 
         iTarget.postMessage(
-            ($.browser.msie < 10) ? BOM.JSON.stringify(iData) : iData,  '*'
+            ($.browser.msie < 10) ? JSON.stringify(iData) : iData,  '*'
         );
     };
 
-})(self,  self.document,  self.jQuery || self.Zepto);
+/* ---------- Mouse Wheel Event ---------- */
+
+    if (! $.browser.mozilla)  return;
+
+    $_DOM.on('DOMMouseScroll',  function (iEvent) {
+        $(iEvent.target).trigger({
+            type:          'mousewheel',
+            wheelDelta:    -iEvent.detail * 40
+        });
+    });
+
+})(self, self.document, iQuery);
 
 
 
-/* ---------- W3C HTML 5  Shim ---------- */
-(function ($) {
+(function (BOM, DOM, $) {
 
-    /* ----- DOM 选择器匹配  v0.1 ----- */
+    if (! ($.browser.msie < 11))  return;
 
-    var DOM_Proto = Element.prototype;
 
-    DOM_Proto.matches = DOM_Proto.matches || DOM_Proto.webkitMatchesSelector ||
-        DOM_Proto.msMatchesSelector || DOM_Proto.mozMatchesSelector ||
-        function () {
-            if (! this.parentNode)  $('<div />')[0].appendChild(this);
+    /* ----- Element Data Set ----- */
 
-            return  ($.inArray(
-                this,  this.parentNode.querySelectorAll( arguments[0] )
-            ) > -1);
+    function DOMStringMap(iElement) {
+        for (var i = 0, iAttr;  i < iElement.attributes.length;  i++) {
+            iAttr = iElement.attributes[i];
+            if (iAttr.nodeName.slice(0, 5) == 'data-')
+                this[ iAttr.nodeName.slice(5).toCamelCase() ] = iAttr.nodeValue;
+        }
+    }
+
+    Object.defineProperty(Element.prototype, 'dataset', {
+        get:    function () {
+            return  new DOMStringMap(this);
+        }
+    });
+
+
+    if (! ($.browser.msie < 10))  return;
+
+    /* ----- Error Useful Information ----- */
+
+    //  Thanks "Kevin Yang" ---
+    //
+    //      http://www.imkevinyang.com/2010/01/%E8%A7%A3%E6%9E%90ie%E4%B8%AD%E7%9A%84javascript-error%E5%AF%B9%E8%B1%A1.html
+
+    Error.prototype.valueOf = function () {
+        return  $.extend(this, {
+            code:       this.number & 0x0FFFF,
+            helpURL:    'https://msdn.microsoft.com/en-us/library/1dk3k160(VS.85).aspx'
+        });
+    };
+
+    /* ----- DOM Class List ----- */
+
+    function DOMTokenList() {
+        var iClass = (arguments[0].getAttribute('class') || '').trim().split(/\s+/);
+
+        $.extend(this, iClass);
+
+        this.length = iClass.length;
+    }
+
+    DOMTokenList.prototype.contains = function (iClass) {
+        if (iClass.match(/\s+/))
+            throw  new DOMException([
+                "Failed to execute 'contains' on 'DOMTokenList': The token provided (",
+                iClass,
+                ") contains HTML space characters, which are not valid in tokens."
+            ].join("'"));
+
+        return  (Array.prototype.indexOf.call(this, iClass) > -1);
+    };
+
+    Object.defineProperty(Element.prototype, 'classList', {
+        get:    function () {
+            return  new DOMTokenList(this);
+        }
+    });
+
+    /* ----- History API ----- */
+
+    var _BOM_,      $_BOM = $(BOM),
+        _Pushing_,  _State_ = [[null, DOM.title, DOM.URL]];
+
+    $(DOM).ready(function () {
+        var iFrame = $('#_iQuery_SandBox_')[0];
+
+        _BOM_ = iFrame.contentWindow;
+
+        iFrame.onload = function () {
+            if (_Pushing_) {
+                _Pushing_ = false;
+                return;
+            }
+
+            var iState = _State_[ _BOM_.location.search.slice(7) ];
+            if (! iState)  return;
+
+            BOM.history.state = iState[0];
+            DOM.title = iState[1];
+
+            $_BOM.trigger({
+                type:     'popstate',
+                state:    iState[0]
+            });
         };
+    });
 
-    /* ----- HTML 5 表单验证  v0.1 ----- */
+    BOM.history.pushState = function (iState, iTitle, iURL) {
+        for (var iKey in iState)
+            if (! $.isData(iState[iKey]))
+                throw ReferenceError("The History State can't be Complex Object !");
+
+        if (typeof iTitle != 'string')
+            throw TypeError("The History State needs a Title String !");
+
+        _BOM_.document.title = DOM.title = iTitle;
+        _Pushing_ = true;
+        _BOM_.location.search = 'index=' + (_State_.push(arguments) - 1);
+    };
+
+    BOM.history.replaceState = function () {
+        _State_ = [ ];
+        this.pushState.apply(this, arguments);
+    };
+
+})(self, self.document, iQuery);
+
+
+
+(function (BOM, DOM, $) {
 
     if (! (($.browser.msie < 10)  ||  $.browser.ios))
         return;
+
+/* ---------- Form Element API ---------- */
 
     function Value_Check() {
         var $_This = $(this);
@@ -1573,32 +1726,389 @@
         return true;
     };
 
-})(self.jQuery || self.Zepto);
+/* ---------- Form Data Object ---------- */
+
+    if (! ($.browser.msie < 10))  return;
+
+    BOM.FormData = function () {
+        this.ownerNode = arguments[0];
+    };
+
+    $.extend(BOM.FormData.prototype, {
+        append:      function () {
+            this[ arguments[0] ] = arguments[1];
+        },
+        toString:    function () {
+            return $(this.ownerNode).serialize();
+        }
+    });
+
+})(self, self.document, iQuery);
 
 
 
 (function (BOM, DOM, $) {
 
-    /* ----- HTML 5 元素数据集  v0.1 ----- */
-
-    if (! ($.browser.msie < 11))  return;
-
-    function DOMStringMap(iElement) {
-        for (var i = 0, iAttr;  i < iElement.attributes.length;  i++) {
-            iAttr = iElement.attributes[i];
-            if (iAttr.nodeName.slice(0, 5) == 'data-')
-                this[ iAttr.nodeName.slice(5).toCamelCase() ] = iAttr.nodeValue;
+    function HTTP_Request(iMethod, iURL, iData, iCallback) {
+        if (typeof iData == 'function') {
+            iCallback = iData;
+            iData = null;
         }
-    }
-    try {
-        Element.prototype.dataset;
-
-        Object.defineProperty(Element.prototype, 'dataset', {
-            get:    function () {
-                return  new DOMStringMap(this);
-            },
-            set:    function () { }
+        return  $.ajax({
+            method:         iMethod,
+            url:            iURL,
+            data:           iData,
+            complete:       iCallback,
+            crossDomain:    true
         });
-    } catch (iError) { }
+    }
 
-})(self,  self.document,  self.jQuery || self.Zepto);
+    var HTTP_Method = $.makeSet('PUT', 'DELETE');
+
+    for (var iMethod in HTTP_Method)
+        $[ iMethod.toLowerCase() ] = $.proxy(HTTP_Request, BOM, iMethod);
+
+})(self, self.document, iQuery);
+
+
+
+(function (BOM, DOM, $) {
+
+/* ---------- DOM HTTP Request ---------- */
+
+    BOM.DOMHttpRequest = function () {
+        this.status = 0;
+        this.readyState = 0;
+        this.responseType = 'text/plain';
+    };
+    BOM.DOMHttpRequest.JSONP = { };
+
+    var Success_State = {
+            readyState:    4,
+            status:        200,
+            statusText:    'OK'
+        };
+
+    $.extend(BOM.DOMHttpRequest.prototype, {
+        open:                function () {
+            this.responseURL = arguments[1];
+            this.readyState = 1;
+        },
+        setRequestHeader:    function () {
+            console.warn("JSONP/iframe doesn't support Changing HTTP Headers...");
+        },
+        send:                function (iData) {
+            var iDHR = this,  _UUID_ = $.uuid('DHR');
+
+            this.$_Transport =
+                (iData instanceof BOM.FormData)  &&  $(iData.ownerNode);
+
+            if (this.$_Transport && (
+                iData.ownerNode.method.toUpperCase() == 'POST'
+            )) {
+                //  <iframe />
+                var iTarget = this.$_Transport.submit(function () {
+                        if ( $(this).data('_AJAX_Submitting_') )  return false;
+                    }).attr('target');
+
+                if ((! iTarget)  ||  iTarget.match(/^_(top|parent|self|blank)$/i)) {
+                    this.$_Transport.attr('target', _UUID_);
+                    iTarget = _UUID_;
+                }
+
+                $('iframe[name="' + iTarget + '"]').sandBox(function () {
+                    iDHR.$_Transport.data('_AJAX_Submitting_', 0);
+                    try {
+                        iDHR.responseText = $(this).contents().find('body').text();
+                    } catch (iError) { }
+
+                    $.extend(iDHR, Success_State, {
+                        responseType:    'text',
+                        response:        iDHR.responseText
+                    });
+                    iDHR.onload();
+                }).attr('name', iTarget);
+
+                this.$_Transport.submit();
+            } else {
+                //  <script />, JSONP
+                var iURL = this.responseURL.match(/([^\?=&]+\?|\?)?(\w.+)?/);
+
+                if (! iURL)  throw 'Illegal JSONP URL !';
+
+                this.constructor.JSONP[_UUID_] = function (iJSON) {
+                    $.extend(iDHR, Success_State, {
+                        responseType:    'json',
+                        response:        iJSON,
+                        responseText:    JSON.stringify(iJSON)
+                    });
+                    iDHR.onload();
+
+                    delete this[_UUID_];
+                    iDHR.$_Transport.remove();
+                };
+                this.responseURL = iURL[1] + $.param(
+                    $.extend(arguments[0] || { },  $.paramJSON(
+                        '?' + iURL[2].replace(
+                            /(\w+)=\?/,  '$1=DOMHttpRequest.JSONP.' + _UUID_
+                        )
+                    ))
+                );
+                this.$_Transport = $('<script />',  {src: this.responseURL})
+                    .appendTo(DOM.head);
+            }
+
+            this.readyState = 2;
+        },
+        abort:               function () {
+            this.$_Transport = null;
+            this.readyState = 0;
+        }
+    });
+
+/* ---------- AJAX for IE 10- ---------- */
+
+    $.ajaxTransport(function (iOption) {
+        var iXHR;
+
+        if (($.browser.msie < 10)  &&  iOption.crossDomain)
+            return {
+                send:     function (iHeader, iComplete) {
+                    iXHR = new BOM.XDomainRequest();
+
+                    iXHR.open(iOption.type, iOption.url, true);
+
+                    iXHR.onload = function () {
+                        iComplete(
+                            200,
+                            'OK',
+                            {text:  iXHR.responseText},
+                            'Content-Type: ' + iXHR.contentType
+                        );
+                    };
+                    iXHR.send(iOption.data);
+                },
+                abort:    function () {
+                    iXHR.abort();
+                    iXHR = null;
+                }
+            };
+    });
+
+    function DHR_Transport(iOption) {
+        var iXHR,  iForm = iOption.data.ownerNode;
+
+        switch (true) {
+            case (
+                (iOption.data instanceof BOM.FormData)  &&
+                $(iForm).is('form')  &&
+                $('input[type="file"]', iForm)[0]
+            ):
+                break;
+            case ($.fn.iquery  &&  (iOption.dataType == 'jsonp')):
+                break;
+            default:    return;
+        }
+
+        return {
+            send:     function (iHeader, iComplete) {
+                if (iOption.dataType == 'jsonp')
+                    iOption.url += (iOption.url.split('?')[1] ? '&' : '?')  +
+                        iOption.jsonp + '=?';
+
+                iXHR = new BOM.DOMHttpRequest();
+                iXHR.open(iOption.type, iOption.url);
+                iXHR.onload = function () {
+                    var iResponse = {text:  iXHR.responseText};
+                    iResponse[ iXHR.responseType ] = iXHR.response;
+
+                    iComplete(iXHR.status, iXHR.statusText, iResponse);
+                };
+                iXHR.send(iOption.data);
+            },
+            abort:    function () {
+                iXHR.abort();
+            }
+        };
+    }
+
+    $.ajaxTransport(DHR_Transport);
+
+    $.ajaxTransport('jsonp', DHR_Transport);
+
+/* ---------- Form Element AJAX Submit ---------- */
+
+    $.fn.ajaxSubmit = function (iCallback) {
+        if (! this.length)  return this;
+
+        function AJAX_Submit(iEvent) {
+            var $_Form = $(this);
+
+            if ((! this.checkValidity())  ||  $_Form.data('_AJAX_Submitting_'))
+                return false;
+
+            $_Form.data('_AJAX_Submitting_', 1);
+
+            var iMethod = ($_Form.attr('method') || 'Get').toLowerCase();
+
+            if (typeof $[iMethod] == 'function')
+                $[iMethod](
+                    this.action,
+                    $.paramJSON('?' + $_Form.serialize()),
+                    function () {
+                        $_Form.data('_AJAX_Submitting_', 0);
+                        iCallback.apply($_Form[0], arguments);
+                    }
+                );
+            return false;
+        }
+
+        var $_Form = this.filter('form');
+
+        if ( $_Form[0] )
+            $_Form.submit(AJAX_Submit);
+        else
+            this.on('submit', 'form:visible', AJAX_Submit);
+
+        return this;
+    };
+
+})(self, self.document, iQuery);
+
+
+
+(function (BOM, DOM, $) {
+
+    function Observer() {
+        this.requireArgs = arguments[0] || 0;
+        this.filter = arguments[1] || [ ];
+        this.table = [[ ]];
+
+        return this;
+    }
+
+    function Each_Row() {
+        var _This_ = this,  iArgs = $.makeArray(arguments);
+
+        if (typeof iArgs[iArgs.length - 1]  !=  'function')  return;
+
+        var iCallback = iArgs.pop();
+
+        $.each(this.table[0],  function (Index) {
+            if (this == null)  return;
+
+            for (var i = 0, _Condition_;  i < iArgs.length;  i++) {
+                _Condition_ = _This_.table[i + 1][Index];
+
+                if (_Condition_ === undefined) {
+
+                    if (i < _This_.requireArgs)  return;
+
+                } else if (
+                    (_Condition_ != iArgs[i])  ||
+                    (! iArgs[i].match(_Condition_))  ||  (
+                        (typeof _This_.filter[i] == 'function')  &&
+                        (false === _This_.filter[i].call(
+                            _This_,  _Condition_,  iArgs[i]
+                        ))
+                    )
+                )
+                    return;
+            }
+
+            if (false  ===  iCallback.call(_This_, this))
+                _This_.table[0][Index] = null;
+        });
+    }
+
+    $.extend(Observer.prototype, {
+        on:         function () {
+            var iArgs = $.makeArray(arguments);
+
+            if (typeof iArgs[iArgs.length - 1]  ==  'function') {
+                var Index = this.table[0].push( iArgs.pop() )  -  1;
+
+                for (var i = 0;  i < iArgs.length;  i++) {
+                    if (! this.table[i + 1])
+                        this.table[i + 1] = [ ];
+
+                    this.table[i + 1][Index] = iArgs[i];
+                }
+            }
+            return this;
+        },
+        off:        function () {
+            var iArgs = $.makeArray(arguments);
+
+            var iCallback = (typeof iArgs[iArgs.length - 1]  ==  'function')  &&
+                    iArgs.pop();
+
+            iArgs.push(function () {
+                return  (iCallback !== false)  &&  (iCallback !== arguments[0]);
+            });
+
+            Each_Row.apply(this, iArgs);
+
+            return this;
+        },
+        one:        function () {
+            var iArgs = $.makeArray(arguments);
+
+            if (typeof iArgs[iArgs.length - 1]  ==  'function') {
+                var iCallback = iArgs.pop();
+
+                iArgs.push(function () {
+                    this.off.apply(this, iArgs);
+
+                    return  iCallback.apply(this, arguments);
+                });
+
+                this.on.apply(this, iArgs);
+            }
+
+            return this;
+        },
+        trigger:    function () {
+            var iArgs = $.makeArray(arguments),  iReturn;
+
+            var iData = $.likeArray(iArgs[iArgs.length - 1])  &&  iArgs.pop();
+
+            iArgs.push(function () {
+                var _Return_ = arguments[0].apply(this, iData);
+
+                iReturn = $.isData(_Return_) ? _Return_ : iReturn;
+            });
+
+            Each_Row.apply(this, iArgs);
+
+            return iReturn;
+        }
+    });
+
+    $.Observer = Observer;
+
+})(self, self.document, iQuery);
+
+
+//
+//              >>>  jQuery+  <<<
+//
+//
+//    [Version]    v7.1  (2016-05-25)
+//
+//    [Require]    jQuery  v1.9+
+//
+//
+//        (C)2014-2016  shiy2008@gmail.com
+//
+
+
+
+(function (BOM, DOM, $) {
+
+    return  BOM.jQuery.extend(true, $);
+
+})(self, self.document, iQuery);
+
+
+});

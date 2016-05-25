@@ -4,15 +4,13 @@
     paths:           {
         jquery:    'http://cdn.bootcss.com/jquery/1.12.3/jquery'
     },
-    out:             '../source/jQuery+.js',
+    out:             '../jQuery+.js',
     onBuildWrite:    function (iName) {
-        if (iName.indexOf('extension') < 0)  return '';
-
         var fParameter = 'BOM',  aParameter = 'self';
 
         if (iName != 'extension/ES-5') {
             fParameter += ', DOM, $';
-            aParameter += ',  self.document,  self.jQuery';
+            aParameter += ', self.document, iQuery';
         }
         return arguments[2]
             .replace(/^define[\s\S]+?(function \()[^\)]*/m,  "\n($1" + fParameter)

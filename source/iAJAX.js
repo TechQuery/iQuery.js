@@ -2,209 +2,202 @@ define(['iEvent'],  function ($) {
 
     var BOM = self,  DOM = self.document;
 
-    /* ----- XML HTTP Request ----- */
 
-    var $_DOM = $(DOM);
+/* ---------- AJAX API ---------- */
 
-    function onLoad(iOption, iProperty) {
-        if (iProperty)  $.extend(this, iProperty);
+    var $_DOM = $(DOM),  iAJAX = new $.Observer(1);
 
-        if (! (iOption.crossDomain || (this.readyState == 4)))
-            return;
+    function AJAX_Register(iName) {
+        var iArgs = $.makeArray(arguments).slice(1);
 
-        var iError = (this.status > 399),  iArgs = [this, iOption];
+        var iCallback = iArgs[iArgs.length - 1];
 
-        $_DOM.trigger('ajaxComplete', iArgs);
-        $_DOM.trigger('ajax' + (iError ? 'Error' : 'Success'),  iArgs);
+        if (typeof iCallback != 'function')  return;
 
-        if (typeof iOption.success == 'function')
-            iOption.success(this.responseAny(), 'success', this);
+        iArgs.splice(-1,  1,  function () {
+            return  iCallback.apply(BOM, $.makeArray(arguments).slice(1));
+        });
+
+        iAJAX.on.apply(iAJAX, [iName].concat(iArgs));
     }
-
-    var Success_State = {
-            readyState:    4,
-            status:        200,
-            statusText:    'OK'
-        };
-
-    function XD_Request(iOption) {
-        var iData = iOption.data;
-
-        this.open.call(this, iOption.type, iOption.url, true);
-
-        this[iOption.crossDomain ? 'onload' : 'onreadystatechange'] = $.proxy(
-            onLoad,
-            this,
-            (! (this instanceof BOM.XMLHttpRequest))  &&  Success_State,
-            null
-        );
-
-        if (iOption.xhrFields)  $.extend(this, iOption.xhrFields);
-
-        if (! iOption.crossDomain)
-            iOption.headers = $.extend(iOption.headers || { }, {
-                'X-Requested-With':    'XMLHttpRequest',
-                Accept:                '*/*'
-            });
-
-        for (var iKey in iOption.headers)
-            this.setRequestHeader(iKey, iOption.headers[iKey]);
-
-        if ((iData instanceof Array)  ||  $.isPlainObject(iData))
-            iData = $.param(iData);
-
-        if ((typeof iData == 'string')  ||  iOption.contentType)
-            this.setRequestHeader('Content-Type', (
-                iOption.contentType || 'application/x-www-form-urlencoded'
-            ));
-
-        iOption.data = iData;
-
-        $_DOM.trigger('ajaxSend',  [this, iOption]);
-
-        this.send(iData);
-
-        return this;
-    }
-
-    var XHR_Extension = {
-            timeOut:        function (iSecond, iCallback) {
-                var iXHR = this;
-
-                $.wait(iSecond, function () {
-                    iXHR[
-                        (iXHR.$_DOM || iXHR.option.crossDomain)  ?
-                            'onload'  :  'onreadystatechange'
-                    ] = null;
-                    iXHR.abort();
-                    iCallback.call(iXHR);
-                    iXHR = null;
-                });
-            },
-            responseAny:    function () {
-                var iContent = this.responseText,
-                    iType = this.responseType || 'text/plain';
-
-                switch ( iType.split('/')[1] ) {
-                    case 'plain':    ;
-                    case 'json':     {
-                        var _Content_ = iContent.trim();
-                        try {
-                            iContent = $.parseJSON(_Content_);
-                            this.responseType = 'application/json';
-                        } catch (iError) {
-                            if ($.browser.msie != 9)  try {
-                                if (! $.browser.mozilla)
-                                    iContent = $.parseXML(_Content_);
-                                else if (this.responseXML)
-                                    iContent = this.responseXML;
-                                else
-                                    break;
-                                this.responseType = 'text/xml';
-                            } catch (iError) { }
-                        }
-                        break;
-                    }
-                    case 'xml':      iContent = this.responseXML;
-                }
-
-                return iContent;
-            },
-            retry:          function () {
-                $.wait(arguments[0],  $.proxy(XD_Request, this));
-            }
-        };
-
-    $.extend(BOM.XMLHttpRequest.prototype, XHR_Extension);
-
-    /* ----- HTTP Wraped Method ----- */
 
     $.extend({
-        ajaxTransport:    function () {
-            var iCallback = arguments[arguments.length - 1];
-
-            $_DOM.on('ajaxTransport',  function () {
-                function iXHR() {}
-
-                $.extend(iXHR.prototype, iCallback.apply(
-                    BOM,  $.makeArray(arguments).slice(1)
-                ), {
-                    open:                function () { },
-                    setRequestHeader:    function () { }
-                });
-
-                return iXHR;
-            });
-        },
-        ajaxPrefilter:    function () {
-            var iCallback = arguments[arguments.length - 1];
-
-            $_DOM.on('ajaxPrefilter',  function () {
-                iCallback.apply(BOM, $.makeArray(arguments).slice(1));
-            });
-        }
+        ajaxPrefilter:    $.proxy(AJAX_Register, $, 'prefilter'),
+        ajaxTransport:    $.proxy(AJAX_Register, $, 'transport')
     });
 
-    function HTTP_Request(iMethod, iURL, iData, iCallback) {
-        var iOption = {
-                type:           iMethod.toUpperCase(),
-                url:            iURL,
-                crossDomain:    $.isCrossDomain(iURL),
-                data:           iData,
-                success:        iCallback
-            };
+    $.ajaxTransport(function (iOption) {
+        var iXHR;
 
-        var iXHR = new (
-                $_DOM.triggerHandler('ajaxTransport', [
-                    iOption, iOption, BOM.XMLHttpRequest
-                ])  ||
-                BOM.XMLHttpRequest
-            )();
+        return {
+            send:    function (iHeader, iComplete) {
+                iXHR = new BOM.XMLHttpRequest();
 
-        $_DOM.triggerHandler('ajaxPrefilter',  [iOption, iOption, iXHR]);
+                iXHR.open(iOption.type, iOption.url, true);
 
-        return  XD_Request.call(iXHR, iOption);
+                iXHR[iOption.crossDomain ? 'onload' : 'onreadystatechange'] =
+                    function () {
+                        if (! (iOption.crossDomain || (iXHR.readyState == 4)))
+                            return;
+
+                        var iResponse = {text:  iXHR.responseText};
+                        iResponse[ iXHR.responseType ] = iXHR.response;
+
+                        iComplete(
+                            iXHR.status,
+                            iXHR.statusText,
+                            iResponse,
+                            iXHR.getAllResponseHeaders()
+                        );
+                    };
+
+                if (iOption.xhrFields)  $.extend(iXHR, iOption.xhrFields);
+
+                if (! iOption.crossDomain)
+                    iOption.headers = $.extend(iOption.headers || { },  iHeader,  {
+                        'X-Requested-With':    'XMLHttpRequest',
+                        Accept:                '*/*'
+                    });
+
+                for (var iKey in iOption.headers)
+                    iXHR.setRequestHeader(iKey, iOption.headers[iKey]);
+
+                var iData = iOption.data;
+
+                if ((iData instanceof Array)  ||  $.isPlainObject(iData))
+                    iData = $.param(iData);
+
+                if ((typeof iData == 'string')  ||  iOption.contentType)
+                    iXHR.setRequestHeader('Content-Type', (
+                        iOption.contentType || 'application/x-www-form-urlencoded'
+                    ));
+
+                iOption.data = iData;
+
+                iXHR.send(iData);
+            },
+            abort:    function () {
+                iXHR.onload = iXHR.onreadystatechange = null;
+                iXHR.abort();
+                iXHR = null;
+            }
+        };
+    });
+
+    function AJAX_Complete(iOption) {
+        var iHeader = { };
+
+        if (arguments[4])
+            $.each(arguments[4].split("\n"),  function () {
+                var _Header_ = $.split(this, /:\s+/, 2);
+
+                iHeader[_Header_[0]] = _Header_[1];
+            });
+
+        $.extend(this, {
+            status:          arguments[1],
+            statusText:      arguments[2],
+            responseText:    arguments[3].text,
+            responseType:
+                (iHeader['Content-Type'] ||　'').split(';')[0]  ||  'text/plain'
+        });
+
+        var iArgs = [this, iOption];
+
+        $_DOM.trigger('ajaxComplete', iArgs);
+
+        if (arguments[1] < 400)
+            $_DOM.trigger('ajaxSuccess', iArgs);
+        else
+            $_DOM.trigger('ajaxError',  iArgs.concat(new Error(this.statusText)));
+
+        if (typeof iOption.success != 'function')  return;
+
+        var iContent = this.responseText;
+
+        switch ( this.responseType.split('/')[1] ) {
+            case 'plain':    ;
+            case 'json':     {
+                try {
+                    iContent = $.parseJSON(iContent);
+                    this.responseType = 'application/json';
+                } catch (iError) {
+                    if ($.browser.msie != 9)  try {
+                        if (! $.browser.mozilla)
+                            iContent = $.parseXML(iContent);
+                        else if (this.responseXML)
+                            iContent = this.responseXML;
+                        else
+                            break;
+                        this.responseType = 'text/xml';
+                    } catch (iError) { }
+                }
+                break;
+            }
+            case 'xml':      iContent = this.responseXML;
+        }
+
+        iOption.success(iContent, 'success', this);
     }
 
-    var HTTP_Method = $.makeSet('POST', 'PUT', 'DELETE');
-
-    for (var iMethod in HTTP_Method)
-        $[ iMethod.toLowerCase() ] = $.proxy(HTTP_Request, BOM, iMethod);
-
-    $.getJSON = $.get = function (iURL, iData, iCallback) {
+    function HTTP_Request(iMethod, iURL, iData, iCallback) {
         if (typeof iData == 'function') {
             iCallback = iData;
             iData = { };
         }
 
-        //  JSONP
-        if ( iURL.match(/\w+=\?/) ) {
-            var iDHR = new BOM.DOMHttpRequest();
-            iDHR.open('GET', iURL);
-            iDHR.onready = iCallback;
-            return iDHR.send(iData);
+        var iOption = {
+                type:           iMethod,
+                crossDomain:    $.isCrossDomain(iURL),
+                dataType:       'text',
+                data:           iData || { },
+                success:        iCallback
+            };
+
+        iOption.url = iURL.replace(/&?(\w+)=\?/,  function () {
+            if (iOption.jsonp = arguments[1])  iOption.dataType = 'jsonp';
+
+            return '';
+        });
+
+        if (iMethod == 'GET') {
+            iOption.data = $.extend($.paramJSON(iOption.url), iOption.data);
+
+            iOption.url = iOption.url.split('?')[0] + (
+                $.isEmptyObject( iOption.data )  ?
+                    ''  :  ('?' + $.param(iOption.data))
+            );
         }
+        var iXHR = new BOM.XMLHttpRequest(),  iArgs = [iOption, iOption, iXHR];
 
-        //  XHR
-        iData = $.extend($.paramJSON(iURL), iData);
+        iAJAX.trigger('prefilter', iArgs);
 
-        var File_Name = $.fileName(iURL);
+        iXHR = iAJAX.trigger('transport', iOption.dataType, iArgs);
 
-        if (!  $.map($('link[rel="next"], link[rel="prefetch"]'),  function () {
-            if ($.fileName( arguments[0].href )  ==  File_Name)
-                return iURL;
-        }).length)
-            iData._ = $.now();
+        iXHR.send({ },  $.proxy(AJAX_Complete, iXHR, iOption));
 
-        return HTTP_Request(
-            'GET',
-            (iURL.split('?')[0] + '?' + $.param(iData)).trim('?'),
-            null,
-            iCallback
-        );
-    };
+        if (iOption.timeout)
+            $.wait(iOption.timeout / 1000,  function () {
+                iXHR.abort();
 
-    /* ----- Smart HTML Loading ----- */
+                $_DOM.trigger('ajaxError', [
+                    iXHR,  iOption,  new Error('XMLHttpRequest Timeout')
+                ]);
+            });
+
+        $_DOM.trigger('ajaxSend',  [iXHR, iOption]);
+    }
+
+    var HTTP_Method = $.makeSet('GET', 'POST', 'PUT', 'DELETE');
+
+    for (var iMethod in HTTP_Method)
+        $[ iMethod.toLowerCase() ] = $.proxy(HTTP_Request, BOM, iMethod);
+
+    $.getJSON = $.get;
+
+
+/* ---------- Smart HTML Loading ---------- */
+
     $.fn.load = function (iURL, iData, iCallback) {
         if (! this[0])  return this;
 

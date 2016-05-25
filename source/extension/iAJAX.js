@@ -11,6 +11,12 @@ define(['jquery'],  function ($) {
     };
     BOM.DOMHttpRequest.JSONP = { };
 
+    var Success_State = {
+            readyState:    4,
+            status:        200,
+            statusText:    'OK'
+        };
+
     $.extend(BOM.DOMHttpRequest.prototype, {
         open:                function () {
             this.responseURL = arguments[1];
@@ -40,23 +46,32 @@ define(['jquery'],  function ($) {
 
                 $('iframe[name="' + iTarget + '"]').sandBox(function () {
                     iDHR.$_Transport.data('_AJAX_Submitting_', 0);
-
-                    if (iDHR.readyState)  try {
-                        iDHR.onload($.extend({
-                            responseText:    $(this).contents().find('body').text()
-                        }, Success_State));
+                    try {
+                        iDHR.responseText = $(this).contents().find('body').text();
                     } catch (iError) { }
+
+                    $.extend(iDHR, Success_State, {
+                        responseType:    'text',
+                        response:        iDHR.responseText
+                    });
+                    iDHR.onload();
                 }).attr('name', iTarget);
 
                 this.$_Transport.submit();
             } else {
                 //  <script />, JSONP
-                var iURL = this.responseURL.match(/([^\?=&]+\?|\?)?(\w.+)?/)  ||
-                        throw 'Illegal JSONP URL !';
+                var iURL = this.responseURL.match(/([^\?=&]+\?|\?)?(\w.+)?/);
 
-                this.constructor.JSONP[_UUID_] = function () {
-                    if (iDHR.readyState)
-                        iDHR.onload(Success_State, arguments[0]);
+                if (! iURL)  throw 'Illegal JSONP URL !';
+
+                this.constructor.JSONP[_UUID_] = function (iJSON) {
+                    $.extend(iDHR, Success_State, {
+                        responseType:    'json',
+                        response:        iJSON,
+                        responseText:    JSON.stringify(iJSON)
+                    });
+                    iDHR.onload();
+
                     delete this[_UUID_];
                     iDHR.$_Transport.remove();
                 };
@@ -82,40 +97,72 @@ define(['jquery'],  function ($) {
 /* ---------- AJAX for IE 10- ---------- */
 
     $.ajaxTransport(function (iOption) {
-        var iXHR,  $_Form = $(iOption.data.ownerNode);
+        var iXHR;
 
-        if (! (
-            ($.browser.msie < 10)  &&
-            (iOption.data instanceof BOM.FormData)  &&
-            $_Form.is('form')
-        ))
-            return;
-
-        if (! $_Form.find('input[type="file"]')[0])
+        if (($.browser.msie < 10)  &&  iOption.crossDomain)
             return {
-                send:     function () {
+                send:     function (iHeader, iComplete) {
                     iXHR = new BOM.XDomainRequest();
-                    iXHR.open(iOption.method, iOption.url);
-                    iXHR;
+
+                    iXHR.open(iOption.type, iOption.url, true);
+
+                    iXHR.onload = function () {
+                        iComplete(
+                            200,
+                            'OK',
+                            {text:  iXHR.responseText},
+                            'Content-Type: ' + iXHR.contentType
+                        );
+                    };
                     iXHR.send(iOption.data);
                 },
                 abort:    function () {
                     iXHR.abort();
+                    iXHR = null;
                 }
             };
+    });
+
+    function DHR_Transport(iOption) {
+        var iXHR,  iForm = iOption.data.ownerNode;
+
+        switch (true) {
+            case (
+                (iOption.data instanceof BOM.FormData)  &&
+                $(iForm).is('form')  &&
+                $('input[type="file"]', iForm)[0]
+            ):
+                break;
+            case ($.fn.iquery  &&  (iOption.dataType == 'jsonp')):
+                break;
+            default:    return;
+        }
 
         return {
-            send:     function () {
+            send:     function (iHeader, iComplete) {
+                if (iOption.dataType == 'jsonp')
+                    iOption.url += (iOption.url.split('?')[1] ? '&' : '?')  +
+                        iOption.jsonp + '=?';
+
                 iXHR = new BOM.DOMHttpRequest();
-                iXHR.open(iOption.method, iOption.url);
-                iXHR.onready = iCallback;
+                iXHR.open(iOption.type, iOption.url);
+                iXHR.onload = function () {
+                    var iResponse = {text:  iXHR.responseText};
+                    iResponse[ iXHR.responseType ] = iXHR.response;
+
+                    iComplete(iXHR.status, iXHR.statusText, iResponse);
+                };
                 iXHR.send(iOption.data);
             },
             abort:    function () {
                 iXHR.abort();
             }
         };
-    });
+    }
+
+    $.ajaxTransport(DHR_Transport);
+
+    $.ajaxTransport('jsonp', DHR_Transport);
 
 /* ---------- Form Element AJAX Submit ---------- */
 
