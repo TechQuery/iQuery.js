@@ -13,13 +13,13 @@ define(['jquery'],  function ($) {
 
         if (typeof iArgs[iArgs.length - 1]  !=  'function')  return;
 
-        var iCallback = iArgs.pop();
+        var iTable = this.table,  iCallback = iArgs.pop();
 
-        $.each(this.table[0],  function (Index) {
-            if (this == null)  return;
+        $.each(iTable[0],  function (Index) {
+            if (arguments[1] == null)  return;
 
-            for (var i = 0, _Condition_;  i < iArgs.length;  i++) {
-                _Condition_ = _This_.table[i + 1][Index];
+            for (var i = 0, _Condition_;  iArgs[i] && iTable[i + 1];  i++) {
+                _Condition_ = iTable[i + 1][Index];
 
                 if (_Condition_ === undefined) {
 
@@ -38,7 +38,7 @@ define(['jquery'],  function ($) {
             }
 
             if (false  ===  iCallback.call(_This_, this))
-                _This_.table[0][Index] = null;
+                iTable[0][Index] = null;
         });
     }
 

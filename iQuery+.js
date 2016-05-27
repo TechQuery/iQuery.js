@@ -5,120 +5,6 @@ if ((typeof this.define != 'function')  ||  (! this.define.amd))
 
 define('iQuery+',  function () {
 
-
-(function (BOM, DOM, $) {
-
-    function Observer() {
-        this.requireArgs = arguments[0] || 0;
-        this.filter = arguments[1] || [ ];
-        this.table = [[ ]];
-
-        return this;
-    }
-
-    function Each_Row() {
-        var _This_ = this,  iArgs = $.makeArray(arguments);
-
-        if (typeof iArgs[iArgs.length - 1]  !=  'function')  return;
-
-        var iCallback = iArgs.pop();
-
-        $.each(this.table[0],  function (Index) {
-            if (this == null)  return;
-
-            for (var i = 0, _Condition_;  i < iArgs.length;  i++) {
-                _Condition_ = _This_.table[i + 1][Index];
-
-                if (_Condition_ === undefined) {
-
-                    if (i < _This_.requireArgs)  return;
-
-                } else if (
-                    (_Condition_ != iArgs[i])  ||
-                    (! iArgs[i].match(_Condition_))  ||  (
-                        (typeof _This_.filter[i] == 'function')  &&
-                        (false === _This_.filter[i].call(
-                            _This_,  _Condition_,  iArgs[i]
-                        ))
-                    )
-                )
-                    return;
-            }
-
-            if (false  ===  iCallback.call(_This_, this))
-                _This_.table[0][Index] = null;
-        });
-    }
-
-    $.extend(Observer.prototype, {
-        on:         function () {
-            var iArgs = $.makeArray(arguments);
-
-            if (typeof iArgs[iArgs.length - 1]  ==  'function') {
-                var Index = this.table[0].push( iArgs.pop() )  -  1;
-
-                for (var i = 0;  i < iArgs.length;  i++) {
-                    if (! this.table[i + 1])
-                        this.table[i + 1] = [ ];
-
-                    this.table[i + 1][Index] = iArgs[i];
-                }
-            }
-            return this;
-        },
-        off:        function () {
-            var _This_ = this,  iArgs = $.makeArray(arguments);
-
-            var iCallback = (typeof iArgs[iArgs.length - 1]  ==  'function')  &&
-                    iArgs.pop();
-
-            iArgs.push(function () {
-                return  (iCallback !== false)  &&  (iCallback !== arguments[0]);
-            });
-
-            Each_Row.apply(this, iArgs);
-
-            return this;
-        },
-        one:        function () {
-            var _This_ = this,  iArgs = $.makeArray(arguments);
-
-            if (typeof iArgs[iArgs.length - 1]  ==  'function') {
-                var iCallback = iArgs.pop();
-
-                iArgs.push(function () {
-                    this.off.apply(this, iArgs);
-
-                    return  iCallback.apply(this, arguments);
-                });
-
-                this.on.apply(this, iArgs);
-            }
-
-            return this;
-        },
-        trigger:    function () {
-            var iArgs = $.makeArray(arguments),  iReturn;
-
-            var iData = $.likeArray(iArgs[iArgs.length - 1])  &&  iArgs.pop();
-
-            iArgs.push(function () {
-                var _Return_ = arguments[0].apply(this, iData);
-
-                iReturn = $.isData(_Return_) ? _Return_ : iReturn;
-            });
-
-            Each_Row.apply(this, iArgs);
-
-            return iReturn;
-        }
-    });
-
-    $.Observer = Observer;
-
-})(self, self.document, self.jQuery);
-
-
 /* ---------- ListView Interface  v0.7 ---------- */
 
 //  Thanks "EasyWebApp" Project --- http://git.oschina.net/Tech_Query/EasyWebApp
@@ -359,7 +245,7 @@ define('iQuery+',  function () {
 
             var iFork = ListView($_View.appendTo( arguments[0] ),  this.selector);
             iFork.$_Template = this.$_Template.clone(true);
-            iFork.callback = this.callback;
+            iFork.table = this.table;
 
             return iFork;
         }
@@ -573,7 +459,7 @@ define('iQuery+',  function () {
 //              >>>  iQuery+  <<<
 //
 //
-//    [Version]    v1.5  (2016-5-24)  Stable
+//    [Version]    v1.5  (2016-5-25)  Stable
 //
 //    [Require]    iQuery  ||  jQuery with jQuery+
 //

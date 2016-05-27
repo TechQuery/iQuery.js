@@ -609,18 +609,19 @@ define(['extension/iTimer'],  function ($) {
             var iPath = (typeof $_Match == 'string'),
                 iMatch = (typeof Element.prototype.matches == 'function');
 
-            for (var i = 0, $_Is;  i < this.length;  i++) {
+            for (var i = 0;  i < this.length;  i++) {
                 if (this[i] === $_Match)  return true;
 
                 if (iPath && iMatch)  try {
-                    return this[i].matches($_Match);
+                    if (this[i].matches( $_Match ))  return true;
                 } catch (iError) { }
 
                 if (! this[i].parentNode)  $('<div />')[0].appendChild( this[i] );
 
-                $_Is = iPath  ?  $($_Match, this[i].parentNode)  :  $($_Match);
-
-                return  ($_Is.index( this[i] )  >  -1);
+                if (-1  <  $.inArray(this[i], (
+                    iPath  ?  $($_Match, this[i].parentNode)  :  $($_Match)
+                )))
+                    return true;
             }
 
             return false;

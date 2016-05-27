@@ -112,34 +112,9 @@ define('jQuery+',  function () {
         });
     };
 
-    /* ----- BOM/DOM Fix  v0.4 ----- */
+    /* ----- Console Fix  v0.1 ----- */
 
-    BOM.new_Window_Fix = function (Fix_More) {
-        if (! this)  return false;
-
-        try {
-            var _Window_ = this.opener,
-                This_DOM = this.document;
-
-            This_DOM.defaultView = this;
-
-            if (_Window_ && (this.location.href == 'about:blank'))
-                This_DOM.domain = _Window_.document.domain;
-
-            if ((_Window_ || this).navigator.userAgent.match(/MSIE 8/i))
-                This_DOM.head = This_DOM.documentElement.firstChild;
-        } catch (iError) {
-            return false;
-        }
-        if (Fix_More)  Fix_More.call(this);
-
-        return true;
-    };
-
-    BOM.new_Window_Fix();
-
-
-    if (console)  return;
+    if (BOM.console)  return;
 
     function _Notice_() {
         var iString = [ ];
@@ -1992,13 +1967,13 @@ define('jQuery+',  function () {
 
         if (typeof iArgs[iArgs.length - 1]  !=  'function')  return;
 
-        var iCallback = iArgs.pop();
+        var iTable = this.table,  iCallback = iArgs.pop();
 
-        $.each(this.table[0],  function (Index) {
-            if (this == null)  return;
+        $.each(iTable[0],  function (Index) {
+            if (arguments[1] == null)  return;
 
-            for (var i = 0, _Condition_;  i < iArgs.length;  i++) {
-                _Condition_ = _This_.table[i + 1][Index];
+            for (var i = 0, _Condition_;  iArgs[i] && iTable[i + 1];  i++) {
+                _Condition_ = iTable[i + 1][Index];
 
                 if (_Condition_ === undefined) {
 
@@ -2017,7 +1992,7 @@ define('jQuery+',  function () {
             }
 
             if (false  ===  iCallback.call(_This_, this))
-                _This_.table[0][Index] = null;
+                iTable[0][Index] = null;
         });
     }
 
@@ -2094,7 +2069,7 @@ define('jQuery+',  function () {
 //              >>>  jQuery+  <<<
 //
 //
-//    [Version]    v7.1  (2016-05-25)
+//    [Version]    v7.1  (2016-05-27)
 //
 //    [Require]    jQuery  v1.9+
 //

@@ -88,7 +88,7 @@ define(['iEvent'],  function ($) {
         var iHeader = { };
 
         if (arguments[4])
-            $.each(arguments[4].split("\n"),  function () {
+            $.each(arguments[4].split("\r\n"),  function () {
                 var _Header_ = $.split(this, /:\s+/, 2);
 
                 iHeader[_Header_[0]] = _Header_[1];
@@ -98,9 +98,32 @@ define(['iEvent'],  function ($) {
             status:          arguments[1],
             statusText:      arguments[2],
             responseText:    arguments[3].text,
-            responseType:
-                (iHeader['Content-Type'] ||　'').split(';')[0]  ||  'text/plain'
+            responseType:    (
+                (iHeader['Content-Type'] || '').split(';')[0].split('/')[1]
+            )  ||  'text'
         });
+
+        switch ( this.responseType ) {
+            case 'text':    ;
+            case 'html':    this.response = this.responseText;
+            case 'json':
+                try {
+                    this.response = $.parseJSON( this.responseText );
+                    this.responseType = 'json';
+                } catch (iError) {
+                    if ($.browser.msie != 9)  try {
+                        if (! $.browser.mozilla)
+                            this.response = $.parseXML( this.responseText );
+                        else if (this.responseXML)
+                            this.response = this.responseXML;
+                        else
+                            break;
+                        this.responseType = 'xml';
+                    } catch (iError) { }
+                }
+                break;
+            case 'xml':     this.response = this.responseXML;
+        }
 
         var iArgs = [this, iOption];
 
@@ -111,33 +134,8 @@ define(['iEvent'],  function ($) {
         else
             $_DOM.trigger('ajaxError',  iArgs.concat(new Error(this.statusText)));
 
-        if (typeof iOption.success != 'function')  return;
-
-        var iContent = this.responseText;
-
-        switch ( this.responseType.split('/')[1] ) {
-            case 'plain':    ;
-            case 'json':     {
-                try {
-                    iContent = $.parseJSON(iContent);
-                    this.responseType = 'application/json';
-                } catch (iError) {
-                    if ($.browser.msie != 9)  try {
-                        if (! $.browser.mozilla)
-                            iContent = $.parseXML(iContent);
-                        else if (this.responseXML)
-                            iContent = this.responseXML;
-                        else
-                            break;
-                        this.responseType = 'text/xml';
-                    } catch (iError) { }
-                }
-                break;
-            }
-            case 'xml':      iContent = this.responseXML;
-        }
-
-        iOption.success(iContent, 'success', this);
+        if (typeof iOption.success == 'function')
+            iOption.success(this.response, 'success', this);
     }
 
     function HTTP_Request(iMethod, iURL, iData, iCallback) {

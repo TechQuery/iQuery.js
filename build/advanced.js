@@ -2,7 +2,8 @@
     baseUrl:         '../source/advanced',
     name:            'iQuery+',
     paths:           {
-        jquery:    'http://cdn.bootcss.com/jquery/1.12.3/jquery'
+        jquery:       'http://cdn.bootcss.com/jquery/1.12.3/jquery',
+        'jQuery+':    'http://git.oschina.net/Tech_Query/iQuery/raw/master/jQuery+.js'
     },
     out:             '../iQuery+.js',
     onBuildWrite:    function () {

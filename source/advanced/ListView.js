@@ -2,7 +2,7 @@
 
 //  Thanks "EasyWebApp" Project --- http://git.oschina.net/Tech_Query/EasyWebApp
 
-define(['jquery', 'Observer'],  function ($) {
+define(['jquery', 'jQuery+'],  function ($) {
 
     var Click_Type = $.browser.mobile ? 'tap' : 'click';
 
@@ -237,7 +237,7 @@ define(['jquery', 'Observer'],  function ($) {
 
             var iFork = ListView($_View.appendTo( arguments[0] ),  this.selector);
             iFork.$_Template = this.$_Template.clone(true);
-            iFork.callback = this.callback;
+            iFork.table = this.table;
 
             return iFork;
         }

@@ -104,34 +104,9 @@ define(function () {
         });
     };
 
-    /* ----- BOM/DOM Fix  v0.4 ----- */
+    /* ----- Console Fix  v0.1 ----- */
 
-    BOM.new_Window_Fix = function (Fix_More) {
-        if (! this)  return false;
-
-        try {
-            var _Window_ = this.opener,
-                This_DOM = this.document;
-
-            This_DOM.defaultView = this;
-
-            if (_Window_ && (this.location.href == 'about:blank'))
-                This_DOM.domain = _Window_.document.domain;
-
-            if ((_Window_ || this).navigator.userAgent.match(/MSIE 8/i))
-                This_DOM.head = This_DOM.documentElement.firstChild;
-        } catch (iError) {
-            return false;
-        }
-        if (Fix_More)  Fix_More.call(this);
-
-        return true;
-    };
-
-    BOM.new_Window_Fix();
-
-
-    if (console)  return;
+    if (BOM.console)  return;
 
     function _Notice_() {
         var iString = [ ];

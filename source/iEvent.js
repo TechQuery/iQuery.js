@@ -408,27 +408,26 @@ define(['iCore'],  function ($) {
     $.start('DOM_Ready');
 
     function DOM_Ready_Event() {
-        if (DOM.isReady || (
-            (this !== DOM)  &&  (
-                (DOM.readyState != 'complete')  ||
-                (!  (DOM.body || { }).lastChild)
-            )
+        if ((typeof arguments[2] == 'number')  &&  (
+            (DOM.readyState != 'complete')  ||  (! (DOM.body || { }).lastChild)
         ))
             return;
 
-        DOM.isReady = true;
-        BOM.clearTimeout( $_DOM.data('Ready_Timer') );
-        $_DOM.data('Load_During', $.end('DOM_Ready'))
-            .data('Ready_Event', arguments[0]);
-        console.info('[DOM Ready Event]');
-        console.log(this, arguments);
+        if (! DOM.isReady) {
+            DOM.isReady = true;
 
-        $_DOM.trigger('ready');
+            $_DOM.data('Load_During', $.end('DOM_Ready'))
+                .data('Ready_Event', arguments[0]);
+            console.info('[DOM Ready Event]');
+            console.log(this, arguments);
+
+            $_DOM.trigger('ready');
+        }
 
         return false;
     }
 
-    $_DOM.data('Ready_Timer',  $.every(0.5, DOM_Ready_Event));
+    $.every(0.5, DOM_Ready_Event);
     $_DOM.one('DOMContentLoaded', DOM_Ready_Event);
     $(BOM).one('load', DOM_Ready_Event);
 
