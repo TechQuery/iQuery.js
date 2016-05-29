@@ -7,7 +7,7 @@ define(['jquery'],  function ($) {
     BOM.DOMHttpRequest = function () {
         this.status = 0;
         this.readyState = 0;
-        this.responseType = 'text/plain';
+        this.responseType = 'text';
     };
     BOM.DOMHttpRequest.JSONP = { };
 
@@ -82,8 +82,11 @@ define(['jquery'],  function ($) {
                         )
                     ))
                 );
-                this.$_Transport = $('<script />',  {src: this.responseURL})
-                    .appendTo(DOM.head);
+                this.$_Transport = $('<script />', {
+                    type:       'text/javascript',
+                    charset:    'UTF-8',
+                    src:        this.responseURL
+                }).appendTo(DOM.head);
             }
 
             this.readyState = 2;
@@ -113,6 +116,11 @@ define(['jquery'],  function ($) {
                             {text:  iXHR.responseText},
                             'Content-Type: ' + iXHR.contentType
                         );
+                    };
+                    iXHR.onerror = function () {
+                        iComplete(500, 'Internal Server Error', {
+                            text:    iXHR.responseText
+                        });
                     };
                     iXHR.send(iOption.data);
                 },

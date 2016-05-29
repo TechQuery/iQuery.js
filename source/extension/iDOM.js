@@ -233,7 +233,7 @@ define(['jquery'],  function ($) {
 
         }).attr('src',  ((! iHTML.match(/<.+?>/)) && iHTML.trim())  ||  'about:blank');
 
-        return  $_iFrame[0].parentNode ? this : $_iFrame.appendTo(DOM.body);
+        return  $_iFrame[0].parentElement ? this : $_iFrame.appendTo(DOM.body);
     };
 
 });

@@ -202,9 +202,11 @@ define(['iCore'],  function ($) {
 
             switch (iEvent.type) {
                 case 'readystatechange':    iEvent.type = 'load';
-    //                Loaded = this.readyState.match(/loaded|complete/);  break;
                 case 'load':
-                    Loaded = (this.readyState == 'loaded');  break;
+                    Loaded = (this.readyState == (
+                        (this.tagName == 'SCRIPT')  ?  'loaded'  :  'complete'
+                    ));
+                    break;
                 case 'propertychange':      {
                     var iType = iEvent.propertyName.match(/^on(.+)/i);
                     if (iType && (

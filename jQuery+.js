@@ -498,7 +498,11 @@ define('jQuery+',  function () {
 
     if ($.browser.modern)  return;
 
-    /* ----- DOM ShortCut ----- */
+    DOM.defaultView = DOM.parentWindow;
+
+
+/* ---------- DOM ShortCut ---------- */
+
     var _Children_ = Object.getOwnPropertyDescriptor(
             Element.prototype,  'children'
         );
@@ -541,7 +545,7 @@ define('jQuery+',  function () {
         });
 
 
-    /* ----- DOM Text Content ----- */
+/* ---------- DOM Text Content ---------- */
 
     Object.defineProperty(Element.prototype, 'textContent', {
         get:    function () {
@@ -556,7 +560,7 @@ define('jQuery+',  function () {
         }
     });
 
-    /* ----- DOM Selector Match ----- */
+/* ---------- DOM Selector Match ---------- */
 
     Element.prototype.matches = function () {
         if (! this.parentNode)  $('<div />')[0].appendChild(this);
@@ -566,7 +570,7 @@ define('jQuery+',  function () {
         ) > -1);
     };
 
-    /* ----- DOM Attribute Name ----- */
+/* ---------- DOM Attribute Name ---------- */
 
     var iAlias = {
             'class':    'className',
@@ -592,7 +596,7 @@ define('jQuery+',  function () {
         }
     });
 
-    /* ----- Computed Style ----- */
+/* ---------- Computed Style ---------- */
 
     function CSSStyleDeclaration() {
         $.extend(this, arguments[0].currentStyle, {
@@ -696,7 +700,7 @@ define('jQuery+',  function () {
         return  new CSSStyleDeclaration(arguments[0]);
     };
 
-    /* ----- DOM Event ----- */
+/* ---------- DOM Event ---------- */
 
     var $_DOM = $(DOM);
 
@@ -777,7 +781,7 @@ define('jQuery+',  function () {
         reset:     $.proxy(Fake_Bubble, null, 'reset', _Reset_)
     });
 
-    /* ----- XML DOM Parser ----- */
+/* ---------- XML DOM Parser ---------- */
 
     var IE_DOMParser = $.map([
             'MSXML2.DOMDocument.6.0',
@@ -1052,7 +1056,7 @@ define('jQuery+',  function () {
 
         }).attr('src',  ((! iHTML.match(/<.+?>/)) && iHTML.trim())  ||  'about:blank');
 
-        return  $_iFrame[0].parentNode ? this : $_iFrame.appendTo(DOM.body);
+        return  $_iFrame[0].parentElement ? this : $_iFrame.appendTo(DOM.body);
     };
 
 })(self, self.document, iQuery);
@@ -1641,9 +1645,12 @@ define('jQuery+',  function () {
         if (typeof iTitle != 'string')
             throw TypeError("The History State needs a Title String !");
 
-        _BOM_.document.title = DOM.title = iTitle;
-        _Pushing_ = true;
-        _BOM_.location.search = 'index=' + (_State_.push(arguments) - 1);
+        if (_BOM_) {
+            DOM.title = iTitle;
+            if ($.browser.modern)  _BOM_.document.title = iTitle;
+            _Pushing_ = true;
+            _BOM_.location.search = 'index=' + (_State_.push(arguments) - 1);
+        }
     };
 
     BOM.history.replaceState = function () {
@@ -1754,7 +1761,7 @@ define('jQuery+',  function () {
     BOM.DOMHttpRequest = function () {
         this.status = 0;
         this.readyState = 0;
-        this.responseType = 'text/plain';
+        this.responseType = 'text';
     };
     BOM.DOMHttpRequest.JSONP = { };
 
@@ -1829,8 +1836,11 @@ define('jQuery+',  function () {
                         )
                     ))
                 );
-                this.$_Transport = $('<script />',  {src: this.responseURL})
-                    .appendTo(DOM.head);
+                this.$_Transport = $('<script />', {
+                    type:       'text/javascript',
+                    charset:    'UTF-8',
+                    src:        this.responseURL
+                }).appendTo(DOM.head);
             }
 
             this.readyState = 2;
@@ -1860,6 +1870,11 @@ define('jQuery+',  function () {
                             {text:  iXHR.responseText},
                             'Content-Type: ' + iXHR.contentType
                         );
+                    };
+                    iXHR.onerror = function () {
+                        iComplete(500, 'Internal Server Error', {
+                            text:    iXHR.responseText
+                        });
                     };
                     iXHR.send(iOption.data);
                 },

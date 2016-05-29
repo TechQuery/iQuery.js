@@ -4,7 +4,11 @@ define(['jquery'],  function ($) {
 
     if ($.browser.modern)  return;
 
-    /* ----- DOM ShortCut ----- */
+    DOM.defaultView = DOM.parentWindow;
+
+
+/* ---------- DOM ShortCut ---------- */
+
     var _Children_ = Object.getOwnPropertyDescriptor(
             Element.prototype,  'children'
         );
@@ -47,7 +51,7 @@ define(['jquery'],  function ($) {
         });
 
 
-    /* ----- DOM Text Content ----- */
+/* ---------- DOM Text Content ---------- */
 
     Object.defineProperty(Element.prototype, 'textContent', {
         get:    function () {
@@ -62,7 +66,7 @@ define(['jquery'],  function ($) {
         }
     });
 
-    /* ----- DOM Selector Match ----- */
+/* ---------- DOM Selector Match ---------- */
 
     Element.prototype.matches = function () {
         if (! this.parentNode)  $('<div />')[0].appendChild(this);
@@ -72,7 +76,7 @@ define(['jquery'],  function ($) {
         ) > -1);
     };
 
-    /* ----- DOM Attribute Name ----- */
+/* ---------- DOM Attribute Name ---------- */
 
     var iAlias = {
             'class':    'className',
@@ -98,7 +102,7 @@ define(['jquery'],  function ($) {
         }
     });
 
-    /* ----- Computed Style ----- */
+/* ---------- Computed Style ---------- */
 
     function CSSStyleDeclaration() {
         $.extend(this, arguments[0].currentStyle, {
@@ -202,7 +206,7 @@ define(['jquery'],  function ($) {
         return  new CSSStyleDeclaration(arguments[0]);
     };
 
-    /* ----- DOM Event ----- */
+/* ---------- DOM Event ---------- */
 
     var $_DOM = $(DOM);
 
@@ -283,7 +287,7 @@ define(['jquery'],  function ($) {
         reset:     $.proxy(Fake_Bubble, null, 'reset', _Reset_)
     });
 
-    /* ----- XML DOM Parser ----- */
+/* ---------- XML DOM Parser ---------- */
 
     var IE_DOMParser = $.map([
             'MSXML2.DOMDocument.6.0',

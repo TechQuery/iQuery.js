@@ -159,6 +159,17 @@ define(['iEvent'],  function ($) {
         });
 
         if (iMethod == 'GET') {
+            var File_Name = $.fileName(iURL);
+
+            if (!  (iOption.jsonp || $.browser.modern || $.map(
+                $('link[rel="next"], link[rel="prefetch"]'),
+                function () {
+                    if ($.fileName( arguments[0].href )  ==  File_Name)
+                        return iURL;
+                }
+            ).length))
+                iOption.data._ = $.now();
+
             iOption.data = $.extend($.paramJSON(iOption.url), iOption.data);
 
             iOption.url = iOption.url.split('?')[0] + (

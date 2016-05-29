@@ -101,9 +101,12 @@ define(['jquery'],  function ($) {
         if (typeof iTitle != 'string')
             throw TypeError("The History State needs a Title String !");
 
-        _BOM_.document.title = DOM.title = iTitle;
-        _Pushing_ = true;
-        _BOM_.location.search = 'index=' + (_State_.push(arguments) - 1);
+        if (_BOM_) {
+            DOM.title = iTitle;
+            if ($.browser.modern)  _BOM_.document.title = iTitle;
+            _Pushing_ = true;
+            _BOM_.location.search = 'index=' + (_State_.push(arguments) - 1);
+        }
     };
 
     BOM.history.replaceState = function () {
