@@ -49,16 +49,32 @@ define(['iObject'],  function ($) {
                 return  !!(iParent.compareDocumentPosition(iChild) & 16);
             else
                 return  (iParent !== iChild) && iParent.contains(iChild);
-        },
-        proxy:            function (iFunction, iContext) {
-            var iArgs = $.makeArray(arguments).slice(2);
-
-            return  function () {
-                return  iFunction.apply(
-                    iContext || this,  $.merge(iArgs, arguments)
-                );
-            };
         }
     });
+
+/* ---------- Function Wrapper ---------- */
+
+    var ProxyCache = {
+            origin:     [ ],
+            wrapper:    [ ]
+        };
+
+    $.proxy = function (iFunction, iContext) {
+        var iArgs = $.makeArray(arguments);
+
+        for (var i = 0;  i < ProxyCache.origin.length;  i++)
+            if ($.isEqual(ProxyCache.origin[i], iArgs))
+                return ProxyCache.wrapper[i];
+
+        var Index = ProxyCache.origin.push( iArgs ) - 1;
+
+        iArgs = iArgs.slice(2);
+
+        return  ProxyCache.wrapper[Index] = function () {
+            return  iFunction.apply(
+                iContext || this,  $.merge(iArgs, arguments)
+            );
+        };
+    };
 
 });

@@ -208,7 +208,7 @@ define(['iCore'],  function ($) {
                     ));
                     break;
                 case 'propertychange':      {
-                    var iType = iEvent.propertyName.match(/^on(.+)/i);
+                    var iType = iEvent.originalEvent.propertyName.match(/^on(.+)/i);
                     if (iType && (
                         IE_Event.type.call(this, iType[1])  ==  'onpropertychange'
                     ))
@@ -223,9 +223,9 @@ define(['iCore'],  function ($) {
             if (Loaded)  arguments[0].call(this, iEvent);
         },
         bind:       function () {
-            this.attachEvent(
-                IE_Event.type.call(this, arguments[0]),
-                $.proxy(IE_Event.handler, this, arguments[1])
+            this[((arguments[0] == '+')  ?  'at'  :  'de')  +  'tachEvent'](
+                IE_Event.type.call(this, arguments[1]),
+                $.proxy(IE_Event.handler, this, arguments[2])
             );
         }
     });
@@ -242,7 +242,7 @@ define(['iCore'],  function ($) {
                     type:      iType,
                     target:    this
                 }))
-                    IE_Event.bind.call(this, iType, Proxy_Handler);
+                    IE_Event.bind.call(this, '+', iType, Proxy_Handler);
             }
             Event_Data[iType].push(iCallback);
 
@@ -278,8 +278,12 @@ define(['iCore'],  function ($) {
                     else
                         delete Event_Data[iType[i]];
 
-                    if (! Event_Data[iType[i]])
+                    if ( Event_Data[iType[i]] )  continue;
+
+                    if ($.browser.modern)
                         this.removeEventListener(iType[i], Proxy_Handler);
+                    else
+                        IE_Event.bind.call(this, '-', iType[i], Proxy_Handler);
                 }
                 return Event_Data;
             });
@@ -363,7 +367,7 @@ define(['iCore'],  function ($) {
                             $_New[i].addEventListener(iType, Proxy_Handler, false);
                             continue;
                         }
-                        IE_Event.bind.call($_New[i], iType, Proxy_Handler);
+                        IE_Event.bind.call($_New[i], '+', iType, Proxy_Handler);
                     }
                 }
                 return $_New[0];
