@@ -56,6 +56,7 @@
  - 新增 **字符串字节长度**方法 —— `$.byteLength()`
  - 新增 **URL 参数对象化**方法（$.param() 的逆方法）—— `$.paramJSON()`，其返回值自带的 .toString() 有 **JSON 格式化（美化）输出**能力
  - 新增 **URL 参数签名**方法 —— `$.paramSign()`
+ - 新增 **多条件观察者**基础对象 —— `$.Observer()`
  - 更智能的 `$.get()`、`$.post()`：支持 form 元素、FormData 对象的请求数据形式，整合 XHR、XDR、JSONP、iframe **自适应 跨域请求**， **自动转换响应内容**为 JSON 或 XML 对象实例
  - 新增 `$.delete()`、`$.put()`，方便实现基于 **RESTful API** 的单页应用
  - 新增 **URL 信息提取**方法 —— `$.fileName()`、`$.filePath()`、`$.urlDomain()`
@@ -126,7 +127,7 @@
 
 
 ## 【iQuery+ 插件库】
- - 通用 **Observer 基础对象**（供其它对象的构造函数继承）
+ - 通用 **CommonView 对象**生成方法 —— `$.CommonView()`
  - 通用 **ListView 对象**生成方法 —— `$.ListView()`
  - 通用 **TreeView 对象**生成方法 —— `$.TreeView()`
  - Base64 文本转 **二进制对象**方法 —— `$.toBlob()`
