@@ -8,7 +8,8 @@ define(['jquery', 'ListView'],  function ($) {
         if (!  (this instanceof _Self_))
             return  new _Self_(iListView, iKey, onFork, onFocus);
 
-        var _This_ = $.Observer.call(this, 1).on('branch', onFork);
+        var _This_ = $.CommonView.call(this, iListView.$_View)
+                .on('branch', onFork);
 
         iKey = iKey || 'list';
 
@@ -42,7 +43,9 @@ define(['jquery', 'ListView'],  function ($) {
         $.fn.on.apply(iListView.$_View.addClass('TreeNode'), this.listener);
     }
 
-    TreeView.prototype = $.extend(new $.Observer(),  {
+    TreeView.getInstance = $.CommonView.getInstance;
+
+    TreeView.prototype = $.extend(new $.CommonView(),  {
         constructor:    TreeView,
         branch:         function (iListView, $_Item, iData) {
             var iFork = iListView.fork($_Item).clear().render(iData);

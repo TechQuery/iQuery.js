@@ -2,7 +2,7 @@
 
 //  Thanks "EasyWebApp" Project --- http://git.oschina.net/Tech_Query/EasyWebApp
 
-define(['jquery', 'jQuery+'],  function ($) {
+define(['jquery', 'CommonView'],  function ($) {
 
     var Click_Type = $.browser.mobile ? 'tap' : 'click';
 
@@ -12,19 +12,16 @@ define(['jquery', 'jQuery+'],  function ($) {
         if (!  (this instanceof _Self_))
             return  new _Self_($_View, $_Item, onInsert);
 
-        $_View = $($_View);
         if (typeof $_Item == 'function') {
             onInsert = $_Item;
             $_Item = null;
         }
 
-        var iView = _Self_.getInstance($_View) || $.Observer.call(this, 1);
+        var iView = $.CommonView.call(this, $_View);
 
-        if (onInsert)  iView.on('insert', onInsert);
+        if (typeof onInsert == 'function')  iView.on('insert', onInsert);
 
         if (iView !== this)  return iView;
-
-        this.$_View = $_View.data('_LVI_', this);
 
         this.selector = $_Item;
         this.length = 0;
@@ -55,10 +52,7 @@ define(['jquery', 'jQuery+'],  function ($) {
     }
 
     $.extend(ListView, {
-        getInstance:    function () {
-            var _Instance_ = $(arguments[0]).data('_LVI_');
-            return  ((_Instance_ instanceof this)  &&  _Instance_);
-        },
+        getInstance:    $.CommonView.getInstance,
         findView:       function ($_View, Init_Instance) {
             $_View = $($_View).find(
                 'ul, ol, dl, tbody, select, datalist, *[multiple]'
@@ -68,7 +62,7 @@ define(['jquery', 'jQuery+'],  function ($) {
                 for (var i = 0;  i < $_View.length;  i++)
                     if (! this.getInstance($_View[i]))  this( $_View[i] );
             } else if (Init_Instance === false)
-                $_View.data('_LVI_', null);
+                $_View.data('CVI_ListView', null);
 
             return $_View;
         }
@@ -89,7 +83,7 @@ define(['jquery', 'jQuery+'],  function ($) {
         return $_Clone;
     }
 
-    ListView.prototype = $.extend(new $.Observer(),  {
+    ListView.prototype = $.extend(new $.CommonView(),  {
         constructor:    ListView,
         getSelector:    function () {
             return  this.selector ?
@@ -233,7 +227,7 @@ define(['jquery', 'jQuery+'],  function ($) {
         fork:           function () {
             var $_View = this.$_View.clone(true);
 
-            $_View.data({_LVI_: '',  LV_Model: ''})[0].id = '';
+            $_View.data({CVI_ListView: '',  LV_Model: ''})[0].id = '';
 
             var iFork = ListView($_View.appendTo( arguments[0] ),  this.selector);
             iFork.$_Template = this.$_Template.clone(true);
