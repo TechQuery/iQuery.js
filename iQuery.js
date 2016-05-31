@@ -596,7 +596,7 @@ define('iQuery',  function () {
                 /[^\u0021-\u007e\uff61-\uffef]/g,  'xx'
             ).length;
         },
-        paramJSON:        function (Args_Str, iRaw) {
+        paramJSON:        function (Args_Str) {
             Args_Str = (
                 Args_Str  ?  $.split(Args_Str, '?', 2)[1]  :  BOM.location.search
             ).match(/[^\?&\s]+/g);
@@ -610,7 +610,10 @@ define('iQuery',  function () {
 
                 iValue = BOM.decodeURIComponent( Args_Str[i][1] );
 
-                if (! iRaw)  try {
+                if (
+                    isNaN(Number( iValue ))  ||
+                    (parseInt(iValue).toString().length < 21)
+                )  try {
                     iValue = $.parseJSON(iValue);
                 } catch (iError) { }
 

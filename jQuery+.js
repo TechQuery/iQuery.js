@@ -221,32 +221,37 @@ define('jQuery+',  function () {
         );
     };
 
-    $.isEqual = function (iLeft, iRight) {
+    $.isEqual = function (iLeft, iRight, iDepth) {
+        iDepth = iDepth || 1;
+
         if (!  (iLeft && iRight))
             return  (iLeft == iRight);
 
-        iLeft = iLeft.valueOf();
-        iRight = iRight.valueOf();
+        iLeft = iLeft.valueOf();  iRight = iRight.valueOf();
 
-        if (iLeft == iRight)  return true;
-        if (! (
-            (iLeft instanceof Object)  &&  (iRight instanceof Object)
-        ))
-            return false;
+        if ((typeof iLeft != 'object')  ||  (typeof iRight != 'object'))
+            return  (iLeft == iRight);
 
         var Left_Key = Object.getOwnPropertyNames(iLeft),
             Right_Key = Object.getOwnPropertyNames(iRight);
 
         if (Left_Key.length != Right_Key.length)  return false;
 
+        Left_Key.sort();  Right_Key.sort();  --iDepth;
+
         for (var i = 0, _Key_;  i < Left_Key.length;  i++) {
             _Key_ = Left_Key[i];
 
-            if (! (
-                (_Key_ in iRight)  &&
-                arguments.callee.call(this, iLeft[_Key_], iRight[_Key_])
-            ))
-                return false;
+            if (_Key_ != Right_Key[i])  return false;
+
+            if (! iDepth) {
+                if (iLeft[_Key_] != iRight[_Key_])  return false;
+            } else {
+                if (! arguments.callee.call(
+                    this, iLeft[_Key_], iRight[_Key_], iDepth
+                ))
+                    return false;
+            }
         }
         return true;
     };
@@ -419,7 +424,7 @@ define('jQuery+',  function () {
                 /[^\u0021-\u007e\uff61-\uffef]/g,  'xx'
             ).length;
         },
-        paramJSON:        function (Args_Str, iRaw) {
+        paramJSON:        function (Args_Str) {
             Args_Str = (
                 Args_Str  ?  $.split(Args_Str, '?', 2)[1]  :  BOM.location.search
             ).match(/[^\?&\s]+/g);
@@ -433,7 +438,10 @@ define('jQuery+',  function () {
 
                 iValue = BOM.decodeURIComponent( Args_Str[i][1] );
 
-                if (! iRaw)  try {
+                if (
+                    isNaN(Number( iValue ))  ||
+                    (parseInt(iValue).toString().length < 21)
+                )  try {
                     iValue = $.parseJSON(iValue);
                 } catch (iError) { }
 
@@ -2084,7 +2092,7 @@ define('jQuery+',  function () {
 //              >>>  jQuery+  <<<
 //
 //
-//    [Version]    v7.1  (2016-05-27)
+//    [Version]    v7.3  (2016-05-31)
 //
 //    [Require]    jQuery  v1.9+
 //
