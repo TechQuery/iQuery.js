@@ -40,7 +40,7 @@ define(['jquery'],  function ($) {
 
             if ( this.likeArray(iVar) ) {
                 iType = 'Array';
-                if (! $.browser.modern)  try {
+                if ($.browser.msie < 10)  try {
                     iVar.item();
                     try {
                         iVar.namedItem();

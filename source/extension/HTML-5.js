@@ -5,7 +5,7 @@ define(['jquery'],  function ($) {
     if (! ($.browser.msie < 11))  return;
 
 
-    /* ----- Element Data Set ----- */
+/* ---------- Element Data Set ---------- */
 
     function DOMStringMap(iElement) {
         for (var i = 0, iAttr;  i < iElement.attributes.length;  i++) {
@@ -24,7 +24,7 @@ define(['jquery'],  function ($) {
 
     if (! ($.browser.msie < 10))  return;
 
-    /* ----- Error Useful Information ----- */
+/* ---------- Error Useful Information ---------- */
 
     //  Thanks "Kevin Yang" ---
     //
@@ -37,7 +37,35 @@ define(['jquery'],  function ($) {
         });
     };
 
-    /* ----- DOM Class List ----- */
+/* ---------- DOM Children ---------- */
+
+    var _Children_ = Object.getOwnPropertyDescriptor(
+            Element.prototype,  'children'
+        );
+
+    function HTMLCollection() {
+        var iChildren = _Children_.get.call( arguments[0] );
+
+        for (var i = 0;  i < iChildren.length;  i++) {
+            this[i] = iChildren[i] || iChildren.item(i);
+
+            if (this[i].name)  this[this[i].name] = this[i];
+        }
+        this.length = i;
+    }
+
+    HTMLCollection.prototype.item = HTMLCollection.prototype.namedItem =
+        function () {
+            return  this[ arguments[0] ]  ||  null;
+        };
+
+    Object.defineProperty(Element.prototype, 'children', {
+        get:    function () {
+            return  new HTMLCollection(this);
+        }
+    });
+
+/* ---------- DOM Class List ---------- */
 
     function DOMTokenList() {
         var iClass = (arguments[0].getAttribute('class') || '').trim().split(/\s+/);

@@ -9,24 +9,7 @@ define(['jquery'],  function ($) {
 
 /* ---------- DOM ShortCut ---------- */
 
-    var _Children_ = Object.getOwnPropertyDescriptor(
-            Element.prototype,  'children'
-        );
-
-    function HTMLCollection() {
-        var iChildren = _Children_.get.call( arguments[0] );
-
-        for (var i = 0;  i < iChildren.length;  i++) {
-            this[i] = iChildren[i] || iChildren.item(i);
-            if (this[i].name)  this[this[i].name] = this[i];
-        }
-        this.length = i;
-    }
-
     var iGetter = {
-            children:                  function () {
-                return  new HTMLCollection(this);
-            },
             firstElementChild:         function () {
                 return this.children[0];
             },
