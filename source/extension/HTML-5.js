@@ -2,8 +2,47 @@ define(['jquery'],  function ($) {
 
     var BOM = self,  DOM = self.document;
 
-    if (! ($.browser.msie < 11))  return;
+/* ---------- Document Current Script ---------- */
 
+    var Stack_Prefix = {
+            webkit:     'at ',
+            mozilla:    '@',
+            msie:       'at Global code \\('
+        };
+
+    function Script_URL() {
+        try {
+            throw  new Error('AMD_Loader');
+        } catch (iError) {
+            var iURL;
+
+            for (var iCore in Stack_Prefix)
+                if ( $.browser[iCore] ) {
+                    iURL = iError.stack.match(RegExp(
+                        "\\s+" + Stack_Prefix[iCore] + "(http(s)?:\\/\\/\\S+.js)"
+                    ));
+
+                    return  iURL && iURL[1];
+                }
+        }
+    }
+
+    if (! ('currentScript' in DOM))
+        Object.defineProperty(DOM.constructor.prototype, 'currentScript', {
+            get:    function () {
+                var iURL = ($.browser.msie < 10)  ||  Script_URL();
+
+                for (var i = 0;  DOM.scripts[i];  i++)
+                    if ((iURL === true)  ?
+                        (DOM.scripts[i].readyState == 'interactive')  :
+                        (DOM.scripts[i].src == iURL)
+                    )
+                        return DOM.scripts[i];
+            }
+        });
+
+
+    if (! ($.browser.msie < 11))  return;
 
 /* ---------- Element Data Set ---------- */
 

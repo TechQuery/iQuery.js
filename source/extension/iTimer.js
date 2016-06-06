@@ -7,7 +7,7 @@ define(['jquery'],  function ($) {
         now:        Date.now,
         every:      function (iSecond, iCallback) {
             var _BOM_ = this._Root_,
-                iTimeOut = (iSecond || 1) * 1000,
+                iTimeOut = (iSecond || 0.01) * 1000,
                 iStart = this.now(),
                 Index = 0;
 

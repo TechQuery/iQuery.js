@@ -91,9 +91,7 @@ define('jQuery+',  function () {
     /* ----- Date Extension ----- */
 
     if (! Date.now)
-        Date.now = function () {
-            return  (new Date()).getTime();
-        };
+        Date.now = function () { return  +(new Date()); };
 
     /* ----- JSON Extension  v0.4 ----- */
 
@@ -204,8 +202,8 @@ define('jQuery+',  function () {
         }
 
         for (var i = 0;  i < iArgs.length;  i++)
-            iSet[ iArgs[i] ] = (typeof iValue == 'function')  ?
-                iValue() : iValue;
+            iSet[ iArgs[i] ] = (typeof iValue != 'function')  ?
+                iValue  :  iValue( iArgs[i] );
 
         return iSet;
     };
@@ -312,7 +310,7 @@ define('jQuery+',  function () {
         now:        Date.now,
         every:      function (iSecond, iCallback) {
             var _BOM_ = this._Root_,
-                iTimeOut = (iSecond || 1) * 1000,
+                iTimeOut = (iSecond || 0.01) * 1000,
                 iStart = this.now(),
                 Index = 0;
 
@@ -388,7 +386,7 @@ define('jQuery+',  function () {
 
             if ( this.likeArray(iVar) ) {
                 iType = 'Array';
-                if (! $.browser.modern)  try {
+                if ($.browser.msie < 10)  try {
                     iVar.item();
                     try {
                         iVar.namedItem();
@@ -511,24 +509,7 @@ define('jQuery+',  function () {
 
 /* ---------- DOM ShortCut ---------- */
 
-    var _Children_ = Object.getOwnPropertyDescriptor(
-            Element.prototype,  'children'
-        );
-
-    function HTMLCollection() {
-        var iChildren = _Children_.get.call( arguments[0] );
-
-        for (var i = 0;  i < iChildren.length;  i++) {
-            this[i] = iChildren[i] || iChildren.item(i);
-            if (this[i].name)  this[this[i].name] = this[i];
-        }
-        this.length = i;
-    }
-
     var iGetter = {
-            children:                  function () {
-                return  new HTMLCollection(this);
-            },
             firstElementChild:         function () {
                 return this.children[0];
             },
@@ -1554,10 +1535,49 @@ define('jQuery+',  function () {
 
 (function (BOM, DOM, $) {
 
+/* ---------- Document Current Script ---------- */
+
+    var Stack_Prefix = {
+            webkit:     'at ',
+            mozilla:    '@',
+            msie:       'at Global code \\('
+        };
+
+    function Script_URL() {
+        try {
+            throw  new Error('AMD_Loader');
+        } catch (iError) {
+            var iURL;
+
+            for (var iCore in Stack_Prefix)
+                if ( $.browser[iCore] ) {
+                    iURL = iError.stack.match(RegExp(
+                        "\\s+" + Stack_Prefix[iCore] + "(http(s)?:\\/\\/\\S+.js)"
+                    ));
+
+                    return  iURL && iURL[1];
+                }
+        }
+    }
+
+    if (! ('currentScript' in DOM))
+        Object.defineProperty(DOM.constructor.prototype, 'currentScript', {
+            get:    function () {
+                var iURL = ($.browser.msie < 10)  ||  Script_URL();
+
+                for (var i = 0;  DOM.scripts[i];  i++)
+                    if ((iURL === true)  ?
+                        (DOM.scripts[i].readyState == 'interactive')  :
+                        (DOM.scripts[i].src == iURL)
+                    )
+                        return DOM.scripts[i];
+            }
+        });
+
+
     if (! ($.browser.msie < 11))  return;
 
-
-    /* ----- Element Data Set ----- */
+/* ---------- Element Data Set ---------- */
 
     function DOMStringMap(iElement) {
         for (var i = 0, iAttr;  i < iElement.attributes.length;  i++) {
@@ -1576,7 +1596,7 @@ define('jQuery+',  function () {
 
     if (! ($.browser.msie < 10))  return;
 
-    /* ----- Error Useful Information ----- */
+/* ---------- Error Useful Information ---------- */
 
     //  Thanks "Kevin Yang" ---
     //
@@ -1589,7 +1609,35 @@ define('jQuery+',  function () {
         });
     };
 
-    /* ----- DOM Class List ----- */
+/* ---------- DOM Children ---------- */
+
+    var _Children_ = Object.getOwnPropertyDescriptor(
+            Element.prototype,  'children'
+        );
+
+    function HTMLCollection() {
+        var iChildren = _Children_.get.call( arguments[0] );
+
+        for (var i = 0;  i < iChildren.length;  i++) {
+            this[i] = iChildren[i] || iChildren.item(i);
+
+            if (this[i].name)  this[this[i].name] = this[i];
+        }
+        this.length = i;
+    }
+
+    HTMLCollection.prototype.item = HTMLCollection.prototype.namedItem =
+        function () {
+            return  this[ arguments[0] ]  ||  null;
+        };
+
+    Object.defineProperty(Element.prototype, 'children', {
+        get:    function () {
+            return  new HTMLCollection(this);
+        }
+    });
+
+/* ---------- DOM Class List ---------- */
 
     function DOMTokenList() {
         var iClass = (arguments[0].getAttribute('class') || '').trim().split(/\s+/);
@@ -2092,7 +2140,7 @@ define('jQuery+',  function () {
 //              >>>  jQuery+  <<<
 //
 //
-//    [Version]    v7.3  (2016-05-31)
+//    [Version]    v7.4  (2016-06-06)
 //
 //    [Require]    jQuery  v1.9+
 //

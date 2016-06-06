@@ -26,8 +26,8 @@ define(['jquery', 'extension/ES-5'],  function ($) {
         }
 
         for (var i = 0;  i < iArgs.length;  i++)
-            iSet[ iArgs[i] ] = (typeof iValue == 'function')  ?
-                iValue() : iValue;
+            iSet[ iArgs[i] ] = (typeof iValue != 'function')  ?
+                iValue  :  iValue( iArgs[i] );
 
         return iSet;
     };

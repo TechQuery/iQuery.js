@@ -83,9 +83,7 @@ define(function () {
     /* ----- Date Extension ----- */
 
     if (! Date.now)
-        Date.now = function () {
-            return  (new Date()).getTime();
-        };
+        Date.now = function () { return  +(new Date()); };
 
     /* ----- JSON Extension  v0.4 ----- */
 
