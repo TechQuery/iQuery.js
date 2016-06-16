@@ -28,12 +28,12 @@ define(['jquery'],  function ($) {
                     if (i < _This_.requireArgs)  return;
 
                 } else if (
-                    (this[i] != iArgs[i])  ||
-                    (! iArgs[i].match(this[i]))  ||  (
-                        (typeof _This_.filter[i] == 'function')  &&
-                        (false === _This_.filter[i].call(
+                    (typeof _This_.filter[i] == 'function')  ?  (
+                        false === _This_.filter[i].call(
                             _This_,  this[i],  iArgs[i]
-                        ))
+                        )
+                    )  :  (
+                        (this[i] != iArgs[i])  &&  (! iArgs[i].match(this[i]))
                     )
                 )
                     return;

@@ -893,6 +893,23 @@ define('jQuery+',  function () {
                 })
             ));
         },
+        inViewport:       function () {
+            for (var i = 0, _OS_, $_BOM, BOM_W, BOM_H;  this[i];  i++) {
+                _OS_ = $( this[i] ).offset();
+
+                $_BOM = $( this[i].ownerDocument.defaultView );
+
+                BOM_W = $_BOM.width(),  BOM_H = $_BOM.height();
+
+                if (
+                    (_OS_.left > BOM_W)  ||
+                    ((_OS_.top - $(DOM).scrollTop())  >  BOM_H)
+                )
+                    return false;
+            }
+
+            return true;
+        },
         scrollTo:         function ($_Target) {
             $_Target = $($_Target);
 
@@ -2053,12 +2070,12 @@ define('jQuery+',  function () {
                     if (i < _This_.requireArgs)  return;
 
                 } else if (
-                    (this[i] != iArgs[i])  ||
-                    (! iArgs[i].match(this[i]))  ||  (
-                        (typeof _This_.filter[i] == 'function')  &&
-                        (false === _This_.filter[i].call(
+                    (typeof _This_.filter[i] == 'function')  ?  (
+                        false === _This_.filter[i].call(
                             _This_,  this[i],  iArgs[i]
-                        ))
+                        )
+                    )  :  (
+                        (this[i] != iArgs[i])  &&  (! iArgs[i].match(this[i]))
                     )
                 )
                     return;
@@ -2140,7 +2157,7 @@ define('jQuery+',  function () {
 //              >>>  jQuery+  <<<
 //
 //
-//    [Version]    v7.4  (2016-06-06)
+//    [Version]    v7.5  (2016-06-16)
 //
 //    [Require]    jQuery  v1.9+
 //

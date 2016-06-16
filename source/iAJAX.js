@@ -84,6 +84,8 @@ define(['iEvent'],  function ($) {
         };
     });
 
+    var ResponseType = $.makeSet('html', 'xml', 'json');
+
     function AJAX_Complete(iOption) {
         var iHeader = { };
 
@@ -94,18 +96,21 @@ define(['iEvent'],  function ($) {
                 iHeader[_Header_[0]] = _Header_[1];
             });
 
+        var iType = (iHeader['Content-Type'] || '').split(';')[0].split('/');
+
         $.extend(this, {
             status:          arguments[1],
             statusText:      arguments[2],
             responseText:    arguments[3].text,
-            responseType:    (
-                (iHeader['Content-Type'] || '').split(';')[0].split('/')[1]
-            )  ||  'text'
+            responseType:
+                ((iType[1] in ResponseType) ? iType[1] : iType[0])  ||  'text'
         });
+
+        this.response = this.responseText;
 
         switch ( this.responseType ) {
             case 'text':    ;
-            case 'html':    this.response = this.responseText;
+            case 'html':    ;
             case 'json':
                 try {
                     this.response = $.parseJSON( this.responseText );

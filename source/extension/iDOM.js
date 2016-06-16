@@ -81,6 +81,23 @@ define(['jquery'],  function ($) {
                 })
             ));
         },
+        inViewport:       function () {
+            for (var i = 0, _OS_, $_BOM, BOM_W, BOM_H;  this[i];  i++) {
+                _OS_ = $( this[i] ).offset();
+
+                $_BOM = $( this[i].ownerDocument.defaultView );
+
+                BOM_W = $_BOM.width(),  BOM_H = $_BOM.height();
+
+                if (
+                    (_OS_.left > BOM_W)  ||
+                    ((_OS_.top - $(DOM).scrollTop())  >  BOM_H)
+                )
+                    return false;
+            }
+
+            return true;
+        },
         scrollTo:         function ($_Target) {
             $_Target = $($_Target);
 
