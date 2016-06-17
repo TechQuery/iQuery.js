@@ -98,25 +98,19 @@ define(['jquery'],  function ($) {
 
             return true;
         },
-        scrollTo:         function ($_Target) {
-            $_Target = $($_Target);
+        scrollTo:         function () {
+            var $_This = this;
 
-            this.has($_Target).each(function () {
-                var $_Scroll = $(this);
+            $( arguments[0] ).each(function () {
+                var $_Scroll = $_This.has(this);
 
-                var iCoord = $($.map($_Target,  function () {
-                        if ( $.contains($_Scroll[0], arguments[0]) )
-                            return arguments[0];
-                    })).offset(),
-                    _Coord_ = $_Scroll.offset();
+                var iCoord = $(this).offset(),  _Coord_ = $_Scroll.offset();
 
                 if (! $_Scroll.length)  return;
 
                 $_Scroll.animate({
-                    scrollTop:
-                        $_Scroll.scrollTop()  +  (iCoord.top - _Coord_.top),
-                    scrollLeft:
-                        $_Scroll.scrollLeft()  +  (iCoord.left - _Coord_.left)
+                    scrollTop:     iCoord.top - _Coord_.top,
+                    scrollLeft:    iCoord.left - _Coord_.left
                 });
             });
 

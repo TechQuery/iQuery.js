@@ -32,27 +32,25 @@ define(['extension/iTimer'],  function ($) {
                     }
                     return  this[iType].get(iElement[0], iName);
                 }
-                var iResult;
 
                 if (typeof iName == 'string') {
                     if (typeof iValue == 'function') {
                         for (var i = 0;  i < iElement.length;  i++)
-                            iResult = this[iType].set(iElement[i], iName, iValue.call(
+                            this[iType].set(iElement[i], iName, iValue.call(
                                 iElement[i],  i,  this[iType].get(iElement[i], iName)
                             ));
-                        return  iResult || iElement;
+                        return iElement;
                     } else {
-                        iResult = { };
-                        iResult[iName] = iValue;
-                        iName = iResult;
-                        iResult = undefined;
+                        var _Value_ = { };
+                        _Value_[iName] = iValue;
+                        iName = _Value_;
                     }
                 }
                 for (var i = 0;  i < iElement.length;  i++)
                     for (var iKey in iName)
-                        iResult = this[iType].set(iElement[i], iKey, iName[iKey]);
+                        this[iType].set(iElement[i], iKey, iName[iKey]);
 
-                return  iResult || iElement;
+                return iElement;
             }
         };
 
@@ -67,8 +65,11 @@ define(['extension/iTimer'],  function ($) {
             if (iValue !== null)  return iValue;
         },
         set:      function (iElement, iName, iValue) {
-            return  ($.Type(iElement) in _DOM_.TypeMap.root) ?
-                    false  :  iElement.setAttribute(iName, iValue);
+            if (
+                (! ($.Type(iElement) in _DOM_.TypeMap.root))  &&
+                (iValue !== undefined)
+            )
+                iElement.setAttribute(iName, iValue);
         },
         clear:    function (iElement, iName) {
             iElement.removeAttribute(iName);

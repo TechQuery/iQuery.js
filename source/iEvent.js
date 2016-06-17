@@ -404,8 +404,6 @@ define(['iCore'],  function ($) {
     ))
         $.fn[iName] = Event_Method(iName);
 
-    if ($.browser.mobile)  $.fn.click = $.fn.tap;
-
 
 /* ---------- Complex Events ---------- */
 
