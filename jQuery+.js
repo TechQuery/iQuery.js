@@ -835,16 +835,6 @@ define('jQuery+',  function () {
                 return  $( arguments[0] )[iMethod](iKey);
             }).reduce(iCallback);
         },
-        refresh:          function () {
-            if (! this.selector)  return this;
-
-            var $_New = $(this.selector, this.context);
-
-            if (this.prevObject instanceof $)
-                $_New = this.prevObject.pushStack($_New);
-
-            return $_New;
-        },
         sameParents:      function () {
             if (this.length < 2)  return this.parents();
 
@@ -896,14 +886,14 @@ define('jQuery+',  function () {
         inViewport:       function () {
             for (var i = 0, _OS_, $_BOM, BOM_W, BOM_H;  this[i];  i++) {
                 _OS_ = $( this[i] ).offset();
+                _OS_.top -= $( this[i].ownerDocument ).scrollTop();
 
                 $_BOM = $( this[i].ownerDocument.defaultView );
-
                 BOM_W = $_BOM.width(),  BOM_H = $_BOM.height();
 
                 if (
-                    (_OS_.left > BOM_W)  ||
-                    ((_OS_.top - $(DOM).scrollTop())  >  BOM_H)
+                    (_OS_.left < 0)  ||  (_OS_.left > BOM_W)  ||
+                    (_OS_.top < 0)  ||  (_OS_.top > BOM_H)
                 )
                     return false;
             }
@@ -1675,56 +1665,6 @@ define('jQuery+',  function () {
         }
     });
 
-    /* ----- History API ----- */
-
-    var _BOM_,      $_BOM = $(BOM),
-        _Pushing_,  _State_ = [[null, DOM.title, DOM.URL]];
-
-    $(DOM).ready(function () {
-        var iFrame = $('#_iQuery_SandBox_')[0];
-
-        _BOM_ = iFrame.contentWindow;
-
-        iFrame.onload = function () {
-            if (_Pushing_) {
-                _Pushing_ = false;
-                return;
-            }
-
-            var iState = _State_[ _BOM_.location.search.slice(7) ];
-            if (! iState)  return;
-
-            BOM.history.state = iState[0];
-            DOM.title = iState[1];
-
-            $_BOM.trigger({
-                type:     'popstate',
-                state:    iState[0]
-            });
-        };
-    });
-
-    BOM.history.pushState = function (iState, iTitle, iURL) {
-        for (var iKey in iState)
-            if (! $.isData(iState[iKey]))
-                throw ReferenceError("The History State can't be Complex Object !");
-
-        if (typeof iTitle != 'string')
-            throw TypeError("The History State needs a Title String !");
-
-        if (_BOM_) {
-            DOM.title = iTitle;
-            if ($.browser.modern)  _BOM_.document.title = iTitle;
-            _Pushing_ = true;
-            _BOM_.location.search = 'index=' + (_State_.push(arguments) - 1);
-        }
-    };
-
-    BOM.history.replaceState = function () {
-        _State_ = [ ];
-        this.pushState.apply(this, arguments);
-    };
-
 })(self, self.document, iQuery);
 
 
@@ -2151,7 +2091,7 @@ define('jQuery+',  function () {
 //              >>>  jQuery+  <<<
 //
 //
-//    [Version]    v7.5  (2016-06-16)
+//    [Version]    v7.3  (2016-06-20)
 //
 //    [Require]    jQuery  v1.9+
 //

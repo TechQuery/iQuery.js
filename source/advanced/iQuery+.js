@@ -2,7 +2,7 @@
 //              >>>  iQuery+  <<<
 //
 //
-//    [Version]    v1.5  (2016-06-16)  Stable
+//    [Version]    v1.6  (2016-06-20)  Stable
 //
 //    [Require]    iQuery  ||  jQuery with jQuery+
 //
@@ -11,6 +11,6 @@
 //
 
 
-define(['TreeView', 'Utility'],  function () {
+define(['TreeView', 'HTML5_History', 'Utility'],  function () {
 
 });

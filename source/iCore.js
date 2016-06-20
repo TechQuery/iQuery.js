@@ -562,7 +562,7 @@ define(['extension/iTimer'],  function ($) {
     $.fn.extend({
         splice:             Array.prototype.splice,
         jquery:             '1.9.1',
-        iquery:             '1.0',
+        iquery:             2.0,
         pushStack:          function ($_New) {
             $_New = $(DOM_Sort(
                 ($_New instanceof Array)  ?  $_New  :  $.makeArray($_New)

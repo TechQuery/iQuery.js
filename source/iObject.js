@@ -108,15 +108,12 @@ define(['extension/iObject'],  function ($) {
                 iSource = this.makeArray(iSource);
 
             for (var i = 1;  i < arguments.length;  i++)
-                iSource = Array.prototype.concat.apply(
-                    iSource,
-                    this.likeArray( arguments[i] )  ?
-                        (
-                            $.browser.modern ?
-                                arguments[i] : this.makeArray(arguments[i])
-                        )  :
-                        [arguments[i]]
-                );
+                Array.prototype.splice.apply(iSource, Array.prototype.concat.apply(
+                    [iSource.length, 0],
+                    ($.likeArray( arguments[i] )  &&  (! $.browser.modern))  ?
+                        $.makeArray( arguments[i] )  :  arguments[i]
+                ));
+
             return iSource;
         },
         unique:           function (iArray) {

@@ -72,7 +72,7 @@ define(['iObject'],  function ($) {
 
         return  ProxyCache.wrapper[Index] = function () {
             return  iFunction.apply(
-                iContext || this,  $.merge(iArgs, arguments)
+                iContext || this,  $.merge([ ], iArgs, arguments)
             );
         };
     };

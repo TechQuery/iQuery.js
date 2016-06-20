@@ -47,19 +47,17 @@ define(['iCore'],  function ($) {
         return 0;
     }
 
-    var Tag_Style = { },
-        $_SandBox = $('<iframe />', {
-            id:       '_iQuery_SandBox_',
+    var Tag_Style = { },  _BOM_;
+
+    $(DOM).ready(function () {
+        _BOM_ = $('<iframe />', {
+            id:       '_CSS_SandBox_',
             style:    'display: none',
             src:      ($.browser.msie < 10)  ?  'blank.html'  :  'about:blank'
-        });
-    $(DOM).ready(function () {
-        $_SandBox.appendTo( this.body );
+        }).appendTo(this.body)[0].contentWindow;
     });
 
     function Tag_Default_CSS(iTagName) {
-        var _BOM_ = $_SandBox[0].contentWindow;
-
         if (! Tag_Style[iTagName]) {
             var $_Default = $('<' + iTagName + ' />').appendTo(
                     _BOM_.document.body

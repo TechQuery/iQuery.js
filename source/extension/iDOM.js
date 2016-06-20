@@ -23,16 +23,6 @@ define(['jquery'],  function ($) {
                 return  $( arguments[0] )[iMethod](iKey);
             }).reduce(iCallback);
         },
-        refresh:          function () {
-            if (! this.selector)  return this;
-
-            var $_New = $(this.selector, this.context);
-
-            if (this.prevObject instanceof $)
-                $_New = this.prevObject.pushStack($_New);
-
-            return $_New;
-        },
         sameParents:      function () {
             if (this.length < 2)  return this.parents();
 
@@ -84,14 +74,14 @@ define(['jquery'],  function ($) {
         inViewport:       function () {
             for (var i = 0, _OS_, $_BOM, BOM_W, BOM_H;  this[i];  i++) {
                 _OS_ = $( this[i] ).offset();
+                _OS_.top -= $( this[i].ownerDocument ).scrollTop();
 
                 $_BOM = $( this[i].ownerDocument.defaultView );
-
                 BOM_W = $_BOM.width(),  BOM_H = $_BOM.height();
 
                 if (
-                    (_OS_.left > BOM_W)  ||
-                    ((_OS_.top - $(DOM).scrollTop())  >  BOM_H)
+                    (_OS_.left < 0)  ||  (_OS_.left > BOM_W)  ||
+                    (_OS_.top < 0)  ||  (_OS_.top > BOM_H)
                 )
                     return false;
             }
