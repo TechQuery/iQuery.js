@@ -3,7 +3,7 @@ define(['jquery'],  function ($) {
     var Code_Indent = $.browser.modern ? '' : ' '.repeat(4);
 
     function CSS_Attribute(iName, iValue) {
-        if ((! isNaN( Number(iValue) ))  &&  iName.match($.cssPX))
+        if ($.isNumeric(iValue) && iName.match($.cssPX))
             iValue += 'px';
 
         return  [iName, ':', Code_Indent, iValue].join('');

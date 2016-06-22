@@ -139,7 +139,7 @@ define(['iCore'],  function ($) {
         var $_This = this.data('_Animate_', 0);
 
         $.each(CSS_Final,  function (iName) {
-            if (isNaN( Number(this) ))  return  $_This.css(iName, this);
+            if (! $.isNumeric(this))  return  $_This.css(iName, this);
 
             $_This.data('_Animate_',  $_This.data('_Animate_') + 1);
 
@@ -217,7 +217,7 @@ define(['iCore'],  function ($) {
             ).call(
                 this,
                 CSS_Final,
-                isNaN(Number( iArgs[0] ))  ?  0.4  :  (iArgs.shift() / 1000),
+                $.isNumeric( iArgs[0] )  ?  (iArgs.shift() / 1000)  :  0.4,
                 (typeof iArgs[0] == 'string')  ?  iArgs.shift()  :  '',
                 (typeof iArgs[0] == 'function')  &&  iArgs[0]
             );

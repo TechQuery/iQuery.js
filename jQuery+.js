@@ -437,7 +437,7 @@ define('jQuery+',  function () {
                 iValue = BOM.decodeURIComponent( Args_Str[i][1] );
 
                 if (
-                    isNaN(Number( iValue ))  ||
+                    (! $.isNumeric(iValue))  ||
                     (parseInt(iValue).toString().length < 21)
                 )  try {
                     iValue = $.parseJSON(iValue);
@@ -821,7 +821,7 @@ define('jQuery+',  function () {
             }
         },
         Array_Reverse = Array.prototype.reverse,
-        Rolling_Style = $.makeSet('auto', 'scroll', 'hidden');
+        Rolling_Style = $.makeSet('auto', 'scroll');
 
     $.fn.extend({
         reduce:           function (iMethod, iKey, iCallback) {
@@ -863,30 +863,30 @@ define('jQuery+',  function () {
         },
         scrollParents:    function () {
             return Array_Reverse.call(this.pushStack(
-                $.map(this.parents(),  function (_DOM_) {
-                    var iCSS = $(_DOM_).css([
-                            'width', 'max-width', 'height', 'max-height',
-                            'overflow-x', 'overflow-y'
+                $.map(this.parents(),  function ($_Parent) {
+                    $_Parent = $($_Parent);
+
+                    var iCSS = $_Parent.css([
+                            'max-width', 'max-height', 'overflow-x', 'overflow-y'
                         ]);
 
                     if (
                         (
-                            (iCSS.width || iCSS['max-width'])  &&
+                            ($_Parent.width() || parseFloat(iCSS['max-width']))  &&
                             (iCSS['overflow-x'] in Rolling_Style)
                         )  ||
                         (
-                            (iCSS.height || iCSS['max-height'])  &&
+                            ($_Parent.height() || parseFloat(iCSS['max-height']))  &&
                             (iCSS['overflow-y'] in Rolling_Style)
                         )
                     )
-                        return _DOM_;
+                        return $_Parent[0];
                 })
             ));
         },
         inViewport:       function () {
             for (var i = 0, _OS_, $_BOM, BOM_W, BOM_H;  this[i];  i++) {
-                _OS_ = $( this[i] ).offset();
-                _OS_.top -= $( this[i].ownerDocument ).scrollTop();
+                _OS_ = this[i].getBoundingClientRect();
 
                 $_BOM = $( this[i].ownerDocument.defaultView );
                 BOM_W = $_BOM.width(),  BOM_H = $_BOM.height();
@@ -1058,7 +1058,7 @@ define('jQuery+',  function () {
     var Code_Indent = $.browser.modern ? '' : ' '.repeat(4);
 
     function CSS_Attribute(iName, iValue) {
-        if ((! isNaN( Number(iValue) ))  &&  iName.match($.cssPX))
+        if ($.isNumeric(iValue) && iName.match($.cssPX))
             iValue += 'px';
 
         return  [iName, ':', Code_Indent, iValue].join('');
@@ -2091,7 +2091,7 @@ define('jQuery+',  function () {
 //              >>>  jQuery+  <<<
 //
 //
-//    [Version]    v7.3  (2016-06-20)
+//    [Version]    v7.3  (2016-06-22)
 //
 //    [Require]    jQuery  v1.9+
 //

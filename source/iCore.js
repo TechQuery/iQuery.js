@@ -111,7 +111,7 @@ define(['extension/iTimer'],  function ($) {
         set:           function (iElement, iName, iValue) {
             if ($.Type(iElement) in _DOM_.TypeMap.root)  return false;
 
-            if ((! isNaN( Number(iValue) ))  &&  iName.match($.cssPX))
+            if ($.isNumeric(iValue) && iName.match($.cssPX))
                 iValue += 'px';
 
             iElement.style[this.Set_Method](iName, String(iValue), 'important');

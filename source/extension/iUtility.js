@@ -91,7 +91,7 @@ define(['jquery'],  function ($) {
                 iValue = BOM.decodeURIComponent( Args_Str[i][1] );
 
                 if (
-                    isNaN(Number( iValue ))  ||
+                    (! $.isNumeric(iValue))  ||
                     (parseInt(iValue).toString().length < 21)
                 )  try {
                     iValue = $.parseJSON(iValue);

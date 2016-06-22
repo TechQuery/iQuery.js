@@ -46,6 +46,9 @@ define(['extension/iObject'],  function ($) {
                 Object.prototype.toString.call(iValue)
                     .split(' ')[1].slice(0, -1).toLowerCase();
         },
+        isNumeric:        function () {
+            return  (! isNaN(Number( arguments[0] )));
+        },
         isEmptyObject:    function () {
             for (var iKey in arguments[0])
                 return false;

@@ -67,7 +67,6 @@
    - **:button** 还支持 `input[type="submit"], input[type="reset"], input[type="image"]`
    - 新增 **:data 伪类** 来筛选有 data-* 属性的元素
    - 新增 **:list 伪类**，等价于 `ul, ol, dl`
- - 新增 jQuery 元素成员更新方法 —— `$.fn.refresh()`
  - 新增 **祖先元素交集**方法 —— `$.fn.sameParents()`
  - 新增 **有滚动条的祖先元素**方法 —— `$.fn.scrollParents()`
  - 新增 **元素可视口检测**方法 —— `$.fn.inViewport()`
@@ -90,7 +89,7 @@
 
 ## 【未实现的 jQuery（最新版）特性】
  - 没有 $.noConflict()，但不会强占 jQuery 变量
- - 不支持 浏览器 **内置类型**（构造函数）相应的 $.isXXX() 方法（但 $.type() 均能返回与构造函数名一致的“类型名”）
+ - 不支持 浏览器 **内置类型**（构造函数）相应的 $.isXXX() 系列方法
  - 不支持 **浏览器特性检测**
  - 暂不支持 $.ajax() 及其多数自定义选项
  - 不支持 $.Deferred()（正在尝试引入 ECMAScript 6 支持的 **Promise/A+ 规范**）
@@ -119,7 +118,6 @@
  - 自带 `Element.prototype.matches` 标准草案方法
  - 自带 **DOMTokenList 对象**，为 IE 10- 提供 **classList** 支持
  - 自带 **DOMStringMap 对象**，为 IE 11- 提供 **dataset** 支持
- - 自带 **HTML 5 History API**，为 IE 10- 提供兼容支持（需 服务器端响应 `./blank.html` 或 404 页面）
  - 修正 IE 8 DOM Attribute 系列方法对 JavaScript 关键字的特殊处理
  - 自带 **CSSStyleDeclaration 对象**，为 IE 8 提供 **getComputedStyle** 支持，并封装了 M$ DirectX 滤镜属性转换
  - 自带 Google Chrome **元素 CSS 规则对象 获取**方法 `Window.getMatchedCSSRules()`
@@ -132,6 +130,7 @@
  - 通用 **CommonView 对象**生成方法 —— `$.CommonView()`
  - 通用 **ListView 对象**生成方法 —— `$.ListView()`
  - 通用 **TreeView 对象**生成方法 —— `$.TreeView()`
+ - **HTML 5  History API  Polyfill** —— 为 IE 10- 提供兼容支持（需 服务器端响应 `./blank.html` 或 404 页面）
  - Base64 文本转 **二进制对象**方法 —— `$.toBlob()`
  - 基于 **现代浏览器 Crypto API** 的哈希方法 —— $.dataHash()
 
