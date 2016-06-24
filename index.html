@@ -1,0 +1,220 @@
+<!DocType HTML>
+<html><head>
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+    <meta http-equiv="Pragma" content="no-cache" />
+    <meta http-equiv="Expires" content="0" />
+
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+
+    <title>iQuery 官方网站</title>
+
+    <link rel="stylesheet" href="doc/core/css/EasyWebUI.css" />
+    <link rel="stylesheet" href="doc/fontpage.css" />
+
+    <link rel="console" href="console" />
+    <script src="doc/core/javascript/EasyImport.js"></script>
+    <script>
+        ImportJS([
+            {
+                'iQuery+.js':    true,
+                '//cdn.bootcss.com/lrsjng.jquery-qrcode/0.14.0/jquery-qrcode.min.js':    true
+            },
+            '../css/EasyWebUI.js',
+            '../../fontpage.js'
+        ]);
+    </script>
+</head><body class="CenterX">
+    <div class="Head Black_O">
+        <div class="PC_Narrow Grid-Row CenterY">
+            <div class="Grid-Column">
+                <a class="jQuery_Function" href="#Feature">
+                    i<span class="Red">Q</span>uery
+                </a>
+            </div>
+            <div class="Grid-Column Column_1-2">
+                <div class="DropDown Head">
+                    <ul class="NavBar">
+                        <li><a href="#Compare">竞品比较</a></li>
+                        <li><a target="_blank" href="doc/">使用教程</a></li>
+                        <li><a href="#OSC">开放源码</a></li><!--
+                        <li><a href="#Popular">社区推荐</a></li>-->
+                    </ul>
+                </div>
+            </div>
+            <form class="Grid-Column"
+                  target="_blank" action="https://www.sogou.com/web">
+                <input type="search" name="query" placeholder="搜索关键词" />
+            </form>
+        </div>
+    </div>
+    <div class="Body PC_Narrow" id="Feature">
+        <div class="Head">
+            <h1>iQuery</h1>
+            <h2>兼容 IE 8+ 的轻量级、增强型 jQuery 兼容 API！</h2>
+            <a class="Button" target="_blank"
+               href="//git.oschina.net/Tech_Query/iQuery/releases">
+                立即获取
+            </a>
+        </div>
+        <div class="Body">
+            <div class="Item-Box visible">
+                <h3 class="Red">
+                    <i class="Icon Eye"></i>上手快
+                </h3>
+                <ul class="Ellipsis">
+                    <li>
+                        实现了所有<em>jQuery 常用 API</em>
+                    </li>
+                    <li>
+                        <em>扩展 API</em>完全遵循
+                        <em><a target="_blank" href="http://www.jquery123.com/">
+                            jQuery API
+                        </a></em>
+                        命名风格、传参形式
+                    </li>
+                </ul>
+            </div>
+            <div class="Item-Box visible">
+                <h3 class="Red">
+                    <i class="Icon Home"></i>兼容佳
+                </h3>
+                <ul class="Ellipsis">
+                    <li>最低<em>IE 8</em>的主流浏览器支持</li>
+                    <li>兼容模块以<em>ECMA、W3C 标准 API</em>的形式开放</li>
+                    <li>中小规模复杂度<em>jQuery 插件无缝切换</em></li>
+                </ul>
+            </div>
+            <div class="Item-Box visible">
+                <h3 class="Red">
+                    <i class="Icon Pen"></i>适用广
+                </h3>
+                <ul class="Ellipsis">
+                    <li><em>体积、兼容范围 适中</em>，一库通用、缓存率利用高</li>
+                    <li>
+                        Polyfill、Plugin 提供
+                        <a target="_blank" href="//git.oschina.net/Tech_Query/iQuery/blob/master/jQuery+.js">API 独立包</a>，
+                        快速适配原有<em>jQuery 兼容项目</em>
+                    </li>
+                </ul>
+            </div>
+            <div class="Item-Box visible">
+                <h3 class="Red">
+                    <i class="Icon Search"></i>进阶易
+                </h3>
+                <ul class="Ellipsis">
+                    <li>
+                        <a target="_blank" href="//git.oschina.net/Tech_Query/iQuery/blob/master/iQuery+.js">iQuery+</a>内建的
+                        <em>通用视图接口</em>大幅简化 jQuery 插件开发
+                    </li>
+                    <li>
+                        轻松实现<em>组件化开发</em>、面向对象式的解耦/通信
+                    </li>
+                    <li>
+                        （兼容组件库实例 ——
+                        <a target="_blank" href="//git.oschina.net/Tech_Query/EasyWebUI/">EasyWebUI</a>）
+                    </li>
+                </ul>
+            </div>
+        </div>
+        <h3 class="jQuery_Function" id="Compare">竞品比较</h3>
+        <div><table>
+            <thead><tr>
+                <th>SPA 引擎/框架</th>
+                <th>iQuery</th>
+                <th><a target="_blank" href="http://jquery.com">
+                    jQuery
+                </a></th>
+                <th><a target="_blank" href="http://zeptojs.com/">
+                    Zepto
+                </a></th>
+                <th><a target="_blank" href="http://jslite.io/">
+                    JSLite
+                </a></th>
+            </tr></thead>
+            <tbody>
+                <tr>
+                    <td>浏览器兼容</td>
+                    <td>IE 8+</td>
+                    <td>IE 6+ (v1.x)<br />IE 9+ (v2.0+)</td>
+                    <td>IE 10+</td>
+                    <td>IE 10+</td>
+                </tr>
+                <tr>
+                    <td>ECMA / W3C Polyfill</td>
+                    <td>多</td>
+                    <td>
+                        <i class="Icon Error Red"></i>
+                        （各模块自行实现 Fix）
+                    </td>
+                    <td>少</td>
+                    <td>少</td>
+                </tr>
+                <tr>
+                    <td>发布版体积</td>
+                    <td>58 KB</td>
+                    <td><ul>
+                        <li>v1.12.4 —— 94.9 KB</li>
+                        <li>v2.2.4  —— 83.6 KB</li>
+                        <li>v3.0.0  —— 84.3 KB</li>
+                    </ul></td>
+                    <td>38.5 KB
+                        （<a target="_blank" href="http://github.e-sites.nl/zeptobuilder/">
+                            Zepto Builder
+                        </a>完整版）
+                    </td>
+                    <td>20.6 KB</td>
+                </tr>
+                <tr>
+                    <td>扩展 API</td>
+                    <td>多</td>
+                    <td></td>
+                    <td>少</td>
+                    <td>少</td>
+                </tr>
+                <tr>
+                    <td>触控事件</td>
+                    <td>
+                        单指
+                        （<code>tap</code>、<code>press</code>、<code>swipe</code>）
+                    </td>
+                    <td><i class="Icon Error Red"></i></td>
+                    <td>多指</td>
+                    <td><i class="Icon Error Red"></i></td>
+                </tr>
+                <tr>
+                    <td title="不能有外部依赖、自闭合、有兼容性要求">JS-SDK 嵌入</td>
+                    <td>
+                        <i class="Icon Check Green"></i>
+                        <a target="_blank" href="//git.oschina.net/Tech_Query/EasyImport.js">
+                            （实例）
+                        </a>
+                    </td>
+                    <td><i class="Icon Error Red"></i></td>
+                    <td><i class="Icon Error Red"></i></td>
+                    <td><i class="Icon Error Red"></i></td>
+                </tr>
+            </tbody>
+        </table></div>
+        <h3 class="jQuery_Function" id="OSC">开发动态</h3>
+        <iframe frameBorder="0" allowTransparency="true"
+                data-src="doc/Git_OSC.html"></iframe><!--
+        <h3 class="jQuery_Function" id="Popular">社区推荐</h3>
+        <p></p>-->
+        <hr />
+    </div>
+    <div class="Foot PC_Narrow Grid-Row">
+        <div class="Grid-Column">
+            (C)2015-2016
+            <a target="_blank" href="http://my.oschina.net/TechQuery/">TechQuery</a>
+        </div>
+        <div class="Grid-Column">
+            Powered by
+            <a target="_blank" href="//git.oschina.net/Tech_Query/EasyImport.js/">
+                EasyImport.js
+            </a>,
+            <a target="_blank" href="//git.oschina.net/Tech_Query/EasyWebUI/">
+                EasyWebUI
+            </a>
+        </div>
+    </div>
+</body></html>
