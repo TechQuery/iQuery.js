@@ -11,8 +11,11 @@ define(['jquery'],  function ($) {
             try {
                 iType = $.type( iVar );
 
-                if ((iType == 'object')  &&  iVar.constructor.name)
-                    iType = iVar.constructor.name;
+                var iName = iVar.constructor.name;
+                iName = (typeof iName == 'function')  ?  iName()  :  iName;
+
+                if ((iType == 'object')  &&  iName)
+                    iType = iName;
                 else
                     iType = iType[0].toUpperCase() + iType.slice(1);
             } catch (iError) {

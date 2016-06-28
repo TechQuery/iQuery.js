@@ -67,11 +67,6 @@ define(['jquery'],  function ($) {
         this.length = arguments[0].length;
     }
 
-    var DOM_Proto = Element.prototype;
-
-    DOM_Proto.matches = DOM_Proto.matches || DOM_Proto.webkitMatchesSelector ||
-        DOM_Proto.msMatchesSelector || DOM_Proto.mozMatchesSelector;
-
     if (typeof BOM.getMatchedCSSRules != 'function')
         BOM.getMatchedCSSRules = function (iElement, iPseudo) {
             if (! (iElement instanceof Element))  return null;

@@ -26,17 +26,16 @@ define(['jquery'],  function ($) {
                     return  (this.nodeType == 1);
                 })[0];
             }
-        };
+        },
+        DOM_Proto = Element.prototype;
 
     for (var iName in iGetter)
-        Object.defineProperty(Element.prototype, iName, {
-            get:    iGetter[iName]
-        });
+        Object.defineProperty(DOM_Proto,  iName,  {get: iGetter[iName]});
 
 
 /* ---------- DOM Text Content ---------- */
 
-    Object.defineProperty(Element.prototype, 'textContent', {
+    Object.defineProperty(DOM_Proto, 'textContent', {
         get:    function () {
             return this.innerText;
         },
@@ -49,27 +48,17 @@ define(['jquery'],  function ($) {
         }
     });
 
-/* ---------- DOM Selector Match ---------- */
-
-    Element.prototype.matches = function () {
-        if (! this.parentNode)  $('<div />')[0].appendChild(this);
-
-        return  ($.inArray(
-            this,  this.parentNode.querySelectorAll( arguments[0] )
-        ) > -1);
-    };
-
 /* ---------- DOM Attribute Name ---------- */
 
     var iAlias = {
             'class':    'className',
             'for':      'htmlFor'
         },
-        Get_Attribute = Element.prototype.getAttribute,
-        Set_Attribute = Element.prototype.setAttribute,
-        Remove_Attribute = Element.prototype.removeAttribute;
+        Get_Attribute = DOM_Proto.getAttribute,
+        Set_Attribute = DOM_Proto.setAttribute,
+        Remove_Attribute = DOM_Proto.removeAttribute;
 
-    $.extend(Element.prototype, {
+    $.extend(DOM_Proto, {
         getAttribute:    function (iName) {
             return  iAlias[iName] ?
                 this[iAlias[iName]]  :  Get_Attribute.call(this, iName,  0);

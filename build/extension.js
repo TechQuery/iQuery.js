@@ -6,11 +6,11 @@
     },
     out:             '../jQuery+.js',
     onBuildWrite:    function (iName) {
-        var fParameter = 'BOM',  aParameter = 'self';
+        var fParameter = 'BOM, DOM',  aParameter = 'self, self.document';
 
         if (iName != 'extension/ES-5') {
-            fParameter += ', DOM, $';
-            aParameter += ', self.document, iQuery';
+            fParameter += ', $';
+            aParameter += ', iQuery';
         }
         return arguments[2]
             .replace(/^define[\s\S]+?(function \()[^\)]*/m,  "\n($1" + fParameter)

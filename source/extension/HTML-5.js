@@ -41,6 +41,20 @@ define(['jquery'],  function ($) {
             }
         });
 
+/* ---------- Element CSS Selector Match ---------- */
+
+    var DOM_Proto = Element.prototype;
+
+    DOM_Proto.matches = DOM_Proto.matches || DOM_Proto.webkitMatchesSelector ||
+        DOM_Proto.msMatchesSelector || DOM_Proto.mozMatchesSelector ||
+        function () {
+            if (! this.parentNode)  $('<div />')[0].appendChild(this);
+
+            return  ($.inArray(
+                this,  this.parentNode.querySelectorAll( arguments[0] )
+            ) > -1);
+        };
+
 
     if (! ($.browser.msie < 11))  return;
 
@@ -54,7 +68,7 @@ define(['jquery'],  function ($) {
         }
     }
 
-    Object.defineProperty(Element.prototype, 'dataset', {
+    Object.defineProperty(DOM_Proto, 'dataset', {
         get:    function () {
             return  new DOMStringMap(this);
         }
@@ -78,9 +92,7 @@ define(['jquery'],  function ($) {
 
 /* ---------- DOM Children ---------- */
 
-    var _Children_ = Object.getOwnPropertyDescriptor(
-            Element.prototype,  'children'
-        );
+    var _Children_ = Object.getOwnPropertyDescriptor(DOM_Proto, 'children');
 
     function HTMLCollection() {
         var iChildren = _Children_.get.call( arguments[0] );
@@ -98,7 +110,7 @@ define(['jquery'],  function ($) {
             return  this[ arguments[0] ]  ||  null;
         };
 
-    Object.defineProperty(Element.prototype, 'children', {
+    Object.defineProperty(DOM_Proto, 'children', {
         get:    function () {
             return  new HTMLCollection(this);
         }
@@ -125,9 +137,29 @@ define(['jquery'],  function ($) {
         return  (Array.prototype.indexOf.call(this, iClass) > -1);
     };
 
-    Object.defineProperty(Element.prototype, 'classList', {
+    Object.defineProperty(DOM_Proto, 'classList', {
         get:    function () {
             return  new DOMTokenList(this);
+        }
+    });
+
+/* ---------- DOM InnerHTML ---------- */
+
+    var InnerHTML = Object.getOwnPropertyDescriptor(DOM_Proto, 'innerHTML');
+
+    Object.defineProperty(DOM_Proto, 'innerHTML', {
+        set:    function (iHTML) {
+            if (! String(iHTML).match(
+                /^[^<]*<\s*(head|meta|title|link|style|script|noscript|(!--[^>]*--))[^>]*>/i
+            ))
+                return  InnerHTML.set.call(this, iHTML);
+
+            InnerHTML.set.call(this,  'IE_Scope' + iHTML);
+
+            var iChild = this.childNodes;
+            iChild[0].nodeValue = iChild[0].nodeValue.slice(8);
+
+            if (! iChild[0].nodeValue[0])  this.removeChild( iChild[0] );
         }
     });
 

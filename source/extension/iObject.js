@@ -47,12 +47,12 @@ define(['jquery', 'extension/ES-5'],  function ($) {
         iDepth = iDepth || 1;
 
         if (!  (iLeft && iRight))
-            return  (iLeft == iRight);
+            return  (iLeft === iRight);
 
         iLeft = iLeft.valueOf();  iRight = iRight.valueOf();
 
         if ((typeof iLeft != 'object')  ||  (typeof iRight != 'object'))
-            return  (iLeft == iRight);
+            return  (iLeft === iRight);
 
         var Left_Key = Object.getOwnPropertyNames(iLeft),
             Right_Key = Object.getOwnPropertyNames(iRight);
@@ -67,7 +67,7 @@ define(['jquery', 'extension/ES-5'],  function ($) {
             if (_Key_ != Right_Key[i])  return false;
 
             if (! iDepth) {
-                if (iLeft[_Key_] != iRight[_Key_])  return false;
+                if (iLeft[_Key_] !== iRight[_Key_])  return false;
             } else {
                 if (! arguments.callee.call(
                     this, iLeft[_Key_], iRight[_Key_], iDepth

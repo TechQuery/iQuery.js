@@ -1,6 +1,6 @@
 define(function () {
 
-    var BOM = self;
+    var BOM = self,  DOM = self.document;
 
     /* ----- Object Patch ----- */
 
@@ -79,6 +79,19 @@ define(function () {
 
             return iResult;
         };
+
+    /* ----- Function Extension ----- */
+
+    function FuncName() {
+        return  (this.toString().trim().match(/^function\s+([^\(\s]*)/) || '')[1];
+    }
+
+    if (! ('name' in Function.prototype)) {
+        if (DOM.documentMode > 8)
+            Object.defineProperty(Function.prototype,  'name',  {get: FuncName});
+        else
+            Function.prototype.name = FuncName;
+    }
 
     /* ----- Date Extension ----- */
 

@@ -8,7 +8,7 @@ define('jQuery+',  function () {
     var iQuery = {fn:  { }};
 
 
-(function (BOM) {
+(function (BOM, DOM) {
 
     /* ----- Object Patch ----- */
 
@@ -88,6 +88,19 @@ define('jQuery+',  function () {
             return iResult;
         };
 
+    /* ----- Function Extension ----- */
+
+    function FuncName() {
+        return  (this.toString().trim().match(/^function\s+([^\(\s]*)/) || '')[1];
+    }
+
+    if (! ('name' in Function.prototype)) {
+        if (DOM.documentMode > 8)
+            Object.defineProperty(Function.prototype,  'name',  {get: FuncName});
+        else
+            Function.prototype.name = FuncName;
+    }
+
     /* ----- Date Extension ----- */
 
     if (! Date.now)
@@ -133,7 +146,7 @@ define('jQuery+',  function () {
     for (var i = 0;  i < Console_Method.length;  i++)
         BOM.console[ Console_Method[i] ] = _Notice_;
 
-})(self);
+})(self, self.document);
 
 
 
@@ -223,12 +236,12 @@ define('jQuery+',  function () {
         iDepth = iDepth || 1;
 
         if (!  (iLeft && iRight))
-            return  (iLeft == iRight);
+            return  (iLeft === iRight);
 
         iLeft = iLeft.valueOf();  iRight = iRight.valueOf();
 
         if ((typeof iLeft != 'object')  ||  (typeof iRight != 'object'))
-            return  (iLeft == iRight);
+            return  (iLeft === iRight);
 
         var Left_Key = Object.getOwnPropertyNames(iLeft),
             Right_Key = Object.getOwnPropertyNames(iRight);
@@ -243,7 +256,7 @@ define('jQuery+',  function () {
             if (_Key_ != Right_Key[i])  return false;
 
             if (! iDepth) {
-                if (iLeft[_Key_] != iRight[_Key_])  return false;
+                if (iLeft[_Key_] !== iRight[_Key_])  return false;
             } else {
                 if (! arguments.callee.call(
                     this, iLeft[_Key_], iRight[_Key_], iDepth
@@ -357,8 +370,11 @@ define('jQuery+',  function () {
             try {
                 iType = $.type( iVar );
 
-                if ((iType == 'object')  &&  iVar.constructor.name)
-                    iType = iVar.constructor.name;
+                var iName = iVar.constructor.name;
+                iName = (typeof iName == 'function')  ?  iName()  :  iName;
+
+                if ((iType == 'object')  &&  iName)
+                    iType = iName;
                 else
                     iType = iType[0].toUpperCase() + iType.slice(1);
             } catch (iError) {
@@ -526,17 +542,16 @@ define('jQuery+',  function () {
                     return  (this.nodeType == 1);
                 })[0];
             }
-        };
+        },
+        DOM_Proto = Element.prototype;
 
     for (var iName in iGetter)
-        Object.defineProperty(Element.prototype, iName, {
-            get:    iGetter[iName]
-        });
+        Object.defineProperty(DOM_Proto,  iName,  {get: iGetter[iName]});
 
 
 /* ---------- DOM Text Content ---------- */
 
-    Object.defineProperty(Element.prototype, 'textContent', {
+    Object.defineProperty(DOM_Proto, 'textContent', {
         get:    function () {
             return this.innerText;
         },
@@ -549,27 +564,17 @@ define('jQuery+',  function () {
         }
     });
 
-/* ---------- DOM Selector Match ---------- */
-
-    Element.prototype.matches = function () {
-        if (! this.parentNode)  $('<div />')[0].appendChild(this);
-
-        return  ($.inArray(
-            this,  this.parentNode.querySelectorAll( arguments[0] )
-        ) > -1);
-    };
-
 /* ---------- DOM Attribute Name ---------- */
 
     var iAlias = {
             'class':    'className',
             'for':      'htmlFor'
         },
-        Get_Attribute = Element.prototype.getAttribute,
-        Set_Attribute = Element.prototype.setAttribute,
-        Remove_Attribute = Element.prototype.removeAttribute;
+        Get_Attribute = DOM_Proto.getAttribute,
+        Set_Attribute = DOM_Proto.setAttribute,
+        Remove_Attribute = DOM_Proto.removeAttribute;
 
-    $.extend(Element.prototype, {
+    $.extend(DOM_Proto, {
         getAttribute:    function (iName) {
             return  iAlias[iName] ?
                 this[iAlias[iName]]  :  Get_Attribute.call(this, iName,  0);
@@ -1122,11 +1127,6 @@ define('jQuery+',  function () {
         this.length = arguments[0].length;
     }
 
-    var DOM_Proto = Element.prototype;
-
-    DOM_Proto.matches = DOM_Proto.matches || DOM_Proto.webkitMatchesSelector ||
-        DOM_Proto.msMatchesSelector || DOM_Proto.mozMatchesSelector;
-
     if (typeof BOM.getMatchedCSSRules != 'function')
         BOM.getMatchedCSSRules = function (iElement, iPseudo) {
             if (! (iElement instanceof Element))  return null;
@@ -1575,6 +1575,20 @@ define('jQuery+',  function () {
             }
         });
 
+/* ---------- Element CSS Selector Match ---------- */
+
+    var DOM_Proto = Element.prototype;
+
+    DOM_Proto.matches = DOM_Proto.matches || DOM_Proto.webkitMatchesSelector ||
+        DOM_Proto.msMatchesSelector || DOM_Proto.mozMatchesSelector ||
+        function () {
+            if (! this.parentNode)  $('<div />')[0].appendChild(this);
+
+            return  ($.inArray(
+                this,  this.parentNode.querySelectorAll( arguments[0] )
+            ) > -1);
+        };
+
 
     if (! ($.browser.msie < 11))  return;
 
@@ -1588,7 +1602,7 @@ define('jQuery+',  function () {
         }
     }
 
-    Object.defineProperty(Element.prototype, 'dataset', {
+    Object.defineProperty(DOM_Proto, 'dataset', {
         get:    function () {
             return  new DOMStringMap(this);
         }
@@ -1612,9 +1626,7 @@ define('jQuery+',  function () {
 
 /* ---------- DOM Children ---------- */
 
-    var _Children_ = Object.getOwnPropertyDescriptor(
-            Element.prototype,  'children'
-        );
+    var _Children_ = Object.getOwnPropertyDescriptor(DOM_Proto, 'children');
 
     function HTMLCollection() {
         var iChildren = _Children_.get.call( arguments[0] );
@@ -1632,7 +1644,7 @@ define('jQuery+',  function () {
             return  this[ arguments[0] ]  ||  null;
         };
 
-    Object.defineProperty(Element.prototype, 'children', {
+    Object.defineProperty(DOM_Proto, 'children', {
         get:    function () {
             return  new HTMLCollection(this);
         }
@@ -1659,9 +1671,29 @@ define('jQuery+',  function () {
         return  (Array.prototype.indexOf.call(this, iClass) > -1);
     };
 
-    Object.defineProperty(Element.prototype, 'classList', {
+    Object.defineProperty(DOM_Proto, 'classList', {
         get:    function () {
             return  new DOMTokenList(this);
+        }
+    });
+
+/* ---------- DOM InnerHTML ---------- */
+
+    var InnerHTML = Object.getOwnPropertyDescriptor(DOM_Proto, 'innerHTML');
+
+    Object.defineProperty(DOM_Proto, 'innerHTML', {
+        set:    function (iHTML) {
+            if (! String(iHTML).match(
+                /^[^<]*<\s*(head|meta|title|link|style|script|noscript|(!--[^>]*--))[^>]*>/i
+            ))
+                return  InnerHTML.set.call(this, iHTML);
+
+            InnerHTML.set.call(this,  'IE_Scope' + iHTML);
+
+            var iChild = this.childNodes;
+            iChild[0].nodeValue = iChild[0].nodeValue.slice(8);
+
+            if (! iChild[0].nodeValue[0])  this.removeChild( iChild[0] );
         }
     });
 
@@ -2091,7 +2123,7 @@ define('jQuery+',  function () {
 //              >>>  jQuery+  <<<
 //
 //
-//    [Version]    v7.3  (2016-06-22)
+//    [Version]    v7.3  (2016-06-28)
 //
 //    [Require]    jQuery  v1.9+
 //
