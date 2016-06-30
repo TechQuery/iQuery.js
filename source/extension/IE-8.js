@@ -114,6 +114,15 @@ define(['jquery'],  function ($) {
         return iArgs.join('');
     }
 
+    function EM_PX(iEM) {
+        var Font_Size = this.ownerNode.parentNode.currentStyle.fontSize;
+
+        if (Font_Size.slice(-2).toLowerCase() == 'pt')
+            Font_Size = Font_Size.slice(0, -2) * BOM.screen.deviceXDPI / 72;
+
+        return  iEM * parseFloat(Font_Size);
+    }
+
     $.extend(CSSStyleDeclaration.prototype, {
         getPropertyValue:    function (iName) {
             var iScale = 1;
@@ -127,9 +136,13 @@ define(['jquery'],  function ($) {
             var iStyle = this[ iName.toCamelCase() ];
             var iNumber = parseFloat(iStyle);
 
-            return  isNaN(iNumber) ? iStyle : (
-                (iNumber / iScale)  +  ($.cssPX[iName] ? 'px' : '')
-            );
+            if (! isNaN(iNumber)) {
+                if (iStyle.slice(-2).toLowerCase() == 'em')
+                    iNumber = EM_PX.call(this, iNumber);
+                iStyle =  (iNumber / iScale)  +  ($.cssPX[iName] ? 'px' : '')
+            }
+
+            return iStyle;
         },
         setPropertyValue:    function (iName, iValue) {
             this[this.length++] = iName;
@@ -261,17 +274,16 @@ define(['jquery'],  function ($) {
 
 /* ---------- XML DOM Parser ---------- */
 
-    var IE_DOMParser = $.map([
-            'MSXML2.DOMDocument.6.0',
-            'MSXML2.DOMDocument.5.0',
-            'MSXML2.DOMDocument.4.0',
-            'MSXML2.DOMDocument.3.0',
-            'MSXML2.DOMDocument',
-            'Microsoft.XMLDOM'
-        ],  function () {
-            new ActiveXObject(arguments[0]);
-            return arguments[0];
-        })[0];
+    var IE_DOMParser = (function () {
+            for (var i = 0;  arguments[i];  i++)  try {
+                new  ActiveXObject( arguments[i] );
+                return arguments[i];
+            } catch (iError) { }
+        })(
+            'MSXML2.DOMDocument.6.0', 'MSXML2.DOMDocument.5.0',
+            'MSXML2.DOMDocument.4.0', 'MSXML2.DOMDocument.3.0',
+            'MSXML2.DOMDocument',     'Microsoft.XMLDOM'
+        );
 
     function XML_Create() {
         var iXML = new ActiveXObject(IE_DOMParser);

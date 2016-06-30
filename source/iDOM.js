@@ -106,25 +106,6 @@ define(['iCore'],  function ($) {
                 [ ].slice.call(this,  Index,  (Index + 1) || undefined)
             );
         },
-        index:              function (iTarget) {
-            if (! iTarget)
-                return  $.trace(this[0], 'previousElementSibling').length;
-
-            var iType = $.Type(iTarget);
-
-            switch (true) {
-                case (iType == 'String'):
-                    return  $.inArray(this[0], $(iTarget));
-                case ($.likeArray( iTarget )):
-                    if (! (iType in _DOM_.TypeMap.element)) {
-                        iTarget = iTarget[0];
-                        iType = $.Type(iTarget);
-                    }
-                case (iType in _DOM_.TypeMap.element):
-                    return  $.inArray(iTarget, this);
-            }
-            return -1;
-        },
         each:               function () {
             return  $.each(this, arguments[0]);
         },

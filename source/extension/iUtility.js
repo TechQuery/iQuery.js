@@ -12,7 +12,8 @@ define(['jquery'],  function ($) {
                 iType = $.type( iVar );
 
                 var iName = iVar.constructor.name;
-                iName = (typeof iName == 'function')  ?  iName()  :  iName;
+                iName = (typeof iName == 'function')  ?
+                    iName.call( iVar.constructor )  :  iName;
 
                 if ((iType == 'object')  &&  iName)
                     iType = iName;

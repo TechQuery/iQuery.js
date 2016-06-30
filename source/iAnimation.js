@@ -53,7 +53,7 @@ define(['iCore'],  function ($) {
         _BOM_ = $('<iframe />', {
             id:       '_CSS_SandBox_',
             style:    'display: none',
-            src:      ($.browser.msie < 10)  ?  'blank.html'  :  'about:blank'
+            src:      'about:blank'
         }).appendTo(this.body)[0].contentWindow;
     });
 
@@ -63,7 +63,7 @@ define(['iCore'],  function ($) {
                     _BOM_.document.body
                 );
             Tag_Style[iTagName] = $.extend(
-                { },  _BOM_.getComputedStyle( $_Default[0] )
+                { },  BOM.getComputedStyle( $_Default[0] )
             );
             $_Default.remove();
         }

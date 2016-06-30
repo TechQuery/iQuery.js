@@ -543,7 +543,8 @@ define('iQuery',  function () {
                 iType = $.type( iVar );
 
                 var iName = iVar.constructor.name;
-                iName = (typeof iName == 'function')  ?  iName()  :  iName;
+                iName = (typeof iName == 'function')  ?
+                    iName.call( iVar.constructor )  :  iName;
 
                 if ((iType == 'object')  &&  iName)
                     iType = iName;
@@ -1203,6 +1204,25 @@ define('iQuery',  function () {
         },
         css:                function () {
             return  _DOM_.operate('Style', this, arguments[0], arguments[1]);
+        },
+        index:              function (iTarget) {
+            if (! iTarget)
+                return  $.trace(this[0], 'previousElementSibling').length;
+
+            var iType = $.Type(iTarget);
+
+            switch (true) {
+                case (iType == 'String'):
+                    return  $.inArray(this[0], $(iTarget));
+                case ($.likeArray( iTarget )):
+                    if (! (iType in _DOM_.TypeMap.element)) {
+                        iTarget = iTarget[0];
+                        iType = $.Type(iTarget);
+                    }
+                case (iType in _DOM_.TypeMap.element):
+                    return  $.inArray(iTarget, this);
+            }
+            return -1;
         }
     });
 
@@ -1317,25 +1337,6 @@ define('iQuery',  function () {
             return  this.pushStack(
                 [ ].slice.call(this,  Index,  (Index + 1) || undefined)
             );
-        },
-        index:              function (iTarget) {
-            if (! iTarget)
-                return  $.trace(this[0], 'previousElementSibling').length;
-
-            var iType = $.Type(iTarget);
-
-            switch (true) {
-                case (iType == 'String'):
-                    return  $.inArray(this[0], $(iTarget));
-                case ($.likeArray( iTarget )):
-                    if (! (iType in _DOM_.TypeMap.element)) {
-                        iTarget = iTarget[0];
-                        iType = $.Type(iTarget);
-                    }
-                case (iType in _DOM_.TypeMap.element):
-                    return  $.inArray(iTarget, this);
-            }
-            return -1;
         },
         each:               function () {
             return  $.each(this, arguments[0]);
@@ -2507,6 +2508,15 @@ define('iQuery',  function () {
         return iArgs.join('');
     }
 
+    function EM_PX(iEM) {
+        var Font_Size = this.ownerNode.parentNode.currentStyle.fontSize;
+
+        if (Font_Size.slice(-2).toLowerCase() == 'pt')
+            Font_Size = Font_Size.slice(0, -2) * BOM.screen.deviceXDPI / 72;
+
+        return  iEM * parseFloat(Font_Size);
+    }
+
     $.extend(CSSStyleDeclaration.prototype, {
         getPropertyValue:    function (iName) {
             var iScale = 1;
@@ -2520,9 +2530,13 @@ define('iQuery',  function () {
             var iStyle = this[ iName.toCamelCase() ];
             var iNumber = parseFloat(iStyle);
 
-            return  isNaN(iNumber) ? iStyle : (
-                (iNumber / iScale)  +  ($.cssPX[iName] ? 'px' : '')
-            );
+            if (! isNaN(iNumber)) {
+                if (iStyle.slice(-2).toLowerCase() == 'em')
+                    iNumber = EM_PX.call(this, iNumber);
+                iStyle =  (iNumber / iScale)  +  ($.cssPX[iName] ? 'px' : '')
+            }
+
+            return iStyle;
         },
         setPropertyValue:    function (iName, iValue) {
             this[this.length++] = iName;
@@ -2654,17 +2668,16 @@ define('iQuery',  function () {
 
 /* ---------- XML DOM Parser ---------- */
 
-    var IE_DOMParser = $.map([
-            'MSXML2.DOMDocument.6.0',
-            'MSXML2.DOMDocument.5.0',
-            'MSXML2.DOMDocument.4.0',
-            'MSXML2.DOMDocument.3.0',
-            'MSXML2.DOMDocument',
-            'Microsoft.XMLDOM'
-        ],  function () {
-            new ActiveXObject(arguments[0]);
-            return arguments[0];
-        })[0];
+    var IE_DOMParser = (function () {
+            for (var i = 0;  arguments[i];  i++)  try {
+                new  ActiveXObject( arguments[i] );
+                return arguments[i];
+            } catch (iError) { }
+        })(
+            'MSXML2.DOMDocument.6.0', 'MSXML2.DOMDocument.5.0',
+            'MSXML2.DOMDocument.4.0', 'MSXML2.DOMDocument.3.0',
+            'MSXML2.DOMDocument',     'Microsoft.XMLDOM'
+        );
 
     function XML_Create() {
         var iXML = new ActiveXObject(IE_DOMParser);
@@ -3400,7 +3413,7 @@ define('iQuery',  function () {
         _BOM_ = $('<iframe />', {
             id:       '_CSS_SandBox_',
             style:    'display: none',
-            src:      ($.browser.msie < 10)  ?  'blank.html'  :  'about:blank'
+            src:      'about:blank'
         }).appendTo(this.body)[0].contentWindow;
     });
 
@@ -3410,7 +3423,7 @@ define('iQuery',  function () {
                     _BOM_.document.body
                 );
             Tag_Style[iTagName] = $.extend(
-                { },  _BOM_.getComputedStyle( $_Default[0] )
+                { },  BOM.getComputedStyle( $_Default[0] )
             );
             $_Default.remove();
         }
