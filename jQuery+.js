@@ -631,15 +631,6 @@ define('jQuery+',  function () {
         return iArgs.join('');
     }
 
-    function EM_PX(iEM) {
-        var Font_Size = this.ownerNode.parentNode.currentStyle.fontSize;
-
-        if (Font_Size.slice(-2).toLowerCase() == 'pt')
-            Font_Size = Font_Size.slice(0, -2) * BOM.screen.deviceXDPI / 72;
-
-        return  iEM * parseFloat(Font_Size);
-    }
-
     $.extend(CSSStyleDeclaration.prototype, {
         getPropertyValue:    function (iName) {
             var iScale = 1;
@@ -654,8 +645,18 @@ define('jQuery+',  function () {
             var iNumber = parseFloat(iStyle);
 
             if (! isNaN(iNumber)) {
-                if (iStyle.slice(-2).toLowerCase() == 'em')
-                    iNumber = EM_PX.call(this, iNumber);
+                switch ( iStyle.slice(-2).toLowerCase() ) {
+                    case 'em':    {
+                        var Font_Size =
+                                this.ownerNode.parentNode.currentStyle.fontSize;
+
+                        iNumber *= parseFloat(Font_Size);
+
+                        if (Font_Size.slice(-2).toLowerCase() != 'pt')  break;
+                    }
+                    case 'pt':    iNumber = iNumber * BOM.screen.deviceXDPI / 72;
+                }
+
                 iStyle =  (iNumber / iScale)  +  ($.cssPX[iName] ? 'px' : '')
             }
 
@@ -919,6 +920,8 @@ define('jQuery+',  function () {
             return true;
         },
         scrollTo:         function () {
+            if (! this[0])  return this;
+
             var $_This = this;
 
             $( arguments[0] ).each(function () {
@@ -929,8 +932,12 @@ define('jQuery+',  function () {
                 if (! $_Scroll.length)  return;
 
                 $_Scroll.animate({
-                    scrollTop:     iCoord.top - _Coord_.top,
-                    scrollLeft:    iCoord.left - _Coord_.left
+                    scrollTop:     (! _Coord_.top)  ?  iCoord.top  :  (
+                        $_Scroll.scrollTop()  +  (iCoord.top - _Coord_.top)
+                    ),
+                    scrollLeft:    (! _Coord_.left)  ?  iCoord.left  :  (
+                        $_Scroll.scrollLeft()  +  (iCoord.left - _Coord_.left)
+                    )
                 });
             });
 
@@ -2136,7 +2143,7 @@ define('jQuery+',  function () {
 //              >>>  jQuery+  <<<
 //
 //
-//    [Version]    v7.3  (2016-06-28)
+//    [Version]    v7.3  (2016-07-01)
 //
 //    [Require]    jQuery  v1.9+
 //

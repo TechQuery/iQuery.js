@@ -114,15 +114,6 @@ define(['jquery'],  function ($) {
         return iArgs.join('');
     }
 
-    function EM_PX(iEM) {
-        var Font_Size = this.ownerNode.parentNode.currentStyle.fontSize;
-
-        if (Font_Size.slice(-2).toLowerCase() == 'pt')
-            Font_Size = Font_Size.slice(0, -2) * BOM.screen.deviceXDPI / 72;
-
-        return  iEM * parseFloat(Font_Size);
-    }
-
     $.extend(CSSStyleDeclaration.prototype, {
         getPropertyValue:    function (iName) {
             var iScale = 1;
@@ -137,8 +128,18 @@ define(['jquery'],  function ($) {
             var iNumber = parseFloat(iStyle);
 
             if (! isNaN(iNumber)) {
-                if (iStyle.slice(-2).toLowerCase() == 'em')
-                    iNumber = EM_PX.call(this, iNumber);
+                switch ( iStyle.slice(-2).toLowerCase() ) {
+                    case 'em':    {
+                        var Font_Size =
+                                this.ownerNode.parentNode.currentStyle.fontSize;
+
+                        iNumber *= parseFloat(Font_Size);
+
+                        if (Font_Size.slice(-2).toLowerCase() != 'pt')  break;
+                    }
+                    case 'pt':    iNumber = iNumber * BOM.screen.deviceXDPI / 72;
+                }
+
                 iStyle =  (iNumber / iScale)  +  ($.cssPX[iName] ? 'px' : '')
             }
 

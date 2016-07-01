@@ -89,6 +89,8 @@ define(['jquery'],  function ($) {
             return true;
         },
         scrollTo:         function () {
+            if (! this[0])  return this;
+
             var $_This = this;
 
             $( arguments[0] ).each(function () {
@@ -99,8 +101,12 @@ define(['jquery'],  function ($) {
                 if (! $_Scroll.length)  return;
 
                 $_Scroll.animate({
-                    scrollTop:     iCoord.top - _Coord_.top,
-                    scrollLeft:    iCoord.left - _Coord_.left
+                    scrollTop:     (! _Coord_.top)  ?  iCoord.top  :  (
+                        $_Scroll.scrollTop()  +  (iCoord.top - _Coord_.top)
+                    ),
+                    scrollLeft:    (! _Coord_.left)  ?  iCoord.left  :  (
+                        $_Scroll.scrollLeft()  +  (iCoord.left - _Coord_.left)
+                    )
                 });
             });
 
