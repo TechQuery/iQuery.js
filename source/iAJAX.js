@@ -186,7 +186,7 @@ define(['iEvent'],  function ($) {
 
         iAJAX.trigger('prefilter', iArgs);
 
-        iXHR = iAJAX.trigger('transport', iOption.dataType, iArgs);
+        iXHR = iAJAX.trigger('transport', iOption.dataType, iArgs).slice(-1)[0];
 
         iXHR.send({ },  $.proxy(AJAX_Complete, iXHR, iOption));
 

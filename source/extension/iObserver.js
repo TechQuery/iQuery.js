@@ -90,14 +90,14 @@ define(['jquery'],  function ($) {
             return this;
         },
         trigger:    function () {
-            var iArgs = $.makeArray(arguments),  iReturn;
+            var iArgs = $.makeArray(arguments),  iReturn = [ ];
 
             var iData = $.likeArray(iArgs[iArgs.length - 1])  &&  iArgs.pop();
 
             iArgs.push(function () {
                 var _Return_ = arguments[0].apply(this, iData);
 
-                iReturn = $.isData(_Return_) ? _Return_ : iReturn;
+                if ($.isData(_Return_))  iReturn.push(_Return_);
             });
 
             Each_Row.apply(this, iArgs);

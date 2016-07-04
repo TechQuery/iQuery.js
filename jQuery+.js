@@ -2118,14 +2118,14 @@ define('jQuery+',  function () {
             return this;
         },
         trigger:    function () {
-            var iArgs = $.makeArray(arguments),  iReturn;
+            var iArgs = $.makeArray(arguments),  iReturn = [ ];
 
             var iData = $.likeArray(iArgs[iArgs.length - 1])  &&  iArgs.pop();
 
             iArgs.push(function () {
                 var _Return_ = arguments[0].apply(this, iData);
 
-                iReturn = $.isData(_Return_) ? _Return_ : iReturn;
+                if ($.isData(_Return_))  iReturn.push(_Return_);
             });
 
             Each_Row.apply(this, iArgs);
@@ -2143,7 +2143,7 @@ define('jQuery+',  function () {
 //              >>>  jQuery+  <<<
 //
 //
-//    [Version]    v7.3  (2016-07-01)
+//    [Version]    v7.3  (2016-07-04)
 //
 //    [Require]    jQuery  v1.9+
 //
