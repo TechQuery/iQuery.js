@@ -1,9 +1,11 @@
-if ((typeof this.define != 'function')  ||  (! this.define.amd))
-    this.define = function () {
-        return  arguments[arguments.length - 1]();
-    };
+(function () {
 
-define('iQuery+',  function () {
+    if ((typeof this.define != 'function')  ||  (! this.define.amd))
+        arguments[0]();
+    else
+        this.define('iQuery+', arguments[0]);
+
+})(function () {
 
 
 (function (BOM, DOM, $) {
@@ -305,7 +307,7 @@ define('iQuery+',  function () {
             return iLV;
         },
         fork:           function () {
-            var $_View = this.$_View.clone(true);
+            var $_View = this.$_View.clone(true).append( this.$_Template );
 
             $_View.data({CVI_ListView: '',  LV_Model: ''})[0].id = '';
 

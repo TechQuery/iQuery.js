@@ -247,7 +247,7 @@ define(['jquery', 'CommonView'],  function ($) {
             return iLV;
         },
         fork:           function () {
-            var $_View = this.$_View.clone(true);
+            var $_View = this.$_View.clone(true).append( this.$_Template );
 
             $_View.data({CVI_ListView: '',  LV_Model: ''})[0].id = '';
 

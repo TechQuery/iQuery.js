@@ -2,7 +2,7 @@
 //          >>>  EasyWebUI Component Library  <<<
 //
 //
-//      [Version]     v2.7  (2016-07-04)  Stable
+//      [Version]     v2.8  (2016-07-04)  Stable
 //
 //      [Based on]    iQuery v1  or  jQuery (with jQuery+),
 //
@@ -14,6 +14,16 @@
 //
 //            (C)2014-2016    shiy2008@gmail.com
 //
+
+
+(function () {
+
+    if ((typeof this.define != 'function')  ||  (! this.define.amd))
+        arguments[0]();
+    else
+        this.define('EasyWebUI', ['iQuery+'], arguments[0]);
+
+})(function () {
 
 
 /* ---------- HTML 5 / CSS 3 补丁 ---------- */
@@ -1107,3 +1117,6 @@
     );
 
 })(self,  self.document,  self.jQuery || self.Zepto);
+
+
+});
