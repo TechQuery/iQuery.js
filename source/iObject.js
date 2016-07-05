@@ -47,6 +47,8 @@ define(['extension/iObject'],  function ($) {
                     .split(' ')[1].slice(0, -1).toLowerCase();
         },
         isNumeric:        function (iValue) {
+            iValue = (iValue && iValue.valueOf)  ?  iValue.valueOf()  :  iValue;
+
             if ((iValue === '')  ||  (iValue === Infinity)  ||  isNaN(iValue))
                 return false;
 

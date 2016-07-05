@@ -101,6 +101,8 @@
         this.$_Template = this[0].clone(true);
 
         this.$_View.on(Click_Type,  '.ListView_Item',  function (iEvent) {
+            if (iView.$_View[0] !== iEvent.target.parentNode)  return;
+
             var $_This = $(this);
 
             if (
