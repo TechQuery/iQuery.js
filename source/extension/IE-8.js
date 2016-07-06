@@ -120,7 +120,7 @@ define(['jquery'],  function ($) {
                 ('pixel-' + iName).toCamelCase()
             ];
             this[iName] = (typeof this[iName] == 'number')  ?
-                (this[iName] + 'px')  :  iStyle[iName];
+                (this[iName] + 'px')  :  (iStyle[iName] + '');
 
             if (typeof this[iName] == 'string')  toPX.call(this, iName);
 
@@ -136,7 +136,15 @@ define(['jquery'],  function ($) {
         this.opacity = (iAlpha  ?  (iAlpha.opacity / 100)  :  1)  +  '';
     }
 
-    var Code_Indent = ' '.repeat(4);
+    CSSStyleDeclaration.prototype.getPropertyValue = function () {
+        return  this[ arguments[0].toCamelCase() ];
+    };
+
+    BOM.getComputedStyle = function () {
+        return  new CSSStyleDeclaration(arguments[0]);
+    };
+
+/* ---------- Set Style ---------- */
 
     function toHexInt(iDec, iLength) {
         var iHex = parseInt( Number(iDec).toFixed(0) ).toString(16);
@@ -158,16 +166,12 @@ define(['jquery'],  function ($) {
         return iArgs.join('');
     }
 
-    $.extend(CSSStyleDeclaration.prototype, {
-        getPropertyValue:    function () {
-            return  this[ arguments[0].toCamelCase() ];
-        },
-        setProperty:         function (iName, iValue) {
-            this[this.length++] = iName;
-
+    DOM.documentElement.style.constructor.prototype.setProperty =
+        function (iName, iValue) {
             var iString = '',  iWrapper,  iScale = 1,  iConvert;
-            if (typeof iValue == 'string')
-                var iRGBA = iValue.match(/\s*rgba\(([^\)]+),\s*(\d\.\d+)\)/i);
+
+            var iRGBA = (typeof iValue == 'string')  &&
+                    iValue.match(/\s*rgba\(([^\)]+),\s*(\d\.\d+)\)/i);
 
             if (iName == 'opacity') {
                 iName = 'filter';
@@ -176,40 +180,27 @@ define(['jquery'],  function ($) {
             } else if (iRGBA) {
                 iString = iValue.replace(iRGBA[0], '');
                 if (iString)
-                    iString += arguments.callee.call(this, arguments[0], iName, iString);
+                    iString += arguments.callee.call(this, iName, iString);
                 if (iName != 'background')
-                    iString += arguments.callee.call(
-                        this,
-                        arguments[0],
+                    iString += arguments.callee.apply(this, [
                         (iName.indexOf('-color') > -1) ? iName : (iName + '-color'),
                         'rgb(' + iRGBA[1] + ')'
-                    );
+                    ]);
                 iName = 'filter';
-                iWrapper = 'progid:' + DX_Filter + 'Gradient(startColorStr=#{n},endColorStr=#{n})';
+                iWrapper = 'progid:' + DX_Filter +
+                    'Gradient(startColorStr=#{n},endColorStr=#{n})';
                 iConvert = function (iAlpha, iRGB) {
                     return  toHexInt(parseFloat(iAlpha) * 256, 2) + RGB_Hex(iRGB);
                 };
             }
             if (iWrapper)
-                iValue = iWrapper.replace(/\{n\}/g,  iConvert ?
-                      iConvert(iRGBA[2], iRGBA[1]) :
-                      (iValue * iScale)
+                iValue = iWrapper.replace(
+                    /\{n\}/g,
+                    iConvert  ?  iConvert(iRGBA[2], iRGBA[1])  :  (iValue * iScale)
                 );
 
-            this[ this[this.length - 1].toCamelCase() ] = iValue + (arguments[2] ? ' !important' : '');
-
-            this.ownerNode.style.setAttribute(
-                iName,  iValue,  arguments[2] && 'important'
-            );
-        }
-    });
-
-    DOM.documentElement.style.constructor.prototype.setProperty =
-        CSSStyleDeclaration.prototype.setProperty;
-
-    BOM.getComputedStyle = function () {
-        return  new CSSStyleDeclaration(arguments[0]);
-    };
+            this.setAttribute(iName, iValue, arguments[2]);
+        };
 
 /* ---------- DOM Event ---------- */
 

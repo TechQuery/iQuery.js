@@ -88,7 +88,7 @@ define(['extension/iTimer'],  function ($) {
 
     /* ----- DOM Style ----- */
     _DOM_.Style = {
-        get:           function (iElement, iName) {
+        get:    function (iElement, iName) {
             if ((! iElement)  ||  ($.Type(iElement) in _DOM_.TypeMap.root))
                 return;
 
@@ -107,14 +107,13 @@ define(['extension/iTimer'],  function ($) {
             }
             return  $.isData(iStyle) ? iStyle : '';
         },
-        Set_Method:    $.browser.modern ? 'setProperty' : 'setAttribute',
-        set:           function (iElement, iName, iValue) {
+        set:    function (iElement, iName, iValue) {
             if ($.Type(iElement) in _DOM_.TypeMap.root)  return false;
 
             if ($.isNumeric(iValue) && iName.match($.cssPX))
                 iValue += 'px';
 
-            iElement.style[this.Set_Method](iName, String(iValue), 'important');
+            iElement.style.setProperty(iName, String(iValue), 'important');
         }
     };
 

@@ -639,7 +639,7 @@
                 ('pixel-' + iName).toCamelCase()
             ];
             this[iName] = (typeof this[iName] == 'number')  ?
-                (this[iName] + 'px')  :  iStyle[iName];
+                (this[iName] + 'px')  :  (iStyle[iName] + '');
 
             if (typeof this[iName] == 'string')  toPX.call(this, iName);
 
@@ -655,7 +655,15 @@
         this.opacity = (iAlpha  ?  (iAlpha.opacity / 100)  :  1)  +  '';
     }
 
-    var Code_Indent = ' '.repeat(4);
+    CSSStyleDeclaration.prototype.getPropertyValue = function () {
+        return  this[ arguments[0].toCamelCase() ];
+    };
+
+    BOM.getComputedStyle = function () {
+        return  new CSSStyleDeclaration(arguments[0]);
+    };
+
+/* ---------- Set Style ---------- */
 
     function toHexInt(iDec, iLength) {
         var iHex = parseInt( Number(iDec).toFixed(0) ).toString(16);
@@ -677,16 +685,12 @@
         return iArgs.join('');
     }
 
-    $.extend(CSSStyleDeclaration.prototype, {
-        getPropertyValue:    function () {
-            return  this[ arguments[0].toCamelCase() ];
-        },
-        setProperty:         function (iName, iValue) {
-            this[this.length++] = iName;
-
+    DOM.documentElement.style.constructor.prototype.setProperty =
+        function (iName, iValue) {
             var iString = '',  iWrapper,  iScale = 1,  iConvert;
-            if (typeof iValue == 'string')
-                var iRGBA = iValue.match(/\s*rgba\(([^\)]+),\s*(\d\.\d+)\)/i);
+
+            var iRGBA = (typeof iValue == 'string')  &&
+                    iValue.match(/\s*rgba\(([^\)]+),\s*(\d\.\d+)\)/i);
 
             if (iName == 'opacity') {
                 iName = 'filter';
@@ -695,40 +699,27 @@
             } else if (iRGBA) {
                 iString = iValue.replace(iRGBA[0], '');
                 if (iString)
-                    iString += arguments.callee.call(this, arguments[0], iName, iString);
+                    iString += arguments.callee.call(this, iName, iString);
                 if (iName != 'background')
-                    iString += arguments.callee.call(
-                        this,
-                        arguments[0],
+                    iString += arguments.callee.apply(this, [
                         (iName.indexOf('-color') > -1) ? iName : (iName + '-color'),
                         'rgb(' + iRGBA[1] + ')'
-                    );
+                    ]);
                 iName = 'filter';
-                iWrapper = 'progid:' + DX_Filter + 'Gradient(startColorStr=#{n},endColorStr=#{n})';
+                iWrapper = 'progid:' + DX_Filter +
+                    'Gradient(startColorStr=#{n},endColorStr=#{n})';
                 iConvert = function (iAlpha, iRGB) {
                     return  toHexInt(parseFloat(iAlpha) * 256, 2) + RGB_Hex(iRGB);
                 };
             }
             if (iWrapper)
-                iValue = iWrapper.replace(/\{n\}/g,  iConvert ?
-                      iConvert(iRGBA[2], iRGBA[1]) :
-                      (iValue * iScale)
+                iValue = iWrapper.replace(
+                    /\{n\}/g,
+                    iConvert  ?  iConvert(iRGBA[2], iRGBA[1])  :  (iValue * iScale)
                 );
 
-            this[ this[this.length - 1].toCamelCase() ] = iValue + (arguments[2] ? ' !important' : '');
-
-            this.ownerNode.style.setAttribute(
-                iName,  iValue,  arguments[2] && 'important'
-            );
-        }
-    });
-
-    DOM.documentElement.style.constructor.prototype.setProperty =
-        CSSStyleDeclaration.prototype.setProperty;
-
-    BOM.getComputedStyle = function () {
-        return  new CSSStyleDeclaration(arguments[0]);
-    };
+            this.setAttribute(iName, iValue, arguments[2]);
+        };
 
 /* ---------- DOM Event ---------- */
 
@@ -864,6 +855,23 @@
         Rolling_Style = $.makeSet('auto', 'scroll');
 
     $.fn.extend({
+        insertTo:         function ($_Target, Index) {
+            var DOM_Set = DOM.createDocumentFragment();
+
+            for (var i = 0;  this[i];  i++)
+                DOM_Set.appendChild( this[i] );
+
+            $_Target = $($_Target).eq(0);
+
+            var iAfter = $( $_Target[0].children ).eq(Index || 0)[0];
+
+            if (iAfter)
+                $_Target[0].insertBefore(DOM_Set, iAfter);
+            else
+                $_Target[0].appendChild(DOM_Set);
+
+            return this;
+        },
         reduce:           function (iMethod, iKey, iCallback) {
             if (arguments.length < 3) {
                 iCallback = iKey;
@@ -2164,7 +2172,7 @@
 //              >>>  jQuery+  <<<
 //
 //
-//    [Version]    v7.3  (2016-07-05)
+//    [Version]    v7.4  (2016-07-06)
 //
 //    [Require]    jQuery  v1.9+
 //
