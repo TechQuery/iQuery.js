@@ -8,7 +8,7 @@
  *    and can be used in the Web UI development of
  *    Any Platform.
  *
- *    [Version]    v1.0  (2016-06-15)
+ *    [Version]    v1.0  (2016-07-07)
  *
  *    [Require]    CSS 2.1  (Best Effect with CSS 3),
  *
@@ -35,6 +35,7 @@ html, body {
                     sans-serif, monospace;
     background:     rgb(231, 231, 231);
     height:         100%;
+    overflow:       auto;
 }
 @media (min-width: 1920px), (min-height:  600px) {
     html, body {
@@ -527,7 +528,7 @@ html.Fixed > body > .Fix-Top {
     padding:    0  !important;
 }
 .Grid-Row > * {
-    display:           table-cell;
+    display:           table-cell  !important;
     vertical-align:    top;
 }
 .Grid-Row.CenterY > *,  .Grid-Row > *.CenterY  {
@@ -789,6 +790,7 @@ ul.NavBar > li:active {
 .DropDown.Head {
     display:       inline-block;
     min-height:    1.5em;
+    cursor:        pointer;
     position:      relative;
 }
 .DropDown.Body {

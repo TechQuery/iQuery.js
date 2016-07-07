@@ -384,46 +384,6 @@ define(['iCore'],  function ($) {
                 return false;
             }
         },
-        append:             function () {
-            var $_Child = $(arguments[0], arguments[1]),
-                DOM_Cache = DOM.createDocumentFragment();
-
-            return  this.each(function (Index) {
-                    var _Child_ = Index ? $_Child.clone(true) : $_Child,
-                        _Cache_ = DOM_Cache.cloneNode();
-
-                    for (var i = 0;  i < _Child_.length;  i++)
-                        _Cache_.appendChild( _Child_[i] );
-
-                    this.appendChild(_Cache_);
-                });
-        },
-        appendTo:           function () {
-            $(arguments[0], arguments[1]).append(this);
-
-            return  this;
-        },
-        before:             function () {
-            var $_Brother = $(arguments[0], arguments[1]),
-                DOM_Cache = DOM.createDocumentFragment();
-
-            return  this.each(function (Index) {
-                var _Brother_ = Index ? $_Brother.clone(true) : $_Brother,
-                    _Cache_ = DOM_Cache.cloneNode();
-
-                for (var i = 0;  i < _Brother_.length;  i++)
-                    if (_Brother_[i] !== this)
-                        _Cache_.appendChild(_Brother_[i]);
-
-                this.parentNode.insertBefore(_Cache_, this);
-            });
-        },
-        prepend:            DOM_Insert('firstElementChild'),
-        prependTo:          function () {
-            $(arguments[0], arguments[1]).prepend(this);
-
-            return  this;
-        },
         after:              DOM_Insert('nextElementSibling'),
         val:                function () {
             if (! $.isData(arguments[0]))

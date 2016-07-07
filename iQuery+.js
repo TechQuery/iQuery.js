@@ -194,7 +194,7 @@
                 this[Index] = $_Item;
 
             return  $_Item.addClass('ListView_Item').data('LV_Model', iValue)
-                .insertTo(this.$_View, Index);
+                .insertTo(this.$_View,  Index * $_Item.length);
         },
         render:         function (iData, iFrom) {
             var iDelay = (this.cache instanceof Array),  $_Scroll;

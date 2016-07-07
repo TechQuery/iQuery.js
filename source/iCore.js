@@ -435,9 +435,6 @@ define(['extension/iTimer'],  function ($) {
     $ = BOM.iQuery = $.extend(iQuery, $, {
         data:             function (iElement, iName, iValue) {
             return  _DOM_.operate('Data', [iElement], iName, iValue);
-        },
-        globalEval:    function () {
-            this('<script />').prop('text', arguments[0]).appendTo('head');
         }
     });
 

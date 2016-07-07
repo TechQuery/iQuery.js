@@ -12,23 +12,6 @@ define(['jquery'],  function ($) {
         Rolling_Style = $.makeSet('auto', 'scroll');
 
     $.fn.extend({
-        insertTo:         function ($_Target, Index) {
-            var DOM_Set = DOM.createDocumentFragment();
-
-            for (var i = 0;  this[i];  i++)
-                DOM_Set.appendChild( this[i] );
-
-            $_Target = $($_Target).eq(0);
-
-            var iAfter = $( $_Target[0].children ).eq(Index || 0)[0];
-
-            if (iAfter)
-                $_Target[0].insertBefore(DOM_Set, iAfter);
-            else
-                $_Target[0].appendChild(DOM_Set);
-
-            return this;
-        },
         reduce:           function (iMethod, iKey, iCallback) {
             if (arguments.length < 3) {
                 iCallback = iKey;

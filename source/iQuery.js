@@ -2,7 +2,7 @@
 //                >>>  iQuery.js  <<<
 //
 //
-//      [Version]    v2.0  (2016-07-06)  Stable
+//      [Version]    v2.0  (2016-07-07)  Alpha
 //
 //      [Usage]      A Light-weight jQuery Compatible API
 //                   with IE 8+ compatibility.
@@ -15,7 +15,7 @@
 define([
     'extension/iBrowser', 'iObject', 'iUtility', 'extension/iUtility',
     'iEvent', 'extension/iEvent', 'extension/IE-8', 'extension/HTML-5',
-    'extension/iDOM', 'extension/iCSS', 'extension/iSelection', 'iAnimation',
+    'iAnimation', 'extension/iDOM', 'extension/iCSS', 'extension/iSelection',
     'extension/iObserver', 'iAJAX', 'extension/HTML-5_Form', 'extension/iAJAX'
 ],  function ($) {
 
