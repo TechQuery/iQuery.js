@@ -22,7 +22,8 @@ define(['jquery', 'CommonView'],  function ($) {
 
         if (typeof onInsert == 'function')  iView.on('insert', onInsert);
 
-        if (iView !== this)  return iView;
+        if ((iView !== this)  ||  (! iView.$_View[0].children[0]))
+            return iView;
 
         this.selector = $_Item;
         this.length = 0;

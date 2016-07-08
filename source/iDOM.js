@@ -77,21 +77,6 @@ define(['iCore'],  function ($) {
         };
     }
 
-    function DOM_Insert(iName) {
-        return  function () {
-            if (
-                this.length &&
-                (!  this.before.apply($(this[0][iName]), arguments).length)
-            )
-                this.append.apply(
-                    (iName == 'firstElementChild')  ?  this  :  this.parent(),
-                    arguments
-                );
-
-            return this;
-        };
-    }
-
     $.fn.extend({
         add:                function () {
             return this.pushStack(
@@ -384,7 +369,6 @@ define(['iCore'],  function ($) {
                 return false;
             }
         },
-        after:              DOM_Insert('nextElementSibling'),
         val:                function () {
             if (! $.isData(arguments[0]))
                 return  this[0] && this[0].value;

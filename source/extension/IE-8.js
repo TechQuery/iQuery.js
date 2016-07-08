@@ -4,7 +4,12 @@ define(['jquery'],  function ($) {
 
     if ($.browser.modern)  return;
 
+
+/* ---------- Document ShortCut ---------- */
+
     DOM.defaultView = DOM.parentWindow;
+
+    DOM.head = DOM.documentElement.firstChild;
 
 
 /* ---------- DOM ShortCut ---------- */

@@ -51,9 +51,9 @@ define(['Insert'],  function ($) {
 
     $(DOM).ready(function () {
         _BOM_ = $('<iframe />', {
-            id:       '_CSS_SandBox_',
-            style:    'display: none',
-            src:      'about:blank'
+            id:     '_CSS_SandBox_',
+            src:    'about:blank',
+            css:    {display:  'none'}
         }).appendTo(this.body)[0].contentWindow;
     });
 

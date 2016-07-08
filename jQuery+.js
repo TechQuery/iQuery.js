@@ -523,7 +523,12 @@
 
     if ($.browser.modern)  return;
 
+
+/* ---------- Document ShortCut ---------- */
+
     DOM.defaultView = DOM.parentWindow;
+
+    DOM.head = DOM.documentElement.firstChild;
 
 
 /* ---------- DOM ShortCut ---------- */
@@ -843,6 +848,31 @@
 
 (function (BOM, DOM, $) {
 
+    $.fn.insertTo = function ($_Target, Index) {
+        var DOM_Set = DOM.createDocumentFragment(),  $_This = [ ];
+
+        for (var i = 0;  this[i];  i++)
+            DOM_Set.appendChild( this[i] );
+
+        $($_Target).each(function () {
+            var iAfter = $(this.children).eq(Index || 0)[0];
+
+            DOM_Set = arguments[0] ? DOM_Set.cloneNode(true) : DOM_Set;
+
+            $.merge($_This, DOM_Set.children);
+
+            this[iAfter ? 'insertBefore' : 'appendChild'](DOM_Set, iAfter);
+        });
+
+        return this.pushStack($_This);
+    };
+
+})(self, self.document, iQuery);
+
+
+
+(function (BOM, DOM, $) {
+
     var iOperator = {
             '+':    function () {
                 return  arguments[0] + arguments[1];
@@ -855,23 +885,6 @@
         Rolling_Style = $.makeSet('auto', 'scroll');
 
     $.fn.extend({
-        insertTo:         function ($_Target, Index) {
-            var DOM_Set = DOM.createDocumentFragment();
-
-            for (var i = 0;  this[i];  i++)
-                DOM_Set.appendChild( this[i] );
-
-            $_Target = $($_Target).eq(0);
-
-            var iAfter = $( $_Target[0].children ).eq(Index || 0)[0];
-
-            if (iAfter)
-                $_Target[0].insertBefore(DOM_Set, iAfter);
-            else
-                $_Target[0].appendChild(DOM_Set);
-
-            return this;
-        },
         reduce:           function (iMethod, iKey, iCallback) {
             if (arguments.length < 3) {
                 iCallback = iKey;
@@ -1624,6 +1637,39 @@
             }
         });
 
+/* ---------- ParentNode Children ---------- */
+
+    function HTMLCollection() {
+        var iChildren = arguments[0].childNodes;
+
+        for (var i = 0, j = 0;  iChildren[i];  i++)
+            if (iChildren[i].nodeType == 1){
+                this[j] = iChildren[i];
+
+                if (this[j++].name)  this[this[j - 1].name] = this[j - 1];
+            }
+
+        this.length = j;
+    }
+
+    HTMLCollection.prototype.item = HTMLCollection.prototype.namedItem =
+        function () {
+            return  this[ arguments[0] ]  ||  null;
+        };
+
+    var Children_Define = {
+            get:    function () {
+                return  new HTMLCollection(this);
+            }
+        };
+
+    if (! DOM.createDocumentFragment().children)
+        Object.defineProperty(
+            ($.browser.modern ? DocumentFragment : DOM.constructor).prototype,
+            'children',
+            Children_Define
+        );
+
 /* ---------- Element CSS Selector Match ---------- */
 
     var DOM_Proto = Element.prototype;
@@ -1673,31 +1719,10 @@
         });
     };
 
-/* ---------- DOM Children ---------- */
+/* ---------- Element Children ---------- */
 
-    var _Children_ = Object.getOwnPropertyDescriptor(DOM_Proto, 'children');
+    Object.defineProperty(DOM_Proto, 'children', Children_Define);
 
-    function HTMLCollection() {
-        var iChildren = _Children_.get.call( arguments[0] );
-
-        for (var i = 0;  i < iChildren.length;  i++) {
-            this[i] = iChildren[i] || iChildren.item(i);
-
-            if (this[i].name)  this[this[i].name] = this[i];
-        }
-        this.length = i;
-    }
-
-    HTMLCollection.prototype.item = HTMLCollection.prototype.namedItem =
-        function () {
-            return  this[ arguments[0] ]  ||  null;
-        };
-
-    Object.defineProperty(DOM_Proto, 'children', {
-        get:    function () {
-            return  new HTMLCollection(this);
-        }
-    });
 
 /* ---------- DOM Class List ---------- */
 
@@ -1837,6 +1862,120 @@
 
     for (var iMethod in HTTP_Method)
         $[ iMethod.toLowerCase() ] = $.proxy(HTTP_Request, BOM, iMethod);
+
+})(self, self.document, iQuery);
+
+
+
+(function (BOM, DOM, $) {
+
+    function Observer() {
+        this.requireArgs = arguments[0] || 0;
+        this.filter = arguments[1] || [ ];
+        this.table = [ ];
+
+        return this;
+    }
+
+    function Each_Row() {
+        var _This_ = this,  iArgs = $.makeArray(arguments);
+
+        if (typeof iArgs[iArgs.length - 1]  !=  'function')  return;
+
+        var WrapCall = iArgs.pop();
+
+        $.each(this.table,  function () {
+            var iCallback = this[this.length - 1];
+
+            if (iCallback == null)  return;
+
+            for (var i = 0;  iArgs[i];  i++) {
+                if (typeof this[i] == 'function')  break;
+
+                if (this[i] === undefined) {
+
+                    if (i < _This_.requireArgs)  return;
+
+                } else if (
+                    (typeof _This_.filter[i] == 'function')  ?  (
+                        false === _This_.filter[i].call(
+                            _This_,  this[i],  iArgs[i]
+                        )
+                    )  :  (
+                        (this[i] != iArgs[i])  &&  (! iArgs[i].match(this[i]))
+                    )
+                )
+                    return;
+            }
+
+            if (false  ===  WrapCall.call(_This_, iCallback))
+                this[this.length - 1] = null;
+        });
+    }
+
+    $.extend(Observer.prototype, {
+        on:         function () {
+            if (typeof arguments[arguments.length - 1]  ==  'function') {
+                var iArgs = $.makeArray(arguments);
+
+                for (var i = 0;  this.table[i];  i++)
+                    if ($.isEqual(this.table[i], iArgs))
+                        return this;
+
+                this.table.push(iArgs);
+            }
+
+            return this;
+        },
+        off:        function () {
+            var iArgs = $.makeArray(arguments);
+
+            var iCallback = (typeof iArgs[iArgs.length - 1]  ==  'function')  &&
+                    iArgs.pop();
+
+            iArgs.push(function () {
+                return  (iCallback !== false)  &&  (iCallback !== arguments[0]);
+            });
+
+            Each_Row.apply(this, iArgs);
+
+            return this;
+        },
+        one:        function () {
+            var iArgs = $.makeArray(arguments);
+
+            if (typeof iArgs[iArgs.length - 1]  ==  'function') {
+                var iCallback = iArgs.pop();
+
+                iArgs.push(function () {
+                    this.off.apply(this, iArgs);
+
+                    return  iCallback.apply(this, arguments);
+                });
+
+                this.on.apply(this, iArgs);
+            }
+
+            return this;
+        },
+        trigger:    function () {
+            var iArgs = $.makeArray(arguments),  iReturn = [ ];
+
+            var iData = $.likeArray(iArgs[iArgs.length - 1])  &&  iArgs.pop();
+
+            iArgs.push(function () {
+                var _Return_ = arguments[0].apply(this, iData);
+
+                if ($.isData(_Return_))  iReturn.push(_Return_);
+            });
+
+            Each_Row.apply(this, iArgs);
+
+            return iReturn;
+        }
+    });
+
+    $.Observer = Observer;
 
 })(self, self.document, iQuery);
 
@@ -2054,125 +2193,11 @@
 })(self, self.document, iQuery);
 
 
-
-(function (BOM, DOM, $) {
-
-    function Observer() {
-        this.requireArgs = arguments[0] || 0;
-        this.filter = arguments[1] || [ ];
-        this.table = [ ];
-
-        return this;
-    }
-
-    function Each_Row() {
-        var _This_ = this,  iArgs = $.makeArray(arguments);
-
-        if (typeof iArgs[iArgs.length - 1]  !=  'function')  return;
-
-        var WrapCall = iArgs.pop();
-
-        $.each(this.table,  function () {
-            var iCallback = this[this.length - 1];
-
-            if (iCallback == null)  return;
-
-            for (var i = 0;  iArgs[i];  i++) {
-                if (typeof this[i] == 'function')  break;
-
-                if (this[i] === undefined) {
-
-                    if (i < _This_.requireArgs)  return;
-
-                } else if (
-                    (typeof _This_.filter[i] == 'function')  ?  (
-                        false === _This_.filter[i].call(
-                            _This_,  this[i],  iArgs[i]
-                        )
-                    )  :  (
-                        (this[i] != iArgs[i])  &&  (! iArgs[i].match(this[i]))
-                    )
-                )
-                    return;
-            }
-
-            if (false  ===  WrapCall.call(_This_, iCallback))
-                this[this.length - 1] = null;
-        });
-    }
-
-    $.extend(Observer.prototype, {
-        on:         function () {
-            if (typeof arguments[arguments.length - 1]  ==  'function') {
-                var iArgs = $.makeArray(arguments);
-
-                for (var i = 0;  this.table[i];  i++)
-                    if ($.isEqual(this.table[i], iArgs))
-                        return this;
-
-                this.table.push(iArgs);
-            }
-
-            return this;
-        },
-        off:        function () {
-            var iArgs = $.makeArray(arguments);
-
-            var iCallback = (typeof iArgs[iArgs.length - 1]  ==  'function')  &&
-                    iArgs.pop();
-
-            iArgs.push(function () {
-                return  (iCallback !== false)  &&  (iCallback !== arguments[0]);
-            });
-
-            Each_Row.apply(this, iArgs);
-
-            return this;
-        },
-        one:        function () {
-            var iArgs = $.makeArray(arguments);
-
-            if (typeof iArgs[iArgs.length - 1]  ==  'function') {
-                var iCallback = iArgs.pop();
-
-                iArgs.push(function () {
-                    this.off.apply(this, iArgs);
-
-                    return  iCallback.apply(this, arguments);
-                });
-
-                this.on.apply(this, iArgs);
-            }
-
-            return this;
-        },
-        trigger:    function () {
-            var iArgs = $.makeArray(arguments),  iReturn = [ ];
-
-            var iData = $.likeArray(iArgs[iArgs.length - 1])  &&  iArgs.pop();
-
-            iArgs.push(function () {
-                var _Return_ = arguments[0].apply(this, iData);
-
-                if ($.isData(_Return_))  iReturn.push(_Return_);
-            });
-
-            Each_Row.apply(this, iArgs);
-
-            return iReturn;
-        }
-    });
-
-    $.Observer = Observer;
-
-})(self, self.document, iQuery);
-
-
 //
 //              >>>  jQuery+  <<<
 //
 //
-//    [Version]    v7.4  (2016-07-06)
+//    [Version]    v7.4  (2016-07-07)
 //
 //    [Require]    jQuery  v1.9+
 //

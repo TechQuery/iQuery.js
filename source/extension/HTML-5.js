@@ -41,6 +41,39 @@ define(['jquery'],  function ($) {
             }
         });
 
+/* ---------- ParentNode Children ---------- */
+
+    function HTMLCollection() {
+        var iChildren = arguments[0].childNodes;
+
+        for (var i = 0, j = 0;  iChildren[i];  i++)
+            if (iChildren[i].nodeType == 1){
+                this[j] = iChildren[i];
+
+                if (this[j++].name)  this[this[j - 1].name] = this[j - 1];
+            }
+
+        this.length = j;
+    }
+
+    HTMLCollection.prototype.item = HTMLCollection.prototype.namedItem =
+        function () {
+            return  this[ arguments[0] ]  ||  null;
+        };
+
+    var Children_Define = {
+            get:    function () {
+                return  new HTMLCollection(this);
+            }
+        };
+
+    if (! DOM.createDocumentFragment().children)
+        Object.defineProperty(
+            ($.browser.modern ? DocumentFragment : DOM.constructor).prototype,
+            'children',
+            Children_Define
+        );
+
 /* ---------- Element CSS Selector Match ---------- */
 
     var DOM_Proto = Element.prototype;
@@ -90,31 +123,10 @@ define(['jquery'],  function ($) {
         });
     };
 
-/* ---------- DOM Children ---------- */
+/* ---------- Element Children ---------- */
 
-    var _Children_ = Object.getOwnPropertyDescriptor(DOM_Proto, 'children');
+    Object.defineProperty(DOM_Proto, 'children', Children_Define);
 
-    function HTMLCollection() {
-        var iChildren = _Children_.get.call( arguments[0] );
-
-        for (var i = 0;  i < iChildren.length;  i++) {
-            this[i] = iChildren[i] || iChildren.item(i);
-
-            if (this[i].name)  this[this[i].name] = this[i];
-        }
-        this.length = i;
-    }
-
-    HTMLCollection.prototype.item = HTMLCollection.prototype.namedItem =
-        function () {
-            return  this[ arguments[0] ]  ||  null;
-        };
-
-    Object.defineProperty(DOM_Proto, 'children', {
-        get:    function () {
-            return  new HTMLCollection(this);
-        }
-    });
 
 /* ---------- DOM Class List ---------- */
 

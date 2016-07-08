@@ -2,7 +2,7 @@
 //              >>>  jQuery+  <<<
 //
 //
-//    [Version]    v7.4  (2016-07-06)
+//    [Version]    v7.4  (2016-07-08)
 //
 //    [Require]    jQuery  v1.9+
 //
@@ -13,11 +13,12 @@
 
 define([
     'jquery',
-    'extension/iBrowser', 'extension/iObject', 'extension/iTimer', 'extension/iUtility',
+    'extension/iBrowser', 'extension/iObject',
+    'extension/iTimer', 'extension/iUtility',
     'extension/IE-8',
-    'extension/iDOM', 'extension/iCSS', 'extension/iSelection', 'extension/iEvent',
-    'extension/HTML-5', 'extension/HTML-5_Form', 'extension/iRESTful', 'extension/iAJAX',
-    'extension/iObserver'
+    'extension/Insert', 'extension/iDOM', 'extension/iCSS',
+    'extension/iSelection', 'extension/iEvent',
+    'extension/HTML-5', 'extension/HTML-5_Form', 'extension/iRESTful', 'extension/iObserver', 'extension/iAJAX'
 ],  function ($) {
 
     var BOM = self;

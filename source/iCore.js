@@ -172,12 +172,9 @@ define(['extension/iTimer'],  function ($) {
         if ((iNew.length == 1)  &&  (iNew[0].nodeType == 1)  &&  AttrList)
             $.each(AttrList,  function (iKey, iValue) {
                 switch (iKey) {
-                    case 'text':     return  iNew[0].textContent = iValue;
-                    case 'html':     return  iNew[0].innerHTML = iValue;
-                    case 'style':    {
-                        if ( $.isPlainObject(iValue) )
-                            return  _DOM_.operate('Style', iNew, iValue);
-                    }
+                    case 'text':     return  iNew[0].textContent = iValue + '';
+                    case 'html':     return  iNew[0].innerHTML = iValue + '';
+                    case 'css':      return  _DOM_.operate('Style', iNew, iValue);
                 }
                 _DOM_.operate('Attribute', iNew, iKey, iValue);
             });

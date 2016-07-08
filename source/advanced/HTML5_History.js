@@ -10,9 +10,9 @@ define(['jquery', 'jQuery+'],  function ($) {
 
     $(DOM).ready(function () {
         var $_iFrame = $('<iframe />', {
-                id:       '_HTML5_History_',
-                style:    'display: none',
-                src:      'blank.html'
+                id:     '_HTML5_History_',
+                src:    'blank.html',
+                css:    {display:  'none'}
             }).appendTo(this.body),
             $_Parent = $(BOM);
 

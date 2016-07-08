@@ -148,8 +148,8 @@ WebApp = (function (BOM, DOM, $) {
                     _Argument_['data-' + iName] = iArgument[iName];
 
             var $_Link = $('<button />', $.extend({
-                    style:    'display: none',
-                    rel:      'nofollow'
+                    rel:    'nofollow',
+                    css:    {display:  'none'}
                 }, iAttribute, _Argument_)).appendTo(DOM.body);
 
             if ((iData instanceof Array)  ||  $.isPlainObject(iData))
@@ -717,7 +717,6 @@ WebApp = (function (BOM, DOM, $) {
             var This_App = this.ownerApp;
 
             PageLink.prefetchClear();
-            this.findLink(true);
 
             This_App.loading = false;
 
@@ -726,6 +725,7 @@ WebApp = (function (BOM, DOM, $) {
                 This_App.history.prev(),
                 This_App
             ]);
+            this.findLink(true);
             This_App.domRoot.focus();
 
             $(DOM.body).trigger({

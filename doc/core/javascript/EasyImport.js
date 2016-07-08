@@ -919,12 +919,9 @@
         if ((iNew.length == 1)  &&  (iNew[0].nodeType == 1)  &&  AttrList)
             $.each(AttrList,  function (iKey, iValue) {
                 switch (iKey) {
-                    case 'text':     return  iNew[0].textContent = iValue;
-                    case 'html':     return  iNew[0].innerHTML = iValue;
-                    case 'style':    {
-                        if ( $.isPlainObject(iValue) )
-                            return  _DOM_.operate('Style', iNew, iValue);
-                    }
+                    case 'text':     return  iNew[0].textContent = iValue + '';
+                    case 'html':     return  iNew[0].innerHTML = iValue + '';
+                    case 'css':      return  _DOM_.operate('Style', iNew, iValue);
                 }
                 _DOM_.operate('Attribute', iNew, iKey, iValue);
             });
@@ -1318,21 +1315,6 @@
         };
     }
 
-    function DOM_Insert(iName) {
-        return  function () {
-            if (
-                this.length &&
-                (!  this.before.apply($(this[0][iName]), arguments).length)
-            )
-                this.append.apply(
-                    (iName == 'firstElementChild')  ?  this  :  this.parent(),
-                    arguments
-                );
-
-            return this;
-        };
-    }
-
     $.fn.extend({
         add:                function () {
             return this.pushStack(
@@ -1625,7 +1607,6 @@
                 return false;
             }
         },
-        after:              DOM_Insert('nextElementSibling'),
         val:                function () {
             if (! $.isData(arguments[0]))
                 return  this[0] && this[0].value;
@@ -2367,7 +2348,12 @@
 
     if ($.browser.modern)  return;
 
+
+/* ---------- Document ShortCut ---------- */
+
     DOM.defaultView = DOM.parentWindow;
+
+    DOM.head = DOM.documentElement.firstChild;
 
 
 /* ---------- DOM ShortCut ---------- */
@@ -2726,6 +2712,39 @@
             }
         });
 
+/* ---------- ParentNode Children ---------- */
+
+    function HTMLCollection() {
+        var iChildren = arguments[0].childNodes;
+
+        for (var i = 0, j = 0;  iChildren[i];  i++)
+            if (iChildren[i].nodeType == 1){
+                this[j] = iChildren[i];
+
+                if (this[j++].name)  this[this[j - 1].name] = this[j - 1];
+            }
+
+        this.length = j;
+    }
+
+    HTMLCollection.prototype.item = HTMLCollection.prototype.namedItem =
+        function () {
+            return  this[ arguments[0] ]  ||  null;
+        };
+
+    var Children_Define = {
+            get:    function () {
+                return  new HTMLCollection(this);
+            }
+        };
+
+    if (! DOM.createDocumentFragment().children)
+        Object.defineProperty(
+            ($.browser.modern ? DocumentFragment : DOM.constructor).prototype,
+            'children',
+            Children_Define
+        );
+
 /* ---------- Element CSS Selector Match ---------- */
 
     var DOM_Proto = Element.prototype;
@@ -2775,31 +2794,10 @@
         });
     };
 
-/* ---------- DOM Children ---------- */
+/* ---------- Element Children ---------- */
 
-    var _Children_ = Object.getOwnPropertyDescriptor(DOM_Proto, 'children');
+    Object.defineProperty(DOM_Proto, 'children', Children_Define);
 
-    function HTMLCollection() {
-        var iChildren = _Children_.get.call( arguments[0] );
-
-        for (var i = 0;  i < iChildren.length;  i++) {
-            this[i] = iChildren[i] || iChildren.item(i);
-
-            if (this[i].name)  this[this[i].name] = this[i];
-        }
-        this.length = i;
-    }
-
-    HTMLCollection.prototype.item = HTMLCollection.prototype.namedItem =
-        function () {
-            return  this[ arguments[0] ]  ||  null;
-        };
-
-    Object.defineProperty(DOM_Proto, 'children', {
-        get:    function () {
-            return  new HTMLCollection(this);
-        }
-    });
 
 /* ---------- DOM Class List ---------- */
 
@@ -2977,9 +2975,9 @@
 
     $(DOM).ready(function () {
         _BOM_ = $('<iframe />', {
-            id:       '_CSS_SandBox_',
-            style:    'display: none',
-            src:      'about:blank'
+            id:     '_CSS_SandBox_',
+            src:    'about:blank',
+            css:    {display:  'none'}
         }).appendTo(this.body)[0].contentWindow;
     });
 
@@ -4375,7 +4373,7 @@
 //                >>>  iQuery.js  <<<
 //
 //
-//      [Version]    v2.0  (2016-07-07)  Stable
+//      [Version]    v2.0  (2016-07-08)  Beta
 //
 //      [Usage]      A Light-weight jQuery Compatible API
 //                   with IE 8+ compatibility.
