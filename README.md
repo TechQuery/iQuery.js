@@ -135,7 +135,7 @@
  - 通用 **TreeView 对象**生成方法 —— `$.TreeView()`
  - **HTML 5  History API  Polyfill** —— 为 IE 10- 提供兼容支持（需 服务器端响应 `./blank.html` 或 404 页面）
  - Base64 文本转 **二进制对象**方法 —— `$.toBlob()`
- - 基于 **现代浏览器 Crypto API** 的哈希方法 —— $.dataHash()
+ - 基于 **现代浏览器 Crypto API** 的哈希方法 —— `$.dataHash()`
 
 
 ## 【参与开发】
@@ -152,7 +152,7 @@ UNIX-Shell、Windows-CMD 通用脚本 ——
 npm install -g requirejs
 npm install -g uglify-js
 
-mkdir ./iQuery;
+mkdir ./iQuery
 git clone https://git.oschina.net/Tech_Query/iQuery.git ./iQuery
 
 node r.js -o build/source.js

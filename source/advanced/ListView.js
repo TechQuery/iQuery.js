@@ -221,14 +221,19 @@ define(['jquery', 'CommonView'],  function ($) {
         sort:           function (iCallback) {
             var iLV = this;
 
-            Array.prototype.sort.call(
-                iLV,
-                function ($_A, $_B) {
+            Array.prototype.sort.call(iLV,  function ($_A, $_B) {
+                if (typeof iCallback == 'function')
                     return  iCallback.apply(iLV, [
                         $_A.data('LV_Model'),  $_B.data('LV_Model'),  $_A,  $_B
                     ]);
-                }
-            );
+
+                var A = $_A.text(),  B = $_B.text();
+                var nA = parseFloat(A),  nB = parseFloat(B);
+
+                return  (isNaN(nA) || isNaN(nB))  ?
+                    A.localeCompare(B)  :  (nA - nB);
+            });
+
             Array.prototype.unshift.call(iLV, [ ]);
 
             $($.merge.apply($, iLV)).detach().appendTo( iLV.$_View );
