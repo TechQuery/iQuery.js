@@ -924,7 +924,7 @@
         },
         scrollParents:    function () {
             return Array_Reverse.call(this.pushStack(
-                $.map(this.parents(),  function ($_Parent) {
+                $.map(this.eq(0).parents(),  function ($_Parent) {
                     $_Parent = $($_Parent);
 
                     var iCSS = $_Parent.css([
@@ -1101,6 +1101,8 @@
                     ))
                 )))
                     $_iFrame.remove();
+
+                if ($.browser.msie)  BOM.CollectGarbage();
 
                 return false;
             }
@@ -2197,7 +2199,7 @@
 //              >>>  jQuery+  <<<
 //
 //
-//    [Version]    v7.4  (2016-07-07)
+//    [Version]    v7.4  (2016-07-12)
 //
 //    [Require]    jQuery  v1.9+
 //

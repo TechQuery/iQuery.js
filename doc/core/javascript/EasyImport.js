@@ -904,15 +904,48 @@
     };
 /* ---------- DOM Constructor ---------- */
 
+    var TagWrapper = $.extend(
+            {
+                area:      {
+                    before:    '<map>',
+                    after:     '</map>'
+                },
+                legend:    {
+                    before:    '<fieldset>',
+                    after:     '</fieldset>'
+                }
+            },
+            $.makeSet(['caption', 'thead', 'tbody', 'tfoot', 'tr'],  {
+                before:    '<table>',
+                after:     '</table>',
+                depth:     2
+            }),
+            $.makeSet(['th', 'td'],  {
+                before:    '<table><tr>',
+                after:     '</tr></table>',
+                depth:     3
+            }),
+            $.makeSet(['optgroup', 'option'],  {
+                before:    '<select multiple>',
+                after:     '</select>'
+            })
+        );
+
     function DOM_Create(TagName, AttrList) {
         var iNew,  iTag = TagName.match(/^\s*<(.+?)\s*\/?>([\s\S]+)?/);
 
         if (! iTag)  return  [ DOM.createTextNode(TagName) ];
 
+        var iWrapper = TagWrapper[ iTag[1] ];
+
+        if (iWrapper)  TagName = iWrapper.before + TagName + iWrapper.after;
+
         if (iTag[2]  ||  (iTag[1].split(/\s/).length > 1)) {
             iNew = DOM.createElement('div');
             iNew.innerHTML = TagName;
-            iNew = $.makeArray(iNew.childNodes);
+            iNew = $.makeArray(((! iWrapper)  ?  iNew  :  (
+                $.trace(iNew,  'firstChild',  iWrapper.depth || 1).slice(-1)[0]
+            )).childNodes);
         } else
             iNew = [DOM.createElement( iTag[1] )];
 
@@ -3266,7 +3299,7 @@
         },
         scrollParents:    function () {
             return Array_Reverse.call(this.pushStack(
-                $.map(this.parents(),  function ($_Parent) {
+                $.map(this.eq(0).parents(),  function ($_Parent) {
                     $_Parent = $($_Parent);
 
                     var iCSS = $_Parent.css([
@@ -3443,6 +3476,8 @@
                     ))
                 )))
                     $_iFrame.remove();
+
+                if ($.browser.msie)  BOM.CollectGarbage();
 
                 return false;
             }
@@ -4373,7 +4408,7 @@
 //                >>>  iQuery.js  <<<
 //
 //
-//      [Version]    v2.0  (2016-07-08)  Beta
+//      [Version]    v2.0  (2016-07-12)  Beta
 //
 //      [Usage]      A Light-weight jQuery Compatible API
 //                   with IE 8+ compatibility.

@@ -1,5 +1,7 @@
 define(['jquery'],  function ($) {
 
+    var BOM = self;
+
     var iOperator = {
             '+':    function () {
                 return  arguments[0] + arguments[1];
@@ -51,7 +53,7 @@ define(['jquery'],  function ($) {
         },
         scrollParents:    function () {
             return Array_Reverse.call(this.pushStack(
-                $.map(this.parents(),  function ($_Parent) {
+                $.map(this.eq(0).parents(),  function ($_Parent) {
                     $_Parent = $($_Parent);
 
                     var iCSS = $_Parent.css([
@@ -228,6 +230,8 @@ define(['jquery'],  function ($) {
                     ))
                 )))
                     $_iFrame.remove();
+
+                if ($.browser.msie)  BOM.CollectGarbage();
 
                 return false;
             }
