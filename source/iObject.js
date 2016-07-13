@@ -6,8 +6,8 @@ define(['extension/iObject'],  function ($) {
 
     $.fn.extend = $.extend = function () {
         var iDeep = (arguments[0] === true);
-        var iTarget,
-            iFirst = iDeep ? 1 : 0;
+
+        var iTarget,  iFirst = iDeep ? 1 : 0;
 
         if (arguments.length  >  (iFirst + 1)) {
             iTarget = arguments[iFirst] || (

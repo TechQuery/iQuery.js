@@ -442,7 +442,7 @@ define(['iDOM'],  function ($) {
         if (! DOM.isReady)
             $_DOM.one('ready', iCallback);
         else
-            iCallback.call(this[0],  $.data(DOM, 'Ready_Event'));
+            iCallback.call(this[0], $_DOM.data('Ready_Event'));
 
         return this;
     };
