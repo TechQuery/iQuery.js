@@ -874,10 +874,7 @@
             this._Data_[iElement.dataIndex][iName] = iValue;
         },
         get:       function (iElement, iName) {
-            if (typeof iElement.dataIndex != 'number')
-                iElement.dataIndex = this._Data_.push({ }) - 1;
-
-            var iData =  this._Data_[iElement.dataIndex] || iElement.dataset;
+            var iData = this._Data_[iElement.dataIndex] || iElement.dataset;
 
             if (iName) {
                 iData = iData || { };
@@ -889,7 +886,7 @@
             }
 
             return  ((iData instanceof Array)  ||  $.isPlainObject(iData))  ?
-                    $.extend(true, undefined, iData)  :  iData;
+                    $.extend(true, null, iData)  :  iData;
         },
         clear:     function (iElement, iName) {
             if (typeof iElement.dataIndex != 'number')  return;
@@ -902,72 +899,6 @@
             }
         }
     };
-/* ---------- DOM Constructor ---------- */
-
-    var TagWrapper = $.extend(
-            {
-                area:      {
-                    before:    '<map>',
-                    after:     '</map>'
-                },
-                legend:    {
-                    before:    '<fieldset>',
-                    after:     '</fieldset>'
-                }
-            },
-            $.makeSet(['caption', 'thead', 'tbody', 'tfoot', 'tr'],  {
-                before:    '<table>',
-                after:     '</table>',
-                depth:     2
-            }),
-            $.makeSet(['th', 'td'],  {
-                before:    '<table><tr>',
-                after:     '</tr></table>',
-                depth:     3
-            }),
-            $.makeSet(['optgroup', 'option'],  {
-                before:    '<select multiple>',
-                after:     '</select>'
-            })
-        );
-
-    function DOM_Create(TagName, AttrList) {
-        var iNew,  iTag = TagName.match(/^\s*<(.+?)\s*\/?>([\s\S]+)?/);
-
-        if (! iTag)  return  [ DOM.createTextNode(TagName) ];
-
-        var iWrapper = TagWrapper[ iTag[1] ];
-
-        if (iWrapper)  TagName = iWrapper.before + TagName + iWrapper.after;
-
-        if (iTag[2]  ||  (iTag[1].split(/\s/).length > 1)) {
-            iNew = DOM.createElement('div');
-            iNew.innerHTML = TagName;
-            iNew = $.makeArray(((! iWrapper)  ?  iNew  :  (
-                $.trace(iNew,  'firstChild',  iWrapper.depth || 1).slice(-1)[0]
-            )).childNodes);
-        } else
-            iNew = [DOM.createElement( iTag[1] )];
-
-        if ((iNew.length == 1)  &&  (iNew[0].nodeType == 1)  &&  AttrList)
-            $.each(AttrList,  function (iKey, iValue) {
-                switch (iKey) {
-                    case 'text':     return  iNew[0].textContent = iValue + '';
-                    case 'html':     return  iNew[0].innerHTML = iValue + '';
-                    case 'css':      return  _DOM_.operate('Style', iNew, iValue);
-                }
-                _DOM_.operate('Attribute', iNew, iKey, iValue);
-            });
-
-        return  iNew[0].parentNode ?
-            $.map(iNew,  function (iDOM, _Index_) {
-                if (iDOM.nodeType == 1) {
-                    iNew[_Index_].parentNode.removeChild(iDOM);
-                    return iDOM;
-                }
-            }) : iNew;
-    }
-
 
 /* ---------- DOM Selector ---------- */
     var iPseudo = {
@@ -1190,10 +1121,20 @@
                 Element_Set = DOM_Search(this.context, Element_Set);
                 Element_Set = (Element_Set.length < 2)  ?
                     Element_Set  :  DOM_Sort(Element_Set);
-            } else
-                Element_Set = DOM_Create(
-                    Element_Set,  $.isPlainObject(iContext) && iContext
-                );
+            } else {
+                Element_Set = _Self_.parseHTML(Element_Set);
+                if (
+                    (Element_Set.length == 1)  &&
+                    (Element_Set[0].nodeType == 1)  &&
+                    $.isPlainObject( iContext )
+                )
+                    for (var iKey in iContext) {
+                        if (typeof this[iKey] == 'function')
+                            (new _Self_( Element_Set[0] ))[iKey]( iContext[iKey] );
+                        else
+                            (new _Self_( Element_Set[0] )).attr(iKey, iContext[iKey]);
+                    }
+            }
         } else if (iType in _DOM_.TypeMap.element)
             Element_Set = [ Element_Set ];
 
@@ -1209,8 +1150,53 @@
 
     /* ----- iQuery Static Method ----- */
 
+    var TagWrapper = $.extend(
+            {
+                area:      {before: '<map>'},
+                legend:    {before: '<fieldset>'},
+                param:     {before: '<object>'}
+            },
+            $.makeSet(['caption', 'thead', 'tbody', 'tfoot', 'tr'],  {
+                before:    '<table>',
+                after:     '</table>',
+                depth:     2
+            }),
+            $.makeSet(['th', 'td'],  {
+                before:    '<table><tr>',
+                depth:     3
+            }),
+            $.makeSet(['optgroup', 'option'],  {before: '<select multiple>'})
+        );
+
     $ = BOM.iQuery = $.extend(iQuery, $, {
-        data:             function (iElement, iName, iValue) {
+        parseHTML:    function (iHTML, AttrList) {
+            var iTag = iHTML.match(
+                    /^\s*<([^\s\/]+)\s*([^<]*?)\s*(\/?)>([^<]*)((<\/\1>)?)([\s\S]*)/
+                ) || [ ];
+
+            if ( iTag[0] )  iTag.splice(6, 1);
+            if (
+                (iTag[5]  &&  (! (iTag.slice(2, 5).join('') + iTag[6])))  ||
+                (iTag[3]  &&  (! (iTag[2] + iTag.slice(4).join(''))))
+            )
+                return  [DOM.createElement( iTag[1] )];
+
+            var iWrapper = TagWrapper[ iTag[1] ],
+                iNew = DOM.createElement('div');
+
+            if (! iWrapper)
+                iNew.innerHTML = iHTML;
+            else {
+                iNew = iWrapper.before  +  iHTML  +  (iWrapper.after || '');
+                iNew = $.trace(iNew,  'firstChild',  iWrapper.depth || 1)
+                    .slice(-1)[0];
+            }
+
+            return  $.map(iNew.childNodes,  function (iDOM, _Index_) {
+                return iDOM.parentNode.removeChild(iDOM);
+            });
+        },
+        data:         function (iElement, iName, iValue) {
             return  _DOM_.operate('Data', [iElement], iName, iValue);
         }
     });
@@ -3966,22 +3952,21 @@
 
         switch ( this.responseType ) {
             case 'text':    ;
-            case 'html':    ;
+            case 'html':    if (! this.responseText.match(/^\s*<.+?>/)) {
+                try {
+                    this.response = $.parseXML( this.responseText );
+                    this.responseType = 'xml';
+                } catch (iError) {
+                    this.response = $.parseHTML( this.responseText );
+                    this.responseType = 'html';
+                }
+                break;
+            }
             case 'json':
                 try {
                     this.response = $.parseJSON( this.responseText );
                     this.responseType = 'json';
-                } catch (iError) {
-                    if ($.browser.msie != 9)  try {
-                        if (! $.browser.mozilla)
-                            this.response = $.parseXML( this.responseText );
-                        else if (this.responseXML)
-                            this.response = this.responseXML;
-                        else
-                            break;
-                        this.responseType = 'xml';
-                    } catch (iError) { }
-                }
+                } catch (iError) { }
                 break;
             case 'xml':     this.response = this.responseXML;
         }

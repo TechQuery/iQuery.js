@@ -110,22 +110,21 @@ define(['iEvent'],  function ($) {
 
         switch ( this.responseType ) {
             case 'text':    ;
-            case 'html':    ;
+            case 'html':    if (! this.responseText.match(/^\s*<.+?>/)) {
+                try {
+                    this.response = $.parseXML( this.responseText );
+                    this.responseType = 'xml';
+                } catch (iError) {
+                    this.response = $.parseHTML( this.responseText );
+                    this.responseType = 'html';
+                }
+                break;
+            }
             case 'json':
                 try {
                     this.response = $.parseJSON( this.responseText );
                     this.responseType = 'json';
-                } catch (iError) {
-                    if ($.browser.msie != 9)  try {
-                        if (! $.browser.mozilla)
-                            this.response = $.parseXML( this.responseText );
-                        else if (this.responseXML)
-                            this.response = this.responseXML;
-                        else
-                            break;
-                        this.responseType = 'xml';
-                    } catch (iError) { }
-                }
+                } catch (iError) { }
                 break;
             case 'xml':     this.response = this.responseXML;
         }

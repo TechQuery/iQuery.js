@@ -57,7 +57,7 @@
  - 新增 **URL 参数对象化**方法（$.param() 的逆方法）—— `$.paramJSON()`，其返回值自带的 .toString() 有 **JSON 格式化（美化）输出**能力
  - 新增 **URL 参数签名**方法 —— `$.paramSign()`
  - 新增 **多条件观察者**基础对象 —— `$.Observer()`
- - 更智能的 `$.get()`、`$.post()`：支持 form 元素、FormData 对象的请求数据形式，整合 XHR、XDR、JSONP、iframe **自适应 跨域请求**， **自动转换响应内容**为 JSON 或 XML 对象实例
+ - 更智能的 `$.get()`、`$.post()`：支持 form 元素、FormData 对象的请求数据形式，整合 XHR、XDR、JSONP、iframe **自适应 跨域请求**， **自动转换响应内容**为 HTML、XML 或 JSON 对象实例
  - 新增 `$.delete()`、`$.put()`，方便实现基于 **RESTful API** 的单页应用
  - 新增 **URL 信息提取**方法 —— `$.fileName()`、`$.filePath()`、`$.urlDomain()`
  - 封装了 **表单元素无刷新提交**，并可直接绑定响应回调 —— `$.fn.ajaxSubmit()`（基于前述的几个 **AJAX 增强方法** 构建）
@@ -96,7 +96,6 @@
  - 不支持 $.Deferred()（正在尝试引入 ECMAScript 6 支持的 **Promise/A+ 规范**）
  - **jQuery 扩展伪类选择符**：只支持 常用且“难以用 **CSS 标准选择符** 或 jQuery API 实现其功能”的
  - 不支持 **XPath 选择器**、操作 **XML 文档**
- - 构造 DOM 元素时的第二参数中不能调用与键名同名的实例方法，仅能设置 DOM 属性
  - 不支持一些不常用的 **jQuery 静态/实例方法**
  - 暂不支持 **动画队列**
 

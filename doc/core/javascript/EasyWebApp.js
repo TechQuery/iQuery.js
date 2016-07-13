@@ -600,6 +600,9 @@ WebApp = (function (BOM, DOM, $) {
                     });
                 } :
                 function (iMarkDown) {
+                    if (typeof iMarkDown != 'string')
+                        iMarkDown = (arguments[2] || { }).responseText;
+
                     if (typeof BOM.marked == 'function')
                         This_Page.show( BOM.marked(iMarkDown) ).$_Page
                             .find('a[href]').attr('target',  function () {

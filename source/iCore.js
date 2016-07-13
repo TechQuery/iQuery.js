@@ -383,9 +383,9 @@ define(['extension/iTimer'],  function ($) {
                 )
                     for (var iKey in iContext) {
                         if (typeof this[iKey] == 'function')
-                            this[iKey].call([Element_Set[0]], iContext[iKey]);
+                            (new _Self_( Element_Set[0] ))[iKey]( iContext[iKey] );
                         else
-                            this.attr.call([Element_Set[0]], iKey, iContext[iKey]);
+                            (new _Self_( Element_Set[0] )).attr(iKey, iContext[iKey]);
                     }
             }
         } else if (iType in _DOM_.TypeMap.element)
@@ -423,11 +423,15 @@ define(['extension/iTimer'],  function ($) {
 
     $ = BOM.iQuery = $.extend(iQuery, $, {
         parseHTML:    function (iHTML, AttrList) {
-            var iTag = iHTML.match(/^\s*<([^\s\/]+)(.*?)\/?>([\s\S]*)/) || [ ];
+            var iTag = iHTML.match(
+                    /^\s*<([^\s\/]+)\s*([^<]*?)\s*(\/?)>([^<]*)((<\/\1>)?)([\s\S]*)/
+                ) || [ ];
 
-            if (iTag[1]  &&  (
-                (! iTag[2].trim())  ||  (iTag[3].slice(0, 2) == '</')
-            ))
+            if ( iTag[0] )  iTag.splice(6, 1);
+            if (
+                (iTag[5]  &&  (! (iTag.slice(2, 5).join('') + iTag[6])))  ||
+                (iTag[3]  &&  (! (iTag[2] + iTag.slice(4).join(''))))
+            )
                 return  [DOM.createElement( iTag[1] )];
 
             var iWrapper = TagWrapper[ iTag[1] ],
