@@ -1122,12 +1122,10 @@
                 Element_Set = (Element_Set.length < 2)  ?
                     Element_Set  :  DOM_Sort(Element_Set);
             } else {
-                Element_Set = _Self_.parseHTML(Element_Set);
-                if (
-                    (Element_Set.length == 1)  &&
-                    (Element_Set[0].nodeType == 1)  &&
-                    $.isPlainObject( iContext )
-                )
+                Element_Set = $.map(_Self_.parseHTML(Element_Set),  function () {
+                    if (arguments[0].nodeType == 1)  return arguments[0];
+                });
+                if ((Element_Set.length == 1)  &&  $.isPlainObject( iContext ))
                     for (var iKey in iContext) {
                         if (typeof this[iKey] == 'function')
                             (new _Self_( Element_Set[0] ))[iKey]( iContext[iKey] );
@@ -4084,7 +4082,7 @@
             var $_Script = $( iFragment.children )
                     .filter('script').not('[src]').remove();
 
-            for (var i = 0;  i < $_Script.length;  i++)
+            for (var i = 0;  $_Script[i];  i++)
                 $.globalEval( $_Script[i].text );
 
             if (typeof iCallback == 'function')

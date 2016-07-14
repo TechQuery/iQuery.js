@@ -233,7 +233,7 @@ define(['iEvent'],  function ($) {
             var $_Script = $( iFragment.children )
                     .filter('script').not('[src]').remove();
 
-            for (var i = 0;  i < $_Script.length;  i++)
+            for (var i = 0;  $_Script[i];  i++)
                 $.globalEval( $_Script[i].text );
 
             if (typeof iCallback == 'function')

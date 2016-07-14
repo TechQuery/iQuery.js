@@ -572,36 +572,31 @@ WebApp = (function (BOM, DOM, $) {
 
             $.get(iLink.href,  (! iLink.href.match(MarkDown_File)) ?
                 function (iHTML) {
-                    if (typeof iHTML != 'string')  return;
+                    iHTML = (arguments[2] || '').responseText  ||  iHTML;
 
-                    var not_Fragment = iHTML.match(/<\s*(html|head|body)(\s|>)/i),
-                        iSimple = (! iHTML.match(/<\s*(link|script)(\s|>)/i)),
-                        iSelector = This_App.domRoot.selector;
-
-                    if ((! not_Fragment)  &&  iSimple)
+                    if (! (
+                        iHTML.match(/<\s*(html|head|body)(\s|>)/i)  ||
+                        iHTML.match(/<\s*(link|script)(\s|>)/i)
+                    ))
                         return This_Page.show(iHTML).boot(Page_Load);
 
-                    $(DOM.body).sandBox(iHTML,  (
-                        ((iSelector && iSimple) ? iSelector : 'body > *')  +
-                            ', link[rel="stylesheet"], link[target]'
-                    ),  function ($_Content) {
-                        $_Content = $_Content.not('script[src]');
+                    var $_Page = $(iHTML.children || iHTML);
 
-                        $_Content.filter('link').appendTo('head');
-                        var $_Script = $_Content.filter('script');
+                    var $_Content = $_Page.not('script[src]'),
+                        $_Script = $_Page.filter('script');
 
-                        for (var i = 0;  i < $_Script.length;  i++)
-                            $.globalEval( $_Script[i].text );
+                    $_Content.filter(
+                        'link[rel="stylesheet"], link[target]'
+                    ).appendTo('head');
 
-                        This_Page.show( $_Content.not('link, script') )
-                            .boot(Page_Load);
+                    for (var i = 0;  $_Script[i];  i++)
+                        $.globalEval( $_Script[i].text );
 
-                        return false;
-                    });
+                    This_Page.show( $_Content.not('link, script') )
+                        .boot(Page_Load);
                 } :
                 function (iMarkDown) {
-                    if (typeof iMarkDown != 'string')
-                        iMarkDown = (arguments[2] || { }).responseText;
+                    iMarkDown = (arguments[2] || '').responseText  ||  iMarkDown;
 
                     if (typeof BOM.marked == 'function')
                         This_Page.show( BOM.marked(iMarkDown) ).$_Page
@@ -889,7 +884,7 @@ WebApp = (function (BOM, DOM, $) {
 //                    >>>  EasyWebApp.js  <<<
 //
 //
-//      [Version]    v2.6  (2016-07-04)  Alpha
+//      [Version]    v2.6  (2016-07-14)  Alpha
 //
 //      [Require]    iQuery  ||  jQuery with jQuery+,
 //
