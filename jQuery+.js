@@ -849,10 +849,7 @@
 (function (BOM, DOM, $) {
 
     $.fn.insertTo = function ($_Target, Index) {
-        var DOM_Set = DOM.createDocumentFragment(),  $_This = [ ];
-
-        for (var i = 0;  this[i];  i++)
-            DOM_Set.appendChild( this[i] );
+        var DOM_Set = $.buildFragment(this),  $_This = [ ];
 
         $($_Target).each(function () {
             var iAfter = $(this.children).eq(Index || 0)[0];
@@ -2199,7 +2196,7 @@
 //              >>>  jQuery+  <<<
 //
 //
-//    [Version]    v7.4  (2016-07-12)
+//    [Version]    v7.4  (2016-07-14)
 //
 //    [Require]    jQuery  v1.9+
 //

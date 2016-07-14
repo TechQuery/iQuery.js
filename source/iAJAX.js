@@ -110,12 +110,14 @@ define(['iEvent'],  function ($) {
 
         switch ( this.responseType ) {
             case 'text':    ;
-            case 'html':    if (! this.responseText.match(/^\s*<.+?>/)) {
+            case 'html':    if (this.responseText.match(/^\s*<.+?>/)) {
                 try {
                     this.response = $.parseXML( this.responseText );
                     this.responseType = 'xml';
                 } catch (iError) {
-                    this.response = $.parseHTML( this.responseText );
+                    this.response = $.buildFragment(
+                        $.parseHTML( this.responseText )
+                    );
                     this.responseType = 'html';
                 }
                 break;
@@ -214,8 +216,6 @@ define(['iEvent'],  function ($) {
     $.fn.load = function (iURL, iData, iCallback) {
         if (! this[0])  return this;
 
-        var $_This = this;
-
         iURL = $.split(iURL.trim(), /\s+/, 2, ' ');
 
         if (typeof iData == 'function') {
@@ -223,43 +223,23 @@ define(['iEvent'],  function ($) {
             iData = null;
         }
 
-        function Append_Back() {
+        var $_This = this;
+
+        $[iData ? 'post' : 'get'](iURL[0], iData, function (iFragment) {
             $_This.children().fadeOut();
 
-            var $_Content = $(arguments[0]);
-            var $_Script = $_Content.filter('script').not('[src]');
+            $_This.empty()[0].appendChild( iFragment );
 
-            arguments[0] = $_Content.not( $_Script )
-                .appendTo( $_This.empty() ).fadeIn();
+            var $_Script = $( iFragment.children )
+                    .filter('script').not('[src]').remove();
 
             for (var i = 0;  i < $_Script.length;  i++)
                 $.globalEval( $_Script[i].text );
 
             if (typeof iCallback == 'function')
-                for (var i = 0;  i < $_This.length;  i++)
+                for (var i = 0;  $_This[i];  i++)
                     iCallback.apply($_This[i], arguments);
-        }
-
-        function Load_Back(iHTML) {
-            if (typeof iHTML != 'string')  return;
-
-            if (! iHTML.match(/<\s*(html|head|body)(\s|>)/i)) {
-                Append_Back.apply(this, arguments);
-                return;
-            }
-
-            var _Context_ = [this, $.makeArray(arguments)];
-
-            $(DOM.body).sandBox(iHTML,  iURL[1],  function ($_innerDOM) {
-                _Context_[1][0] = $_innerDOM;
-
-                Append_Back.apply(_Context_[0], _Context_[1]);
-
-                return false;
-            });
-        }
-
-        $[iData ? 'post' : 'get'](iURL[0], iData, Load_Back);
+        });
 
         return this;
     };

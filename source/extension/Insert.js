@@ -1,10 +1,7 @@
 define(['jquery'],  function ($) {
 
     $.fn.insertTo = function ($_Target, Index) {
-        var DOM_Set = DOM.createDocumentFragment(),  $_This = [ ];
-
-        for (var i = 0;  this[i];  i++)
-            DOM_Set.appendChild( this[i] );
+        var DOM_Set = $.buildFragment(this),  $_This = [ ];
 
         $($_Target).each(function () {
             var iAfter = $(this.children).eq(Index || 0)[0];

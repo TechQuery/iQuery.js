@@ -422,12 +422,13 @@ define(['extension/iTimer'],  function ($) {
         );
 
     $ = BOM.iQuery = $.extend(iQuery, $, {
-        parseHTML:    function (iHTML, AttrList) {
+        parseHTML:        function (iHTML, AttrList) {
             var iTag = iHTML.match(
                     /^\s*<([^\s\/]+)\s*([^<]*?)\s*(\/?)>([^<]*)((<\/\1>)?)([\s\S]*)/
                 ) || [ ];
 
-            if ( iTag[0] )  iTag.splice(6, 1);
+            if (iTag[5] === undefined)  iTag[5] = '';
+
             if (
                 (iTag[5]  &&  (! (iTag.slice(2, 5).join('') + iTag[6])))  ||
                 (iTag[3]  &&  (! (iTag[2] + iTag.slice(4).join(''))))
@@ -445,11 +446,22 @@ define(['extension/iTimer'],  function ($) {
                     .slice(-1)[0];
             }
 
-            return  $.map(iNew.childNodes,  function (iDOM, _Index_) {
-                return iDOM.parentNode.removeChild(iDOM);
-            });
+            return $.map(
+                $.makeArray(iNew.childNodes),
+                function (iDOM, _Index_) {
+                    return iDOM.parentNode.removeChild(iDOM);
+                }
+            );
         },
-        data:         function (iElement, iName, iValue) {
+        buildFragment:    function (iNode) {
+            var iFragment = DOM.createDocumentFragment();
+
+            for (var i = 0;  iNode[i];  i++)
+                iFragment.appendChild( iNode[i] );
+
+            return iFragment;
+        },
+        data:             function (iElement, iName, iValue) {
             return  _DOM_.operate('Data', [iElement], iName, iValue);
         }
     });
