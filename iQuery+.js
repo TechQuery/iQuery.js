@@ -222,7 +222,7 @@
                     return this;
                 }
             }
-            if ( iData[0] )  this.trigger('afterRender', [iData]);
+            if ( iData.length )  this.trigger('afterRender', [iData]);
 
             return this;
         },
@@ -303,13 +303,14 @@
             return iLV;
         },
         fork:           function () {
-            var $_View = this.$_View.clone(true).append( this.$_Template );
-
+            var $_View = this.$_View.clone(true).empty().append(
+                    this.$_Template.clone(true)
+                );
             $_View.data({CVI_ListView: '',  LV_Model: ''})[0].id = '';
 
             var iFork = ListView($_View.appendTo( arguments[0] ),  this.selector);
-            iFork.$_Template = this.$_Template.clone(true);
             iFork.table = this.table;
+            iFork.parentView = this;
 
             return iFork;
         }
@@ -336,9 +337,15 @@
 
         iKey = iKey || 'list';
 
+        this.depth = 0;
+
         this.unit = iListView.on('insert',  function ($_Item, iValue) {
-            if ($.likeArray( iValue[iKey] )  &&  iValue[iKey][0])
-                _This_.branch(this, $_Item, iValue[iKey]);
+            if ($.likeArray( iValue[iKey] )  &&  iValue[iKey][0]) {
+                if (_This_.depth < 3)
+                    _This_.branch(this.fork($_Item), iValue[iKey]);
+                else
+                    $_Item.data('TV_Model');
+            }
         });
 
         this.listener = [
@@ -347,8 +354,17 @@
             function (iEvent) {
                 if ( $(iEvent.target).is(':input') )  return;
 
-                if ( iEvent.isPseudo() )
-                    $(this).children('.TreeNode').toggle(200);
+                var $_Item = $(this);
+                var iData = $_Item.data('TV_Model');
+
+                if (
+                    iEvent.isPseudo()  &&
+                    (! $_Item.children('.TreeNode').toggle(200)[0])  &&
+                    iData
+                )
+                    _This_.branch(
+                        $.ListView.getInstance( this.parentNode ),  iData
+                    );
 
                 $('.ListView_Item.active', _This_.unit.$_View[0]).not(this)
                     .removeClass('active');
@@ -370,13 +386,12 @@
 
     TreeView.prototype = $.extend(new $.CommonView(),  {
         constructor:    TreeView,
-        branch:         function (iListView, $_Item, iData) {
-            var iFork = iListView.fork($_Item).clear().render(iData);
+        branch:         function (iFork, iData) {
+            this.depth = Math.max(
+                this.depth,  $.trace(iFork, 'parentView').length + 1
+            );
+            iFork.clear().render(iData).$_View.children().removeClass('active');
 
-            iFork.$_View.children().removeClass('active');
-
-            this.depth = iFork.$_View.parentsUntil( this.unit.$_View )
-                .filter('TreeNode').length + 1;
             this.trigger('branch',  [iFork, iData, this.depth]);
 
             $.fn.off.apply(iFork.$_View.addClass('TreeNode'), this.listener);
@@ -588,7 +603,7 @@
 //              >>>  iQuery+  <<<
 //
 //
-//    [Version]    v1.6  (2016-07-11)  Stable
+//    [Version]    v1.6  (2016-07-15)  Stable
 //
 //    [Require]    iQuery  ||  jQuery with jQuery+
 //

@@ -162,7 +162,7 @@ define(['jquery', 'CommonView'],  function ($) {
                     return this;
                 }
             }
-            if ( iData[0] )  this.trigger('afterRender', [iData]);
+            if ( iData.length )  this.trigger('afterRender', [iData]);
 
             return this;
         },
@@ -243,13 +243,14 @@ define(['jquery', 'CommonView'],  function ($) {
             return iLV;
         },
         fork:           function () {
-            var $_View = this.$_View.clone(true).append( this.$_Template );
-
+            var $_View = this.$_View.clone(true).empty().append(
+                    this.$_Template.clone(true)
+                );
             $_View.data({CVI_ListView: '',  LV_Model: ''})[0].id = '';
 
             var iFork = ListView($_View.appendTo( arguments[0] ),  this.selector);
-            iFork.$_Template = this.$_Template.clone(true);
             iFork.table = this.table;
+            iFork.parentView = this;
 
             return iFork;
         }
