@@ -321,31 +321,36 @@
 })(self, self.document, self.jQuery);
 
 
-/* ---------- TreeView Interface  v0.3 ---------- */
+/* ---------- TreeView Interface  v0.4 ---------- */
 
 
 (function (BOM, DOM, $) {
 
-    function TreeView(iListView, iKey, onFork, onFocus) {
+    function TreeView(iListView, iKey, Init_Depth, onFork, onFocus) {
         var _Self_ = arguments.callee;
 
         if (!  (this instanceof _Self_))
-            return  new _Self_(iListView, iKey, onFork, onFocus);
+            return  new _Self_(iListView, iKey, Init_Depth, onFork, onFocus);
+
+        var iArgs = $.makeArray( arguments ).slice(1);
+
+        iKey = (typeof iArgs[0] == 'string')  ?  iArgs.shift()  :  'list';
+        this.initDepth = (typeof iArgs[0] == 'number')  ?
+            iArgs.shift()  :  Infinity;
 
         var _This_ = $.CommonView.call(this, iListView.$_View)
-                .on('branch', onFork);
-
-        iKey = iKey || 'list';
+                .on('branch',  (typeof iArgs[0] == 'function')  &&  iArgs.shift());
 
         this.depth = 0;
+        onFocus = iArgs[0];
 
         this.unit = iListView.on('insert',  function ($_Item, iValue) {
-            if ($.likeArray( iValue[iKey] )  &&  iValue[iKey][0]) {
-                if (_This_.depth < 3)
-                    _This_.branch(this.fork($_Item), iValue[iKey]);
-                else
-                    $_Item.data('TV_Model');
-            }
+            var iParent = this;
+
+            if ($.likeArray( iValue[iKey] )  &&  iValue[iKey][0])
+                $.wait(0.01,  function () {
+                    _This_.branch(iParent.fork($_Item), iValue[iKey]);
+                });
         });
 
         this.listener = [
@@ -354,17 +359,14 @@
             function (iEvent) {
                 if ( $(iEvent.target).is(':input') )  return;
 
-                var $_Item = $(this);
-                var iData = $_Item.data('TV_Model');
+                var $_Fork = $(this).children('.TreeNode');
 
-                if (
-                    iEvent.isPseudo()  &&
-                    (! $_Item.children('.TreeNode').toggle(200)[0])  &&
-                    iData
-                )
-                    _This_.branch(
-                        $.ListView.getInstance( this.parentNode ),  iData
-                    );
+                if (iEvent.isPseudo() && $_Fork[0]) {
+                    if ( $_Fork[0].firstElementChild )
+                        $_Fork.toggle(200);
+                    else
+                        _This_.render($_Fork);
+                }
 
                 $('.ListView_Item.active', _This_.unit.$_View[0]).not(this)
                     .removeClass('active');
@@ -386,13 +388,28 @@
 
     TreeView.prototype = $.extend(new $.CommonView(),  {
         constructor:    TreeView,
+        render:         function ($_Fork, iData) {
+            $_Fork = $($_Fork);
+
+            $.ListView.getInstance( $_Fork ).render(
+                iData || $_Fork.data('TV_Model')
+            ).$_View.children().removeClass('active');
+
+            return this;
+        },
         branch:         function (iFork, iData) {
             this.depth = Math.max(
                 this.depth,  $.trace(iFork, 'parentView').length + 1
             );
-            iFork.clear().render(iData).$_View.children().removeClass('active');
+            iFork.clear();
 
-            this.trigger('branch',  [iFork, iData, this.depth]);
+            if (this.initDepth < this.depth) {
+                iFork.$_View.data('TV_Model', iData);
+                iData = null;
+            } else
+                this.render(iFork.$_View, iData);
+
+            this.trigger('branch',  [iFork, this.depth, iData]);
 
             $.fn.off.apply(iFork.$_View.addClass('TreeNode'), this.listener);
 
@@ -603,7 +620,7 @@
 //              >>>  iQuery+  <<<
 //
 //
-//    [Version]    v1.6  (2016-07-15)  Stable
+//    [Version]    v1.7  (2016-07-18)  Stable
 //
 //    [Require]    iQuery  ||  jQuery with jQuery+
 //

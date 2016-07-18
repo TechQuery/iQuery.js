@@ -416,9 +416,10 @@ WebApp = (function (BOM, DOM, $) {
         iJSONP = iJSONP && iJSONP[1];
 
         var URL_Param = $.param(
-                $.extend(iArgs || { },  $.paramJSON(
-                    '?'  +  iURL[1].replace(iJSONP + '=?',  '')
-                ))
+                $.extend(
+                    $.paramJSON('?'  +  iURL[1].replace(iJSONP + '=?',  '')),
+                    iArgs || { }
+                )
             );
         iURL = [
             BOM.decodeURIComponent(iURL[0]).replace(RE_Str_Var,  function () {
@@ -570,7 +571,7 @@ WebApp = (function (BOM, DOM, $) {
                     this.show(this.getTemplate( iLink.href.slice(1) )).ownerApp
                 );
 
-            $.get(iLink.href,  (! iLink.href.match(MarkDown_File)) ?
+            $.get(iLink.getURL('href'),  (! iLink.href.match(MarkDown_File)) ?
                 function (iHTML) {
                     iHTML = (arguments[2] || '').responseText  ||  iHTML;
 
@@ -580,20 +581,29 @@ WebApp = (function (BOM, DOM, $) {
                     ))
                         return This_Page.show(iHTML).boot(Page_Load);
 
-                    var $_Page = $(iHTML.children || iHTML);
+                    var $_Content = $(iHTML.children || iHTML),  $_Page = [ ];
 
-                    var $_Content = $_Page.not('script[src]'),
-                        $_Script = $_Page.filter('script');
+                    for (var i = 0, j = 0;  $_Content[i];  i++)
+                        switch ( $_Content[i].tagName.toLowerCase() ) {
+                            case 'link':      {
+                                if ($_Content[i].rel == 'stylesheet')
+                                    $('<link rel="stylesheet" />')
+                                        .attr('href', $_Content[i].href)
+                                        .appendTo( DOM.head );
+                                else if ($_Content[i].getAttribute('target'))
+                                    DOM.head.appendChild( $_Content[i] );
 
-                    $_Content.filter(
-                        'link[rel="stylesheet"], link[target]'
-                    ).appendTo('head');
+                                break;
+                            }
+                            case 'script':    {
+                                if ( $_Content[i].text.trim() )
+                                    $.globalEval( $_Content[i].text );
+                                break;
+                            }
+                            default:          $_Page[j++] = $_Content[i];
+                        }
 
-                    for (var i = 0;  $_Script[i];  i++)
-                        $.globalEval( $_Script[i].text );
-
-                    This_Page.show( $_Content.not('link, script') )
-                        .boot(Page_Load);
+                    This_Page.show($_Page).boot(Page_Load);
                 } :
                 function (iMarkDown) {
                     iMarkDown = (arguments[2] || '').responseText  ||  iMarkDown;
@@ -697,10 +707,12 @@ WebApp = (function (BOM, DOM, $) {
             return this;
         },
         findLink:    function (iPrefetch) {
-            var $_Link = (
-                    this.ownerApp.history.lastIndex ?
-                        this.ownerApp.domRoot : $(DOM.body)
-                ).find('*[target]');
+            var $_Root = this.ownerApp.history.lastIndex ?
+                    this.ownerApp.domRoot : $(DOM.body);
+
+            var $_Link = $_Root.find('*[target]').not(
+                    $.ListView.findView($_Root).find('*[target]')
+                );
 
             for (var i = 0, iLink;  i < $_Link.length;  i++) {
                 iLink = new PageLink(this.ownerApp, $_Link[i]);
@@ -884,7 +896,7 @@ WebApp = (function (BOM, DOM, $) {
 //                    >>>  EasyWebApp.js  <<<
 //
 //
-//      [Version]    v2.6  (2016-07-14)  Alpha
+//      [Version]    v2.6  (2016-07-18)  Alpha
 //
 //      [Require]    iQuery  ||  jQuery with jQuery+,
 //

@@ -115,13 +115,14 @@ body > .Body table td ul {
 }
 
 
-.osc_git_box {
-    margin:    0  6em  !important;
+p > iframe[data-src] {
+    width:             24em;
+    display:           inline-block;
+    vertical-align:    top;
 }
 @media (max-width:  640px) {
-    .osc_git_box {
-        margin-left:     0  !important;
-        margin-right:    0  !important;
+    p > iframe[data-src] {
+        width:    95%;
     }
 }
 
