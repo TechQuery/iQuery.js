@@ -321,16 +321,16 @@
 })(self, self.document, self.jQuery);
 
 
-/* ---------- TreeView Interface  v0.4 ---------- */
+/* ---------- TreeView Interface  v0.2 ---------- */
 
 
 (function (BOM, DOM, $) {
 
-    function TreeView(iListView, iKey, Init_Depth, onFork, onFocus) {
+    function TreeView(iListView, iKey, Init_Depth, onFork) {
         var _Self_ = arguments.callee;
 
         if (!  (this instanceof _Self_))
-            return  new _Self_(iListView, iKey, Init_Depth, onFork, onFocus);
+            return  new _Self_(iListView, iKey, Init_Depth, onFork);
 
         var iArgs = $.makeArray( arguments ).slice(1);
 
@@ -339,10 +339,9 @@
             iArgs.shift()  :  Infinity;
 
         var _This_ = $.CommonView.call(this, iListView.$_View)
-                .on('branch',  (typeof iArgs[0] == 'function')  &&  iArgs.shift());
+                .on('branch',  (typeof iArgs[0] == 'function')  &&  iArgs[0]);
 
         this.depth = 0;
-        onFocus = iArgs[0];
 
         this.unit = iListView.on('insert',  function ($_Item, iValue) {
             var iParent = this;
@@ -371,14 +370,14 @@
                 $('.ListView_Item.active', _This_.unit.$_View[0]).not(this)
                     .removeClass('active');
 
-                if (typeof onFocus != 'function')  return;
+                var iTarget = arguments[0].target;
 
-                var $_Target = onFocus.apply(this, arguments);
+                _This_.trigger('focus', [iTarget]);
 
-                if ($_Target && _This_.$_Content) {
-                    _This_.$_Content.scrollTo( $_Target );
-                    return false;
-                }
+                return (
+                    (iTarget.tagName != 'A')  ||
+                    (iTarget.getAttribute('href')[0] != '#')
+                );
             }
         ];
         $.fn.on.apply(iListView.$_View.addClass('TreeNode'), this.listener);
@@ -414,52 +413,6 @@
             $.fn.off.apply(iFork.$_View.addClass('TreeNode'), this.listener);
 
             return iFork;
-        },
-        bind:           function ($_Item, Depth_Sort, Data_Filter) {
-            this.$_Content = $_Item.sameParents().eq(0);
-            this.data = [ ];
-
-            for (
-                var  i = 0,  _Tree_ = this.data,  _Level_ = 0,  _Parent_;
-                i < $_Item.length;
-                i++
-            ) {
-                if (i > 0)
-                    _Level_ = Depth_Sort.call(this,  $_Item[i - 1],  $_Item[i]);
-
-                if (_Level_ > 0)
-                    _Tree_ = _Tree_.slice(-1)[0].list = $.extend([ ], {
-                        parent:    _Tree_
-                    });
-                else if (_Level_ < 0) {
-                    _Parent_ = _Tree_.parent;
-                    delete _Tree_.parent;
-                    _Tree_ = _Parent_;
-                }
-                _Tree_.push( Data_Filter.call($_Item[i]) );
-            }
-
-            this.unit.clear().render( this.data );
-
-            return this;
-        },
-        linkage:        function ($_Scroll, onScroll) {
-            var _DOM_ = $_Scroll[0].ownerDocument;
-
-            $_Scroll.scroll(function () {
-                if (arguments[0].target !== this)  return;
-
-                var iAnchor = $_Scroll.offset(),
-                    iFontSize = $(_DOM_.body).css('font-size') / 2;
-
-                var $_Anchor = $(_DOM_.elementFromPoint(
-                        iAnchor.left + $_Scroll.css('padding-left') + iFontSize,
-                        iAnchor.top + $_Scroll.css('padding-top') + iFontSize
-                    ));
-                return  onScroll.call(this, $_Anchor);
-            });
-
-            return this;
         }
     });
 
@@ -620,7 +573,7 @@
 //              >>>  iQuery+  <<<
 //
 //
-//    [Version]    v1.7  (2016-07-18)  Stable
+//    [Version]    v1.4  (2016-07-19)  Stable
 //
 //    [Require]    iQuery  ||  jQuery with jQuery+
 //
