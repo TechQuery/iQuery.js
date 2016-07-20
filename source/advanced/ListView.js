@@ -6,16 +6,16 @@ define(['jquery', 'CommonView'],  function ($) {
 
     var Click_Type = $.browser.mobile ? 'tap' : 'click';
 
-    function ListView($_View, $_Item, No_Delay, onInsert) {
+    function ListView($_View, $_Item, iDelay, onInsert) {
         var _Self_ = arguments.callee;
 
         if (!  (this instanceof _Self_))
-            return  new _Self_($_View, $_Item, No_Delay, onInsert);
+            return  new _Self_($_View, $_Item, iDelay, onInsert);
 
         var iArgs = $.makeArray(arguments).slice(1);
 
         $_Item = (iArgs[0] instanceof Array)  &&  iArgs.shift();
-        No_Delay = (typeof iArgs[0] == 'boolean')  &&  iArgs.shift();
+        iDelay = (typeof iArgs[0] == 'boolean')  &&  iArgs.shift();
         onInsert = (typeof iArgs[0] == 'function')  &&  iArgs[0];
 
         var iView = $.CommonView.call(this, $_View);
@@ -27,7 +27,7 @@ define(['jquery', 'CommonView'],  function ($) {
 
         this.selector = $_Item;
         this.length = 0;
-        this.cache = No_Delay || [ ];
+        this.cache = iDelay && [ ];
 
         for (;  ;  this.length++) {
             $_Item = this.itemOf(this.length);

@@ -121,7 +121,7 @@
 ## 【iQuery+ 插件库】
  - 通用 [**CommonView 对象**](CommonView.md)生成方法 —— `$.CommonView()`
  - 通用 [**ListView 对象**](ListView.md)生成方法 —— `$.ListView()`
- - 通用 **TreeView 对象**生成方法 —— `$.TreeView()`
+ - 通用 [**TreeView 对象**](TreeView.md)生成方法 —— `$.TreeView()`
  - **HTML 5  History API  Polyfill** —— 为 IE 10- 提供兼容支持（需 服务器端响应 `./blank.html` 或 404 页面）
  - Base64 文本转 **二进制对象**方法 —— `$.toBlob()`
  - 基于 **现代浏览器 Crypto API** 的哈希方法 —— `$.dataHash()`
