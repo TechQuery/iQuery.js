@@ -779,7 +779,7 @@
                 iSelector = ['input[type="radio"]',  'div, section, .Body'];
             iSelector[Label_At ? 'unshift' : 'push']('label');
 
-            $.ListView(this,  iSelector,  function ($_Tab_Item) {
+            $.ListView(this,  iSelector,  false,  function ($_Tab_Item) {
                 var _UUID_ = $.uuid();
 
                 var $_Label = $_Tab_Item.filter('label').attr('for', _UUID_),
@@ -899,7 +899,7 @@
     $.fn.iReadNav = function ($_Context) {
         return  this.each(function () {
             var iMainNav = $.TreeView(
-                    $.ListView(this,  function ($_Item, iValue) {
+                    $.ListView(this,  false,  function ($_Item, iValue) {
 
                         $('a', $_Item[0]).text(iValue.text)[0].href =
                             '#' + iValue.id;
@@ -908,11 +908,11 @@
                     function () {
                         arguments[0].$_View.attr('class', '');
                     }
-                ).on('focus',  function (iTarget) {
-                    if (iTarget.tagName.toLowerCase() != 'a')  return;
+                ).on('focus',  function (iEvent) {
+                    if (iEvent.target.tagName.toLowerCase() != 'a')  return;
 
                     var $_Target = $(
-                            '*[id="'  +  iTarget.href.split('#')[1]  +  '"]'
+                            '*[id="' + iEvent.target.href.split('#')[1] + '"]'
                         );
                     $_Target.scrollParents().eq(0).scrollTo( $_Target );
                 }),
@@ -932,9 +932,9 @@
                 if (! $.contains(this, $_Anchor[0]))  return;
 
                 $_Anchor = $(
-                    'a[href="#' + $_Anchor[0].id + '"]',  iMainNav.unit.$_View[0]
+                    'a[href="#' + $_Anchor[0].id + '"]',  iMainNav.$_View[0]
                 );
-                $('.ListView_Item.active', iMainNav.unit.$_View[0])
+                $('.ListView_Item.active', iMainNav.$_View[0])
                     .removeClass('active');
 
                 $.ListView.getInstance( $_Anchor.parents('.TreeNode')[0] )
@@ -1002,7 +1002,7 @@
     $.fn.iTree = function (Sub_Key, onInsert) {
         return  this.each(function () {
             var iOrgTree = $.TreeView(
-                    $.ListView(this, onInsert),
+                    $.ListView(this, false, onInsert),
                     Sub_Key,
                     2,
                     function (iFork, iDepth, iData) {
@@ -1033,23 +1033,24 @@
                     ), 'important');
                 });
 
-            iOrgTree.unit.$_View
-                .on('Insert',  '.ListView_Item',  function () {
-                    var iSub = $.ListView.getInstance(
-                            $(this).children('.TreeNode')
-                        );
+            iOrgTree.$_View.on('Insert',  '.ListView_Item',  function () {
 
-                    if ( iSub )
-                        iSub.insert( arguments[1] );
-                    else
-                        iOrgTree.branch(this, arguments[1]);
+                var iSub = $.ListView.getInstance(
+                        $(this).children('.TreeNode')
+                    );
 
-                    return false;
-                })
-                .on('Edit',  '.ListView_Item',  function () {
-                    return  (! $(arguments[0].target).contentEdit());
-                })
-                .on('Delete',  '.ListView_Item', branchDelete);
+                if ( iSub )
+                    iSub.insert( arguments[1] );
+                else
+                    iOrgTree.branch(this, arguments[1]);
+
+                return false;
+
+            }).on('Edit',  '.ListView_Item',  function () {
+
+                return  (! $(arguments[0].target).contentEdit());
+
+            }).on('Delete',  '.ListView_Item', branchDelete);
         });
     };
 

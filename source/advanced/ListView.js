@@ -15,7 +15,7 @@ define(['jquery', 'CommonView'],  function ($) {
         var iArgs = $.makeArray(arguments).slice(1);
 
         $_Item = (iArgs[0] instanceof Array)  &&  iArgs.shift();
-        iDelay = (typeof iArgs[0] == 'boolean')  &&  iArgs.shift();
+        iDelay = (typeof iArgs[0] == 'boolean')  ?  iArgs.shift()  :  null;
         onInsert = (typeof iArgs[0] == 'function')  &&  iArgs[0];
 
         var iView = $.CommonView.call(this, $_View);
@@ -27,7 +27,6 @@ define(['jquery', 'CommonView'],  function ($) {
 
         this.selector = $_Item;
         this.length = 0;
-        this.cache = iDelay && [ ];
 
         for (;  ;  this.length++) {
             $_Item = this.itemOf(this.length);
@@ -40,6 +39,11 @@ define(['jquery', 'CommonView'],  function ($) {
         _Self_.findView(this.$_View, false);
 
         this.$_Template = this[0].clone(true);
+
+        iDelay = (iDelay !== false)  ?
+            $('*', this[0][0]).add( this[0][0] ).isMedia()  :  iDelay;
+
+        this.cache = iDelay && [ ];
 
         this.$_View.on(Click_Type,  '.ListView_Item',  function (iEvent) {
             if (iView.$_View[0] !== this.parentNode)  return;
@@ -248,7 +252,9 @@ define(['jquery', 'CommonView'],  function ($) {
                 );
             $_View.data({CVI_ListView: '',  LV_Model: ''})[0].id = '';
 
-            var iFork = ListView($_View.appendTo( arguments[0] ),  this.selector);
+            var iFork = ListView(
+                    $_View.appendTo( arguments[0] ),  false,  this.selector
+                );
             iFork.table = this.table;
             iFork.parentView = this;
 

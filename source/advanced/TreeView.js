@@ -17,17 +17,17 @@ define(['jquery', 'ListView'],  function ($) {
         var _This_ = $.CommonView.call(this, iListView.$_View)
                 .on('branch',  (typeof iArgs[0] == 'function')  &&  iArgs[0]);
 
-        this.length = 0;
         this.$_View = iListView.$_View;
 
-        this.unit = iListView.on('insert',  function ($_Item, iValue) {
+        this[0] = [iListView.on('insert',  function ($_Item, iValue) {
             var iParent = this;
 
             if ($.likeArray( iValue[iKey] )  &&  iValue[iKey][0])
                 $.wait(0.01,  function () {
                     _This_.branch(iParent.fork($_Item), iValue[iKey]);
                 });
-        });
+        })];
+        this.length = 1;
 
         this.listener = [
             $.browser.mobile ? 'tap' : 'click',
@@ -44,7 +44,7 @@ define(['jquery', 'ListView'],  function ($) {
                         _This_.render($_Fork);
                 }
 
-                $('.ListView_Item.active', _This_.unit.$_View[0]).not(this)
+                $('.ListView_Item.active', _This_.$_View[0]).not(this)
                     .removeClass('active');
 
                 _This_.trigger('focus', arguments);
@@ -67,7 +67,7 @@ define(['jquery', 'ListView'],  function ($) {
                 $_Fork = $($_Fork);
             else {
                 iData = $_Fork;
-                $_Fork = this.unit.$_View;
+                $_Fork = this.$_View;
             }
 
             $.ListView.getInstance( $_Fork ).render(
@@ -77,7 +77,7 @@ define(['jquery', 'ListView'],  function ($) {
             return this;
         },
         clear:          function () {
-            this.unit.clear();
+            this[0][0].clear();
 
             return this;
         },
@@ -85,10 +85,11 @@ define(['jquery', 'ListView'],  function ($) {
             var iFork = ($_Item instanceof $.ListView)  ?  $_Item  :  (
                     $.ListView.getInstance( $_Item[0].parentNode ).fork( $_Item )
                 );
-            this.length = Math.max(
-                this.length,  $.trace(iFork, 'parentView').length + 1
-            );
-            iFork.clear();
+            var iDepth = $.trace(iFork, 'parentView').length;
+
+            if (! this[iDepth])  this[this.length++] = [ ];
+
+            this[iDepth].push( iFork.clear() );
 
             if (this.initDepth < this.length) {
                 iFork.$_View.data('TV_Model', iData);
@@ -103,7 +104,7 @@ define(['jquery', 'ListView'],  function ($) {
             return iFork;
         },
         valueOf:        function () {
-            return this.unit.valueOf();
+            return this[0][0].valueOf();
         }
     });
 

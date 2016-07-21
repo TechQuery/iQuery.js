@@ -10,7 +10,7 @@
 
 ### .length
  - 类型：Number
- - 含义：树形视图的深度
+ - 含义：树形视图的深度（数字序号 索引的是一个个数组，内含对应深度上的 [ListView 对象](ListView.md)）
 
 ### .$_View
  - 类型：jQuery

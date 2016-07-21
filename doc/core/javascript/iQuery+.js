@@ -75,7 +75,7 @@
         var iArgs = $.makeArray(arguments).slice(1);
 
         $_Item = (iArgs[0] instanceof Array)  &&  iArgs.shift();
-        iDelay = (typeof iArgs[0] == 'boolean')  &&  iArgs.shift();
+        iDelay = (typeof iArgs[0] == 'boolean')  ?  iArgs.shift()  :  null;
         onInsert = (typeof iArgs[0] == 'function')  &&  iArgs[0];
 
         var iView = $.CommonView.call(this, $_View);
@@ -87,7 +87,6 @@
 
         this.selector = $_Item;
         this.length = 0;
-        this.cache = iDelay && [ ];
 
         for (;  ;  this.length++) {
             $_Item = this.itemOf(this.length);
@@ -100,6 +99,11 @@
         _Self_.findView(this.$_View, false);
 
         this.$_Template = this[0].clone(true);
+
+        iDelay = (iDelay !== false)  ?
+            $('*', this[0][0]).add( this[0][0] ).isMedia()  :  iDelay;
+
+        this.cache = iDelay && [ ];
 
         this.$_View.on(Click_Type,  '.ListView_Item',  function (iEvent) {
             if (iView.$_View[0] !== this.parentNode)  return;
@@ -308,7 +312,9 @@
                 );
             $_View.data({CVI_ListView: '',  LV_Model: ''})[0].id = '';
 
-            var iFork = ListView($_View.appendTo( arguments[0] ),  this.selector);
+            var iFork = ListView(
+                    $_View.appendTo( arguments[0] ),  false,  this.selector
+                );
             iFork.table = this.table;
             iFork.parentView = this;
 
@@ -341,17 +347,17 @@
         var _This_ = $.CommonView.call(this, iListView.$_View)
                 .on('branch',  (typeof iArgs[0] == 'function')  &&  iArgs[0]);
 
-        this.length = 0;
         this.$_View = iListView.$_View;
 
-        this.unit = iListView.on('insert',  function ($_Item, iValue) {
+        this[0] = [iListView.on('insert',  function ($_Item, iValue) {
             var iParent = this;
 
             if ($.likeArray( iValue[iKey] )  &&  iValue[iKey][0])
                 $.wait(0.01,  function () {
                     _This_.branch(iParent.fork($_Item), iValue[iKey]);
                 });
-        });
+        })];
+        this.length = 1;
 
         this.listener = [
             $.browser.mobile ? 'tap' : 'click',
@@ -368,7 +374,7 @@
                         _This_.render($_Fork);
                 }
 
-                $('.ListView_Item.active', _This_.unit.$_View[0]).not(this)
+                $('.ListView_Item.active', _This_.$_View[0]).not(this)
                     .removeClass('active');
 
                 _This_.trigger('focus', arguments);
@@ -391,7 +397,7 @@
                 $_Fork = $($_Fork);
             else {
                 iData = $_Fork;
-                $_Fork = this.unit.$_View;
+                $_Fork = this.$_View;
             }
 
             $.ListView.getInstance( $_Fork ).render(
@@ -401,7 +407,7 @@
             return this;
         },
         clear:          function () {
-            this.unit.clear();
+            this[0][0].clear();
 
             return this;
         },
@@ -409,10 +415,11 @@
             var iFork = ($_Item instanceof $.ListView)  ?  $_Item  :  (
                     $.ListView.getInstance( $_Item[0].parentNode ).fork( $_Item )
                 );
-            this.length = Math.max(
-                this.length,  $.trace(iFork, 'parentView').length + 1
-            );
-            iFork.clear();
+            var iDepth = $.trace(iFork, 'parentView').length;
+
+            if (! this[iDepth])  this[this.length++] = [ ];
+
+            this[iDepth].push( iFork.clear() );
 
             if (this.initDepth < this.length) {
                 iFork.$_View.data('TV_Model', iData);
@@ -427,7 +434,7 @@
             return iFork;
         },
         valueOf:        function () {
-            return this.unit.valueOf();
+            return this[0][0].valueOf();
         }
     });
 
