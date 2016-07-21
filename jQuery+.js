@@ -981,6 +981,29 @@
             });
 
             return this;
+        },
+        isMedia:         function () {
+            if (this.filter('iframe, object, embed, audio, video')[0])
+                return true;
+
+            return  (!!  $.map(this,  function () {
+                var $_Image = $( arguments[0] );
+
+                if (
+                    ($_Image[0].tagName != 'IMG')  &&
+                    ($_Image.css('background-image') == 'none')
+                )
+                    return;
+
+                var iSize = $.map($_Image.css([
+                        'width', 'height', 'min-width', 'min-height'
+                    ]), parseFloat);
+
+                return (
+                    (Math.max(iSize.width, iSize['min-width']) > 240)  ||
+                    (Math.max(iSize.height, iSize['min-height']) > 160)
+                );
+            })[0]);
         }
     });
 
@@ -1779,6 +1802,82 @@
     if (! (($.browser.msie < 10)  ||  $.browser.ios))
         return;
 
+/* ---------- Placeholder ---------- */
+
+    var _Value_ = {
+            INPUT:       Object.getOwnPropertyDescriptor(
+                HTMLInputElement.prototype, 'value'
+            ),
+            TEXTAREA:    Object.getOwnPropertyDescriptor(
+                HTMLTextAreaElement.prototype, 'value'
+            )
+        };
+    function getValue() {
+        return _Value_[this.tagName].get.call(this);
+    }
+
+    function PH_Blur() {
+        if (getValue.call( this ))  return;
+
+        this.value = this.placeholder;
+        this.style.color = 'gray';
+    }
+
+    function PH_Focus() {
+        if (this.placeholder != getValue.call(this))  return;
+
+        this.value = '';
+        this.style.color = '';
+    }
+
+    var iPlaceHolder = {
+            get:    function () {
+                return this.getAttribute('placeholder');
+            },
+            set:    function () {
+                this.setAttribute('placeholder', arguments[0]);
+
+                PH_Blur.call(this);
+
+                $(this).off('focus', PH_Focus).off('blur', PH_Blur)
+                    .focus(PH_Focus).blur(PH_Blur);
+            }
+        };
+    Object.defineProperty(
+        HTMLInputElement.prototype, 'placeholder', iPlaceHolder
+    );
+    Object.defineProperty(
+        HTMLTextAreaElement.prototype, 'placeholder', iPlaceHolder
+    );
+
+    $(DOM).ready(function () {
+        $('input[placeholder], textarea[placeholder]')
+            .prop('placeholder',  function () {
+                return this.placeholder;
+            });
+    });
+
+/* ---------- Field Value ---------- */
+
+    var Value_Patch = {
+            get:    function () {
+                var iValue = getValue.call(this);
+
+                return (
+                    (iValue == this.placeholder)  &&  (this.style.color == 'gray')
+                ) ?
+                    '' : iValue;
+            }/*,
+            set:    function () {
+                _Value_.set.call(this, arguments[0]);
+
+                if (this.style.color == 'gray')  this.style.color = '';
+            }*/
+        };
+    Object.defineProperty(HTMLInputElement.prototype, 'value', Value_Patch);
+    Object.defineProperty(HTMLTextAreaElement.prototype, 'value', Value_Patch);
+
+
 /* ---------- Form Element API ---------- */
 
     function Value_Check() {
@@ -1815,8 +1914,15 @@
         var $_Input = $('*[name]:input', this);
 
         for (var i = 0;  i < $_Input.length;  i++)
-            if (! $_Input[i].checkValidity())
+            if (! $_Input[i].checkValidity()) {
+                $_Input[i].style.borderColor = 'red';
+
+                $.wait(1,  function () {
+                    $_Input[i].style.borderColor = '';
+                });
                 return false;
+            }
+
         return true;
     };
 
@@ -2196,7 +2302,7 @@
 //              >>>  jQuery+  <<<
 //
 //
-//    [Version]    v7.4  (2016-07-14)
+//    [Version]    v7.6  (2016-07-21)
 //
 //    [Require]    jQuery  v1.9+
 //

@@ -67,6 +67,7 @@
    - **:button** 还支持 `input[type="submit"], input[type="reset"], input[type="image"]`
    - 新增 **:data 伪类** 来筛选有 data-* 属性的元素
    - 新增 **:list 伪类**，等价于 `ul, ol, dl`
+ - 新增 **多媒体元素判断**方法 —— `$.fn.isMedia()`
  - 新增 **子元素插入**方法 —— `$.fn.insertTo()`
  - 新增 **祖先元素交集**方法 —— `$.fn.sameParents()`
  - 新增 **有滚动条的祖先元素**方法 —— `$.fn.scrollParents()`

@@ -362,12 +362,10 @@ define(['iCore'],  function ($) {
                 return  new_Class.join(' ');
             });
         },
-        hasClass:           function () {
-            try {
-                return this[0].classList.contains(arguments[0]);
-            } catch (iError) {
-                return false;
-            }
+        hasClass:           function (iName) {
+            return  (!!  $.map(this,  function () {
+                return arguments[0].classList.contains(iName);
+            })[0]);
         },
         val:                function () {
             if (! $.isData(arguments[0]))
