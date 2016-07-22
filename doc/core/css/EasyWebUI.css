@@ -8,7 +8,7 @@
  *    and can be used in the Web UI development of
  *    Any Platform.
  *
- *    [Version]    v1.0  (2016-07-21)
+ *    [Version]    v1.0  (2016-07-22)
  *
  *    [Require]    CSS 2.1  (Best Effect with CSS 3),
  *
@@ -207,6 +207,17 @@ button > *,  a.Button > *  {
     vertical-align:    middle;
     max-height:        1.5em;
     margin:            0  0.5em;
+}
+button > sup,  a.Button > sup,
+button > sub,  a.Button > sub  {
+    margin:       auto;
+    font-size:    x-small;
+}
+button > sup,  a.Button > sup  {
+    vertical-align:    super;
+}
+button > sub,  a.Button > sub  {
+    vertical-align:    sub;
 }
 input[type="submit"], button[type="submit"] {
     background:      rgb(88, 167, 0);
