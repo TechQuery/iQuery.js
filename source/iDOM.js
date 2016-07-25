@@ -1,4 +1,4 @@
-define(['iCore'],  function ($) {
+define(['extension/iPseudo'],  function ($) {
 
     var BOM = self,  DOM = self.document;
 

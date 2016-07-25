@@ -63,11 +63,11 @@
  - 封装了 **表单元素无刷新提交**，并可直接绑定响应回调 —— `$.fn.ajaxSubmit()`（基于前述的几个 **AJAX 增强方法** 构建）
  - 新增 **选择符合法性判断**方法 —— `$.isSelector()`
  - 更多 jQuery **伪类选择符**：
-   - **:image** 还支持 `img, link[type="image/x-icon"], svg, canvas`
+   - **:image** 还支持 `img, link[type="image/x-icon"], svg, canvas` 及设置了 `background-image` 的普通元素
    - **:button** 还支持 `input[type="submit"], input[type="reset"], input[type="image"]`
    - 新增 **:data 伪类** 来筛选有 data-* 属性的元素
-   - 新增 **:list 伪类**，等价于 `ul, ol, dl`
- - 新增 **多媒体元素判断**方法 —— `$.fn.isMedia()`
+   - 新增 **:list 伪类**，等价于 `ul, ol, dl, tbody, select, datalist`
+   - 新增 **:media 伪类**，等价于 `iframe, object, embed, audio, video` 及尺寸较大的 `:image`
  - 新增 **子元素插入**方法 —— `$.fn.insertTo()`
  - 新增 **祖先元素交集**方法 —— `$.fn.sameParents()`
  - 新增 **有滚动条的祖先元素**方法 —— `$.fn.scrollParents()`

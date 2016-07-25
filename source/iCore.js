@@ -152,112 +152,7 @@ define(['extension/iTimer'],  function ($) {
             }
         }
     };
-
 /* ---------- DOM Selector ---------- */
-    var iPseudo = {
-            ':header':     {
-                filter:    function () {
-                    return  (arguments[0] instanceof HTMLHeadingElement);
-                }
-            },
-            ':image':      {
-                feature:    $.extend($.makeSet(
-                    'img', 'svg', 'canvas'
-                ), {
-                    input:    {type:  'image'},
-                    link:     {type:  'image/x-icon'}
-                }),
-                filter:    function (iElement) {
-                    var iTag = iElement.tagName.toLowerCase();
-
-                    if (iTag in this.feature)
-                        return  (this.feature[iTag] instanceof Boolean) ? true : (
-                            this.feature[iTag].type == iElement.type.toLowerCase()
-                        );
-                }
-            },
-            ':button':     {
-                feature:    $.makeSet(
-                    'button', 'image', 'submit', 'reset'
-                ),
-                filter:     function (iElement) {
-                    var iTag = iElement.tagName.toLowerCase();
-
-                    return  ((iTag == 'button') || (
-                        (iTag == 'input') &&
-                        (iElement.type.toLowerCase() in this.feature)
-                    ));
-                }
-            },
-            ':input':      {
-                feature:    $.makeSet(
-                    'input', 'textarea', 'button', 'select'
-                ),
-                filter:     function (iDOM) {
-                    return (
-                        (iDOM.tagName.toLowerCase() in this.feature)  ||
-                        (typeof iDOM.getAttribute('contentEditable') == 'string')  ||
-                        iDOM.designMode
-                    );
-                }
-            },
-            ':list':       {
-                feature:    $.makeSet('ul', 'ol', 'dl', 'datalist'),
-                filter:     function () {
-                    return  (arguments[0].tagName.toLowerCase() in this.feature);
-                }
-            },
-            ':data':       {
-                filter:    function () {
-                    return  (! $.isEmptyObject(arguments[0].dataset));
-                }
-            },
-            ':visible':    {
-                feature:    {
-                    display:    'none',
-                    width:      0,
-                    height:     0
-                },
-                filter:     function (iElement) {
-                    var iStyle = _DOM_.operate('Style', [iElement], [
-                            'display', 'width', 'height'
-                        ]);
-
-                    for (var iKey in iStyle)
-                        if (iStyle[iKey] === this.feature[iKey])
-                            return;
-                    return true;
-                }
-            },
-            ':parent':      {
-                filter:    function () {
-                    var iNode = arguments[0].childNodes;
-
-                    if (! arguments[0].children.length) {
-                        for (var i = 0;  i < iNode.length;  i++)
-                            if (iNode[i].nodeType == 3)
-                                return true;
-                    } else  return true;
-                }
-            }
-        };
-    $.extend(iPseudo, {
-        ':hidden':    {
-            filter:    function () {
-                return  (! iPseudo[':visible'].filter(arguments[0]));
-            }
-        },
-        ':empty':     {
-            filter:    function () {
-                return  (! iPseudo[':parent'].filter(arguments[0]));
-            }
-        }
-    });
-
-    for (var _Pseudo_ in iPseudo)
-        iPseudo[_Pseudo_].regexp = RegExp(
-            '(.*?)' + _Pseudo_ + "([>\\+~\\s]*.*)"
-        );
 
     function QuerySelector(iPath) {
         var iRoot = this;
@@ -284,31 +179,32 @@ define(['extension/iTimer'],  function ($) {
     function DOM_Search(iRoot, iSelector) {
         var _Self_ = arguments.callee;
 
-        return  $.map(iSelector.split(/\s*,\s*/),  function () {
-            try {
-                return $.makeArray(
-                    QuerySelector.call(iRoot,  arguments[0] || '*')
-                );
-            } catch (iError) {
-                var _Selector_;
-                for (var _Pseudo_ in iPseudo) {
-                    _Selector_ = arguments[0].match(iPseudo[_Pseudo_].regexp);
-                    if (_Selector_)  break;
-                };
-                if (! _Selector_)  return;
+        return  $.map(iSelector.split(/\s*,\s*/),  function (_Selector_) {
+            var iPseudo = [ ],  _Before_,  _After_ = _Selector_;
 
-                _Selector_[1] = _Selector_[1] || '*';
-                _Selector_[1] += (_Selector_[1].match(/[\s>\+~]\s*$/) ? '*' : '');
+            while (! (iPseudo[1] in $.expr[':'])) {
+                iPseudo = _After_.match(/:(\w+)(\(('|")?([^'"]*)\3?\))?/);
 
-                return $.map(
-                    QuerySelector.call(iRoot, _Selector_[1]),
-                    function (iDOM) {
-                        if ( iPseudo[_Pseudo_].filter(iDOM) )
-                            return  _Selector_[2]  ?
-                                _Self_(iDOM,  '*' + _Selector_[2])  :  iDOM;
-                    }
-                );
+                if (! iPseudo)
+                    return  $.makeArray(QuerySelector.call(iRoot, _Selector_));
+
+                _Before_ = iPseudo.index  ?
+                    _After_.slice(0, iPseudo.index)  :  '*';
+
+                _After_ = _After_.slice(iPseudo.index + iPseudo[0].length)
             }
+
+            if (_Before_.match(/[\s>\+~]\s*$/))  _Before_ += '*';
+
+            iPseudo.splice(2, 1);
+
+            return $.map(
+                QuerySelector.call(iRoot, _Before_),
+                function (iDOM, Index) {
+                    if ($.expr[':'][iPseudo[1]](iDOM, Index, iPseudo))
+                        return  _Self_(iDOM, _After_);
+                }
+            );
         });
     }
     var DOM_Sort = $.browser.msie ?
