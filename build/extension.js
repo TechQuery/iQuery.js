@@ -10,7 +10,7 @@
 
         if (iName != 'extension/ES-5') {
             fParameter += ', $';
-            aParameter += ', iQuery';
+            aParameter += ', self.jQuery';
         }
         return arguments[2]
             .replace(/^define[\s\S]+?(function \()[^\)]*/m,  "\n($1" + fParameter)

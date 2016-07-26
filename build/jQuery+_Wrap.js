@@ -7,8 +7,6 @@
 
 })(function () {
 
-    var iQuery = {fn:  { }};
-
 
 
 });

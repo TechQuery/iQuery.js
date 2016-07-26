@@ -349,7 +349,7 @@ define(['extension/iTimer'],  function ($) {
             );
         },
         buildFragment:    function (iNode) {
-            var iFragment = DOM.createDocumentFragment();
+            var iFragment = (arguments[1] || DOM).createDocumentFragment();
 
             for (var i = 0;  iNode[i];  i++)
                 iFragment.appendChild( iNode[i] );

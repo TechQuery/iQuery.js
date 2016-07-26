@@ -7,8 +7,6 @@
 
 })(function () {
 
-    var iQuery = {fn:  { }};
-
 
 (function (BOM, DOM) {
 
@@ -185,7 +183,7 @@
         versionNumber:    IE_Ver || FF_Ver || WK_Ver
     };
 
-})(self, self.document, iQuery);
+})(self, self.document, self.jQuery);
 
 
 
@@ -312,7 +310,7 @@
         return  arguments.callee.apply(this, iArgs);
     };
 
-})(self, self.document, iQuery);
+})(self, self.document, self.jQuery);
 
 
 
@@ -357,7 +355,7 @@
         }
     });
 
-})(self, self.document, iQuery);
+})(self, self.document, self.jQuery);
 
 
 
@@ -515,7 +513,7 @@
         ].join('|'))
     });
 
-})(self, self.document, iQuery);
+})(self, self.document, self.jQuery);
 
 
 
@@ -596,7 +594,7 @@
         );
     };
 
-})(self, self.document, iQuery);
+})(self, self.document, self.jQuery);
 
 
 
@@ -923,14 +921,14 @@
         return iXML;
     };
 
-})(self, self.document, iQuery);
+})(self, self.document, self.jQuery);
 
 
 
 (function (BOM, DOM, $) {
 
     $.fn.insertTo = function ($_Target, Index) {
-        var DOM_Set = $.buildFragment(this),  $_This = [ ];
+        var DOM_Set = $.buildFragment(this, DOM),  $_This = [ ];
 
         $($_Target).each(function () {
             var iAfter = $(this.children).eq(Index || 0)[0];
@@ -945,7 +943,7 @@
         return this.pushStack($_This);
     };
 
-})(self, self.document, iQuery);
+})(self, self.document, self.jQuery);
 
 
 
@@ -1196,7 +1194,7 @@
         return  $_iFrame[0].parentElement ? this : $_iFrame.appendTo(DOM.body);
     };
 
-})(self, self.document, iQuery);
+})(self, self.document, self.jQuery);
 
 
 
@@ -1361,7 +1359,7 @@
             return  this.css('z-index',  parseInt(new_Index) || 'auto');
     };
 
-})(self, self.document, iQuery);
+})(self, self.document, self.jQuery);
 
 
 
@@ -1438,7 +1436,7 @@
         });
     };
 
-})(self, self.document, iQuery);
+})(self, self.document, self.jQuery);
 
 
 
@@ -1664,7 +1662,7 @@
         });
     });
 
-})(self, self.document, iQuery);
+})(self, self.document, self.jQuery);
 
 
 
@@ -1843,7 +1841,7 @@
         }
     });
 
-})(self, self.document, iQuery);
+})(self, self.document, self.jQuery);
 
 
 
@@ -1993,7 +1991,7 @@
         }
     });
 
-})(self, self.document, iQuery);
+})(self, self.document, self.jQuery);
 
 
 
@@ -2018,7 +2016,7 @@
     for (var iMethod in HTTP_Method)
         $[ iMethod.toLowerCase() ] = $.proxy(HTTP_Request, BOM, iMethod);
 
-})(self, self.document, iQuery);
+})(self, self.document, self.jQuery);
 
 
 
@@ -2132,7 +2130,7 @@
 
     $.Observer = Observer;
 
-})(self, self.document, iQuery);
+})(self, self.document, self.jQuery);
 
 
 
@@ -2345,7 +2343,7 @@
         return this;
     };
 
-})(self, self.document, iQuery);
+})(self, self.document, self.jQuery);
 
 
 //
@@ -2366,7 +2364,7 @@
 
     return  BOM.jQuery.extend(true, $);
 
-})(self, self.document, iQuery);
+})(self, self.document, self.jQuery);
 
 
 });
