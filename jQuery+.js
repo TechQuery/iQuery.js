@@ -569,6 +569,16 @@
         }
     });
 
+    var pFocusable = [
+            'a[href],  map[name] area[href]',
+            'label, input, textarea, button, select, option, object',
+            '*[tabIndex], *[contentEditable]'
+        ].join(', ');
+
+    $.expr[':'].focusable = function () {
+        return arguments[0].matches(pFocusable);
+    };
+
     var pMedia = $.makeSet('IFRAME', 'OBJECT', 'EMBED', 'AUDIO', 'VIDEO');
 
     $.expr[':'].media = function (iDOM) {
@@ -1319,21 +1329,18 @@
 /* ---------- Smart zIndex ---------- */
 
     function Get_zIndex() {
-        var $_This = $(this);
+        for (
+            var $_This = $(this),  zIndex;
+            $_This[0];
+            $_This = $($_This[0].offsetParent)
+        )
+            if ($_This.css('position') != 'static') {
+                zIndex = parseInt( $_This.css('z-index') );
 
-        var _zIndex_ = $_This.css('z-index');
-        if (_zIndex_ != 'auto')  return parseInt(_zIndex_);
+                if (zIndex > 0)  return zIndex;
+            }
 
-        var $_Parents = $_This.parents();
-        _zIndex_ = 0;
-
-        $_Parents.each(function () {
-            var _Index_ = $(this).css('z-index');
-
-            _zIndex_ += (_Index_ == 'auto')  ?  1  :  parseInt(_Index_);
-        });
-
-        return ++_zIndex_;
+        return 0;
     }
 
     function Set_zIndex() {
@@ -1458,15 +1465,10 @@
 
 /* ---------- Focus AnyWhere ---------- */
 
-    var DOM_Focus = $.fn.focus,
-        iFocusable = [
-            'a[href], area',
-            'label, input, textarea, button, select, option',
-            '*[tabIndex], *[contentEditable]'
-        ].join(', ');
+    var DOM_Focus = $.fn.focus;
 
     $.fn.focus = function () {
-        this.not(iFocusable).attr('tabIndex', -1).css('outline', 'none');
+        this.not(':focusable').attr('tabIndex', -1).css('outline', 'none');
 
         return  DOM_Focus.apply(this, arguments);
     };
@@ -2350,7 +2352,7 @@
 //              >>>  jQuery+  <<<
 //
 //
-//    [Version]    v7.7  (2016-07-25)
+//    [Version]    v7.7  (2016-07-26)
 //
 //    [Require]    jQuery  v1.9+
 //

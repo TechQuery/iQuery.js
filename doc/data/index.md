@@ -47,16 +47,19 @@
  - 新增 **URL 参数对象化**方法（$.param() 的逆方法）—— `$.paramJSON()`，其返回值自带的 .toString() 有 **JSON 格式化（美化）输出**能力
  - 新增 **URL 参数签名**方法 —— `$.paramSign()`
  - 新增 [**多条件观察者**基础对象](Observer.md) —— `$.Observer()`
- - 更智能的 `$.get()`、`$.post()`：支持 form 元素、FormData 对象的请求数据形式，整合 XHR、XDR、JSONP、iframe **自适应 跨域请求**， **自动转换响应内容**为 JSON 或 XML 对象实例
+ - 更智能的 `$.get()`、`$.post()`：支持 form 元素、FormData 对象的请求数据形式，整合 XHR、XDR、JSONP、iframe **自适应 跨域请求**， **自动转换响应内容**为 HTML、XML 或 JSON 对象实例
  - 新增 `$.delete()`、`$.put()`，方便实现基于 **RESTful API** 的单页应用
  - 新增 **URL 信息提取**方法 —— `$.fileName()`、`$.filePath()`、`$.urlDomain()`
  - 封装了 **表单元素无刷新提交**，并可直接绑定响应回调 —— `$.fn.ajaxSubmit()`（基于前述的几个 **AJAX 增强方法** 构建）
  - 新增 **选择符合法性判断**方法 —— `$.isSelector()`
  - 更多 jQuery **伪类选择符**：
-   - **:image** 还支持 `img, link[type="image/x-icon"], svg, canvas`
+   - **:image** 还支持 `img, link[type="image/x-icon"], svg, canvas` 及设置了 `background-image` 的普通元素
    - **:button** 还支持 `input[type="submit"], input[type="reset"], input[type="image"]`
+   - 自带 **:focusable 伪类**（[jQuery UI](http://api.jqueryui.com/) 标准）
    - 新增 **:data 伪类** 来筛选有 data-* 属性的元素
-   - 新增 **:list 伪类**，等价于 `ul, ol, dl`
+   - 新增 **:list 伪类**，等价于 `ul, ol, dl, tbody, select, datalist`
+   - 新增 **:media 伪类**，等价于 `iframe, object, embed, audio, video` 及尺寸较大的 `:image`
+ - 新增 **子元素插入**方法 —— `$.fn.insertTo()`
  - 新增 **祖先元素交集**方法 —— `$.fn.sameParents()`
  - 新增 **有滚动条的祖先元素**方法 —— `$.fn.scrollParents()`
  - 新增 **元素可视口检测**方法 —— `$.fn.inViewport()`
@@ -86,25 +89,26 @@
  - 不支持 $.Deferred()（正在尝试引入 ECMAScript 6 支持的 **Promise/A+ 规范**）
  - **jQuery 扩展伪类选择符**：只支持 常用且“难以用 **CSS 标准选择符** 或 jQuery API 实现其功能”的
  - 不支持 **XPath 选择器**、操作 **XML 文档**
- - 构造 DOM 元素时的第二参数中不能调用与键名同名的实例方法，仅能设置 DOM 属性
  - 不支持一些不常用的 **jQuery 静态/实例方法**
  - 暂不支持 **动画队列**
 
 
 ### ECMA、W3C 标准 API 补丁
 
- - 自带 `Object.getOwnPropertyNames()` 标准方法
- - 自带 `Array.prototype.indexOf()` 标准方法
- - 自带 `Array.prototype.reduce()` 标准方法
  - 自带 支持“非空白符”的 `String.prototype.trim()`（借鉴 PHP）
  - 新增 `String.prototype.repeat` 标准草案方法
  - 新增 String **toCamelCase**（驼峰命名法）、 **toHyphenCase**（连字符命名法） **书写格式转换**方法
+ - 自带 `Array.prototype.indexOf()` 标准方法
+ - 自带 `Array.prototype.reduce()` 标准方法
+ - 自带 `Function.prototype.name` 属性补丁
+ - 自带 `Object.getOwnPropertyNames()` 标准方法
  - 自带 `Date.now()` 标准方法
  - 新增 JSON **format 格式化显示**方法、 **parseAll 深度解析**方法（$.parseJSON() 被其增强）
  - 重写 `Error.prototype.valueOf()`，使 IE 10- 返回可查询的错误码（附带 官方文档 URL）
  - 新增 **DOMHttpRequest 对象**，封装了 **JSONP Get**、 **iframe Post**
  - 自带 `HTMLDocument.prototype.currentScript` 属性
  - 自带 `Element.prototype.textContent` 属性
+ - 自带 `Element.prototype.innerHTML` 的 IE 8 补丁
  - 自带 **HTMLCollection 对象**，修复 IE 10- `Element.prototype.children` 属性在其元素有 name 属性时的“数字键值缺失”Bug
  - 自带 Element 对象的 `firstElementChild`、`lastElementChild`、`previousElementSibling`、`nextElementSibling` 属性
  - 自带 `Element.prototype.matches` 标准草案方法
@@ -119,6 +123,7 @@
 
 
 ## 【iQuery+ 插件库】
+
  - 通用 [**CommonView 对象**](CommonView.md)生成方法 —— `$.CommonView()`
  - 通用 [**ListView 对象**](ListView.md)生成方法 —— `$.ListView()`
  - 通用 [**TreeView 对象**](TreeView.md)生成方法 —— `$.TreeView()`

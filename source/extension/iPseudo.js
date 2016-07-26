@@ -48,6 +48,16 @@ define(['jquery'],  function ($) {
         }
     });
 
+    var pFocusable = [
+            'a[href],  map[name] area[href]',
+            'label, input, textarea, button, select, option, object',
+            '*[tabIndex], *[contentEditable]'
+        ].join(', ');
+
+    $.expr[':'].focusable = function () {
+        return arguments[0].matches(pFocusable);
+    };
+
     var pMedia = $.makeSet('IFRAME', 'OBJECT', 'EMBED', 'AUDIO', 'VIDEO');
 
     $.expr[':'].media = function (iDOM) {

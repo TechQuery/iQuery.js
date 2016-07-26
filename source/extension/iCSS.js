@@ -127,21 +127,18 @@ define(['jquery'],  function ($) {
 /* ---------- Smart zIndex ---------- */
 
     function Get_zIndex() {
-        var $_This = $(this);
+        for (
+            var $_This = $(this),  zIndex;
+            $_This[0];
+            $_This = $($_This[0].offsetParent)
+        )
+            if ($_This.css('position') != 'static') {
+                zIndex = parseInt( $_This.css('z-index') );
 
-        var _zIndex_ = $_This.css('z-index');
-        if (_zIndex_ != 'auto')  return parseInt(_zIndex_);
+                if (zIndex > 0)  return zIndex;
+            }
 
-        var $_Parents = $_This.parents();
-        _zIndex_ = 0;
-
-        $_Parents.each(function () {
-            var _Index_ = $(this).css('z-index');
-
-            _zIndex_ += (_Index_ == 'auto')  ?  1  :  parseInt(_Index_);
-        });
-
-        return ++_zIndex_;
+        return 0;
     }
 
     function Set_zIndex() {

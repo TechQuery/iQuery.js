@@ -23,15 +23,10 @@ define(['jquery'],  function ($) {
 
 /* ---------- Focus AnyWhere ---------- */
 
-    var DOM_Focus = $.fn.focus,
-        iFocusable = [
-            'a[href], area',
-            'label, input, textarea, button, select, option',
-            '*[tabIndex], *[contentEditable]'
-        ].join(', ');
+    var DOM_Focus = $.fn.focus;
 
     $.fn.focus = function () {
-        this.not(iFocusable).attr('tabIndex', -1).css('outline', 'none');
+        this.not(':focusable').attr('tabIndex', -1).css('outline', 'none');
 
         return  DOM_Focus.apply(this, arguments);
     };

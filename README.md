@@ -1,6 +1,5 @@
 # iQuery
 
-## 【概述】
 
 [**iQuery**](http://tech_query.oschina.io/iquery) 是一个 **普适**而 **轻巧**的 **DOM/JavaScript 开发库** —— **支持 IE 8+ 的 jQuery/W3C 兼容 API**，包含 最常用的 jQuery 静态/实例 属性、方法，适合替代逻辑简单的网页中体积很大的 jQuery，或作为 **Web 前端开发基础库** 嵌入各种 独立发布（不能有外部依赖、自闭合、有兼容性要求）的 JavaScript 库。
 
@@ -26,7 +25,7 @@
     ...
 </body></html>
 ```
-### 【成功驱动的项目】
+### 成功驱动的项目
  1. EasyImport.js
  2. 某公司 JS-SDK
  3. [EasyWebUI](http://git.oschina.net/Tech_Query/EasyWebUI/)
@@ -38,7 +37,9 @@
  9. 某公司 WiFi 认证微官网
 
 
-## 【对 jQuery（最新版）的增强】
+## 【API 总览】
+
+### 对 jQuery（最新版）的增强
 
 以下扩展已收录在本项目的 [**jQuery+.js**](/master/jQuery+.js) 中，方便配合其它 jQuery API 实现 ——
  - 内置一个改进且向下兼容的 **$.browser 对象**，能通过 **直接比较版本号**来区分浏览器
@@ -65,6 +66,7 @@
  - 更多 jQuery **伪类选择符**：
    - **:image** 还支持 `img, link[type="image/x-icon"], svg, canvas` 及设置了 `background-image` 的普通元素
    - **:button** 还支持 `input[type="submit"], input[type="reset"], input[type="image"]`
+   - 自带 **:focusable 伪类**（[jQuery UI](http://api.jqueryui.com/) 标准）
    - 新增 **:data 伪类** 来筛选有 data-* 属性的元素
    - 新增 **:list 伪类**，等价于 `ul, ol, dl, tbody, select, datalist`
    - 新增 **:media 伪类**，等价于 `iframe, object, embed, audio, video` 及尺寸较大的 `:image`
@@ -89,7 +91,8 @@
  - 新增 **跨页面消息事件**方法 —— `$.fn.onReply()`（基于 `window.postMessage()`）
 
 
-## 【未实现的 jQuery（最新版）特性】
+### 未实现的 jQuery（最新版）特性
+
  - 没有 $.noConflict()，但不会强占 jQuery 变量
  - 不支持 浏览器 **内置类型**（构造函数）相应的 $.isXXX() 系列方法
  - 不支持 **浏览器特性检测**
@@ -101,7 +104,8 @@
  - 暂不支持 **动画队列**
 
 
-## 【JavaScript、DOM、BOM 原生 API 扩展】
+### ECMA、W3C 标准 API 补丁
+
  - 自带 支持“非空白符”的 `String.prototype.trim()`（借鉴 PHP）
  - 新增 `String.prototype.repeat` 标准草案方法
  - 新增 String **toCamelCase**（驼峰命名法）、 **toHyphenCase**（连字符命名法） **书写格式转换**方法
@@ -130,6 +134,7 @@
 
 
 ## 【iQuery+ 插件库】
+
  - 通用 **CommonView 对象**生成方法 —— `$.CommonView()`
  - 通用 **ListView 对象**生成方法 —— `$.ListView()`
  - 通用 **TreeView 对象**生成方法 —— `$.TreeView()`
@@ -140,11 +145,11 @@
 
 ## 【参与开发】
 
-### （〇）环境搭建
+### 环境搭建
  1. 安装 **Git**（比 SVN 更适合 **开源团队**）
  2. 安装 **Node.JS** 最新 LTS 版
 
-### （一）从源码构建
+### 从源码构建
 
 UNIX-Shell、Windows-CMD 通用脚本 ——
 
