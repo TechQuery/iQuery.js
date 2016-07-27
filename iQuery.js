@@ -1063,7 +1063,7 @@
         );
 
     $ = BOM.iQuery = $.extend(iQuery, $, {
-        parseHTML:        function (iHTML, AttrList) {
+        parseHTML:    function (iHTML, AttrList) {
             var iTag = iHTML.match(
                     /^\s*<([^\s\/\>]+)\s*([^<]*?)\s*(\/?)>([^<]*)((<\/\1>)?)([\s\S]*)/
                 ) || [ ];
@@ -1095,15 +1095,7 @@
                 }
             );
         },
-        buildFragment:    function (iNode) {
-            var iFragment = DOM.createDocumentFragment();
-
-            for (var i = 0;  iNode[i];  i++)
-                iFragment.appendChild( iNode[i] );
-
-            return iFragment;
-        },
-        data:             function (iElement, iName, iValue) {
+        data:         function (iElement, iName, iValue) {
             return  _DOM_.operate('Data', [iElement], iName, iValue);
         }
     });
@@ -2897,8 +2889,17 @@
 
 (function (BOM, DOM, $) {
 
+    $.buildFragment = $.buildFragment  ||  function (iNode) {
+        var iFragment = (arguments[1] || DOM).createDocumentFragment();
+
+        for (var i = 0;  iNode[i];  i++)
+            iFragment.appendChild( iNode[i] );
+
+        return iFragment;
+    };
+
     $.fn.insertTo = function ($_Target, Index) {
-        var DOM_Set = $.buildFragment(this),  $_This = [ ];
+        var DOM_Set = $.buildFragment(this, DOM),  $_This = [ ];
 
         $($_Target).each(function () {
             var iAfter = $(this.children).eq(Index || 0)[0];

@@ -10,7 +10,7 @@
     var WebApp;
 
 
-WebApp = (function (BOM, DOM, $) {
+var ViewDataIO = (function (BOM, DOM, $) {
 
     function ArrayRender(iArray, ValueRender) {
         $.ListView(this,  function () {
@@ -79,8 +79,7 @@ WebApp = (function (BOM, DOM, $) {
 
 
 
-WebApp = (function (BOM, DOM, $) {
-
+var PageLink = (function (BOM, DOM, $) {
 
 /* ---------- [object PageLink] ---------- */
 
@@ -127,17 +126,17 @@ WebApp = (function (BOM, DOM, $) {
             this.data = $.extend($.paramJSON(this.href), this.data);
     }
 
-    PageLink.getAttr = function () {
-        return arguments[0].attr([
-            'target', 'title', 'alt', 'href', 'method', 'src', 'action'
-        ]);
-    };
-
-    var Prefetch_Tag = $.browser.modern ? 'prefetch' : 'next';
-
-    PageLink.prefetchClear = function () {
-        $('head link[rel="' + Prefetch_Tag + '"]').remove();
-    };
+    $.extend(PageLink, {
+        getAttr:          function () {
+            return arguments[0].attr([
+                'target', 'title', 'alt', 'href', 'method', 'src', 'action'
+            ]);
+        },
+        prefetchRel:      $.browser.modern ? 'prefetch' : 'next',
+        prefetchClear:    function () {
+            $('head link[rel="' + this.prefetchRel + '"]').remove();
+        }
+    });
 
     $.extend(PageLink.prototype, {
         createDOM:    function (iAttribute, iArgument, iData) {
@@ -210,20 +209,27 @@ WebApp = (function (BOM, DOM, $) {
         }
     });
 
+    return PageLink;
+
+})(self, self.document, self.jQuery);
+
+
+
+var InnerPage = (function (BOM, DOM, $, PageLink) {
+
 /* ---------- [object InnerPage] ---------- */
 
     function InnerPage(App_Instance, iLink) {
         $.extend(this, {
-            ownerApp:         App_Instance,
-            sourceLink:       iLink,
-            title:            iLink.title || DOM.title,
-            URL:              iLink.alt || BOM.location.href,
-            HTML:             iLink.href || DOM.URL,
-            method:           iLink.method,
-            JSON:             iLink.src || iLink.action,
-            time:             $.now(),
-            innerLink:        [ ],
-            innerTemplate:    [ ]
+            ownerApp:      App_Instance,
+            sourceLink:    iLink,
+            title:         iLink.title || DOM.title,
+            URL:           iLink.alt || BOM.location.href,
+            HTML:          iLink.href || DOM.URL,
+            method:        iLink.method,
+            JSON:          iLink.src || iLink.action,
+            time:          $.now(),
+            innerLink:     [ ]
         });
     }
 
@@ -269,9 +275,15 @@ WebApp = (function (BOM, DOM, $) {
         valueOf:    PageLink.prototype.valueOf
     });
 
-/* ---------- [object InnerHistory] ---------- */
+    return InnerPage;
 
-    var $_BOM = $(BOM);
+})(self, self.document, self.jQuery, PageLink);
+
+
+
+var InnerHistory = (function (BOM, DOM, $, InnerPage) {
+
+/* ---------- [object InnerHistory] ---------- */
 
     function InnerHistory() {
         var _This_ = $.extend(this, {
@@ -281,7 +293,7 @@ WebApp = (function (BOM, DOM, $) {
                 lastIndex:    -1
             });
 
-        $_BOM.on('popstate',  function () {
+        $(BOM).on('popstate',  function () {
             var iState = arguments[0].state;
             var _Index_ = (iState || { }).DOM_Index;
             var iHistory = _This_[_Index_];
@@ -295,15 +307,6 @@ WebApp = (function (BOM, DOM, $) {
             _This_.prevIndex = _This_.lastIndex;
             _This_.lastIndex = iState.DOM_Index;
         });
-    }
-
-    function Data_Merge(iOld, iNew) {
-        var iArgs = $.makeArray(arguments);
-        iArgs.unshift(true);
-
-        if (iArgs.slice(-1)[0] instanceof Array)  iArgs.splice(1, 0, [ ]);
-
-        return  $.extend.apply($, iArgs);
     }
 
     $.extend(InnerHistory.prototype, {
@@ -375,17 +378,35 @@ WebApp = (function (BOM, DOM, $) {
                     $.paramJSON('?' + iSource.serialize())  :  iSource
             );
             return iSource;
-        },
-        getData:      function () {
-            var iData = $.map(this,  function (iPage) {
-                    var _Data_ = iPage.data || iPage.sourceLink.data;
-
-                    return  _Data_ && [_Data_];
-                });
-            return  (iData.length < 2)  ?
-                (iData[0] || { })  :  Data_Merge.apply(null, iData);
-        },
+        }
     });
+
+    return InnerHistory;
+
+})(self, self.document, self.jQuery, InnerPage);
+
+
+
+var WebApp = (function (BOM, DOM, $, PageLink, InnerPage, InnerHistory) {
+
+    function Data_Merge(iOld, iNew) {
+        var iArgs = $.makeArray(arguments);
+        iArgs.unshift(true);
+
+        if (iArgs.slice(-1)[0] instanceof Array)  iArgs.splice(1, 0, [ ]);
+
+        return  $.extend.apply($, iArgs);
+    }
+
+    InnerHistory.prototype.getData = function () {
+        var iData = $.map(this,  function (iPage) {
+                var _Data_ = iPage.data || iPage.sourceLink.data;
+
+                return  _Data_ && [_Data_];
+            });
+        return  (iData.length < 2)  ?
+            (iData[0] || { })  :  Data_Merge.apply(null, iData);
+    };
 
 /* ---------->> WebApp Constructor <<---------- */
 
@@ -393,13 +414,15 @@ WebApp = (function (BOM, DOM, $) {
         $.Observer.apply(this);
 
         $.extend(this, {
-            domRoot:      $($_Root),
-            apiRoot:      API_Root || '',
-            cache:        (Cache_Second || (Cache_Second == 0))  ?
-                Cache_Second  :  Infinity,
-            urlChange:    URL_Change,
-            history:      new InnerHistory(this, $_Root),
-            loading:      false
+            domRoot:          $($_Root),
+            apiRoot:          API_Root || '',
+            cache:
+                (Cache_Second || (Cache_Second == 0))  ?
+                    Cache_Second  :  Infinity,
+            urlChange:        URL_Change,
+            history:          new InnerHistory(this, $_Root),
+            loading:          false,
+            innerTemplate:    { }
         });
     }
 
@@ -408,36 +431,56 @@ WebApp = (function (BOM, DOM, $) {
 
     var RE_Str_Var = /\{(.+?)\}/g;
 
-    WebApp.prototype.makeURL = function (iURL, iData, iArgs) {
-        iURL = $.split(iURL, '?', 2);
-        iData = $.extend(this.history.getData(),  iData || { });
+    $.extend(WebApp.prototype, {
+        makeURL:        function (iURL, iData, iArgs) {
+            iURL = $.split(iURL, '?', 2);
+            iData = $.extend(this.history.getData(),  iData || { });
 
-        var iJSONP = ('&' + iURL[1]).match(/&([^=]+)=\?/);
-        iJSONP = iJSONP && iJSONP[1];
+            var iJSONP = ('&' + iURL[1]).match(/&([^=]+)=\?/);
+            iJSONP = iJSONP && iJSONP[1];
 
-        var URL_Param = $.param(
-                $.extend(
-                    $.paramJSON('?'  +  iURL[1].replace(iJSONP + '=?',  '')),
-                    iArgs || { }
-                )
-            );
-        iURL = [
-            BOM.decodeURIComponent(iURL[0]).replace(RE_Str_Var,  function () {
-                return iData[arguments[1]];
-            }),
-            (! iJSONP)  ?  URL_Param  :  [
-                URL_Param,  URL_Param ? '&' : '',  iJSONP,  '=?'
-            ].join('')
-        ].join('?');
+            var URL_Param = $.param(
+                    $.extend(
+                        $.paramJSON('?'  +  iURL[1].replace(iJSONP + '=?',  '')),
+                        iArgs || { }
+                    )
+                );
+            iURL = [
+                BOM.decodeURIComponent(iURL[0]).replace(RE_Str_Var,  function () {
+                    return iData[arguments[1]];
+                }),
+                (! iJSONP)  ?  URL_Param  :  [
+                    URL_Param,  URL_Param ? '&' : '',  iJSONP,  '=?'
+                ].join('')
+            ].join('?');
 
-        if (! (
-            iURL.match(/^(\w+:)?\/\/[\w\d]+/) ||
-            $.fileName(iURL).match(/\.(htm|html|md|markdown)$/)
-        ))
-            iURL = this.apiRoot + iURL;
+            if (! (
+                iURL.match(/^(\w+:)?\/\/[\w\d]+/) ||
+                $.fileName(iURL).match(/\.(htm|html|md|markdown)$/)
+            ))
+                iURL = this.apiRoot + iURL;
 
-        return iURL;
-    };
+            return iURL;
+        },
+        getTemplate:    function (DOM_ID) {
+            if (DOM_ID)
+                return this.innerTemplate[DOM_ID].children().clone(true);
+
+            var $_Link = $('body *[target="_self"][href^="#"]');
+
+            for (var i = 0;  $_Link[i];  i++) {
+                DOM_ID = $_Link[i].getAttribute('href').slice(1);
+
+                if (this.innerTemplate[DOM_ID])  continue;
+
+                this.innerTemplate[DOM_ID] =
+                    $(DOM.getElementById(DOM_ID)).detach();
+                $.ListView.findView(this.innerTemplate[DOM_ID], false);
+            }
+
+            return this;
+        }
+    });
 
     function Trig_Event() {
         var This_Page = this.history.last();
@@ -462,7 +505,7 @@ WebApp = (function (BOM, DOM, $) {
                 ((iHTML[1] || '').indexOf('=') == -1)
             ) {
                 var $_Prefetch = $('<link />', {
-                        rel:     Prefetch_Tag,
+                        rel:     this.constructor.prefetchRel,
                         href:    this.href
                     });
 
@@ -473,7 +516,7 @@ WebApp = (function (BOM, DOM, $) {
                 )
                     $_Prefetch.add(
                         $('<link />', {
-                            rel:     Prefetch_Tag,
+                            rel:     this.constructor.prefetchRel,
                             href:    this.getURL('src')
                         })
                     );
@@ -519,17 +562,13 @@ WebApp = (function (BOM, DOM, $) {
         }
     });
 
-    function Original_Link() {
-        return ($.inArray(
-            'nofollow',  (this.getAttribute('rel') || '').split(/\s+/)
-        ) > -1);
-    }
-
     $.extend(InnerPage.prototype, {
         boot:    function (iRender) {
             var This_Page = this,
                 $_Page = $('head link[target][href]'),
                 $_API = $('head link[src]');
+
+            this.ownerApp.getTemplate();
 
             if ( $_Page.length )
                 this.ownerApp.one('pageReady',  function () {
@@ -555,20 +594,13 @@ WebApp = (function (BOM, DOM, $) {
             for (var i = 0;  i < $_API.length;  i++)
                 (new PageLink(this.ownerApp, $_API[i])).loadData(API_Load);
         },
-        getTemplate:    function (DOM_ID) {
-            if (! this.innerTemplate[DOM_ID]) {
-                this.innerTemplate[DOM_ID] = $('*[id="' + DOM_ID + '"]').remove();
-                $.ListView.findView(this.innerTemplate[DOM_ID], false);
-            }
-            return this.innerTemplate[DOM_ID].children().clone(true);
-        },
         load:    function (iLink, Page_Load) {
             var MarkDown_File = /\.(md|markdown)\??/i,
                 This_Page = this,  This_App = this.ownerApp;
 
             if (iLink.href[0] == '#')
                 return Page_Load.call(
-                    this.show(this.getTemplate( iLink.href.slice(1) )).ownerApp
+                    this.show(This_App.getTemplate( iLink.href.slice(1) )).ownerApp
                 );
 
             $.get(iLink.getURL('href'),  (! iLink.href.match(MarkDown_File)) ?
@@ -613,7 +645,7 @@ WebApp = (function (BOM, DOM, $) {
                             .find('a[href]').attr('target',  function () {
                                 if (! (
                                     this.href.indexOf('#!') ||
-                                    Original_Link.call(this)
+                                    this.matches('a[rel*="nofollow"]')
                                 )) {
                                     this.setAttribute('rel', 'nofollow');
                                     return arguments[1];
@@ -747,55 +779,6 @@ WebApp = (function (BOM, DOM, $) {
         }
     });
 
-/* ---------- User Event Switcher ---------- */
-
-    var No_Hook = $.makeSet('form', 'input', 'textarea', 'select');
-
-    function Event_Filter() {
-        var iTagName = this.tagName.toLowerCase(),
-            iEvent = arguments.callee.caller.arguments[0];
-
-        switch (iEvent.type) {
-            case 'click':     ;
-            case 'tap':       {
-                if (iTagName == 'a') {
-                    if ( Original_Link.call(this) )  return true;
-
-                    iEvent.preventDefault();
-                }
-                return  (iTagName in No_Hook);
-            }
-            case 'change':    return  (this !== iEvent.target);
-        }
-    }
-
-    $(DOM).ready(function () {
-        $(this.body).on(
-            ($.browser.mobile ? 'tap' : 'click') + ' change',
-            '*[target]',
-            function () {
-                if ( Event_Filter.call(this) )  return;
-
-                var iLink = new PageLink($('.EWA_Container').WebApp(), this);
-
-                switch (iLink.target) {
-                    case '_self':     {
-                        if (iLink.href)  iLink.loadTemplate();
-                        break;
-                    }
-                    case '_blank':    {
-                        if (iLink.src)  iLink.loadData();
-                        break;
-                    }
-                    case '_top':      {
-                        if (iLink.href)  iLink.loadPage();
-                        break;
-                    }
-                    default:          iLink.loadTemplate();
-                }
-            }
-        );
-    });
 /* ---------- Manual Navigation ---------- */
 
     WebApp.prototype.loadLink = function (iAttribute, iArgument, iData) {
@@ -882,21 +865,21 @@ WebApp = (function (BOM, DOM, $) {
                 this.render(null, arguments[0]).onReady();
             });
 
-        $_BOM.on('hashchange',  $.proxy(Hash_Path_Load, This_Page));
+        $(BOM).on('hashchange',  $.proxy(Hash_Path_Load, This_Page));
 
         return this;
     };
 
     return WebApp;
 
-})(self, self.document, self.jQuery);
+})(self, self.document, self.jQuery, PageLink, InnerPage, InnerHistory);
 
 
 //
 //                    >>>  EasyWebApp.js  <<<
 //
 //
-//      [Version]    v2.6  (2016-07-18)  Alpha
+//      [Version]    v2.6  (2016-07-27)  Beta
 //
 //      [Require]    iQuery  ||  jQuery with jQuery+,
 //
@@ -913,7 +896,7 @@ WebApp = (function (BOM, DOM, $) {
 
 
 
-WebApp = (function (BOM, DOM, $, WebApp) {
+var EasyWebApp = (function (BOM, DOM, $, WebApp, PageLink) {
 
 /* ---------->> jQuery Wrapper <<---------- */
 
@@ -944,7 +927,54 @@ WebApp = (function (BOM, DOM, $, WebApp) {
         return iWebApp;
     };
 
-})(self, self.document, self.jQuery, WebApp);
+/* ---------- User Event Switcher ---------- */
+
+    var No_Hook = $.makeSet('form', 'input', 'textarea', 'select');
+
+    function Event_Filter() {
+        var iTagName = this.tagName.toLowerCase(),
+            iEvent = arguments.callee.caller.arguments[0];
+
+        switch (iEvent.type) {
+            case 'click':     ;
+            case 'tap':       {
+                if (iTagName == 'a') {
+                    if (this.matches('a[rel*="nofollow"]'))  return true;
+
+                    iEvent.preventDefault();
+                }
+                return  (iTagName in No_Hook);
+            }
+            case 'change':    return  (this !== iEvent.target);
+        }
+    }
+
+    $(DOM).on(
+        ($.browser.mobile ? 'tap' : 'click') + ' change',
+        '*[target]',
+        function () {
+            if ( Event_Filter.call(this) )  return;
+
+            var iLink = new PageLink($('.EWA_Container').WebApp(), this);
+
+            switch (iLink.target) {
+                case '_self':     {
+                    if (iLink.href)  iLink.loadTemplate();
+                    break;
+                }
+                case '_blank':    {
+                    if (iLink.src)  iLink.loadData();
+                    break;
+                }
+                case '_top':      {
+                    if (iLink.href)  iLink.loadPage();
+                    break;
+                }
+                default:          iLink.loadTemplate();
+            }
+        }
+    );
+})(self, self.document, self.jQuery, WebApp, PageLink);
 
 
 });

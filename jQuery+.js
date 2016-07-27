@@ -927,6 +927,15 @@
 
 (function (BOM, DOM, $) {
 
+    $.buildFragment = $.buildFragment  ||  function (iNode) {
+        var iFragment = (arguments[1] || DOM).createDocumentFragment();
+
+        for (var i = 0;  iNode[i];  i++)
+            iFragment.appendChild( iNode[i] );
+
+        return iFragment;
+    };
+
     $.fn.insertTo = function ($_Target, Index) {
         var DOM_Set = $.buildFragment(this, DOM),  $_This = [ ];
 

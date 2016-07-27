@@ -316,7 +316,7 @@ define(['extension/iTimer'],  function ($) {
         );
 
     $ = BOM.iQuery = $.extend(iQuery, $, {
-        parseHTML:        function (iHTML, AttrList) {
+        parseHTML:    function (iHTML, AttrList) {
             var iTag = iHTML.match(
                     /^\s*<([^\s\/\>]+)\s*([^<]*?)\s*(\/?)>([^<]*)((<\/\1>)?)([\s\S]*)/
                 ) || [ ];
@@ -348,15 +348,7 @@ define(['extension/iTimer'],  function ($) {
                 }
             );
         },
-        buildFragment:    function (iNode) {
-            var iFragment = (arguments[1] || DOM).createDocumentFragment();
-
-            for (var i = 0;  iNode[i];  i++)
-                iFragment.appendChild( iNode[i] );
-
-            return iFragment;
-        },
-        data:             function (iElement, iName, iValue) {
+        data:         function (iElement, iName, iValue) {
             return  _DOM_.operate('Data', [iElement], iName, iValue);
         }
     });
