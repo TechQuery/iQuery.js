@@ -106,6 +106,15 @@ define(['jquery'],  function ($) {
 
             return _Args_;
         },
+        extendURL:        function (iURL, iArgs) {
+            if ((! iArgs)  ||  $.isEmptyObject(iArgs))  return iURL;
+
+            iURL = $.split(iURL, '?', 2);
+
+            return  iURL[0] + '?' + $.param($.extend(
+                $.paramJSON('?' + iURL[1]),  iArgs
+            ));
+        },
         paramSign:        function (iData) {
             iData = (typeof iData == 'string')  ?  this.paramJSON(iData)  :  iData;
 

@@ -63,7 +63,7 @@ define(['jquery'],  function ($) {
     $.expr[':'].media = function (iDOM) {
         if (iDOM.tagName in pMedia)  return true;
 
-        if (! this.image(iDOM))  return;
+        if (! $.expr[':'].image(iDOM))  return;
 
         var iSize = $.map($(iDOM).css([
                 'width', 'height', 'min-width', 'min-height'

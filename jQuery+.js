@@ -465,6 +465,15 @@
 
             return _Args_;
         },
+        extendURL:        function (iURL, iArgs) {
+            if ((! iArgs)  ||  $.isEmptyObject(iArgs))  return iURL;
+
+            iURL = $.split(iURL, '?', 2);
+
+            return  iURL[0] + '?' + $.param($.extend(
+                $.paramJSON('?' + iURL[1]),  iArgs
+            ));
+        },
         paramSign:        function (iData) {
             iData = (typeof iData == 'string')  ?  this.paramJSON(iData)  :  iData;
 
@@ -582,7 +591,7 @@
     $.expr[':'].media = function (iDOM) {
         if (iDOM.tagName in pMedia)  return true;
 
-        if (! this.image(iDOM))  return;
+        if (! $.expr[':'].image(iDOM))  return;
 
         var iSize = $.map($(iDOM).css([
                 'width', 'height', 'min-width', 'min-height'
@@ -2320,7 +2329,7 @@
     $.fn.ajaxSubmit = function (iCallback) {
         if (! this.length)  return this;
 
-        function AJAX_Submit(iEvent) {
+        function AJAX_Submit() {
             var $_Form = $(this);
 
             if ((! this.checkValidity())  ||  $_Form.data('_AJAX_Submitting_'))
@@ -2339,7 +2348,7 @@
                         iCallback.apply($_Form[0], arguments);
                     }
                 );
-            return false;
+            arguments[0].preventDefault();
         }
 
         var $_Form = this.filter('form');
@@ -2359,7 +2368,7 @@
 //              >>>  jQuery+  <<<
 //
 //
-//    [Version]    v7.7  (2016-07-26)
+//    [Version]    v7.8  (2016-07-29)
 //
 //    [Require]    jQuery  v1.9+
 //

@@ -39,6 +39,11 @@ define(['jquery', 'jQuery+'],  function ($) {
             this.trigger('render', arguments);
 
             return this;
+        },
+        clear:          function () {
+            this.$_View.empty();
+
+            return this;
         }
     });
 

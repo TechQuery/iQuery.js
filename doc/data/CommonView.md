@@ -32,3 +32,7 @@
  - 参数
    - `iData` 渲染用的数据
  - 返回值：CommonView 对象
+
+### .clear()
+ - 用途：清空视图
+ - 返回值：CommonView 对象
