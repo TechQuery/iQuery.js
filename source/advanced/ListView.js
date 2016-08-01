@@ -61,7 +61,9 @@ define(['jquery', 'CommonView'],  function ($) {
     }
 
     $.extend(ListView, {
+        getClass:       $.CommonView.getClass,
         getInstance:    $.CommonView.getInstance,
+        instanceOf:     $.CommonView.instanceOf,
         findView:       function ($_View, Init_Instance) {
             $_View = $($_View).find('*:list, *[multiple]')
                 .not('input[type="file"]');
@@ -70,7 +72,7 @@ define(['jquery', 'CommonView'],  function ($) {
                 for (var i = 0;  i < $_View.length;  i++)
                     if (! this.getInstance($_View[i]))  this( $_View[i] );
             } else if (Init_Instance === false)
-                $_View.data('CVI_ListView', null);
+                $_View.data(this.getClass(), null);
 
             return $_View;
         }
@@ -143,7 +145,8 @@ define(['jquery', 'CommonView'],  function ($) {
         render:         function (iData, iFrom) {
             var iDelay = (this.cache instanceof Array),  $_Scroll;
 
-            if (iDelay)  iData = iData ? this.cache.concat(iData) : this.cache;
+            if (iDelay)
+                iData = iData  ?  $.merge(this.cache, iData)  :  this.cache;
 
             iFrom = iFrom || 0;
 
@@ -249,7 +252,7 @@ define(['jquery', 'CommonView'],  function ($) {
             var $_View = this.$_View.clone(true).empty().append(
                     this.$_Template.clone(true)
                 );
-            $_View.data({CVI_ListView: '',  LV_Model: ''})[0].id = '';
+            $_View.data({'[object ListView]': '',  LV_Model: ''})[0].id = '';
 
             var iFork = ListView(
                     $_View.appendTo( arguments[0] ),  false,  this.selector

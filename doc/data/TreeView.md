@@ -6,6 +6,12 @@
  - 别名：`$.TreeView`
 
 
+## 【静态方法】
+
+### instanceOf(iDOM)
+（继承自 [CommonView](CommonView.md)）
+
+
 ## 【实例属性】
 
 ### .length

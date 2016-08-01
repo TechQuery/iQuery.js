@@ -6,6 +6,15 @@
  - 别名：`$.CommonView`
 
 
+## 【静态方法】
+
+### instanceOf(iDOM)
+ - 用途：获取一个 DOM 元素所属的 CommonView 实例
+ - 参数
+   - `iDOM` 一个 CommonView 对象的 DOM 子元素
+ - 返回值：CommonView 对象
+
+
 ## 【实例属性】
 
 ### .$_View

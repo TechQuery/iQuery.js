@@ -8,6 +8,9 @@
 
 ## 【静态方法】
 
+### instanceOf(iDOM)
+（继承自 [CommonView](CommonView.md)）
+
 ### findView($_Root, Init_Instance)
  - 用途：查找“列表式”结构的 DOM 元素
  - 参数
@@ -17,6 +20,7 @@
      - `true` 用 ListView 实例化找到的元素
      - `false` 清除所找元素关联的 ListView 实例
  - 返回值：jQuery 对象
+
 
 ## 【实例属性】
 
