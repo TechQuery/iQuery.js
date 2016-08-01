@@ -20,7 +20,7 @@ define(['jquery'],  function ($) {
 
             if (iCallback == null)  return;
 
-            for (var i = 0;  iArgs[i];  i++) {
+            for (var i = 0;  i < iArgs.length;  i++) {
                 if (typeof this[i] == 'function')  break;
 
                 if (this[i] === undefined) {

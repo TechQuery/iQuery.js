@@ -2,7 +2,7 @@
 //              >>>  jQuery+  <<<
 //
 //
-//    [Version]    v7.8  (2016-07-29)
+//    [Version]    v7.8  (2016-08-01)
 //
 //    [Require]    jQuery  v1.9+
 //

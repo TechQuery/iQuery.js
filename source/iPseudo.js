@@ -1,4 +1,4 @@
-define(['iCore'],  function ($) {
+define(['iSelector'],  function ($) {
 
     var BOM = self;
 
@@ -38,6 +38,9 @@ define(['iCore'],  function ($) {
         },
         contains:    function (iDOM, Index, iMatch) {
             return  (iDOM.textContent.indexOf(iMatch[3]) > -1);
+        },
+        not:         function (iDOM, Index, iMatch) {
+            return  (! $.fn.is.call([iDOM], iMatch[3]));
         }
     };
 

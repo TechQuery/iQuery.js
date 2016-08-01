@@ -571,8 +571,8 @@
         list:    function () {
             return  (arguments[0].tagName in pList);
         },
-        data:    function () {
-            return  (! $.isEmptyObject(arguments[0].dataset));
+        data:    function (iDOM, Index, iMatch) {
+            return  Boolean($.data(iDOM, iMatch[3]));
         }
     });
 
@@ -2060,7 +2060,7 @@
 
             if (iCallback == null)  return;
 
-            for (var i = 0;  iArgs[i];  i++) {
+            for (var i = 0;  i < iArgs.length;  i++) {
                 if (typeof this[i] == 'function')  break;
 
                 if (this[i] === undefined) {
@@ -2368,7 +2368,7 @@
 //              >>>  jQuery+  <<<
 //
 //
-//    [Version]    v7.8  (2016-07-29)
+//    [Version]    v7.8  (2016-08-01)
 //
 //    [Require]    jQuery  v1.9+
 //

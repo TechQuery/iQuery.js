@@ -408,7 +408,11 @@
         $.fn.on.apply(iListView.$_View.addClass('TreeNode'), this.listener);
     }
 
-    TreeView.getInstance = $.CommonView.getInstance;
+    $.extend(TreeView, {
+        getClass:       $.CommonView.getClass,
+        getInstance:    $.CommonView.getInstance,
+        instanceOf:     $.CommonView.instanceOf
+    });
 
     TreeView.prototype = $.extend(new $.CommonView(),  {
         constructor:    TreeView,
@@ -622,12 +626,4 @@
 //
 //        (C)2015-2016  shiy2008@gmail.com
 //
-
-
-
-(function (BOM, DOM, $) {
-
-})(self, self.document, self.jQuery);
-
-
 });
