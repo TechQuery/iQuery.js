@@ -56,7 +56,7 @@
    - **:image** 还支持 `img, link[type="image/x-icon"], svg, canvas` 及设置了 `background-image` 的普通元素
    - **:button** 还支持 `input[type="submit"], input[type="reset"], input[type="image"]`
    - 自带 **:focusable 伪类**（[jQuery UI](http://api.jqueryui.com/) 标准）
-   - 新增 **:data 伪类** 来筛选有 data-* 属性的元素
+   - 自带 **:data() 伪类**（[jQuery UI](http://api.jqueryui.com/) 标准）
    - 新增 **:list 伪类**，等价于 `ul, ol, dl, tbody, select, datalist`
    - 新增 **:media 伪类**，等价于 `iframe, object, embed, audio, video` 及尺寸较大的 `:image`
  - 新增 **子元素插入**方法 —— `$.fn.insertTo()`

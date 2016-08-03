@@ -74,6 +74,10 @@ define(['jquery'],  function ($) {
             Children_Define
         );
 
+    if (! DOM.head.children[0])
+        Object.defineProperty(DOM_Proto, 'children', Children_Define);
+
+
 /* ---------- Element CSS Selector Match ---------- */
 
     var DOM_Proto = Element.prototype;
@@ -122,11 +126,6 @@ define(['jquery'],  function ($) {
             helpURL:    'https://msdn.microsoft.com/en-us/library/1dk3k160(VS.85).aspx'
         });
     };
-
-/* ---------- Element Children ---------- */
-
-    Object.defineProperty(DOM_Proto, 'children', Children_Define);
-
 
 /* ---------- DOM Class List ---------- */
 

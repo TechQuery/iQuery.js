@@ -106,14 +106,15 @@ define(['jquery'],  function ($) {
 
             return _Args_;
         },
-        extendURL:        function (iURL, iArgs) {
-            if ((! iArgs)  ||  $.isEmptyObject(iArgs))  return iURL;
+        extendURL:        function () {
+            var iArgs = $.makeArray( arguments );
+            var iURL = $.split(iArgs.shift(), '?', 2);
 
-            iURL = $.split(iURL, '?', 2);
+            if (! iArgs[0])  return arguments[0];
 
-            return  iURL[0] + '?' + $.param($.extend(
-                $.paramJSON('?' + iURL[1]),  iArgs
-            ));
+            iArgs.unshift( $.paramJSON('?' + iURL[1]) );
+
+            return  iURL[0]  +  '?'  +  $.param($.extend.apply($, iArgs));
         },
         paramSign:        function (iData) {
             iData = (typeof iData == 'string')  ?  this.paramJSON(iData)  :  iData;

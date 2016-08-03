@@ -4,7 +4,7 @@ define(['jquery', 'extension/ES-5'],  function ($) {
 
     var UA = BOM.navigator.userAgent;
 
-    var is_Trident = UA.match(/MSIE (\d+)|Trident[^\)]+rv:(\d+)/i),
+    var is_Trident = UA.match(/MSIE (\d+)|Trident[^\)]+rv:(\d+)|Edge\/(\d+)\./i),
         is_Gecko = UA.match(/; rv:(\d+)[^\/]+Gecko\/\d+/),
         is_Webkit = UA.match(/AppleWebkit\/(\d+\.\d+)/i);
     var IE_Ver = is_Trident ? Number(is_Trident[1] || is_Trident[2]) : NaN,

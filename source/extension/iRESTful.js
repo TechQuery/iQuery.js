@@ -9,7 +9,7 @@ define(['jquery'],  function ($) {
             method:         iMethod,
             url:            iURL,
             data:           iData,
-            complete:       iCallback,
+            success:        iCallback,
             crossDomain:    true
         });
     }
