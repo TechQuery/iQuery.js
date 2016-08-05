@@ -27,23 +27,27 @@
 
     /* ----- String Extension ----- */
 
-    if (! ''.trim)
-        var Blank_Char = /(^\s*)|(\s*$)/g;
-    else
-        var _Trim_ = ''.trim;
+    var _Trim_ = ''.trim;
+
+    var Blank_Char = (! _Trim_)  &&  /(^\s*)|(\s*$)/g;
 
     String.prototype.trim = function (iChar) {
         if (! iChar)
-            return  Blank_Char ? this.replace(Blank_Char, '') : _Trim_.call(this);
-        else {
-            for (var i = 0, a = 0, b;  i < iChar.length;  i++) {
-                if ((this[0] == iChar[i]) && (! a))
-                    a = 1;
-                if ((this[this.length - 1] == iChar[i]) && (! b))
-                    b = -1;
-            }
-            return this.slice(a, b);
+            return  _Trim_  ?  _Trim_.call(this)  :  this.replace(Blank_Char, '');
+
+        var iFrom = 0,  iTo;
+
+        for (var i = 0;  iChar[i];  i++) {
+            if ((! iFrom)  &&  (this[0] == iChar[i]))
+                iFrom = 1;
+
+            if ((! iTo)  &&  (this[this.length - 1] == iChar[i]))
+                iTo = -1;
+
+            if (iFrom && iTo)  break;
         }
+
+        return  this.slice(iFrom, iTo);
     };
 
     if (! ''.repeat)
@@ -322,35 +326,43 @@
         return  iValue && (iValue.constructor === Object);
     };
 
-    $.fn.extend = $.extend = function () {
-        var iDeep = (arguments[0] === true);
+    function _Extend_(iTarget, iSource, iDeep) {
+        iTarget = ((! iTarget)  &&  (iSource instanceof Array))  ?
+            [ ]  :  Object(iTarget);
 
-        var iTarget,  iFirst = iDeep ? 1 : 0;
+        iSource = Object(iSource);
 
-        if (arguments.length  >  (iFirst + 1)) {
-            iTarget = arguments[iFirst] || (
-                (arguments[iFirst + 1] instanceof Array)  ?  [ ]  :  { }
-            );
-            iFirst++ ;
-        } else
-            iTarget = this;
-
-        for (var i = iFirst, iValue;  i < arguments.length;  i++)
-            for (var iKey in arguments[i])
-                if (
-                    Object.prototype.hasOwnProperty.call(arguments[i], iKey)  &&
-                    (arguments[i][iKey] !== undefined)
-                ) {
-                    iTarget[iKey] = iValue = arguments[i][iKey];
-
-                    if (iDeep)  try {
-                        if ((iValue instanceof Array)  ||  $.isPlainObject(iValue))
-                            iTarget[iKey] = arguments.callee.call(
-                                this,  true,  undefined,  iValue
-                            );
-                    } catch (iError) { }
-                }
+        for (var iKey in iSource)
+            if (Object.prototype.hasOwnProperty.call(iSource, iKey)) {
+                iTarget[iKey] = (iDeep && (
+                    (iSource[iKey] instanceof Array)  ||
+                    $.isPlainObject( iSource[iKey] )
+                ))  ?
+                    arguments.callee(iTarget[iKey], iSource[iKey], iDeep)  :
+                    iSource[iKey];
+            }
         return iTarget;
+    }
+
+    $.makeArray = $.browser.modern ?
+        function () {
+            return  Array.apply(null, arguments[0]);
+        } :
+        function () {
+            return  _Extend_([ ], arguments[0]);
+        };
+
+    $.fn.extend = $.extend = function () {
+        var iArgs = $.makeArray( arguments );
+
+        var iDeep = (iArgs[0] === true)  &&  iArgs.shift();
+
+        if (iArgs.length < 2)  iArgs.unshift(this);
+
+        for (var i = 1;  i < iArgs.length;  i++)
+            iArgs[0] = _Extend_(iArgs[0], iArgs[i], iDeep);
+
+        return iArgs[0];
     };
 
     $.extend({
@@ -425,13 +437,6 @@
 
             return iTarget;
         },
-        makeArray:        $.browser.modern ?
-            function () {
-                return  Array.apply(null, arguments[0]);
-            } :
-            function () {
-                return  this.extend([ ], arguments[0]);
-            },
         inArray:          function () {
             return  Array.prototype.indexOf.call(arguments[1], arguments[0]);
         },
@@ -4493,7 +4498,7 @@
 //                >>>  iQuery.js  <<<
 //
 //
-//      [Version]    v2.0  (2016-08-03)  Beta
+//      [Version]    v2.0  (2016-08-05)  Stable
 //
 //      [Usage]      A Light-weight jQuery Compatible API
 //                   with IE 8+ compatibility.
