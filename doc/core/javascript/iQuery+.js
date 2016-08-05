@@ -75,7 +75,7 @@
 })(self, self.document, self.jQuery);
 
 
-/* ---------- ListView Interface  v0.8 ---------- */
+/* ---------- ListView Interface  v0.9 ---------- */
 
 //  Thanks "EasyWebApp" Project --- http://git.oschina.net/Tech_Query/EasyWebApp
 
@@ -84,21 +84,21 @@
 
     var Click_Type = $.browser.mobile ? 'tap' : 'click';
 
-    function ListView($_View, $_Item, iDelay, onInsert) {
+    function ListView($_View, $_Item, iDelay, onUpdate) {
         var _Self_ = arguments.callee;
 
         if (!  (this instanceof _Self_))
-            return  new _Self_($_View, $_Item, iDelay, onInsert);
+            return  new _Self_($_View, $_Item, iDelay, onUpdate);
 
         var iArgs = $.makeArray(arguments).slice(1);
 
         $_Item = (iArgs[0] instanceof Array)  &&  iArgs.shift();
         iDelay = (typeof iArgs[0] == 'boolean')  ?  iArgs.shift()  :  null;
-        onInsert = (typeof iArgs[0] == 'function')  &&  iArgs[0];
+        onUpdate = (typeof iArgs[0] == 'function')  &&  iArgs[0];
 
         var iView = $.CommonView.call(this, $_View);
 
-        if (typeof onInsert == 'function')  iView.on('insert', onInsert);
+        if (typeof onUpdate == 'function')  iView.on('update', onUpdate);
 
         if ((iView !== this)  ||  (! iView.$_View[0].children[0]))
             return iView;
@@ -168,6 +168,7 @@
                     (this.$_Template.attr('class') || '').split(/\s+/)
                 ).join('.').trim('.');
         },
+        //  Retrieve
         itemOf:         function (Index) {
             Index = Index || 0;
 
@@ -182,6 +183,7 @@
             );
         },
         slice:          Array.prototype.slice,
+        //  Retrieve
         indexOf:        function (Index, getInstance) {
             if ($.isNumeric( Index ))
                 return  this.slice(Index,  (Index + 1) || undefined)[0];
@@ -194,7 +196,18 @@
 
             return  getInstance ? $() : -1;
         },
+        //  Update
+        update:         function () {
+            var $_Item = this.indexOf(arguments[0], true);
+
+            this.trigger('update', [
+                $_Item,  arguments[1],  this.indexOf($_Item)
+            ]);
+
+            return this;
+        },
         splice:         Array.prototype.splice,
+        //  Create
         insert:         function (iValue, Index) {
             iValue = (iValue === undefined)  ?  { }  :  iValue;
 
@@ -216,6 +229,8 @@
                 this.splice(Index, 0, $_Item);
             else
                 this[Index] = $_Item;
+
+            this.update(Index, iValue);
 
             return  $_Item.addClass('ListView_Item').data('LV_Model', iValue)
                 .insertTo(this.$_View,  Index * $_Item.length);
@@ -264,14 +279,10 @@
             }
             return iData;
         },
+        //  Delete
         remove:         function (Index) {
-            var $_Item = this.indexOf(Index);
+            var $_Item = this.indexOf(Index, true);
 
-            if (typeof $_Item == 'number') {
-                if ($_Item < 0)  return this;
-                Index = $_Item;
-                $_Item = this.indexOf(Index);
-            }
             if (
                 $_Item.length  &&
                 (false  !==  this.trigger('remove', [
@@ -619,7 +630,7 @@
 //              >>>  iQuery+  <<<
 //
 //
-//    [Version]    v1.4  (2016-08-01)  Stable
+//    [Version]    v1.5  (2016-08-05)  Stable
 //
 //    [Require]    iQuery  ||  jQuery with jQuery+
 //

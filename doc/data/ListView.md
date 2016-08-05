@@ -44,6 +44,13 @@
 ### .one(ConditionN, iCallback)
 （继承自 [Observer](Observer.md)）
 
+### .update(Index, iValue)
+ - 用途：列表项 DOM 内容更新
+ - 参数
+   - `Index` 列表项的索引号
+   - `iValue` 渲染用的数据值
+ - 返回值：ListView 对象
+
 ### .insert(iValue, Index)
  - 用途：插入一个列表项
  - 参数
