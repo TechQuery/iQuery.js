@@ -56,21 +56,21 @@ define(['jquery', 'CommonView'],  function ($) {
                     'a[href], *[tabIndex], *[contentEditable]'
                 )
             )
-                _Self_.getInstance(this.parentNode).focus(this);
+                _Self_.instanceOf(this).focus(this);
         });
     }
 
     $.extend(ListView, {
-        getClass:       $.CommonView.getClass,
-        getInstance:    $.CommonView.getInstance,
-        instanceOf:     $.CommonView.instanceOf,
-        findView:       function ($_View, Init_Instance) {
+        getClass:      $.CommonView.getClass,
+        instanceOf:    $.CommonView.instanceOf,
+        findView:      function ($_View, Init_Instance) {
             $_View = $($_View).find('*:list, *[multiple]')
                 .not('input[type="file"]');
 
             if (Init_Instance === true) {
                 for (var i = 0;  i < $_View.length;  i++)
-                    if (! this.getInstance($_View[i]))  this( $_View[i] );
+                    if (! this.instanceOf($_View[i], false))
+                        this( $_View[i] );
             } else if (Init_Instance === false)
                 $_View.data(this.getClass(), null);
 

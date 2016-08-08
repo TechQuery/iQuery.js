@@ -8,10 +8,11 @@
 
 ## 【静态方法】
 
-### instanceOf(iDOM)
+### instanceOf(iDOM, Check_Parent)
  - 用途：获取一个 DOM 元素所属的 CommonView 实例
  - 参数
    - `iDOM` 一个 CommonView 对象的 DOM 子元素
+   - `Check_Parent`（可选）可用 false 强制不查找祖先元素上的实例
  - 返回值：CommonView 对象
 
 
@@ -43,5 +44,5 @@
  - 返回值：CommonView 对象
 
 ### .clear()
- - 用途：清空视图
+ - 用途：清空视图中的数据
  - 返回值：CommonView 对象

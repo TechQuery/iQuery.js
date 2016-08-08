@@ -8,7 +8,7 @@ define(['jquery', 'jQuery+'],  function ($) {
 
         $_View = $($_View);
 
-        var iView = this.constructor.getInstance($_View) ||
+        var iView = this.constructor.instanceOf($_View, false)  ||
                 $.Observer.call(this, 1);
 
         if (iView !== this)  return iView;
@@ -21,21 +21,20 @@ define(['jquery', 'jQuery+'],  function ($) {
     }
 
     $.extend(CommonView, {
-        getClass:       function () {
+        getClass:      function () {
             return  this.prototype.toString.call({constructor: this});
         },
-        getInstance:    function () {
-            var _Instance_ = $( arguments[0] ).data( this.getClass(this) );
-            return  ((_Instance_ instanceof this)  &&  _Instance_);
-        },
-        instanceOf:     function (iDOM) {
-            var iName = this.getClass();
-            var Instance = '*:data("' + iName + '")';
+        instanceOf:    function (iDOM, Check_Parent) {
+            var iName = this.getClass(),  _Instance_,  $_Instance = $(iDOM);
 
-            var $_Instance = $(iDOM).parent(Instance);
+            do {
+                _Instance_ = $_Instance.data(iName);
 
-            return  ($_Instance[0] ? $_Instance : $(iDOM).parents(Instance))
-                .data(iName);
+                if (_Instance_ instanceof this)  return _Instance_;
+
+                $_Instance = $_Instance.parent();
+
+            } while ($_Instance[0]  &&  (Check_Parent !== false));
         }
     });
 
@@ -53,8 +52,22 @@ define(['jquery', 'jQuery+'],  function ($) {
 
             return this;
         },
+        valueOf:        function () {
+            return $.map(
+                this.$_View.find('*').addBack().filter('form'),
+                function () {
+                    return  $.paramJSON('?'  +  $( arguments[0] ).serialize());
+                }
+            );
+        },
         clear:          function () {
-            this.$_View.empty();
+            var $_Data = this.$_View.find('*').addBack().filter('form')
+                    .one('reset',  function () {
+                        arguments[0].stopPropagation();
+                    });
+
+            for (var i = 0;  $_Data[i];  i++)
+                $_Data[i].reset();
 
             return this;
         }

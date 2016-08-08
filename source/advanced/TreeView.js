@@ -59,9 +59,8 @@ define(['jquery', 'ListView'],  function ($) {
     }
 
     $.extend(TreeView, {
-        getClass:       $.CommonView.getClass,
-        getInstance:    $.CommonView.getInstance,
-        instanceOf:     $.CommonView.instanceOf
+        getClass:      $.CommonView.getClass,
+        instanceOf:    $.CommonView.instanceOf
     });
 
     TreeView.prototype = $.extend(new $.CommonView(),  {
@@ -74,7 +73,7 @@ define(['jquery', 'ListView'],  function ($) {
                 $_Fork = this.$_View;
             }
 
-            $.ListView.getInstance( $_Fork ).render(
+            $.ListView.instanceOf($_Fork, false).render(
                 iData || $_Fork.data('TV_Model')
             ).$_View.children().removeClass('active');
 
@@ -87,7 +86,7 @@ define(['jquery', 'ListView'],  function ($) {
         },
         branch:         function ($_Item, iData) {
             var iFork = ($_Item instanceof $.ListView)  ?  $_Item  :  (
-                    $.ListView.getInstance( $_Item[0].parentNode ).fork( $_Item )
+                    $.ListView.instanceOf( $_Item ).fork( $_Item )
                 );
             var iDepth = $.trace(iFork, 'parentView').length;
 
