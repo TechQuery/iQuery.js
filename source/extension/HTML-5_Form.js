@@ -38,7 +38,8 @@ define(['jquery'],  function ($) {
                 return this.getAttribute('placeholder');
             },
             set:    function () {
-                this.setAttribute('placeholder', arguments[0]);
+                if ($.browser.modern)
+                    this.setAttribute('placeholder', arguments[0]);
 
                 PH_Blur.call(this);
 

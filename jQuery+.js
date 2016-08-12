@@ -1905,7 +1905,8 @@
                 return this.getAttribute('placeholder');
             },
             set:    function () {
-                this.setAttribute('placeholder', arguments[0]);
+                if ($.browser.modern)
+                    this.setAttribute('placeholder', arguments[0]);
 
                 PH_Blur.call(this);
 
@@ -2019,17 +2020,19 @@
 
 (function (BOM, DOM, $) {
 
-    function HTTP_Request(iMethod, iURL, iData, iCallback) {
+    function HTTP_Request(iMethod, iURL, iData, iCallback, DataType) {
         if (typeof iData == 'function') {
+            DataType = iCallback;
             iCallback = iData;
             iData = null;
         }
         return  $.ajax({
             method:         iMethod,
             url:            iURL,
+            crossDomain:    true,
             data:           iData,
-            success:        iCallback,
-            crossDomain:    true
+            dataType:       DataType,
+            success:        iCallback
         });
     }
 
@@ -2372,7 +2375,7 @@
 //              >>>  jQuery+  <<<
 //
 //
-//    [Version]    v7.8  (2016-08-05)
+//    [Version]    v7.8  (2016-08-12)
 //
 //    [Require]    jQuery  v1.9+
 //
