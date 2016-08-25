@@ -15,7 +15,10 @@ define(['jquery', 'ListView'],  function ($) {
             iArgs.shift()  :  Infinity;
 
         var _This_ = $.CommonView.call(this, iListView.$_View)
-                .on('branch',  (typeof iArgs[0] == 'function')  &&  iArgs[0]);
+                .on('branch', iArgs[0]);
+
+        if ((_This_ !== this)  ||  (! _This_.$_View[0].children[0]))
+            return _This_;
 
         this.$_View = iListView.$_View;
 

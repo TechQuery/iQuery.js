@@ -16,11 +16,8 @@ define(['jquery', 'CommonView'],  function ($) {
 
         $_Item = (iArgs[0] instanceof Array)  &&  iArgs.shift();
         iDelay = (typeof iArgs[0] == 'boolean')  ?  iArgs.shift()  :  null;
-        onUpdate = (typeof iArgs[0] == 'function')  &&  iArgs[0];
 
-        var iView = $.CommonView.call(this, $_View);
-
-        if (typeof onUpdate == 'function')  iView.on('update', onUpdate);
+        var iView = $.CommonView.call(this, $_View).on('update', iArgs[0]);
 
         if ((iView !== this)  ||  (! iView.$_View[0].children[0]))
             return iView;

@@ -107,11 +107,8 @@
 
         $_Item = (iArgs[0] instanceof Array)  &&  iArgs.shift();
         iDelay = (typeof iArgs[0] == 'boolean')  ?  iArgs.shift()  :  null;
-        onUpdate = (typeof iArgs[0] == 'function')  &&  iArgs[0];
 
-        var iView = $.CommonView.call(this, $_View);
-
-        if (typeof onUpdate == 'function')  iView.on('update', onUpdate);
+        var iView = $.CommonView.call(this, $_View).on('update', iArgs[0]);
 
         if ((iView !== this)  ||  (! iView.$_View[0].children[0]))
             return iView;
@@ -389,7 +386,10 @@
             iArgs.shift()  :  Infinity;
 
         var _This_ = $.CommonView.call(this, iListView.$_View)
-                .on('branch',  (typeof iArgs[0] == 'function')  &&  iArgs[0]);
+                .on('branch', iArgs[0]);
+
+        if ((_This_ !== this)  ||  (! _This_.$_View[0].children[0]))
+            return _This_;
 
         this.$_View = iListView.$_View;
 
@@ -642,7 +642,7 @@
 //              >>>  iQuery+  <<<
 //
 //
-//    [Version]    v1.6  (2016-08-08)  Stable
+//    [Version]    v1.6  (2016-08-25)  Stable
 //
 //    [Require]    iQuery  ||  jQuery with jQuery+
 //
