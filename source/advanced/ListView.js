@@ -200,6 +200,8 @@ define(['jquery', 'CommonView'],  function ($) {
         },
         //  Delete
         remove:         function (Index) {
+            Index = $.isNumeric(Index) ? Index : this.indexOf(Index);
+
             var $_Item = this.indexOf(Index, true);
 
             if (

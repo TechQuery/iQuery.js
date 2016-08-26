@@ -1732,12 +1732,11 @@
 
 /* ---------- ParentNode Children ---------- */
 
-    function HTMLCollection() {
-        var iChildren = arguments[0].childNodes;
+    function HTMLCollection(DOM_Array) {
 
-        for (var i = 0, j = 0;  iChildren[i];  i++)
-            if (iChildren[i].nodeType == 1){
-                this[j] = iChildren[i];
+        for (var i = 0, j = 0;  DOM_Array[i];  i++)
+            if (DOM_Array[i].nodeType == 1){
+                this[j] = DOM_Array[i];
 
                 if (this[j++].name)  this[this[j - 1].name] = this[j - 1];
             }
@@ -1752,7 +1751,7 @@
 
     var Children_Define = {
             get:    function () {
-                return  new HTMLCollection(this);
+                return  new HTMLCollection( this.childNodes );
             }
         };
 
@@ -1767,6 +1766,18 @@
         Object.defineProperty(DOM_Proto, 'children', Children_Define);
 
 
+/* ---------- Selected Options ---------- */
+
+    if ($.browser.msie < 12)
+        Object.defineProperty(HTMLSelectElement.prototype, 'selectedOptions', {
+            get:    function () {
+                return  new HTMLCollection(
+                    $.map(this.options,  function (iOption) {
+                        return  iOption.selected ? iOption : null;
+                    })
+                );
+            }
+        });
 /* ---------- Element CSS Selector Match ---------- */
 
     var DOM_Proto = Element.prototype;
@@ -2375,7 +2386,7 @@
 //              >>>  jQuery+  <<<
 //
 //
-//    [Version]    v7.8  (2016-08-12)
+//    [Version]    v7.8  (2016-08-26)
 //
 //    [Require]    jQuery  v1.9+
 //
