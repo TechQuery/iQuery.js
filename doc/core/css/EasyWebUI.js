@@ -887,8 +887,8 @@
                 $_Shim = $( $_Fixed[0].nextElementSibling );
 
                 if (
-                    $_Shim.attr('style', '')[0].outerHTML ==
-                    $_Fixed.clone(true).attr('style', '')[0].outerHTML
+                    $_Shim.removeAttr('style')[0].outerHTML ==
+                    $_Fixed.clone(true).removeAttr('style')[0].outerHTML
                 )
                     $_Shim.remove();
 
