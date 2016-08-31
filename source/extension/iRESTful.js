@@ -1,5 +1,7 @@
 define(['jquery'],  function ($) {
 
+    var BOM = self;
+
     function HTTP_Request(iMethod, iURL, iData, iCallback, DataType) {
         if (typeof iData == 'function') {
             DataType = iCallback;
@@ -7,7 +9,7 @@ define(['jquery'],  function ($) {
             iData = null;
         }
         return  $.ajax({
-            method:         iMethod,
+            type:           iMethod,
             url:            iURL,
             crossDomain:    true,
             data:           iData,
@@ -16,9 +18,15 @@ define(['jquery'],  function ($) {
         });
     }
 
-    var HTTP_Method = $.makeSet('PUT', 'DELETE');
+    var _Patch_ = ($ !== BOM.iQuery);
+
+    var HTTP_Method = $.makeSet.apply(
+            $,  ['PUT', 'DELETE'].concat(_Patch_  ?  [ ]  :  ['GET', 'POST'])
+        );
 
     for (var iMethod in HTTP_Method)
         $[ iMethod.toLowerCase() ] = $.proxy(HTTP_Request, BOM, iMethod);
+
+    if (! _Patch_)  $.getJSON = $.get;
 
 });

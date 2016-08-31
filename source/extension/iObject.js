@@ -1,4 +1,4 @@
-define(['jquery', 'extension/ES-5'],  function ($) {
+define(['jquery'],  function ($) {
 
     $.likeArray = function (iObject) {
         if ((! iObject)  ||  (typeof iObject != 'object'))
