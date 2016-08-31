@@ -624,7 +624,7 @@
                     function () { iPause = false; }
                 );
             }).render(
-                Array( $.ListView.getInstance(this).length )
+                Array( $.ListView.instanceOf(this, false).length )
             );
         }).on('swipe',  function (iEvent) {
             if (
@@ -731,8 +731,7 @@
                 $('.ListView_Item.active', iMainNav.$_View[0])
                     .removeClass('active');
 
-                $.ListView.getInstance( $_Anchor.parents('.TreeNode')[0] )
-                    .focus( $_Anchor[0].parentNode );
+                $.ListView.instanceOf( $_Anchor ).focus( $_Anchor[0].parentNode );
 
             }).on('Refresh',  function () {
 
@@ -796,7 +795,7 @@
 /* ---------- 目录树  v0.2 ---------- */
 
     function branchDelete() {
-        var iList = $.ListView.getInstance( this.parentNode );
+        var iList = $.ListView.instanceOf( this );
 
         iList.remove( this );
 
@@ -841,8 +840,8 @@
 
             iOrgTree.$_View.on('Insert',  '.ListView_Item',  function () {
 
-                var iSub = $.ListView.getInstance(
-                        $(this).children('.TreeNode')
+                var iSub = $.ListView.instanceOf(
+                        $(this).children('.TreeNode'), false
                     );
 
                 if ( iSub )

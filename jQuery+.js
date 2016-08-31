@@ -110,6 +110,7 @@
     if (! Date.now)
         Date.now = function () { return  +(new Date()); };
 
+
     /* ----- JSON Extension  v0.4 ----- */
 
     BOM.JSON.format = function () {
@@ -151,6 +152,56 @@
         BOM.console[ Console_Method[i] ] = _Notice_;
 
 })(self, self.document);
+
+
+
+(function (BOM, DOM, $) {
+
+    if (BOM.Promise)  return BOM.Promise;
+
+    function Promise() {
+        this.state = 'pending';
+        this.callback = [ ];
+
+        var _This_ = this;
+
+        arguments[0].call(this,  function () {
+            _This_.state = 'resolved';
+            _This_.value = arguments[0];
+        },  function () {
+            _This_.state = 'rejected';
+            _This_.error = arguments[0];
+        });
+    }
+
+    Promise.prototype.then = function (onResolved, onRejected) {
+        this.callback.push( onResolved );
+
+        var _This_ = this;
+
+        return  new Promise(function (iResolve, iReject) {
+
+            BOM.setTimeout(function () {
+                switch (_This_.state) {
+                    case 'resolved':    {
+                        if (onResolved !== _This_.callback[0])  break;
+
+                        _This_.callback.shift();
+
+                        return  iResolve( onResolved.call(_This_, _This_.value) );
+                    }
+                    case 'rejected':
+                        return  iReject( onRejected.call(_This_, _This_.error) );
+                }
+
+                BOM.setTimeout( arguments.callee );
+            });
+        });
+    };
+
+    return  BOM.Promise = Promise;
+
+})(self, self.document, self.jQuery);
 
 
 
@@ -2038,7 +2089,7 @@
             iData = null;
         }
         return  $.ajax({
-            method:         iMethod,
+            type:           iMethod,
             url:            iURL,
             crossDomain:    true,
             data:           iData,
@@ -2047,10 +2098,16 @@
         });
     }
 
-    var HTTP_Method = $.makeSet('PUT', 'DELETE');
+    var _Patch_ = ($ !== BOM.iQuery);
+
+    var HTTP_Method = $.makeSet.apply(
+            $,  ['PUT', 'DELETE'].concat(_Patch_  ?  [ ]  :  ['GET', 'POST'])
+        );
 
     for (var iMethod in HTTP_Method)
         $[ iMethod.toLowerCase() ] = $.proxy(HTTP_Request, BOM, iMethod);
+
+    if (! _Patch_)  $.getJSON = $.get;
 
 })(self, self.document, self.jQuery);
 
@@ -2380,7 +2437,7 @@
 //              >>>  jQuery+  <<<
 //
 //
-//    [Version]    v7.8  (2016-08-30)
+//    [Version]    v7.9  (2016-08-31)
 //
 //    [Require]    jQuery  v1.9+
 //

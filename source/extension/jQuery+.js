@@ -2,7 +2,7 @@
 //              >>>  jQuery+  <<<
 //
 //
-//    [Version]    v7.8  (2016-08-30)
+//    [Version]    v7.9  (2016-08-31)
 //
 //    [Require]    jQuery  v1.9+
 //
@@ -13,7 +13,7 @@
 
 define([
     'jquery',
-    'extension/iBrowser', 'extension/iObject',
+    'extension/ES_API', 'extension/iBrowser', 'extension/iObject',
     'extension/iTimer', 'extension/iUtility',
     'extension/iPseudo', 'extension/IE-8',
     'extension/Insert', 'extension/iDOM', 'extension/iCSS',

@@ -3,7 +3,7 @@ define(['iEvent'],  function ($) {
     var BOM = self,  DOM = self.document;
 
 
-/* ---------- AJAX API ---------- */
+/* ---------- Custom API ---------- */
 
     var $_DOM = $(DOM),  iAJAX = new $.Observer(1);
 
@@ -25,6 +25,9 @@ define(['iEvent'],  function ($) {
         ajaxPrefilter:    $.proxy(AJAX_Register, $, 'prefilter'),
         ajaxTransport:    $.proxy(AJAX_Register, $, 'transport')
     });
+
+
+/* ---------- Original XHR ---------- */
 
     $.ajaxTransport(function (iOption) {
         var iXHR;
@@ -83,14 +86,15 @@ define(['iEvent'],  function ($) {
             }
         };
     });
+/* ---------- Response Data ---------- */
 
     var ResponseType = $.makeSet('html', 'xml', 'json');
 
-    function AJAX_Complete(iOption) {
+    function AJAX_Complete(iResolve, iReject, iCode) {
         var iHeader = { };
 
-        if (arguments[4])
-            $.each(arguments[4].split("\r\n"),  function () {
+        if (arguments[5])
+            $.each(arguments[5].split("\r\n"),  function () {
                 var _Header_ = $.split(this, /:\s+/, 2);
 
                 iHeader[_Header_[0]] = _Header_[1];
@@ -99,9 +103,9 @@ define(['iEvent'],  function ($) {
         var iType = (iHeader['Content-Type'] || '').split(';')[0].split('/');
 
         $.extend(this, {
-            status:          arguments[1],
-            statusText:      arguments[2],
-            responseText:    arguments[3].text,
+            status:          iCode,
+            statusText:      arguments[3],
+            responseText:    arguments[4].text,
             responseType:
                 ((iType[1] in ResponseType) ? iType[1] : iType[0])  ||  'text'
         });
@@ -131,23 +135,25 @@ define(['iEvent'],  function ($) {
             case 'xml':     this.response = this.responseXML;
         }
 
-        var iArgs = [this, iOption];
-
-        $_DOM.trigger('ajaxComplete', iArgs);
-
-        if (arguments[1] < 400)
-            $_DOM.trigger('ajaxSuccess', iArgs);
+        if (iCode < 400)
+            iResolve( this.response );
         else
-            $_DOM.trigger('ajaxError',  iArgs.concat(new Error(this.statusText)));
-
-        if (typeof iOption.success == 'function')
-            iOption.success(this.response, 'success', this);
+            iReject( this.statusText );
     }
+
+/* ---------- Request Core ---------- */
 
     var Default_Option = {
             type:        'GET',
             dataType:    'text'
         };
+
+    function Complete_Event(iStatus, iOption) {
+        $_DOM.trigger('ajaxComplete',  [this, iOption]);
+
+        if (typeof iOption.complete == 'function')
+            iOption.complete(this, iStatus);
+    }
 
     $.ajax = function (iURL, iOption) {
         if ($.isPlainObject( iURL ))
@@ -157,6 +163,7 @@ define(['iEvent'],  function ($) {
             iOption.url = iURL;
         }
 
+    //  Option Object
         var _Option_ = $.extend({
                 url:    BOM.location.href
             }, Default_Option, iOption);
@@ -188,24 +195,53 @@ define(['iEvent'],  function ($) {
             _Option_.url = $.extendURL(iURL, _Option_.data);
         }
 
+    //  Prefilter & Transport
         var iXHR = new BOM.XMLHttpRequest(),  iArgs = [_Option_, iOption, iXHR];
 
         iAJAX.trigger('prefilter', iArgs);
 
         iXHR = iAJAX.trigger('transport', _Option_.dataType, iArgs).slice(-1)[0];
 
-        iXHR.send({ },  $.proxy(AJAX_Complete, iXHR, _Option_));
+    //  Async Promise
+        var iResult = new Promise(function (iResolve, iReject) {
+                if (_Option_.timeout)
+                    $.wait(_Option_.timeout / 1000,  function () {
+                        iXHR.abort();
 
-        if (_Option_.timeout)
-            $.wait(_Option_.timeout / 1000,  function () {
-                iXHR.abort();
+                        var iError = new Error('XMLHttpRequest Timeout');
 
-                $_DOM.trigger('ajaxError', [
-                    iXHR,  _Option_,  new Error('XMLHttpRequest Timeout')
-                ]);
+                        iReject(iError);
+
+                        $_DOM.trigger('ajaxError',  [iXHR, _Option_, iError]);
+                    });
+
+                iXHR.send({ },  $.proxy(AJAX_Complete, iXHR, iResolve, iReject));
+
+                $_DOM.trigger('ajaxSend',  [iXHR, _Option_]);
             });
 
-        $_DOM.trigger('ajaxSend',  [iXHR, _Option_]);
+        iArgs = [iXHR, _Option_];
+
+        iResult.then(function () {
+
+            $_DOM.trigger('ajaxSuccess', iArgs);
+
+            if (typeof _Option_.success == 'function')
+                _Option_.success(arguments[0], 'success', iXHR);
+
+            Complete_Event.call(iXHR, 'success', _Option_);
+
+        },  function (iError) {
+
+            $_DOM.trigger('ajaxError', iArgs.concat(iError));
+
+            if (typeof _Option_.error == 'function')
+                _Option_.error(iXHR, 'error', iError);
+
+            Complete_Event.call(iXHR, 'error', _Option_);
+        });
+
+        return iResult;
     };
 
 });

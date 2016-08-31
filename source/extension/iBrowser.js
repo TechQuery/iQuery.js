@@ -1,4 +1,4 @@
-define(['jquery', 'extension/ES-5'],  function ($) {
+define(['jquery', 'extension/Promise_A+'],  function ($) {
 
     var BOM = self;
 

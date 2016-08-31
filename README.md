@@ -97,7 +97,7 @@
  - 不支持 浏览器 **内置类型**（构造函数）相应的 $.isXXX() 系列方法
  - 不支持 **浏览器特性检测**
  - 不支持 $.ajax() 不常用的自定义选项
- - 不支持 $.Deferred()（正在尝试引入 ECMAScript 6 支持的 **Promise/A+ 规范**）
+ - 不支持 $.Deferred()
  - **jQuery 扩展伪类选择符**：只支持 常用且“难以用 **CSS 标准选择符** 或 jQuery API 实现其功能”的
  - 不支持 **XPath 选择器**、操作 **XML 文档**
  - 不支持一些不常用的 **jQuery 静态/实例方法**
@@ -115,6 +115,7 @@
  - 自带 `Object.getOwnPropertyNames()` 标准方法
  - 自带 `Date.now()` 标准方法
  - 新增 JSON **format 格式化显示**方法、 **parseAll 深度解析**方法（$.parseJSON() 被其增强）
+ - 自带 `Promise()` 标准对象构造函数
  - 重写 `Error.prototype.valueOf()`，使 IE 10- 返回可查询的错误码（附带 官方文档 URL）
  - 新增 **DOMHttpRequest 对象**，封装了 **JSONP Get**、 **iframe Post**
  - 自带 `HTMLDocument.prototype.currentScript` 属性

@@ -13,7 +13,8 @@
 
 
 define([
-    'extension/iBrowser', 'iObject', 'iUtility', 'extension/iUtility',
+    'extension/ES_API', 'extension/iBrowser', 'iObject',
+    'iUtility', 'extension/iUtility',
     'iPseudo', 'iEvent', 'extension/iEvent', 'extension/IE-8', 'extension/HTML-5',
     'iAnimation', 'extension/iDOM', 'extension/iCSS', 'extension/iSelection',
     'extension/iObserver',

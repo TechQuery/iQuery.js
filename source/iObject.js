@@ -11,7 +11,10 @@ define(['extension/iObject'],  function ($) {
         iSource = Object(iSource);
 
         for (var iKey in iSource)
-            if (Object.prototype.hasOwnProperty.call(iSource, iKey)) {
+            if (
+                (iSource[iKey] !== undefined)  &&
+                Object.prototype.hasOwnProperty.call(iSource, iKey)
+            ) {
                 iTarget[iKey] = (iDeep && (
                     (iSource[iKey] instanceof Array)  ||
                     $.isPlainObject( iSource[iKey] )

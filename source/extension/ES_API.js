@@ -102,6 +102,7 @@ define(function () {
     if (! Date.now)
         Date.now = function () { return  +(new Date()); };
 
+
     /* ----- JSON Extension  v0.4 ----- */
 
     BOM.JSON.format = function () {

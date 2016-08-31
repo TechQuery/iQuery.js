@@ -8,7 +8,7 @@
     onBuildWrite:    function (iName) {
         var fParameter = 'BOM, DOM',  aParameter = 'self, self.document';
 
-        if (iName != 'extension/ES-5') {
+        if (iName != 'extension/ES_API') {
             fParameter += ', $';
             aParameter += ', self.jQuery';
         }
