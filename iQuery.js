@@ -161,42 +161,70 @@
 
     if (BOM.Promise)  return BOM.Promise;
 
-    function Promise() {
-        this.state = 'pending';
-        this.callback = [ ];
+    function Promise(iMain) {
+        var _Self_ = arguments.callee,
+            _This_ = {
+                state:       -1,
+                value:       undefined,
+                callback:    [ ]
+            };
 
-        var _This_ = this;
+        this.then = function (onResolve, onReject) {
+            return  new _Self_(function (iResolve, iReject) {
+                if (_This_.state == -1)
+                    _This_.callback.push([
+                        onResolve,  onReject,  iResolve,  iReject
+                    ]);
+                else
+                    arguments[_This_.state](_This_.value);
+            });
+        };
 
-        arguments[0].call(this,  function () {
-            _This_.state = 'resolved';
-            _This_.value = arguments[0];
-        },  function () {
-            _This_.state = 'rejected';
-            _This_.error = arguments[0];
+        BOM.setTimeout(function () {
+            iMain(function () {
+                _Complete_.call(_This_, 0, arguments[0]);
+            },  function () {
+                _Complete_.call(_This_, 1, arguments[0]);
+            });
         });
     }
 
-    Promise.prototype.then = function (onResolved, onRejected) {
-        this.callback.push( onResolved );
+    function _Complete_(iType) {
+        if (this.state > -1)  return;
 
-        var _This_ = this;
+        this.state = iType;  this.value = arguments[1];
 
-        return  new Promise(function (iResolve, iReject) {
+        for (var i = 0, _CB_, _Value_;  this.callback[i];  i++)  try {
+            _CB_ = this.callback[i];
 
-            BOM.setTimeout(function () {
-                switch (_This_.state) {
-                    case 'resolved':    {
-                        if (onResolved !== _This_.callback[0])  break;
+            if (typeof _CB_[iType] == 'function') {
+                _Value_ = _CB_[iType]( this.value );
 
-                        _This_.callback.shift();
+                if (_Value_ instanceof Promise)
+                    return  _Value_.then(_CB_[2], _CB_[3]);
+            } else
+                _Value_ = this.value;
 
-                        return  iResolve( onResolved.call(_This_, _This_.value) );
-                    }
-                    case 'rejected':
-                        return  iReject( onRejected.call(_This_, _This_.error) );
-                }
+            _CB_[2](_Value_);
 
-                BOM.setTimeout( arguments.callee );
+        } catch (iError) {
+            _CB_[3]( iError );
+        }
+    }
+
+    Promise.all = function (pList) {
+        var _Result_ = [ ];
+
+        return  new this(function (iResolved, iReject) {
+
+            ' '.repeat( pList.length ).replace(/ /g,  function (_, Index) {
+
+                pList[Index].then(function () {
+                    _Result_[Index] = arguments[0];
+
+                    if (_Result_.length == pList.length)
+                        iResolved(_Result_);
+                },  iReject);
             });
         });
     };
@@ -4628,7 +4656,7 @@
 //                >>>  iQuery.js  <<<
 //
 //
-//      [Version]    v2.0  (2016-08-31)  Stable
+//      [Version]    v2.0  (2016-09-01)  Stable
 //
 //      [Usage]      A Light-weight jQuery Compatible API
 //                   with IE 8+ compatibility.
