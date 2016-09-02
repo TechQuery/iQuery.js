@@ -1,3 +1,16 @@
+//
+//              >>>  jQuery+  <<<
+//
+//
+//    [Version]    v8.0  (2016-09-02)
+//
+//    [Require]    jQuery  v1.9+
+//
+//
+//        (C)2014-2016  shiy2008@gmail.com
+//
+
+
 (function () {
 
     if ((typeof this.define != 'function')  ||  (! this.define.amd))

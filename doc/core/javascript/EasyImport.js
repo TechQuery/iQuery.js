@@ -1,3 +1,17 @@
+//
+//                >>>  iQuery.js  <<<
+//
+//
+//      [Version]    v2.0  (2016-09-02)  Stable
+//
+//      [Usage]      A Light-weight jQuery Compatible API
+//                   with IE 8+ compatibility.
+//
+//
+//          (C)2015-2016    shiy2008@gmail.com
+//
+
+
 (function () {
 
     if ((typeof this.define != 'function')  ||  (! this.define.amd))
@@ -157,13 +171,14 @@
 
 
 
-(function (BOM, DOM, $) {
+(function (BOM, DOM) {
 
     if (BOM.Promise)  return BOM.Promise;
 
     function Promise(iMain) {
         var _Self_ = arguments.callee,
             _This_ = {
+                _public_:    this,
                 state:       -1,
                 value:       undefined,
                 callback:    [ ]
@@ -194,13 +209,15 @@
 
         this.state = iType;  this.value = arguments[1];
 
-        for (var i = 0, _CB_, _Value_;  this.callback[i];  i++)  try {
-            _CB_ = this.callback[i];
+        for (var _CB_, _Value_;  _CB_ = this.callback.shift();  )  try {
 
             if (typeof _CB_[iType] == 'function') {
                 _Value_ = _CB_[iType]( this.value );
 
-                if (_Value_ instanceof Promise)
+                if (_Value_ === this._public_)
+                    throw  TypeError("Can't return the same Promise object !");
+
+                if (typeof _Value_.then == 'function')
                     return  _Value_.then(_CB_[2], _CB_[3]);
             } else
                 _Value_ = this.value;
@@ -211,6 +228,30 @@
             _CB_[3]( iError );
         }
     }
+
+    Promise.resolve = function (iValue) {
+        if (iValue instanceof this)  return iValue;
+
+        if (typeof iValue.then == 'function')
+            return  new this(function () {
+                iValue.then.apply(iValue, arguments);
+            });
+
+        return  new this(function () {
+            arguments[0](iValue);
+        });
+    };
+
+    Promise.reject = function (iValue) {
+        if (typeof iValue.then == 'function')
+            return  new this(function () {
+                iValue.then.apply(iValue, arguments);
+            });
+
+        return  new this(function () {
+            arguments[1](iValue);
+        });
+    };
 
     Promise.all = function (pList) {
         var _Result_ = [ ];
@@ -231,7 +272,7 @@
 
     return  BOM.Promise = Promise;
 
-})(self,  self.document,  self.iQuery || iQuery);
+})(self,  self.document);
 
 
 
@@ -1105,6 +1146,8 @@
             return  _DOM_.operate('Data', [iElement], iName, iValue);
         }
     });
+
+    if (typeof BOM.jQuery != 'function')  BOM.$ = BOM.jQuery = $;
 
     /* ----- iQuery Instance Method ----- */
 
@@ -4648,30 +4691,6 @@
 
         return this;
     };
-
-})(self,  self.document,  self.iQuery || iQuery);
-
-
-//
-//                >>>  iQuery.js  <<<
-//
-//
-//      [Version]    v2.0  (2016-09-01)  Stable
-//
-//      [Usage]      A Light-weight jQuery Compatible API
-//                   with IE 8+ compatibility.
-//
-//
-//          (C)2015-2016    shiy2008@gmail.com
-//
-
-
-
-(function (BOM, DOM, $) {
-
-    if (typeof BOM.jQuery != 'function')  BOM.$ = BOM.jQuery = $;
-
-    return $;
 
 })(self,  self.document,  self.iQuery || iQuery);
 

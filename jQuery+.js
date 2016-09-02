@@ -1,3 +1,16 @@
+//
+//              >>>  jQuery+  <<<
+//
+//
+//    [Version]    v8.0  (2016-09-02)
+//
+//    [Require]    jQuery  v1.9+
+//
+//
+//        (C)2014-2016  shiy2008@gmail.com
+//
+
+
 (function () {
 
     if ((typeof this.define != 'function')  ||  (! this.define.amd))
@@ -155,13 +168,14 @@
 
 
 
-(function (BOM, DOM, $) {
+(function (BOM, DOM) {
 
     if (BOM.Promise)  return BOM.Promise;
 
     function Promise(iMain) {
         var _Self_ = arguments.callee,
             _This_ = {
+                _public_:    this,
                 state:       -1,
                 value:       undefined,
                 callback:    [ ]
@@ -192,13 +206,15 @@
 
         this.state = iType;  this.value = arguments[1];
 
-        for (var i = 0, _CB_, _Value_;  this.callback[i];  i++)  try {
-            _CB_ = this.callback[i];
+        for (var _CB_, _Value_;  _CB_ = this.callback.shift();  )  try {
 
             if (typeof _CB_[iType] == 'function') {
                 _Value_ = _CB_[iType]( this.value );
 
-                if (_Value_ instanceof Promise)
+                if (_Value_ === this._public_)
+                    throw  TypeError("Can't return the same Promise object !");
+
+                if (typeof _Value_.then == 'function')
                     return  _Value_.then(_CB_[2], _CB_[3]);
             } else
                 _Value_ = this.value;
@@ -209,6 +225,30 @@
             _CB_[3]( iError );
         }
     }
+
+    Promise.resolve = function (iValue) {
+        if (iValue instanceof this)  return iValue;
+
+        if (typeof iValue.then == 'function')
+            return  new this(function () {
+                iValue.then.apply(iValue, arguments);
+            });
+
+        return  new this(function () {
+            arguments[0](iValue);
+        });
+    };
+
+    Promise.reject = function (iValue) {
+        if (typeof iValue.then == 'function')
+            return  new this(function () {
+                iValue.then.apply(iValue, arguments);
+            });
+
+        return  new this(function () {
+            arguments[1](iValue);
+        });
+    };
 
     Promise.all = function (pList) {
         var _Result_ = [ ];
@@ -229,7 +269,7 @@
 
     return  BOM.Promise = Promise;
 
-})(self, self.document, self.jQuery);
+})(self, self.document);
 
 
 
@@ -392,51 +432,6 @@
 
         return  arguments.callee.apply(this, iArgs);
     };
-
-})(self, self.document, self.jQuery);
-
-
-
-(function (BOM, DOM, $) {
-
-    var _Timer_ = { };
-
-    $.extend({
-        _Root_:     BOM,
-        now:        Date.now,
-        every:      function (iSecond, iCallback) {
-            var _BOM_ = this._Root_,
-                iTimeOut = (iSecond || 0.01) * 1000,
-                iStart = this.now(),
-                Index = 0;
-
-            return  _BOM_.setTimeout(function () {
-                var iDuring = (Date.now() - iStart) / 1000;
-
-                var iReturn = iCallback.call(_BOM_, ++Index, iDuring);
-
-                if ((typeof iReturn == 'undefined')  ||  iReturn)
-                    _BOM_.setTimeout(arguments.callee, iTimeOut);
-            }, iTimeOut);
-        },
-        wait:       function (iSecond, iCallback) {
-            return  this.every(iSecond, function () {
-                iCallback.apply(this, arguments);
-                return false;
-            });
-        },
-        start:      function (iName) {
-            return  (_Timer_[iName] = this.now());
-        },
-        end:        function (iName) {
-            return  (this.now() - _Timer_[iName]) / 1000;
-        },
-        uuid:       function () {
-            return  (arguments[0] || 'uuid')  +  '_'  +
-                (this.now() + Math.random()).toString(36)
-                    .replace('.', '').toUpperCase();
-        }
-    });
 
 })(self, self.document, self.jQuery);
 
@@ -612,6 +607,51 @@
 
 (function (BOM, DOM, $) {
 
+    var _Timer_ = { };
+
+    $.extend({
+        _Root_:     BOM,
+        now:        Date.now,
+        every:      function (iSecond, iCallback) {
+            var _BOM_ = this._Root_,
+                iTimeOut = (iSecond || 0.01) * 1000,
+                iStart = this.now(),
+                Index = 0;
+
+            return  _BOM_.setTimeout(function () {
+                var iDuring = (Date.now() - iStart) / 1000;
+
+                var iReturn = iCallback.call(_BOM_, ++Index, iDuring);
+
+                if ((typeof iReturn == 'undefined')  ||  iReturn)
+                    _BOM_.setTimeout(arguments.callee, iTimeOut);
+            }, iTimeOut);
+        },
+        wait:       function (iSecond, iCallback) {
+            return  this.every(iSecond, function () {
+                iCallback.apply(this, arguments);
+                return false;
+            });
+        },
+        start:      function (iName) {
+            return  (_Timer_[iName] = this.now());
+        },
+        end:        function (iName) {
+            return  (this.now() - _Timer_[iName]) / 1000;
+        },
+        uuid:       function () {
+            return  (arguments[0] || 'uuid')  +  '_'  +
+                (this.now() + Math.random()).toString(36)
+                    .replace('.', '').toUpperCase();
+        }
+    });
+
+})(self, self.document, self.jQuery);
+
+
+
+(function (BOM, DOM, $) {
+
 /* ---------- Enhanced :image ---------- */
 
     var pImage = $.extend($.makeSet('IMG', 'SVG', 'CANVAS'), {
@@ -686,6 +726,232 @@
             (Math.max(iSize.height, iSize['min-height']) > 160)
         );
     };
+
+})(self, self.document, self.jQuery);
+
+
+
+(function (BOM, DOM, $) {
+
+/* ---------- Event from Pseudo ---------- */
+
+    $.Event.prototype.isPseudo = function () {
+        var $_This = $(this.currentTarget);
+
+        var iOffset = $_This.offset();
+
+        return Boolean(
+            (this.pageX  &&  (
+                (this.pageX < iOffset.left)  ||
+                (this.pageX  >  (iOffset.left + $_This.width()))
+            ))  ||
+            (this.pageY  &&  (
+                (this.pageY < iOffset.top)  ||
+                (this.pageY  >  (iOffset.top + $_This.height()))
+            ))
+        );
+    };
+
+/* ---------- Focus AnyWhere ---------- */
+
+    var DOM_Focus = $.fn.focus;
+
+    $.fn.focus = function () {
+        this.not(':focusable').attr('tabIndex', -1).css('outline', 'none');
+
+        return  DOM_Focus.apply(this, arguments);
+    };
+
+/* ---------- Single Finger Touch ---------- */
+
+    var $_DOM = $(DOM);
+
+    function get_Touch(iEvent) {
+        var iTouch = iEvent;
+
+        if ($.browser.mobile)  try {
+            iTouch = iEvent.changedTouches[0];
+        } catch (iError) {
+            iTouch = iEvent.touches[0];
+        }
+
+        iTouch.timeStamp = iEvent.timeStamp || $.now();
+
+        return iTouch;
+    }
+
+    $_DOM.bind(
+        $.browser.mobile ? 'touchstart MSPointerDown' : 'mousedown',
+        function (iEvent) {
+            $(iEvent.target).data('_Gesture_Event_', get_Touch(iEvent));
+        }
+    ).bind(
+        $.browser.mobile ? 'touchend touchcancel MSPointerUp' : 'mouseup',
+        function (iEvent) {
+            var $_Target = $(iEvent.target);
+
+            var iStart = $_Target.data('_Gesture_Event_');
+
+            if (! iStart)  return;
+
+            $_Target.data('_Gesture_Event_', null);
+
+            var iEnd = get_Touch(iEvent);
+
+            iEvent = {
+                target:    $_Target[0],
+                detail:    iEnd.timeStamp - iStart.timeStamp,
+                deltaX:    iStart.pageX - iEnd.pageX,
+                deltaY:    iStart.pageY - iEnd.pageY
+            };
+
+            var iShift = Math.sqrt(
+                    Math.pow(iEvent.deltaX, 2)  +  Math.pow(iEvent.deltaY, 2)
+                );
+
+            if (iEvent.detail > 300)
+                iEvent.type = 'press';
+            else if (iShift < 22)
+                iEvent.type = 'tap';
+            else {
+                iEvent.type = 'swipe';
+                iEvent.detail = iShift;
+            }
+
+            $_Target.trigger(iEvent);
+        }
+    );
+
+/* ---------- Text Input Event ---------- */
+
+    function TypeBack(iHandler, iKey, iEvent) {
+        var $_This = $(this);
+        var iValue = $_This[iKey]();
+
+        if (false  !==  iHandler.call(iEvent.target, iEvent, iValue))
+            return;
+
+        iValue = iValue.split('');
+        iValue.splice(
+            BOM.getSelection().getRangeAt(0).startOffset - 1,  1
+        );
+        $_This[iKey]( iValue.join('') );
+    }
+
+    $.fn.input = function (iHandler) {
+        this.filter('input, textarea').on(
+            $.browser.modern ? 'input' : 'propertychange',
+            function (iEvent) {
+                if ($.browser.modern  ||  (iEvent.propertyName == 'value'))
+                    TypeBack.call(this, iHandler, 'val', iEvent);
+            }
+        );
+
+        this.not('input, textarea').on('paste',  function (iEvent) {
+
+            return  iHandler.call(
+                iEvent.target,
+                iEvent,
+                ($.browser.modern ? iEvent : BOM).clipboardData.getData(
+                    $.browser.modern ? 'text/plain' : 'text'
+                )
+            );
+        }).keyup(function (iEvent) {
+
+            var iKey = iEvent.which;
+
+            if (
+                (iKey < 48)  ||  (iKey > 105)  ||
+                ((iKey > 90)  &&  (iKey < 96))  ||
+                iEvent.ctrlKey  ||  iEvent.shiftKey  ||  iEvent.altKey
+            )
+                return;
+
+            TypeBack.call(iEvent.target, iHandler, 'text', iEvent);
+        });
+
+        return this;
+    };
+
+/* ---------- Cross Page Event ---------- */
+
+    function CrossPageEvent(iType, iSource) {
+        if (typeof iType == 'string') {
+            this.type = iType;
+            this.target = iSource;
+        } else
+            $.extend(this, iType);
+
+        if (! (iSource && (iSource instanceof Element)))  return;
+
+        $.extend(this,  $.map(iSource.dataset,  function (iValue) {
+            if (typeof iValue == 'string')  try {
+                return  $.parseJSON(iValue);
+            } catch (iError) { }
+
+            return iValue;
+        }));
+    }
+
+    CrossPageEvent.prototype.valueOf = function () {
+        var iValue = $.extend({ }, this);
+
+        delete iValue.data;
+        delete iValue.target;
+        delete iValue.valueOf;
+
+        return iValue;
+    };
+
+    var $_BOM = $(BOM);
+
+    $.fn.onReply = function (iType, iData, iCallback) {
+        var iTarget = this[0],  $_Source;
+
+        if (typeof iTarget.postMessage != 'function')  return this;
+
+        if (arguments.length == 4) {
+            $_Source = $(iData);
+            iData = iCallback;
+            iCallback = arguments[3];
+        }
+
+        var _Event_ = new CrossPageEvent(iType,  ($_Source || { })[0]);
+
+        if (typeof iCallback == 'function')
+            $_BOM.on('message',  function (iEvent) {
+                iEvent = iEvent.originalEvent || iEvent;
+
+                var iReturn = new CrossPageEvent(
+                        (typeof iEvent.data == 'string')  ?
+                            $.parseJSON(iEvent.data) : iEvent.data
+                    );
+                if (
+                    (iEvent.source === iTarget)  &&
+                    (iReturn.type == iType)  &&
+                    $.isEqual(iReturn, _Event_)
+                ) {
+                    iCallback.call($_Source ? $_Source[0] : this,  iReturn);
+                    $_BOM.off('message', arguments.callee);
+                }
+            });
+        iData = $.extend({data: iData},  _Event_.valueOf());
+
+        iTarget.postMessage(
+            ($.browser.msie < 10) ? JSON.stringify(iData) : iData,  '*'
+        );
+    };
+
+/* ---------- Mouse Wheel Event ---------- */
+
+    if (! $.browser.mozilla)  return;
+
+    $_DOM.on('DOMMouseScroll',  function (iEvent) {
+        $(iEvent.target).trigger({
+            type:          'mousewheel',
+            wheelDelta:    -iEvent.detail * 40
+        });
+    });
 
 })(self, self.document, self.jQuery);
 
@@ -1013,6 +1279,195 @@
 
         return iXML;
     };
+
+})(self, self.document, self.jQuery);
+
+
+
+(function (BOM, DOM, $) {
+
+/* ---------- Document Current Script ---------- */
+
+    var Stack_Prefix = {
+            webkit:     'at ',
+            mozilla:    '@',
+            msie:       'at Global code \\('
+        };
+
+    function Script_URL() {
+        try {
+            throw  new Error('AMD_Loader');
+        } catch (iError) {
+            var iURL;
+
+            for (var iCore in Stack_Prefix)
+                if ( $.browser[iCore] ) {
+                    iURL = iError.stack.match(RegExp(
+                        "\\s+" + Stack_Prefix[iCore] + "(http(s)?:\\/\\/\\S+.js)"
+                    ));
+
+                    return  iURL && iURL[1];
+                }
+        }
+    }
+
+    if (! ('currentScript' in DOM))
+        Object.defineProperty(DOM.constructor.prototype, 'currentScript', {
+            get:    function () {
+                var iURL = ($.browser.msie < 10)  ||  Script_URL();
+
+                for (var i = 0;  DOM.scripts[i];  i++)
+                    if ((iURL === true)  ?
+                        (DOM.scripts[i].readyState == 'interactive')  :
+                        (DOM.scripts[i].src == iURL)
+                    )
+                        return DOM.scripts[i];
+            }
+        });
+
+/* ---------- ParentNode Children ---------- */
+
+    function HTMLCollection(DOM_Array) {
+
+        for (var i = 0, j = 0;  DOM_Array[i];  i++)
+            if (DOM_Array[i].nodeType == 1){
+                this[j] = DOM_Array[i];
+
+                if (this[j++].name)  this[this[j - 1].name] = this[j - 1];
+            }
+
+        this.length = j;
+    }
+
+    HTMLCollection.prototype.item = HTMLCollection.prototype.namedItem =
+        function () {
+            return  this[ arguments[0] ]  ||  null;
+        };
+
+    var Children_Define = {
+            get:    function () {
+                return  new HTMLCollection( this.childNodes );
+            }
+        };
+
+    if (! DOM.createDocumentFragment().children)
+        Object.defineProperty(
+            ($.browser.modern ? DocumentFragment : DOM.constructor).prototype,
+            'children',
+            Children_Define
+        );
+
+    if (! DOM.head.children[0])
+        Object.defineProperty(DOM_Proto, 'children', Children_Define);
+
+
+/* ---------- Selected Options ---------- */
+
+    if ($.browser.msie < 12)
+        Object.defineProperty(HTMLSelectElement.prototype, 'selectedOptions', {
+            get:    function () {
+                return  new HTMLCollection(
+                    $.map(this.options,  function (iOption) {
+                        return  iOption.selected ? iOption : null;
+                    })
+                );
+            }
+        });
+/* ---------- Element CSS Selector Match ---------- */
+
+    var DOM_Proto = Element.prototype;
+
+    DOM_Proto.matches = DOM_Proto.matches || DOM_Proto.webkitMatchesSelector ||
+        DOM_Proto.msMatchesSelector || DOM_Proto.mozMatchesSelector ||
+        function () {
+            if (! this.parentNode)  $('<div />')[0].appendChild(this);
+
+            return  ($.inArray(
+                this,  this.parentNode.querySelectorAll( arguments[0] )
+            ) > -1);
+        };
+
+
+    if (! ($.browser.msie < 11))  return;
+
+/* ---------- Element Data Set ---------- */
+
+    function DOMStringMap(iElement) {
+        for (var i = 0, iAttr;  i < iElement.attributes.length;  i++) {
+            iAttr = iElement.attributes[i];
+            if (iAttr.nodeName.slice(0, 5) == 'data-')
+                this[ iAttr.nodeName.slice(5).toCamelCase() ] = iAttr.nodeValue;
+        }
+    }
+
+    Object.defineProperty(DOM_Proto, 'dataset', {
+        get:    function () {
+            return  new DOMStringMap(this);
+        }
+    });
+
+
+    if (! ($.browser.msie < 10))  return;
+
+/* ---------- Error Useful Information ---------- */
+
+    //  Thanks "Kevin Yang" ---
+    //
+    //      http://www.imkevinyang.com/2010/01/%E8%A7%A3%E6%9E%90ie%E4%B8%AD%E7%9A%84javascript-error%E5%AF%B9%E8%B1%A1.html
+
+    Error.prototype.valueOf = function () {
+        return  $.extend(this, {
+            code:       this.number & 0x0FFFF,
+            helpURL:    'https://msdn.microsoft.com/en-us/library/1dk3k160(VS.85).aspx'
+        });
+    };
+
+/* ---------- DOM Class List ---------- */
+
+    function DOMTokenList() {
+        var iClass = (arguments[0].getAttribute('class') || '').trim().split(/\s+/);
+
+        $.extend(this, iClass);
+
+        this.length = iClass.length;
+    }
+
+    DOMTokenList.prototype.contains = function (iClass) {
+        if (iClass.match(/\s+/))
+            throw  new DOMException([
+                "Failed to execute 'contains' on 'DOMTokenList': The token provided (",
+                iClass,
+                ") contains HTML space characters, which are not valid in tokens."
+            ].join("'"));
+
+        return  (Array.prototype.indexOf.call(this, iClass) > -1);
+    };
+
+    Object.defineProperty(DOM_Proto, 'classList', {
+        get:    function () {
+            return  new DOMTokenList(this);
+        }
+    });
+
+/* ---------- DOM InnerHTML ---------- */
+
+    var InnerHTML = Object.getOwnPropertyDescriptor(DOM_Proto, 'innerHTML');
+
+    Object.defineProperty(DOM_Proto, 'innerHTML', {
+        set:    function (iHTML) {
+            if (! String(iHTML).match(
+                /^[^<]*<\s*(head|meta|title|link|style|script|noscript|(!--[^>]*--))[^>]*>/i
+            ))
+                return  InnerHTML.set.call(this, iHTML);
+
+            InnerHTML.set.call(this,  'IE_Scope' + iHTML);
+
+            var iChild = this.childNodes;
+            iChild[0].nodeValue = iChild[0].nodeValue.slice(8);
+
+            if (! iChild[0].nodeValue[0])  this.removeChild( iChild[0] );
+        }
+    });
 
 })(self, self.document, self.jQuery);
 
@@ -1544,225 +1999,113 @@
 
 (function (BOM, DOM, $) {
 
-/* ---------- Event from Pseudo ---------- */
-
-    $.Event.prototype.isPseudo = function () {
-        var $_This = $(this.currentTarget);
-
-        var iOffset = $_This.offset();
-
-        return Boolean(
-            (this.pageX  &&  (
-                (this.pageX < iOffset.left)  ||
-                (this.pageX  >  (iOffset.left + $_This.width()))
-            ))  ||
-            (this.pageY  &&  (
-                (this.pageY < iOffset.top)  ||
-                (this.pageY  >  (iOffset.top + $_This.height()))
-            ))
-        );
-    };
-
-/* ---------- Focus AnyWhere ---------- */
-
-    var DOM_Focus = $.fn.focus;
-
-    $.fn.focus = function () {
-        this.not(':focusable').attr('tabIndex', -1).css('outline', 'none');
-
-        return  DOM_Focus.apply(this, arguments);
-    };
-
-/* ---------- Single Finger Touch ---------- */
-
-    var $_DOM = $(DOM);
-
-    function get_Touch(iEvent) {
-        var iTouch = iEvent;
-
-        if ($.browser.mobile)  try {
-            iTouch = iEvent.changedTouches[0];
-        } catch (iError) {
-            iTouch = iEvent.touches[0];
-        }
-
-        iTouch.timeStamp = iEvent.timeStamp || $.now();
-
-        return iTouch;
-    }
-
-    $_DOM.bind(
-        $.browser.mobile ? 'touchstart MSPointerDown' : 'mousedown',
-        function (iEvent) {
-            $(iEvent.target).data('_Gesture_Event_', get_Touch(iEvent));
-        }
-    ).bind(
-        $.browser.mobile ? 'touchend touchcancel MSPointerUp' : 'mouseup',
-        function (iEvent) {
-            var $_Target = $(iEvent.target);
-
-            var iStart = $_Target.data('_Gesture_Event_');
-
-            if (! iStart)  return;
-
-            $_Target.data('_Gesture_Event_', null);
-
-            var iEnd = get_Touch(iEvent);
-
-            iEvent = {
-                target:    $_Target[0],
-                detail:    iEnd.timeStamp - iStart.timeStamp,
-                deltaX:    iStart.pageX - iEnd.pageX,
-                deltaY:    iStart.pageY - iEnd.pageY
-            };
-
-            var iShift = Math.sqrt(
-                    Math.pow(iEvent.deltaX, 2)  +  Math.pow(iEvent.deltaY, 2)
-                );
-
-            if (iEvent.detail > 300)
-                iEvent.type = 'press';
-            else if (iShift < 22)
-                iEvent.type = 'tap';
-            else {
-                iEvent.type = 'swipe';
-                iEvent.detail = iShift;
-            }
-
-            $_Target.trigger(iEvent);
-        }
-    );
-
-/* ---------- Text Input Event ---------- */
-
-    function TypeBack(iHandler, iKey, iEvent) {
-        var $_This = $(this);
-        var iValue = $_This[iKey]();
-
-        if (false  !==  iHandler.call(iEvent.target, iEvent, iValue))
-            return;
-
-        iValue = iValue.split('');
-        iValue.splice(
-            BOM.getSelection().getRangeAt(0).startOffset - 1,  1
-        );
-        $_This[iKey]( iValue.join('') );
-    }
-
-    $.fn.input = function (iHandler) {
-        this.filter('input, textarea').on(
-            $.browser.modern ? 'input' : 'propertychange',
-            function (iEvent) {
-                if ($.browser.modern  ||  (iEvent.propertyName == 'value'))
-                    TypeBack.call(this, iHandler, 'val', iEvent);
-            }
-        );
-
-        this.not('input, textarea').on('paste',  function (iEvent) {
-
-            return  iHandler.call(
-                iEvent.target,
-                iEvent,
-                ($.browser.modern ? iEvent : BOM).clipboardData.getData(
-                    $.browser.modern ? 'text/plain' : 'text'
-                )
-            );
-        }).keyup(function (iEvent) {
-
-            var iKey = iEvent.which;
-
-            if (
-                (iKey < 48)  ||  (iKey > 105)  ||
-                ((iKey > 90)  &&  (iKey < 96))  ||
-                iEvent.ctrlKey  ||  iEvent.shiftKey  ||  iEvent.altKey
-            )
-                return;
-
-            TypeBack.call(iEvent.target, iHandler, 'text', iEvent);
-        });
+    function Observer() {
+        this.requireArgs = arguments[0] || 0;
+        this.filter = arguments[1] || [ ];
+        this.table = [ ];
 
         return this;
-    };
-
-/* ---------- Cross Page Event ---------- */
-
-    function CrossPageEvent(iType, iSource) {
-        if (typeof iType == 'string') {
-            this.type = iType;
-            this.target = iSource;
-        } else
-            $.extend(this, iType);
-
-        if (! (iSource && (iSource instanceof Element)))  return;
-
-        $.extend(this,  $.map(iSource.dataset,  function (iValue) {
-            if (typeof iValue == 'string')  try {
-                return  $.parseJSON(iValue);
-            } catch (iError) { }
-
-            return iValue;
-        }));
     }
 
-    CrossPageEvent.prototype.valueOf = function () {
-        var iValue = $.extend({ }, this);
+    function Each_Row() {
+        var _This_ = this,  iArgs = $.makeArray(arguments);
 
-        delete iValue.data;
-        delete iValue.target;
-        delete iValue.valueOf;
+        if (typeof iArgs[iArgs.length - 1]  !=  'function')  return;
 
-        return iValue;
-    };
+        var WrapCall = iArgs.pop();
 
-    var $_BOM = $(BOM);
+        $.each(this.table,  function () {
+            var iCallback = this[this.length - 1];
 
-    $.fn.onReply = function (iType, iData, iCallback) {
-        var iTarget = this[0],  $_Source;
+            if (iCallback == null)  return;
 
-        if (typeof iTarget.postMessage != 'function')  return this;
+            for (var i = 0;  i < iArgs.length;  i++) {
+                if (typeof this[i] == 'function')  break;
 
-        if (arguments.length == 4) {
-            $_Source = $(iData);
-            iData = iCallback;
-            iCallback = arguments[3];
-        }
+                if (this[i] === undefined) {
 
-        var _Event_ = new CrossPageEvent(iType,  ($_Source || { })[0]);
+                    if (i < _This_.requireArgs)  return;
 
-        if (typeof iCallback == 'function')
-            $_BOM.on('message',  function (iEvent) {
-                iEvent = iEvent.originalEvent || iEvent;
+                } else if (
+                    (typeof _This_.filter[i] == 'function')  ?  (
+                        false === _This_.filter[i].call(
+                            _This_,  this[i],  iArgs[i]
+                        )
+                    )  :  (
+                        (this[i] != iArgs[i])  &&  (! iArgs[i].match(this[i]))
+                    )
+                )
+                    return;
+            }
 
-                var iReturn = new CrossPageEvent(
-                        (typeof iEvent.data == 'string')  ?
-                            $.parseJSON(iEvent.data) : iEvent.data
-                    );
-                if (
-                    (iEvent.source === iTarget)  &&
-                    (iReturn.type == iType)  &&
-                    $.isEqual(iReturn, _Event_)
-                ) {
-                    iCallback.call($_Source ? $_Source[0] : this,  iReturn);
-                    $_BOM.off('message', arguments.callee);
-                }
-            });
-        iData = $.extend({data: iData},  _Event_.valueOf());
-
-        iTarget.postMessage(
-            ($.browser.msie < 10) ? JSON.stringify(iData) : iData,  '*'
-        );
-    };
-
-/* ---------- Mouse Wheel Event ---------- */
-
-    if (! $.browser.mozilla)  return;
-
-    $_DOM.on('DOMMouseScroll',  function (iEvent) {
-        $(iEvent.target).trigger({
-            type:          'mousewheel',
-            wheelDelta:    -iEvent.detail * 40
+            if (false  ===  WrapCall.call(_This_, iCallback))
+                this[this.length - 1] = null;
         });
+    }
+
+    $.extend(Observer.prototype, {
+        on:         function () {
+            if (typeof arguments[arguments.length - 1]  ==  'function') {
+                var iArgs = $.makeArray(arguments);
+
+                for (var i = 0;  this.table[i];  i++)
+                    if ($.isEqual(this.table[i], iArgs))
+                        return this;
+
+                this.table.push(iArgs);
+            }
+
+            return this;
+        },
+        off:        function () {
+            var iArgs = $.makeArray(arguments);
+
+            var iCallback = (typeof iArgs[iArgs.length - 1]  ==  'function')  &&
+                    iArgs.pop();
+
+            iArgs.push(function () {
+                return  (iCallback !== false)  &&  (iCallback !== arguments[0]);
+            });
+
+            Each_Row.apply(this, iArgs);
+
+            return this;
+        },
+        one:        function () {
+            var iArgs = $.makeArray(arguments);
+
+            if (typeof iArgs[iArgs.length - 1]  ==  'function') {
+                var iCallback = iArgs.pop();
+
+                iArgs.push(function () {
+                    this.off.apply(this, iArgs);
+
+                    return  iCallback.apply(this, arguments);
+                });
+
+                this.on.apply(this, iArgs);
+            }
+
+            return this;
+        },
+        trigger:    function () {
+            var iArgs = $.makeArray(arguments),  iReturn = [ ];
+
+            var iData = $.likeArray(iArgs[iArgs.length - 1])  &&  iArgs.pop();
+
+            iArgs.push(function () {
+                var _Return_ = arguments[0].apply(this, iData);
+
+                if ($.isData(_Return_))  iReturn.push(_Return_);
+            });
+
+            Each_Row.apply(this, iArgs);
+
+            return iReturn;
+        }
     });
+
+    $.Observer = Observer;
 
 })(self, self.document, self.jQuery);
 
@@ -1770,188 +2113,32 @@
 
 (function (BOM, DOM, $) {
 
-/* ---------- Document Current Script ---------- */
-
-    var Stack_Prefix = {
-            webkit:     'at ',
-            mozilla:    '@',
-            msie:       'at Global code \\('
-        };
-
-    function Script_URL() {
-        try {
-            throw  new Error('AMD_Loader');
-        } catch (iError) {
-            var iURL;
-
-            for (var iCore in Stack_Prefix)
-                if ( $.browser[iCore] ) {
-                    iURL = iError.stack.match(RegExp(
-                        "\\s+" + Stack_Prefix[iCore] + "(http(s)?:\\/\\/\\S+.js)"
-                    ));
-
-                    return  iURL && iURL[1];
-                }
+    function HTTP_Request(iMethod, iURL, iData, iCallback, DataType) {
+        if (typeof iData == 'function') {
+            DataType = iCallback;
+            iCallback = iData;
+            iData = null;
         }
-    }
-
-    if (! ('currentScript' in DOM))
-        Object.defineProperty(DOM.constructor.prototype, 'currentScript', {
-            get:    function () {
-                var iURL = ($.browser.msie < 10)  ||  Script_URL();
-
-                for (var i = 0;  DOM.scripts[i];  i++)
-                    if ((iURL === true)  ?
-                        (DOM.scripts[i].readyState == 'interactive')  :
-                        (DOM.scripts[i].src == iURL)
-                    )
-                        return DOM.scripts[i];
-            }
+        return  $.ajax({
+            type:           iMethod,
+            url:            iURL,
+            crossDomain:    true,
+            data:           iData,
+            dataType:       DataType,
+            success:        iCallback
         });
-
-/* ---------- ParentNode Children ---------- */
-
-    function HTMLCollection(DOM_Array) {
-
-        for (var i = 0, j = 0;  DOM_Array[i];  i++)
-            if (DOM_Array[i].nodeType == 1){
-                this[j] = DOM_Array[i];
-
-                if (this[j++].name)  this[this[j - 1].name] = this[j - 1];
-            }
-
-        this.length = j;
     }
 
-    HTMLCollection.prototype.item = HTMLCollection.prototype.namedItem =
-        function () {
-            return  this[ arguments[0] ]  ||  null;
-        };
+    var _Patch_ = ($ !== BOM.iQuery);
 
-    var Children_Define = {
-            get:    function () {
-                return  new HTMLCollection( this.childNodes );
-            }
-        };
-
-    if (! DOM.createDocumentFragment().children)
-        Object.defineProperty(
-            ($.browser.modern ? DocumentFragment : DOM.constructor).prototype,
-            'children',
-            Children_Define
+    var HTTP_Method = $.makeSet.apply(
+            $,  ['PUT', 'DELETE'].concat(_Patch_  ?  [ ]  :  ['GET', 'POST'])
         );
 
-    if (! DOM.head.children[0])
-        Object.defineProperty(DOM_Proto, 'children', Children_Define);
+    for (var iMethod in HTTP_Method)
+        $[ iMethod.toLowerCase() ] = $.proxy(HTTP_Request, BOM, iMethod);
 
-
-/* ---------- Selected Options ---------- */
-
-    if ($.browser.msie < 12)
-        Object.defineProperty(HTMLSelectElement.prototype, 'selectedOptions', {
-            get:    function () {
-                return  new HTMLCollection(
-                    $.map(this.options,  function (iOption) {
-                        return  iOption.selected ? iOption : null;
-                    })
-                );
-            }
-        });
-/* ---------- Element CSS Selector Match ---------- */
-
-    var DOM_Proto = Element.prototype;
-
-    DOM_Proto.matches = DOM_Proto.matches || DOM_Proto.webkitMatchesSelector ||
-        DOM_Proto.msMatchesSelector || DOM_Proto.mozMatchesSelector ||
-        function () {
-            if (! this.parentNode)  $('<div />')[0].appendChild(this);
-
-            return  ($.inArray(
-                this,  this.parentNode.querySelectorAll( arguments[0] )
-            ) > -1);
-        };
-
-
-    if (! ($.browser.msie < 11))  return;
-
-/* ---------- Element Data Set ---------- */
-
-    function DOMStringMap(iElement) {
-        for (var i = 0, iAttr;  i < iElement.attributes.length;  i++) {
-            iAttr = iElement.attributes[i];
-            if (iAttr.nodeName.slice(0, 5) == 'data-')
-                this[ iAttr.nodeName.slice(5).toCamelCase() ] = iAttr.nodeValue;
-        }
-    }
-
-    Object.defineProperty(DOM_Proto, 'dataset', {
-        get:    function () {
-            return  new DOMStringMap(this);
-        }
-    });
-
-
-    if (! ($.browser.msie < 10))  return;
-
-/* ---------- Error Useful Information ---------- */
-
-    //  Thanks "Kevin Yang" ---
-    //
-    //      http://www.imkevinyang.com/2010/01/%E8%A7%A3%E6%9E%90ie%E4%B8%AD%E7%9A%84javascript-error%E5%AF%B9%E8%B1%A1.html
-
-    Error.prototype.valueOf = function () {
-        return  $.extend(this, {
-            code:       this.number & 0x0FFFF,
-            helpURL:    'https://msdn.microsoft.com/en-us/library/1dk3k160(VS.85).aspx'
-        });
-    };
-
-/* ---------- DOM Class List ---------- */
-
-    function DOMTokenList() {
-        var iClass = (arguments[0].getAttribute('class') || '').trim().split(/\s+/);
-
-        $.extend(this, iClass);
-
-        this.length = iClass.length;
-    }
-
-    DOMTokenList.prototype.contains = function (iClass) {
-        if (iClass.match(/\s+/))
-            throw  new DOMException([
-                "Failed to execute 'contains' on 'DOMTokenList': The token provided (",
-                iClass,
-                ") contains HTML space characters, which are not valid in tokens."
-            ].join("'"));
-
-        return  (Array.prototype.indexOf.call(this, iClass) > -1);
-    };
-
-    Object.defineProperty(DOM_Proto, 'classList', {
-        get:    function () {
-            return  new DOMTokenList(this);
-        }
-    });
-
-/* ---------- DOM InnerHTML ---------- */
-
-    var InnerHTML = Object.getOwnPropertyDescriptor(DOM_Proto, 'innerHTML');
-
-    Object.defineProperty(DOM_Proto, 'innerHTML', {
-        set:    function (iHTML) {
-            if (! String(iHTML).match(
-                /^[^<]*<\s*(head|meta|title|link|style|script|noscript|(!--[^>]*--))[^>]*>/i
-            ))
-                return  InnerHTML.set.call(this, iHTML);
-
-            InnerHTML.set.call(this,  'IE_Scope' + iHTML);
-
-            var iChild = this.childNodes;
-            iChild[0].nodeValue = iChild[0].nodeValue.slice(8);
-
-            if (! iChild[0].nodeValue[0])  this.removeChild( iChild[0] );
-        }
-    });
+    if (! _Patch_)  $.getJSON = $.get;
 
 })(self, self.document, self.jQuery);
 
@@ -2103,153 +2290,6 @@
             return $(this.ownerNode).serialize();
         }
     });
-
-})(self, self.document, self.jQuery);
-
-
-
-(function (BOM, DOM, $) {
-
-    function HTTP_Request(iMethod, iURL, iData, iCallback, DataType) {
-        if (typeof iData == 'function') {
-            DataType = iCallback;
-            iCallback = iData;
-            iData = null;
-        }
-        return  $.ajax({
-            type:           iMethod,
-            url:            iURL,
-            crossDomain:    true,
-            data:           iData,
-            dataType:       DataType,
-            success:        iCallback
-        });
-    }
-
-    var _Patch_ = ($ !== BOM.iQuery);
-
-    var HTTP_Method = $.makeSet.apply(
-            $,  ['PUT', 'DELETE'].concat(_Patch_  ?  [ ]  :  ['GET', 'POST'])
-        );
-
-    for (var iMethod in HTTP_Method)
-        $[ iMethod.toLowerCase() ] = $.proxy(HTTP_Request, BOM, iMethod);
-
-    if (! _Patch_)  $.getJSON = $.get;
-
-})(self, self.document, self.jQuery);
-
-
-
-(function (BOM, DOM, $) {
-
-    function Observer() {
-        this.requireArgs = arguments[0] || 0;
-        this.filter = arguments[1] || [ ];
-        this.table = [ ];
-
-        return this;
-    }
-
-    function Each_Row() {
-        var _This_ = this,  iArgs = $.makeArray(arguments);
-
-        if (typeof iArgs[iArgs.length - 1]  !=  'function')  return;
-
-        var WrapCall = iArgs.pop();
-
-        $.each(this.table,  function () {
-            var iCallback = this[this.length - 1];
-
-            if (iCallback == null)  return;
-
-            for (var i = 0;  i < iArgs.length;  i++) {
-                if (typeof this[i] == 'function')  break;
-
-                if (this[i] === undefined) {
-
-                    if (i < _This_.requireArgs)  return;
-
-                } else if (
-                    (typeof _This_.filter[i] == 'function')  ?  (
-                        false === _This_.filter[i].call(
-                            _This_,  this[i],  iArgs[i]
-                        )
-                    )  :  (
-                        (this[i] != iArgs[i])  &&  (! iArgs[i].match(this[i]))
-                    )
-                )
-                    return;
-            }
-
-            if (false  ===  WrapCall.call(_This_, iCallback))
-                this[this.length - 1] = null;
-        });
-    }
-
-    $.extend(Observer.prototype, {
-        on:         function () {
-            if (typeof arguments[arguments.length - 1]  ==  'function') {
-                var iArgs = $.makeArray(arguments);
-
-                for (var i = 0;  this.table[i];  i++)
-                    if ($.isEqual(this.table[i], iArgs))
-                        return this;
-
-                this.table.push(iArgs);
-            }
-
-            return this;
-        },
-        off:        function () {
-            var iArgs = $.makeArray(arguments);
-
-            var iCallback = (typeof iArgs[iArgs.length - 1]  ==  'function')  &&
-                    iArgs.pop();
-
-            iArgs.push(function () {
-                return  (iCallback !== false)  &&  (iCallback !== arguments[0]);
-            });
-
-            Each_Row.apply(this, iArgs);
-
-            return this;
-        },
-        one:        function () {
-            var iArgs = $.makeArray(arguments);
-
-            if (typeof iArgs[iArgs.length - 1]  ==  'function') {
-                var iCallback = iArgs.pop();
-
-                iArgs.push(function () {
-                    this.off.apply(this, iArgs);
-
-                    return  iCallback.apply(this, arguments);
-                });
-
-                this.on.apply(this, iArgs);
-            }
-
-            return this;
-        },
-        trigger:    function () {
-            var iArgs = $.makeArray(arguments),  iReturn = [ ];
-
-            var iData = $.likeArray(iArgs[iArgs.length - 1])  &&  iArgs.pop();
-
-            iArgs.push(function () {
-                var _Return_ = arguments[0].apply(this, iData);
-
-                if ($.isData(_Return_))  iReturn.push(_Return_);
-            });
-
-            Each_Row.apply(this, iArgs);
-
-            return iReturn;
-        }
-    });
-
-    $.Observer = Observer;
 
 })(self, self.document, self.jQuery);
 
@@ -2457,27 +2497,6 @@
 
         return this;
     };
-
-})(self, self.document, self.jQuery);
-
-
-//
-//              >>>  jQuery+  <<<
-//
-//
-//    [Version]    v7.9  (2016-09-01)
-//
-//    [Require]    jQuery  v1.9+
-//
-//
-//        (C)2014-2016  shiy2008@gmail.com
-//
-
-
-
-(function (BOM, DOM, $) {
-
-    return  BOM.jQuery.extend(true, $);
 
 })(self, self.document, self.jQuery);
 

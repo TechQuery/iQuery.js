@@ -262,6 +262,8 @@ define(['extension/iTimer'],  function ($) {
         }
     });
 
+    if (typeof BOM.jQuery != 'function')  BOM.$ = BOM.jQuery = $;
+
     /* ----- iQuery Instance Method ----- */
 
     $.fn = $.prototype;
