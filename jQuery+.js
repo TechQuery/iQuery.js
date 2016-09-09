@@ -1681,28 +1681,24 @@
     }
 
     $.fn.value = function (iAttr, iFiller) {
-        if (typeof iAttr == 'function') {
-            iFiller = iAttr;
-            iAttr = '';
-        }
-        var $_Value = iAttr  ?  this.filter('[' + iAttr + ']')  :  this;
-        $_Value = $_Value.length  ?  $_Value  :  this.find('[' + iAttr + ']');
+        var $_Value = '[' + iAttr + ']';
 
-        if (! iFiller)  return Value_Operator.call($_Value[0]);
+        $_Value = this.filter( $_Value ).add( this.find($_Value) );
+
+        if (! iFiller)
+            return  Value_Operator.call( $_Value[0] );
 
         var Data_Set = (typeof iFiller != 'function');
 
-        for (var i = 0, iKey;  i < $_Value.length;  i++) {
-            iKey = iAttr && $_Value[i].getAttribute(iAttr);
+        return  $_Value.each(function () {
+            var iKey = this.getAttribute( iAttr );
 
-            Value_Operator.call(
-                $_Value[i],
-                Data_Set  ?  iFiller[iKey]  :  iFiller.apply($_Value[i], [
-                    iKey || Value_Operator.call($_Value[i]),  i,  $_Value
+            Value_Operator.apply(this, [
+                Data_Set  ?  iFiller[iKey]  :  iFiller.apply(this, [
+                    iKey,  arguments[0],  $_Value
                 ])
-            );
-        }
-        return this;
+            ]);
+        });
     };
 
 /* ---------- HTML DOM SandBox ---------- */
@@ -2170,20 +2166,27 @@
 
             $_This.empty().append( $_Fragment );
 
-            $_Script.each(function () {
+            var iArgs = arguments;
+
+            Promise.all($.map($_Script,  function (iJS, Index) {
                 var $_JS = $('<script />');
 
-                if (! this.src)
-                    $_JS[0].text = this.text;
-                else
-                    $_JS[0].src = this.src;
+                if (! iJS.src) {
+                    $_JS.prop('text', iJS.text).insertTo($_This, Index);
+                    return;
+                }
 
-                $_JS.insertTo($_This, arguments[0]);
+                return  new Promise(function () {
+                    $_JS.on('load', arguments[0])
+                        .on('error', arguments[1])
+                        .prop('src', iJS.src)
+                        .insertTo($_This, Index);
+                });
+            })).then(function () {
+                if (typeof iCallback == 'function')
+                    for (var i = 0;  $_This[i];  i++)
+                        iCallback.apply($_This[i], iArgs);
             });
-
-            if (typeof iCallback == 'function')
-                for (var i = 0;  $_This[i];  i++)
-                    iCallback.apply($_This[i], arguments);
         },  'html');
 
         return this;

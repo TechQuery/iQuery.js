@@ -59,20 +59,27 @@ define(['jquery'],  function ($) {
 
             $_This.empty().append( $_Fragment );
 
-            $_Script.each(function () {
+            var iArgs = arguments;
+
+            Promise.all($.map($_Script,  function (iJS, Index) {
                 var $_JS = $('<script />');
 
-                if (! this.src)
-                    $_JS[0].text = this.text;
-                else
-                    $_JS[0].src = this.src;
+                if (! iJS.src) {
+                    $_JS.prop('text', iJS.text).insertTo($_This, Index);
+                    return;
+                }
 
-                $_JS.insertTo($_This, arguments[0]);
+                return  new Promise(function () {
+                    $_JS.on('load', arguments[0])
+                        .on('error', arguments[1])
+                        .prop('src', iJS.src)
+                        .insertTo($_This, Index);
+                });
+            })).then(function () {
+                if (typeof iCallback == 'function')
+                    for (var i = 0;  $_This[i];  i++)
+                        iCallback.apply($_This[i], iArgs);
             });
-
-            if (typeof iCallback == 'function')
-                for (var i = 0;  $_This[i];  i++)
-                    iCallback.apply($_This[i], arguments);
         },  'html');
 
         return this;

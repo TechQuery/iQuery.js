@@ -177,28 +177,24 @@ define(['jquery'],  function ($) {
     }
 
     $.fn.value = function (iAttr, iFiller) {
-        if (typeof iAttr == 'function') {
-            iFiller = iAttr;
-            iAttr = '';
-        }
-        var $_Value = iAttr  ?  this.filter('[' + iAttr + ']')  :  this;
-        $_Value = $_Value.length  ?  $_Value  :  this.find('[' + iAttr + ']');
+        var $_Value = '[' + iAttr + ']';
 
-        if (! iFiller)  return Value_Operator.call($_Value[0]);
+        $_Value = this.filter( $_Value ).add( this.find($_Value) );
+
+        if (! iFiller)
+            return  Value_Operator.call( $_Value[0] );
 
         var Data_Set = (typeof iFiller != 'function');
 
-        for (var i = 0, iKey;  i < $_Value.length;  i++) {
-            iKey = iAttr && $_Value[i].getAttribute(iAttr);
+        return  $_Value.each(function () {
+            var iKey = this.getAttribute( iAttr );
 
-            Value_Operator.call(
-                $_Value[i],
-                Data_Set  ?  iFiller[iKey]  :  iFiller.apply($_Value[i], [
-                    iKey || Value_Operator.call($_Value[i]),  i,  $_Value
+            Value_Operator.apply(this, [
+                Data_Set  ?  iFiller[iKey]  :  iFiller.apply(this, [
+                    iKey,  arguments[0],  $_Value
                 ])
-            );
-        }
-        return this;
+            ]);
+        });
     };
 
 /* ---------- HTML DOM SandBox ---------- */
