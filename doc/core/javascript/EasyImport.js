@@ -2,7 +2,7 @@
 //                >>>  iQuery.js  <<<
 //
 //
-//      [Version]    v2.0  (2016-09-02)  Stable
+//      [Version]    v2.0  (2016-09-09)  Stable
 //
 //      [Usage]      A Light-weight jQuery Compatible API
 //                   with IE 8+ compatibility.
@@ -819,7 +819,7 @@
                 arguments[0] || BOM.location.href
             ).match(/^(\w+:)?\/\/[^\/]+/) || [ ])[0];
         },
-        isCrossDomain:    function X_Domain() {
+        isCrossDomain:    function () {
             var iDomain = this.urlDomain( arguments[0] );
 
             return  iDomain && (
@@ -4270,6 +4270,8 @@
 
 (function (BOM, DOM, $) {
 
+/* ---------- RESTful API ---------- */
+
     function HTTP_Request(iMethod, iURL, iData, iCallback, DataType) {
         if (typeof iData == 'function') {
             DataType = iCallback;
@@ -4297,11 +4299,8 @@
 
     if (! _Patch_)  $.getJSON = $.get;
 
-})(self,  self.document,  self.iQuery || iQuery);
 
-
-
-(function (BOM, DOM, $) {
+/* ---------- Smart Load ---------- */
 
     $.fn.load = function (iURL, iData, iCallback) {
         if (! this[0])  return this;
@@ -4315,21 +4314,34 @@
 
         var $_This = this;
 
-        $[iData ? 'post' : 'get'](iURL[0], iData, function (iFragment) {
+        $[iData ? 'post' : 'get'](iURL[0],  iData,  function ($_Fragment) {
+            $_Fragment = $(
+                (typeof $_Fragment == 'string')  ?
+                    $_Fragment  :  $_Fragment.children
+            );
+            var $_Script = $_Fragment.filter('script');
+
+            $_Fragment = $_Fragment.not( $_Script );
+
             $_This.children().fadeOut();
 
-            $_This.empty()[0].appendChild( iFragment );
+            $_This.empty().append( $_Fragment );
 
-            var $_Script = $( iFragment.children )
-                    .filter('script').not('[src]').remove();
+            $_Script.each(function () {
+                var $_JS = $('<script />');
 
-            for (var i = 0;  $_Script[i];  i++)
-                $.globalEval( $_Script[i].text );
+                if (! this.src)
+                    $_JS[0].text = this.text;
+                else
+                    $_JS[0].src = this.src;
+
+                $_JS.insertTo($_This, arguments[0]);
+            });
 
             if (typeof iCallback == 'function')
                 for (var i = 0;  $_This[i];  i++)
                     iCallback.apply($_This[i], arguments);
-        });
+        },  'html');
 
         return this;
     };

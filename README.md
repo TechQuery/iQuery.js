@@ -57,12 +57,13 @@
  - 新增 **对象构造函数名**获取方法 —— `$.Type()`
  - 新增 **字符串部分分割**方法 —— `$.split()`（借鉴 PHP）
  - 新增 **字符串字节长度**方法 —— `$.byteLength()`
+ - 新增 **URL 信息提取**方法 —— `$.fileName()`、`$.filePath()`、`$.urlDomain()`
  - 新增 **URL 参数对象化**方法（$.param() 的逆方法）—— `$.paramJSON()`，其返回值自带的 .toString() 有 **JSON 格式化（美化）输出**能力
  - 新增 **URL 参数签名**方法 —— `$.paramSign()`
  - 新增 **多条件观察者**基础对象 —— `$.Observer()`
  - 更智能的 `$.get()`、`$.post()`：支持 form 元素、FormData 对象的请求数据形式，整合 XHR、XDR、JSONP、iframe **自适应 跨域请求**， **自动转换响应内容**为 HTML、XML 或 JSON 对象实例
  - 新增 `$.delete()`、`$.put()`，方便实现基于 **RESTful API** 的单页应用
- - 新增 **URL 信息提取**方法 —— `$.fileName()`、`$.filePath()`、`$.urlDomain()`
+ - 优化了 `$.fn.load()` 的 `<script />` 处理方式，方便 DOM 片段清理、脚本调试
  - 封装了 **表单元素无刷新提交**，并可直接绑定响应回调 —— `$.fn.ajaxSubmit()`（基于前述的几个 **AJAX 增强方法** 构建）
  - 新增 **选择符合法性判断**方法 —— `$.isSelector()`
  - 更多 jQuery **伪类选择符**：

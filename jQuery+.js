@@ -2,7 +2,7 @@
 //              >>>  jQuery+  <<<
 //
 //
-//    [Version]    v8.0  (2016-09-02)
+//    [Version]    v8.1  (2016-09-09)
 //
 //    [Require]    jQuery  v1.9+
 //
@@ -584,7 +584,7 @@
                 arguments[0] || BOM.location.href
             ).match(/^(\w+:)?\/\/[^\/]+/) || [ ])[0];
         },
-        isCrossDomain:    function X_Domain() {
+        isCrossDomain:    function () {
             var iDomain = this.urlDomain( arguments[0] );
 
             return  iDomain && (
@@ -2113,6 +2113,8 @@
 
 (function (BOM, DOM, $) {
 
+/* ---------- RESTful API ---------- */
+
     function HTTP_Request(iMethod, iURL, iData, iCallback, DataType) {
         if (typeof iData == 'function') {
             DataType = iCallback;
@@ -2139,6 +2141,53 @@
         $[ iMethod.toLowerCase() ] = $.proxy(HTTP_Request, BOM, iMethod);
 
     if (! _Patch_)  $.getJSON = $.get;
+
+
+/* ---------- Smart Load ---------- */
+
+    $.fn.load = function (iURL, iData, iCallback) {
+        if (! this[0])  return this;
+
+        iURL = $.split(iURL.trim(), /\s+/, 2, ' ');
+
+        if (typeof iData == 'function') {
+            iCallback = iData;
+            iData = null;
+        }
+
+        var $_This = this;
+
+        $[iData ? 'post' : 'get'](iURL[0],  iData,  function ($_Fragment) {
+            $_Fragment = $(
+                (typeof $_Fragment == 'string')  ?
+                    $_Fragment  :  $_Fragment.children
+            );
+            var $_Script = $_Fragment.filter('script');
+
+            $_Fragment = $_Fragment.not( $_Script );
+
+            $_This.children().fadeOut();
+
+            $_This.empty().append( $_Fragment );
+
+            $_Script.each(function () {
+                var $_JS = $('<script />');
+
+                if (! this.src)
+                    $_JS[0].text = this.text;
+                else
+                    $_JS[0].src = this.src;
+
+                $_JS.insertTo($_This, arguments[0]);
+            });
+
+            if (typeof iCallback == 'function')
+                for (var i = 0;  $_This[i];  i++)
+                    iCallback.apply($_This[i], arguments);
+        },  'html');
+
+        return this;
+    };
 
 })(self, self.document, self.jQuery);
 

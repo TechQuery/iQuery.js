@@ -147,7 +147,7 @@ define(['jquery'],  function ($) {
                 arguments[0] || BOM.location.href
             ).match(/^(\w+:)?\/\/[^\/]+/) || [ ])[0];
         },
-        isCrossDomain:    function X_Domain() {
+        isCrossDomain:    function () {
             var iDomain = this.urlDomain( arguments[0] );
 
             return  iDomain && (
