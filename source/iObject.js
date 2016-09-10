@@ -109,7 +109,7 @@ define(['extension/iObject'],  function ($) {
 
                     var _Element_ = iCallback(arguments[1], iKey, iSource);
 
-                    if ((_Element_ !== undefined)  &&  (_Element_ !== null))
+                    if (_Element_ != null)
                         if (iArray)
                             iTarget = iTarget.concat(_Element_);
                         else

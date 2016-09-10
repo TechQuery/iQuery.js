@@ -63,7 +63,7 @@
  - 新增 **多条件观察者**基础对象 —— `$.Observer()`
  - 更智能的 `$.get()`、`$.post()`：支持 form 元素、FormData 对象的请求数据形式，整合 XHR、XDR、JSONP、iframe **自适应 跨域请求**， **自动转换响应内容**为 HTML、XML 或 JSON 对象实例
  - 新增 `$.delete()`、`$.put()`，方便实现基于 **RESTful API** 的单页应用
- - 优化了 `$.fn.load()` 的 `<script />` 处理方式，方便 DOM 片段清理、脚本调试
+ - 重构 `$.fn.load()` 内部实现，与 **W3C HTML 解析规则** 保持一致，方便 DOM 片段清理、脚本调试
  - 封装了 **表单元素无刷新提交**，并可直接绑定响应回调 —— `$.fn.ajaxSubmit()`（基于前述的几个 **AJAX 增强方法** 构建）
  - 新增 **选择符合法性判断**方法 —— `$.isSelector()`
  - 更多 jQuery **伪类选择符**：

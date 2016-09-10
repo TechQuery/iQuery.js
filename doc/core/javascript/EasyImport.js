@@ -2,7 +2,7 @@
 //                >>>  iQuery.js  <<<
 //
 //
-//      [Version]    v2.0  (2016-09-09)  Stable
+//      [Version]    v2.0  (2016-09-10)  Stable
 //
 //      [Usage]      A Light-weight jQuery Compatible API
 //                   with IE 8+ compatibility.
@@ -217,7 +217,7 @@
                 if (_Value_ === this._public_)
                     throw  TypeError("Can't return the same Promise object !");
 
-                if (typeof _Value_.then == 'function')
+                if (typeof (_Value_ || '').then  ==  'function')
                     return  _Value_.then(_CB_[2], _CB_[3]);
             } else
                 _Value_ = this.value;
@@ -232,31 +232,39 @@
     Promise.resolve = function (iValue) {
         if (iValue instanceof this)  return iValue;
 
-        if (typeof iValue.then == 'function')
+        if (typeof (iValue || '').then  ==  'function')
             return  new this(function () {
                 iValue.then.apply(iValue, arguments);
             });
 
-        return  new this(function () {
-            arguments[0](iValue);
+        return  new this(function (iResolve) {
+            BOM.setTimeout(function () {
+                iResolve(iValue);
+            });
         });
     };
 
     Promise.reject = function (iValue) {
-        if (typeof iValue.then == 'function')
+        if (typeof (iValue || '').then  ==  'function')
             return  new this(function () {
                 iValue.then.apply(iValue, arguments);
             });
 
-        return  new this(function () {
-            arguments[1](iValue);
+        return  new this(function (_, iReject) {
+            BOM.setTimeout(function () {
+                iReject(iValue);
+            });
         });
     };
 
     Promise.all = function (pList) {
         var _Result_ = [ ];
 
-        return  new this(function (iResolved, iReject) {
+        for (var i = 0;  i < pList.length;  i++)
+            if ((! pList[i])  ||  (typeof pList[i].then != 'function'))
+                pList[i] = this.resolve( pList[i] );
+
+        return  i  ?  new this(function (iResolved, iReject) {
 
             ' '.repeat( pList.length ).replace(/ /g,  function (_, Index) {
 
@@ -267,7 +275,7 @@
                         iResolved(_Result_);
                 },  iReject);
             });
-        });
+        })  :  this.resolve(pList);
     };
 
     return  BOM.Promise = Promise;
@@ -551,7 +559,7 @@
 
                     var _Element_ = iCallback(arguments[1], iKey, iSource);
 
-                    if ((_Element_ !== undefined)  &&  (_Element_ !== null))
+                    if (_Element_ != null)
                         if (iArray)
                             iTarget = iTarget.concat(_Element_);
                         else
@@ -3590,28 +3598,24 @@
     }
 
     $.fn.value = function (iAttr, iFiller) {
-        if (typeof iAttr == 'function') {
-            iFiller = iAttr;
-            iAttr = '';
-        }
-        var $_Value = iAttr  ?  this.filter('[' + iAttr + ']')  :  this;
-        $_Value = $_Value.length  ?  $_Value  :  this.find('[' + iAttr + ']');
+        var $_Value = '[' + iAttr + ']';
 
-        if (! iFiller)  return Value_Operator.call($_Value[0]);
+        $_Value = this.filter( $_Value ).add( this.find($_Value) );
+
+        if (! iFiller)
+            return  Value_Operator.call( $_Value[0] );
 
         var Data_Set = (typeof iFiller != 'function');
 
-        for (var i = 0, iKey;  i < $_Value.length;  i++) {
-            iKey = iAttr && $_Value[i].getAttribute(iAttr);
+        return  $_Value.each(function () {
+            var iKey = this.getAttribute( iAttr );
 
-            Value_Operator.call(
-                $_Value[i],
-                Data_Set  ?  iFiller[iKey]  :  iFiller.apply($_Value[i], [
-                    iKey || Value_Operator.call($_Value[i]),  i,  $_Value
+            Value_Operator.apply(this, [
+                Data_Set  ?  iFiller[iKey]  :  iFiller.apply(this, [
+                    iKey,  arguments[0],  $_Value
                 ])
-            );
-        }
-        return this;
+            ]);
+        });
     };
 
 /* ---------- HTML DOM SandBox ---------- */
@@ -4302,6 +4306,32 @@
 
 /* ---------- Smart Load ---------- */
 
+    function HTML_Exec($_Fragment) {
+        var iDOM,  _This_ = this;
+
+        while ( $_Fragment[0] ) {
+            if ($_Fragment[0].tagName != 'SCRIPT')
+                iDOM = $_Fragment[0];
+            else if (! $_Fragment[0].src)
+                iDOM = $('<script />').prop('text', $_Fragment[0].text)[0];
+            else
+                return  (new Promise(function () {
+                    _This_.appendChild(
+                        $('<script />')
+                            .on('load', arguments[0]).on('error', arguments[1])
+                            .prop('src', $_Fragment[0].src)[0]
+                    );
+                    $_Fragment.shift();
+
+                })).then($.proxy(arguments.callee, this, $_Fragment));
+
+            this.appendChild( iDOM );
+            $_Fragment.shift();
+        }
+
+        return Promise.resolve('');
+    }
+
     $.fn.load = function (iURL, iData, iCallback) {
         if (! this[0])  return this;
 
@@ -4314,33 +4344,20 @@
 
         var $_This = this;
 
-        $[iData ? 'post' : 'get'](iURL[0],  iData,  function ($_Fragment) {
-            $_Fragment = $(
-                (typeof $_Fragment == 'string')  ?
-                    $_Fragment  :  $_Fragment.children
-            );
-            var $_Script = $_Fragment.filter('script');
+        $[iData ? 'post' : 'get'](iURL[0],  iData,  function () {
+            var iHTML = arguments[2].responseText,  AJAX_Args = arguments;
 
-            $_Fragment = $_Fragment.not( $_Script );
+            $_This.each(function () {
+                var $_Box = $(this);
 
-            $_This.children().fadeOut();
+                $_Box.children().fadeOut();
 
-            $_This.empty().append( $_Fragment );
-
-            $_Script.each(function () {
-                var $_JS = $('<script />');
-
-                if (! this.src)
-                    $_JS[0].text = this.text;
-                else
-                    $_JS[0].src = this.src;
-
-                $_JS.insertTo($_This, arguments[0]);
+                HTML_Exec.call($_Box.empty()[0],  $.makeArray( $(iHTML) ))
+                    .then(function () {
+                        if (typeof iCallback == 'function')
+                            iCallback.apply($_Box[0], AJAX_Args);
+                    });
             });
-
-            if (typeof iCallback == 'function')
-                for (var i = 0;  $_This[i];  i++)
-                    iCallback.apply($_This[i], arguments);
         },  'html');
 
         return this;

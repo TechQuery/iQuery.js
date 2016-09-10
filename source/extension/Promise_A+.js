@@ -46,7 +46,7 @@ define(function () {
                 if (_Value_ === this._public_)
                     throw  TypeError("Can't return the same Promise object !");
 
-                if (typeof _Value_.then == 'function')
+                if (typeof (_Value_ || '').then  ==  'function')
                     return  _Value_.then(_CB_[2], _CB_[3]);
             } else
                 _Value_ = this.value;
@@ -61,31 +61,39 @@ define(function () {
     Promise.resolve = function (iValue) {
         if (iValue instanceof this)  return iValue;
 
-        if (typeof iValue.then == 'function')
+        if (typeof (iValue || '').then  ==  'function')
             return  new this(function () {
                 iValue.then.apply(iValue, arguments);
             });
 
-        return  new this(function () {
-            arguments[0](iValue);
+        return  new this(function (iResolve) {
+            BOM.setTimeout(function () {
+                iResolve(iValue);
+            });
         });
     };
 
     Promise.reject = function (iValue) {
-        if (typeof iValue.then == 'function')
+        if (typeof (iValue || '').then  ==  'function')
             return  new this(function () {
                 iValue.then.apply(iValue, arguments);
             });
 
-        return  new this(function () {
-            arguments[1](iValue);
+        return  new this(function (_, iReject) {
+            BOM.setTimeout(function () {
+                iReject(iValue);
+            });
         });
     };
 
     Promise.all = function (pList) {
         var _Result_ = [ ];
 
-        return  new this(function (iResolved, iReject) {
+        for (var i = 0;  i < pList.length;  i++)
+            if ((! pList[i])  ||  (typeof pList[i].then != 'function'))
+                pList[i] = this.resolve( pList[i] );
+
+        return  i  ?  new this(function (iResolved, iReject) {
 
             ' '.repeat( pList.length ).replace(/ /g,  function (_, Index) {
 
@@ -96,7 +104,7 @@ define(function () {
                         iResolved(_Result_);
                 },  iReject);
             });
-        });
+        })  :  this.resolve(pList);
     };
 
     return  BOM.Promise = Promise;
