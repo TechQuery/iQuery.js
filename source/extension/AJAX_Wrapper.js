@@ -72,8 +72,9 @@ define(['jquery'],  function ($) {
 
         var $_This = this;
 
-        $[iData ? 'post' : 'get'](iURL[0],  iData,  function () {
-            var iHTML = arguments[2].responseText,  AJAX_Args = arguments;
+        $[iData ? 'post' : 'get'](iURL[0],  iData,  function (iHTML, _, iXHR) {
+
+            var iHTML = (typeof iHTML == 'string')  ?  iHTML  :  iXHR.responseText;
 
             $_This.each(function () {
                 var $_Box = $(this);
@@ -83,7 +84,7 @@ define(['jquery'],  function ($) {
                 HTML_Exec.call($_Box.empty()[0],  $.makeArray( $(iHTML) ))
                     .then(function () {
                         if (typeof iCallback == 'function')
-                            iCallback.apply($_Box[0], AJAX_Args);
+                            iCallback.call($_Box[0], iHTML, _, iXHR);
                     });
             });
         },  'html');

@@ -252,7 +252,7 @@ define(['extension/iTimer'],  function ($) {
 
             return $.map(
                 $.makeArray(iNew.childNodes),
-                function (iDOM, _Index_) {
+                function (iDOM) {
                     return iDOM.parentNode.removeChild(iDOM);
                 }
             );
