@@ -2322,11 +2322,11 @@
         return Boolean(
             (this.pageX  &&  (
                 (this.pageX < iOffset.left)  ||
-                (this.pageX  >  (iOffset.left + $_This.width()))
+                (this.pageX  >  (iOffset.left + parseFloat($_This.css('width'))))
             ))  ||
             (this.pageY  &&  (
                 (this.pageY < iOffset.top)  ||
-                (this.pageY  >  (iOffset.top + $_This.height()))
+                (this.pageY  >  (iOffset.top + parseFloat($_This.css('height'))))
             ))
         );
     };

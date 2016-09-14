@@ -134,7 +134,16 @@
         this.cache = iDelay && [ ];
 
         this.$_View.on(Click_Type,  '.ListView_Item',  function (iEvent) {
+
             if (iView.$_View[0] !== this.parentNode)  return;
+
+            var $_Focus = $( iEvent.target );
+
+            if (! $_Focus.is(':data("TV_Focused")'))
+                $_Focus = $_Focus.parents(':data("TV_Focused")').eq(0);
+
+            if ( $_Focus.data('TV_Focused') )
+                return  $_Focus.data('TV_Focused', null);
 
             var $_This = $(this);
 
@@ -143,8 +152,11 @@
                 $_This.scrollParents().is(
                     'a[href], *[tabIndex], *[contentEditable]'
                 )
-            )
+            ) {
                 _Self_.instanceOf(this).focus(this);
+
+                $_This.data('TV_Focused', 1);
+            }
         });
     }
 
@@ -644,7 +656,7 @@
 //              >>>  iQuery+  <<<
 //
 //
-//    [Version]    v1.6  (2016-08-25)  Stable
+//    [Version]    v1.6  (2016-09-14)  Stable
 //
 //    [Require]    iQuery  ||  jQuery with jQuery+
 //
