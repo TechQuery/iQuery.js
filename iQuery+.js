@@ -362,13 +362,17 @@
             return iLV;
         },
         fork:           function () {
-            var $_View = this.$_View.clone(true).empty().append(
-                    this.$_Template.clone(true)
-                );
-            $_View.data({'[object ListView]': '',  LV_Model: ''})[0].id = '';
-
             var iFork = ListView(
-                    $_View.appendTo( arguments[0] ),  false,  this.selector
+                    this.$_View.clone(true)
+                        .removeAttr('id style')
+                        .data({
+                            '[object ListView]':    '',
+                            LV_Model:               ''
+                        })
+                        .empty().append( this.$_Template.clone(true) )
+                        .appendTo( arguments[0] ),
+                    false,
+                    this.selector
                 );
             iFork.table = this.table;
             iFork.parentView = this;
@@ -482,11 +486,12 @@
 
             this[iDepth].push( iFork.clear() );
 
-            if (this.initDepth < this.length) {
+            if (this.initDepth > iDepth)
+                this.render(iFork.$_View, iData);
+            else {
                 iFork.$_View.data('TV_Model', iData);
                 iData = null;
-            } else
-                this.render(iFork.$_View, iData);
+            }
 
             this.trigger('branch',  [iFork, this.length, iData]);
 
@@ -656,11 +661,19 @@
 //              >>>  iQuery+  <<<
 //
 //
-//    [Version]    v1.6  (2016-09-14)  Stable
+//    [Version]    v1.6  (2016-09-18)  Stable
 //
 //    [Require]    iQuery  ||  jQuery with jQuery+
 //
 //
 //        (C)2015-2016  shiy2008@gmail.com
 //
+
+
+
+(function (BOM, DOM, $) {
+
+})(self, self.document, self.jQuery);
+
+
 });

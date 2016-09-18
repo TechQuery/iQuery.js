@@ -15,6 +15,12 @@ define(function () {
             return iKey;
         };
 
+    Object.getPrototypeOf = Object.getPrototypeOf  ||  function (iObject) {
+        return  (iObject != null)  &&  (
+            iObject.constructor.prototype || iObject.__proto__
+        );
+    };
+
     /* ----- String Extension ----- */
 
     var _Trim_ = ''.trim;
@@ -40,10 +46,9 @@ define(function () {
         return  this.slice(iFrom, iTo);
     };
 
-    if (! ''.repeat)
-        String.prototype.repeat = function (Times) {
-            return  (new Array(Times + 1)).join(this);
-        };
+    String.prototype.repeat = String.prototype.repeat  ||  function (Times) {
+        return  (new Array(Times + 1)).join(this);
+    };
 
     String.prototype.toCamelCase = function () {
         var iName = this.split(arguments[0] || '-');
@@ -62,27 +67,25 @@ define(function () {
 
     /* ----- Array Extension ----- */
 
-    if (! [ ].indexOf)
-        Array.prototype.indexOf = function () {
-            for (var i = 0;  i < this.length;  i++)
-                if (arguments[0] === this[i])
-                    return i;
+    Array.prototype.indexOf = Array.prototype.indexOf  ||  function () {
+        for (var i = 0;  i < this.length;  i++)
+            if (arguments[0] === this[i])
+                return i;
 
-            return -1;
-        };
+        return -1;
+    };
 
-    if (! [ ].reduce)
-        Array.prototype.reduce = function () {
-            var iResult = arguments[1];
+    Array.prototype.reduce = Array.prototype.reduce  ||  function () {
+        var iResult = arguments[1];
 
-            for (var i = 1;  i < this.length;  i++) {
-                if (i == 1)  iResult = this[0];
+        for (var i = 1;  i < this.length;  i++) {
+            if (i == 1)  iResult = this[0];
 
-                iResult = arguments[0](iResult, this[i], i, this);
-            }
+            iResult = arguments[0](iResult, this[i], i, this);
+        }
 
-            return iResult;
-        };
+        return iResult;
+    };
 
     /* ----- Function Extension ----- */
 
@@ -99,8 +102,7 @@ define(function () {
 
     /* ----- Date Extension ----- */
 
-    if (! Date.now)
-        Date.now = function () { return  +(new Date()); };
+    Date.now = Date.now  ||  function () { return  +(new Date()); };
 
 
     /* ----- JSON Extension  v0.4 ----- */

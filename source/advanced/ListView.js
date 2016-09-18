@@ -271,13 +271,17 @@ define(['jquery', 'CommonView'],  function ($) {
             return iLV;
         },
         fork:           function () {
-            var $_View = this.$_View.clone(true).empty().append(
-                    this.$_Template.clone(true)
-                );
-            $_View.data({'[object ListView]': '',  LV_Model: ''})[0].id = '';
-
             var iFork = ListView(
-                    $_View.appendTo( arguments[0] ),  false,  this.selector
+                    this.$_View.clone(true)
+                        .removeAttr('id style')
+                        .data({
+                            '[object ListView]':    '',
+                            LV_Model:               ''
+                        })
+                        .empty().append( this.$_Template.clone(true) )
+                        .appendTo( arguments[0] ),
+                    false,
+                    this.selector
                 );
             iFork.table = this.table;
             iFork.parentView = this;

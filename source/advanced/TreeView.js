@@ -97,11 +97,12 @@ define(['jquery', 'ListView'],  function ($) {
 
             this[iDepth].push( iFork.clear() );
 
-            if (this.initDepth < this.length) {
+            if (this.initDepth > iDepth)
+                this.render(iFork.$_View, iData);
+            else {
                 iFork.$_View.data('TV_Model', iData);
                 iData = null;
-            } else
-                this.render(iFork.$_View, iData);
+            }
 
             this.trigger('branch',  [iFork, this.length, iData]);
 
