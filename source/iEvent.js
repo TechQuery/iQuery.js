@@ -15,7 +15,7 @@ define(['iDOM'],  function ($) {
     function isOriginalEvent() {
         return (
             ('on' + this.type)  in
-            (this.target || DOM.documentElement).constructor.prototype
+            Object.getPrototypeOf(this.target || DOM.documentElement)
         ) || (
             $.browser.modern  &&  (this.type in Mutation_Event)
         );
@@ -191,7 +191,7 @@ define(['iDOM'],  function ($) {
 
             iType = 'on' + iType;
 
-            if (! (iType in this.constructor.prototype))
+            if (! (iType in Object.getPrototypeOf(this)))
                 return 'onpropertychange';
 
             return iType;

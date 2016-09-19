@@ -453,7 +453,7 @@
 (function (BOM, DOM, $) {
 
     $.isPlainObject = function (iValue) {
-        return  iValue && (iValue.constructor === Object);
+        return  iValue  &&  (Object.getPrototypeOf(iValue) === Object.prototype);
     };
 
     function _Extend_(iTarget, iSource, iDeep) {
@@ -1849,7 +1849,7 @@
     function isOriginalEvent() {
         return (
             ('on' + this.type)  in
-            (this.target || DOM.documentElement).constructor.prototype
+            Object.getPrototypeOf(this.target || DOM.documentElement)
         ) || (
             $.browser.modern  &&  (this.type in Mutation_Event)
         );
@@ -2025,7 +2025,7 @@
 
             iType = 'on' + iType;
 
-            if (! (iType in this.constructor.prototype))
+            if (! (iType in Object.getPrototypeOf(this)))
                 return 'onpropertychange';
 
             return iType;
@@ -2709,7 +2709,7 @@
         return iArgs.join('');
     }
 
-    DOM.documentElement.style.constructor.prototype.setProperty =
+    Object.getPrototypeOf( DOM.documentElement.style ).setProperty =
         function (iName, iValue) {
             var iString = '',  iWrapper,  iScale = 1,  iConvert;
 
@@ -2893,7 +2893,7 @@
     }
 
     if (! ('currentScript' in DOM))
-        Object.defineProperty(DOM.constructor.prototype, 'currentScript', {
+        Object.defineProperty(Object.getPrototypeOf(DOM), 'currentScript', {
             get:    function () {
                 var iURL = ($.browser.msie < 10)  ||  Script_URL();
 

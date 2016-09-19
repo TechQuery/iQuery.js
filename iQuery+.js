@@ -668,12 +668,4 @@
 //
 //        (C)2015-2016  shiy2008@gmail.com
 //
-
-
-
-(function (BOM, DOM, $) {
-
-})(self, self.document, self.jQuery);
-
-
 });

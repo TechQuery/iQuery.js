@@ -6,11 +6,14 @@
         'jQuery+':    'http://git.oschina.net/Tech_Query/iQuery/raw/master/jQuery+.js'
     },
     out:             '../iQuery+.js',
-    onBuildWrite:    function () {
+    onBuildWrite:    function (iName, _, iCode) {
         var fParameter = 'BOM, DOM, $',
             aParameter = 'self, self.document, self.jQuery';
 
-        return arguments[2]
+        if (iName.indexOf('iQuery+') > -1)
+            return  iCode.replace(/(\/\/\n)\n[\s\S]+/, '$1');
+
+        return iCode
             .replace(/^define[\s\S]+?(function \()[^\)]*/m,  "\n($1" + fParameter)
             .replace(/\s+var BOM.+?;/, '')
             .replace(/\}\).$/,  '})(' + aParameter + ");\n\n");

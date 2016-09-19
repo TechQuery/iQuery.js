@@ -171,7 +171,7 @@ define(['jquery'],  function ($) {
         return iArgs.join('');
     }
 
-    DOM.documentElement.style.constructor.prototype.setProperty =
+    Object.getPrototypeOf( DOM.documentElement.style ).setProperty =
         function (iName, iValue) {
             var iString = '',  iWrapper,  iScale = 1,  iConvert;
 

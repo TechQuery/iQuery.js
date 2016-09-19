@@ -28,7 +28,7 @@ define(['jquery'],  function ($) {
     }
 
     if (! ('currentScript' in DOM))
-        Object.defineProperty(DOM.constructor.prototype, 'currentScript', {
+        Object.defineProperty(Object.getPrototypeOf(DOM), 'currentScript', {
             get:    function () {
                 var iURL = ($.browser.msie < 10)  ||  Script_URL();
 

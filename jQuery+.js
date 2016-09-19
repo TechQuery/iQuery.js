@@ -1138,7 +1138,7 @@
         return iArgs.join('');
     }
 
-    DOM.documentElement.style.constructor.prototype.setProperty =
+    Object.getPrototypeOf( DOM.documentElement.style ).setProperty =
         function (iName, iValue) {
             var iString = '',  iWrapper,  iScale = 1,  iConvert;
 
@@ -1322,7 +1322,7 @@
     }
 
     if (! ('currentScript' in DOM))
-        Object.defineProperty(DOM.constructor.prototype, 'currentScript', {
+        Object.defineProperty(Object.getPrototypeOf(DOM), 'currentScript', {
             get:    function () {
                 var iURL = ($.browser.msie < 10)  ||  Script_URL();
 
