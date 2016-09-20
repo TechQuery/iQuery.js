@@ -1,7 +1,9 @@
 define(['extension/iObject'],  function ($) {
 
     $.isPlainObject = function (iValue) {
-        return  iValue  &&  (Object.getPrototypeOf(iValue) === Object.prototype);
+        return  iValue  &&  (typeof iValue == 'object')  &&  (
+            Object.getPrototypeOf(iValue) === Object.prototype
+        );
     };
 
     function _Extend_(iTarget, iSource, iDeep) {

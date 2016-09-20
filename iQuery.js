@@ -2,7 +2,7 @@
 //                >>>  iQuery.js  <<<
 //
 //
-//      [Version]    v2.0  (2016-09-18)  Stable
+//      [Version]    v2.0  (2016-09-20)  Stable
 //
 //      [Usage]      A Light-weight jQuery Compatible API
 //                   with IE 8+ compatibility.
@@ -453,7 +453,9 @@
 (function (BOM, DOM, $) {
 
     $.isPlainObject = function (iValue) {
-        return  iValue  &&  (Object.getPrototypeOf(iValue) === Object.prototype);
+        return  iValue  &&  (typeof iValue == 'object')  &&  (
+            Object.getPrototypeOf(iValue) === Object.prototype
+        );
     };
 
     function _Extend_(iTarget, iSource, iDeep) {
@@ -1095,7 +1097,7 @@
         $.extend(this, Element_Set, {
             length:     Element_Set.length,
             context:    (Element_Set.length == 1)  ?
-                Element_Set[0].ownerDocument  :  this.context
+                (Element_Set[0] || '').ownerDocument  :  this.context
         });
     }
 
@@ -1516,6 +1518,38 @@
         };
     }
 
+    function DOM_Map() {
+
+        var iArgs = $.makeArray( arguments );
+
+        var CoreBack = (typeof iArgs.slice(-1)[0] == 'function')  &&  iArgs.pop();
+
+        var _Not_ = iArgs.shift(),  _Reverse_ = iArgs[0];
+
+        return  function ($_Filter) {
+            var $_Result = this;
+
+            if (CoreBack)  $_Result = $.map($_Result, CoreBack);
+
+            if ($.isNumeric( $_Filter ))
+                $_Result = $.map($_Result,  function (iDOM) {
+
+                    return  (iDOM.nodeType == $_Filter)  ?  iDOM  :  null;
+                });
+            else if ($_Filter)
+                $_Result = $.map($_Result,  function (iDOM) {
+
+                    var _Is_ = $( iDOM ).is( $_Filter );
+
+                    return  (_Not_  ?  (! _Is_)  :  _Is_)  ?  iDOM  :  null;
+                });
+
+            $_Result = this.pushStack( $_Result );
+
+            return  _Reverse_  ?  Array_Reverse.call( $_Result )  :  $_Result;
+        };
+    }
+
     $.fn.extend({
         add:                function () {
             return this.pushStack(
@@ -1554,24 +1588,8 @@
 
             return false;
         },
-        filter:             function () {
-            var $_Result = [ ];
-
-            for (var i = 0, j = 0;  i < this.length;  i++)
-                if ($( this[i] ).is( arguments[0] ))
-                    $_Result[j++] = this[i];
-
-            return this.pushStack($_Result);
-        },
-        not:                function () {
-            var $_Result = [ ];
-
-            for (var i = 0, j = 0;  i < this.length;  i++)
-                if (! $( this[i] ).is( arguments[0] ))
-                    $_Result[j++] = this[i];
-
-            return this.pushStack($_Result);
-        },
+        filter:             DOM_Map(),
+        not:                DOM_Map(true),
         removeAttr:         function (iAttr) {
             iAttr = iAttr.trim().split(/\s+/);
 
@@ -1583,86 +1601,30 @@
         addBack:            function () {
             return  this.pushStack( $.merge(this, this.prevObject) );
         },
-        parent:             function () {
-            var $_Result = [ ];
-
-            for (var i = 0, j = 0;  i < this.length;  i++)
-                if ($.inArray(this[i].parentNode, $_Result) == -1)
-                    $_Result[j++] = this[i].parentNode;
-
-            return this.pushStack(
-                arguments[0]  ?  $($_Result).filter(arguments[0])  :  $_Result
-            );
-        },
-        parents:            function () {
-            var $_Result = [ ];
-
-            for (var i = 0;  i < this.length;  i++)
-                $_Result = $_Result.concat(
-                    $.trace(this[i], 'parentNode').slice(0, -1)
-                );
-
-            return  Array_Reverse.call(this.pushStack(
-                arguments[0]  ?  $($_Result).filter(arguments[0])  :  $_Result
-            ));
-        },
+        parent:             DOM_Map(function () {
+            return arguments[0].parentElement;
+        }),
+        parents:            DOM_Map('',  true,  function () {
+            return  $.trace(arguments[0], 'parentElement').slice(0, -1);
+        }),
         parentsUntil:       function () {
             return  Array_Reverse.call(
                 this.parents().not( $(arguments[0]).parents().addBack() )
             );
         },
-        children:           function () {
-            var $_Result = [ ];
-
-            for (var i = 0;  i < this.length;  i++)
-                $_Result = $.merge($_Result, this[i].children);
-
-            return this.pushStack(
-                arguments[0]  ?  $($_Result).filter(arguments[0])  :  $_Result
-            );
-        },
-        contents:           function () {
-            var $_Result = [ ],
-                Type_Filter = parseInt(arguments[0]);
-
-            for (var i = 0;  i < this.length;  i++)
-                $_Result = $.merge(
-                    $_Result,
-                    (this[i].tagName.toLowerCase() != 'iframe') ?
-                        this[i].childNodes : this[i].contentWindow.document
-                );
-            if ($.Type(Type_Filter) == 'Number')
-                for (var i = 0;  i < $_Result.length;  i++)
-                    if ($_Result[i].nodeType != Type_Filter)
-                        $_Result[i] = null;
-
-            return this.pushStack($_Result);
-        },
-        nextAll:            function () {
-            var $_Result = [ ];
-
-            for (var i = 0;  i < this.length;  i++)
-                $_Result = $_Result.concat(
-                    $.trace(this[i], 'nextElementSibling')
-                );
-
-            return this.pushStack(
-                arguments[0]  ?  $($_Result).filter(arguments[0])  :  $_Result
-            );
-        },
-        prevAll:            function () {
-            var $_Result = [ ];
-
-            for (var i = 0;  i < this.length;  i++)
-                $_Result = $_Result.concat(
-                    $.trace(this[i], 'previousElementSibling')
-                );
-            $_Result.reverse();
-
-            return Array_Reverse.call(this.pushStack(
-                arguments[0]  ?  $($_Result).filter(arguments[0])  :  $_Result
-            ));
-        },
+        children:           DOM_Map(function () {
+            return  $.makeArray( arguments[0].children );
+        }),
+        contents:           DOM_Map(function (iDOM) {
+            return (iDOM.tagName != 'IFRAME')  ?
+                $.makeArray( iDOM.childNodes )  :  iDOM.contentWindow.document;
+        }),
+        nextAll:            DOM_Map(function () {
+            return  $.trace(arguments[0], 'nextElementSibling');
+        }),
+        prevAll:            DOM_Map('',  true,  function () {
+            return  $.trace(arguments[0], 'previousElementSibling');
+        }),
         siblings:           function () {
             var $_Result = this.prevAll().add( this.nextAll() );
 

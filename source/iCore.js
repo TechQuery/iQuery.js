@@ -200,7 +200,7 @@ define(['extension/iTimer'],  function ($) {
         $.extend(this, Element_Set, {
             length:     Element_Set.length,
             context:    (Element_Set.length == 1)  ?
-                Element_Set[0].ownerDocument  :  this.context
+                (Element_Set[0] || '').ownerDocument  :  this.context
         });
     }
 
