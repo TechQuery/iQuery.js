@@ -293,6 +293,44 @@ define(['extension/iTimer'],  function ($) {
         css:                function () {
             return  _DOM_.operate('Style', this, arguments[0], arguments[1]);
         },
+        addClass:           function (new_Class) {
+            if (typeof new_Class != 'string')  return this;
+
+            new_Class = new_Class.trim().split(/\s+/);
+
+            return  this.attr('class',  function (_Index_, old_Class) {
+                old_Class = (old_Class || '').trim().split(/\s+/);
+
+                for (var i = 0, j = old_Class.length;  i < new_Class.length;  i++)
+                    if ($.inArray(new_Class[i], old_Class) == -1)
+                        old_Class[j++] = new_Class[i];
+
+                return  old_Class.join(' ').trim();
+            });
+        },
+        removeClass:        function (iClass) {
+            if (typeof iClass != 'string')  return this;
+
+            iClass = iClass.trim().split(/\s+/);
+
+            return  this.attr('class',  function (_Index_, old_Class) {
+                old_Class = (old_Class || '').trim().split(/\s+/);
+                if (! old_Class[0])  return;
+
+                var new_Class = [ ];
+
+                for (var i = 0, j = 0;  i < old_Class.length;  i++)
+                    if ($.inArray(old_Class[i], iClass) == -1)
+                        new_Class[j++] = old_Class[i];
+
+                return  new_Class.join(' ');
+            });
+        },
+        hasClass:           function (iName) {
+            return  (!!  $.map(this,  function () {
+                return arguments[0].classList.contains(iName);
+            })[0]);
+        },
         index:              function (iTarget) {
             if (! iTarget)
                 return  $.trace(this[0], 'previousElementSibling').length;
