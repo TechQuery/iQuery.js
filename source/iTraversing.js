@@ -37,10 +37,14 @@ define(['extension/iPseudo'],  function ($) {
     $.fn.extend({
         is:              function ($_Match) {
             var iPath = (typeof $_Match == 'string'),
+                iCallback = (typeof $_Match == 'function'),
                 iMatch = (typeof Element.prototype.matches == 'function');
 
-            for (var i = 0;  i < this.length;  i++) {
-                if (this[i] === $_Match)  return true;
+            for (var i = 0;  this[i];  i++) {
+                if ((this[i] === $_Match)  ||  (
+                    iCallback  &&  $_Match.call(this[i], i)
+                ))
+                    return true;
 
                 if (iPath && iMatch)  try {
                     if (this[i].matches( $_Match ))  return true;

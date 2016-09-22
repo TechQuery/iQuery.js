@@ -135,37 +135,46 @@ define(['Insert'],  function ($) {
         return iKF;
     }
 
-    function KeyFrame_Animate(CSS_Final, During_Second, iEasing, iCallback) {
-        var $_This = this.data('_Animate_', 0);
+    function KeyFrame_Animate(CSS_Final, During_Second, iEasing) {
+        var iAnimate = [ ],  $_This = $(this);
 
         $.each(CSS_Final,  function (iName) {
-            if (! $.isNumeric(this))  return  $_This.css(iName, this);
+            var iStyle = this;
 
-            $_This.data('_Animate_',  $_This.data('_Animate_') + 1);
+            iAnimate.push(new Promise(function (iResolve, iReject) {
+                if (! $.isNumeric(iStyle)) {
+                    $_This.css(iName, iStyle);
 
-            var iSpecial = (iName in Animate_Property);
-            var iKeyFrame = KeyFrame(
-                    iSpecial ? $_This[iName]() : $_This.css(iName),
-                    this,
-                    During_Second
-                );
-            $.every(1 / FPS,  function () {
-                if ($_This.data('_Animate_') && iKeyFrame.length) {
-                    if (iSpecial)
-                        $_This[iName]( iKeyFrame.shift() );
-                    else
-                        $_This.css(iName, iKeyFrame.shift());
-                } else {
-                    var iCount = $_This.data('_Animate_') - 1;
-                    $_This.data('_Animate_', iCount);
-
-                    if ((! iCount) && iCallback)  iCallback.call( $_This[0] );
-
-                    return  iKeyFrame = false;
+                    return iResolve();
                 }
-            });
+
+                var iSpecial = (iName in Animate_Property);
+
+                var iKeyFrame = KeyFrame(
+                        iSpecial ? $_This[iName]() : $_This.css(iName),
+                        iStyle,
+                        During_Second
+                    );
+
+                $.every(1 / FPS,  function () {
+                    if (! $_This.data('_Animate_'))
+                        iReject('Animating stoped');
+                    else if ( iKeyFrame.length ) {
+                        if (iSpecial)
+                            $_This[iName]( iKeyFrame.shift() );
+                        else
+                            $_This.css(iName, iKeyFrame.shift());
+
+                        return;
+                    } else
+                        iResolve();
+
+                    return false;
+                });
+            }));
         });
-        return $_This;
+
+        return  Promise.all( iAnimate );
     }
 
     /* ----- Transition Animation ----- */
@@ -186,44 +195,62 @@ define(['Insert'],  function ($) {
     var End_Event = 'TransitionEnd';
     var Bind_Name = End_Event.toLowerCase() + ' ' + CSS_Prefix + End_Event;
 
-    function Transition_Animate() {
+    function Transition_Animate(CSS_Final) {
         var iTransition = [
                 'all',  (arguments[1] + 's'),  arguments[2]
-            ].join(' ');
+            ].join(' '),
+            $_This = $(this);
 
-        return  this.on(Bind_Name, arguments[3])
+        return  new Promise(function () {
+            $_This.on(Bind_Name, arguments[0])
                 .css('transition', iTransition).css(
                     CSS_AMP('transition'),  iTransition
                 )
-                .css( arguments[0] );
+                .css( CSS_Final );
+        });
     }
 
     $.fn.extend({
         animate:    function (CSS_Final) {
             if (! this[0])  return this;
 
-            var iArgs = $.makeArray(arguments).slice(1),
-                iCSS = Object.getOwnPropertyNames( CSS_Final );
+            var iCSS = Object.getOwnPropertyNames( CSS_Final );
 
-            this.data('_CSS_Animate_',  function () {
+            this.data('_Animate_', 1).data('_CSS_Animate_',  function () {
                 return  $.extend(arguments[1], $(this).css(iCSS));
             });
 
-            return (
-                (($.browser.msie < 10)  ||  (! $.isEmptyObject(
-                    $.intersect($.makeSet.apply($, iCSS),  Animate_Property)
-                ))) ?
-                    KeyFrame_Animate  :  Transition_Animate
-            ).call(
-                this,
-                CSS_Final,
-                $.isNumeric( iArgs[0] )  ?  (iArgs.shift() / 1000)  :  0.4,
-                (typeof iArgs[0] == 'string')  ?  iArgs.shift()  :  '',
-                (typeof iArgs[0] == 'function')  &&  iArgs[0]
-            );
+            var iEngine = (
+                    (($.browser.msie < 10)  ||  (! $.isEmptyObject(
+                        $.intersect($.makeSet.apply($, iCSS),  Animate_Property)
+                    ))) ?
+                        KeyFrame_Animate  :  Transition_Animate
+                );
+
+            var iArgs = $.makeArray( arguments ).slice(1);
+
+            var During_Second = $.isNumeric( iArgs[0] )  ?
+                    (iArgs.shift() / 1000)  :  0.4,
+                iEasing = (typeof iArgs[0] == 'string')  ?  iArgs.shift()  :  '',
+                iCallback = (typeof iArgs[0] == 'function')  &&  iArgs[0];
+
+            return  this.data('_Animate_Queue_',  function (_, iQueue) {
+                var iProcess = $.proxy(
+                        iEngine,  this,  CSS_Final,  During_Second,  iEasing
+                    );
+
+                iQueue = iQueue ? iQueue.then(iProcess) : iProcess();
+
+                iQueue.then(iCallback);
+
+                return iQueue;
+            });
         },
         stop:       function () {
             return  this.data('_Animate_', 0);
+        },
+        promise:    function () {
+            return this.data('_Animate_Queue_');
         }
     });
 

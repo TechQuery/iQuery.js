@@ -2,7 +2,7 @@
 //                >>>  iQuery.js  <<<
 //
 //
-//      [Version]    v2.0  (2016-09-20)  Stable
+//      [Version]    v2.0  (2016-09-22)  Stable
 //
 //      [Usage]      A Light-weight jQuery Compatible API
 //                   with IE 8+ compatibility.
@@ -21,7 +21,10 @@
 
 })(function () {
 
-    var iQuery = {fn:  { }};
+    var iQuery = {fn: {
+            jquery:    '1.9.1',
+            iquery:    2.0
+        }};
 
 
 (function (BOM, DOM) {
@@ -425,6 +428,9 @@
 
         return iResult;
     };
+
+    if ($.fn.iquery)  $.dir = $.trace;
+
 
     $.intersect = function () {
         if (arguments.length < 2)  return arguments[0];
@@ -1167,10 +1173,8 @@
     $.fn.extend = $.extend;
 
     $.fn.extend({
-        splice:             Array.prototype.splice,
-        jquery:             '1.9.1',
-        iquery:             2.0,
-        pushStack:          function ($_New) {
+        splice:         Array.prototype.splice,
+        pushStack:      function ($_New) {
             $_New = $($.uniqueSort(
                 ($_New instanceof Array)  ?  $_New  :  $.makeArray($_New)
             ));
@@ -1178,19 +1182,57 @@
 
             return $_New;
         },
-        attr:               function () {
+        attr:           function () {
             return  _DOM_.operate('Attribute', this, arguments[0], arguments[1]);
         },
-        prop:               function () {
+        prop:           function () {
             return  _DOM_.operate('Property', this, arguments[0], arguments[1]);
         },
-        data:               function () {
+        data:           function () {
             return  _DOM_.operate('Data', this, arguments[0], arguments[1]);
         },
-        css:                function () {
+        css:            function () {
             return  _DOM_.operate('Style', this, arguments[0], arguments[1]);
         },
-        index:              function (iTarget) {
+        addClass:       function (new_Class) {
+            if (typeof new_Class != 'string')  return this;
+
+            new_Class = new_Class.trim().split(/\s+/);
+
+            return  this.attr('class',  function (_Index_, old_Class) {
+                old_Class = (old_Class || '').trim().split(/\s+/);
+
+                for (var i = 0, j = old_Class.length;  i < new_Class.length;  i++)
+                    if ($.inArray(new_Class[i], old_Class) == -1)
+                        old_Class[j++] = new_Class[i];
+
+                return  old_Class.join(' ').trim();
+            });
+        },
+        removeClass:    function (iClass) {
+            if (typeof iClass != 'string')  return this;
+
+            iClass = iClass.trim().split(/\s+/);
+
+            return  this.attr('class',  function (_Index_, old_Class) {
+                old_Class = (old_Class || '').trim().split(/\s+/);
+                if (! old_Class[0])  return;
+
+                var new_Class = [ ];
+
+                for (var i = 0, j = 0;  i < old_Class.length;  i++)
+                    if ($.inArray(old_Class[i], iClass) == -1)
+                        new_Class[j++] = old_Class[i];
+
+                return  new_Class.join(' ');
+            });
+        },
+        hasClass:       function (iName) {
+            return  (!!  $.map(this,  function () {
+                return arguments[0].classList.contains(iName);
+            })[0]);
+        },
+        index:          function (iTarget) {
             if (! iTarget)
                 return  $.trace(this[0], 'previousElementSibling').length;
 
@@ -1445,6 +1487,139 @@
 
     var Array_Reverse = Array.prototype.reverse;
 
+    function DOM_Map() {
+
+        var iArgs = $.makeArray( arguments );
+
+        var CoreBack = (typeof iArgs.slice(-1)[0] == 'function')  &&  iArgs.pop();
+
+        var _Not_ = iArgs.shift(),  _Reverse_ = iArgs[0];
+
+        return  function ($_Filter) {
+            var $_Result = this;
+
+            if (CoreBack)  $_Result = $.map($_Result, CoreBack);
+
+            if ($.isNumeric( $_Filter ))
+                $_Result = $.map($_Result,  function (iDOM) {
+
+                    return  (iDOM.nodeType == $_Filter)  ?  iDOM  :  null;
+                });
+            else if ($_Filter)
+                $_Result = $.map($_Result,  function (iDOM) {
+
+                    var _Is_ = $( iDOM ).is( $_Filter );
+
+                    return  (_Not_  ?  (! _Is_)  :  _Is_)  ?  iDOM  :  null;
+                });
+
+            $_Result = this.pushStack( $_Result );
+
+            return  _Reverse_  ?  Array_Reverse.call( $_Result )  :  $_Result;
+        };
+    }
+
+    $.fn.extend({
+        is:              function ($_Match) {
+            var iPath = (typeof $_Match == 'string'),
+                iCallback = (typeof $_Match == 'function'),
+                iMatch = (typeof Element.prototype.matches == 'function');
+
+            for (var i = 0;  this[i];  i++) {
+                if ((this[i] === $_Match)  ||  (
+                    iCallback  &&  $_Match.call(this[i], i)
+                ))
+                    return true;
+
+                if (iPath && iMatch)  try {
+                    if (this[i].matches( $_Match ))  return true;
+                } catch (iError) { }
+
+                if (! this[i].parentNode)  $('<div />')[0].appendChild( this[i] );
+
+                if (-1  <  $.inArray(this[i], (
+                    iPath  ?  $($_Match, this[i].parentNode)  :  $($_Match)
+                )))
+                    return true;
+            }
+
+            return false;
+        },
+        add:                function () {
+            return  this.pushStack( $.merge(this,  $.apply(BOM, arguments)) );
+        },
+        addBack:         function () {
+            return  this.pushStack( $.merge(this, this.prevObject) );
+        },
+        filter:          DOM_Map(),
+        not:             DOM_Map(true),
+        parent:          DOM_Map(function (iDOM) {
+            return iDOM.parentElement;
+        }),
+        parents:         DOM_Map('',  true,  function (iDOM) {
+            return  $.trace(iDOM, 'parentElement').slice(0, -1);
+        }),
+        parentsUntil:    function () {
+            return  Array_Reverse.call(
+                this.parents().not( $(arguments[0]).parents().addBack() )
+            );
+        },
+        children:        DOM_Map(function (iDOM) {
+            return  $.makeArray( iDOM.children );
+        }),
+        contents:        DOM_Map(function (iDOM) {
+            return (iDOM.tagName != 'IFRAME')  ?
+                $.makeArray( iDOM.childNodes )  :  iDOM.contentWindow.document;
+        }),
+        prev:            DOM_Map(function (iDOM) {
+            return iDOM.previousElementSibling;
+        }),
+        prevAll:         DOM_Map('',  true,  function (iDOM) {
+            return  $.trace(iDOM, 'previousElementSibling');
+        }),
+        next:               DOM_Map(function (iDOM) {
+            return iDOM.nextElementSibling;
+        }),
+        nextAll:         DOM_Map(function (iDOM) {
+            return  $.trace(iDOM, 'nextElementSibling');
+        }),
+        siblings:        function () {
+            var $_Result = this.prevAll().add( this.nextAll() );
+
+            return this.pushStack(
+                arguments[0]  ?  $_Result.filter(arguments[0])  :  $_Result
+            );
+        },
+        offsetParent:    DOM_Map(function (iDOM) {
+            return iDOM.offsetParent;
+        }),
+        find:               function () {
+            var $_Result = [ ];
+
+            for (var i = 0;  i < this.length;  i++)
+                $_Result = $.merge($_Result,  $.find(arguments[0], this[i]));
+
+            return  this.pushStack( $_Result );
+        },
+        has:                function ($_Filter) {
+            if (typeof $_Filter != 'string') {
+                var _UUID_ = $.uuid('Has');
+                $($_Filter).addClass(_UUID_);
+                $_Filter = '.' + _UUID_;
+            }
+
+            return  this.pushStack($.map(this,  function () {
+                if ( $($_Filter, arguments[0]).removeClass(_UUID_).length )
+                    return arguments[0];
+            }));
+        }
+    });
+})(self,  self.document,  self.iQuery || iQuery);
+
+
+
+(function (BOM, DOM, $) {
+
     function DOM_Size(iName) {
         iName = {
             scroll:    'scroll' + iName,
@@ -1453,7 +1628,7 @@
             css:       iName.toLowerCase()
         };
 
-        return  function () {
+        return  function (iValue) {
             if (! this[0])  return  arguments.length ? this : 0;
 
             switch ( $.Type(this[0]) ) {
@@ -1468,13 +1643,21 @@
                         this[0].document.body[iName.client]
                     );
             }
-            var iValue = parseFloat(arguments[0]),
-                iFix = this.is('table') ? 4 : 0;
 
-            if (isNaN( iValue ))  return  this[0][iName.client] + iFix;
+            if (! $.isNumeric(iValue))
+                return  this[0][iName.client] + (
+                    (this[0].tagName == 'TABLE')  ?  4  :  0
+                );
 
-            for (var i = 0;  i < this.length;  i++)
-                this[i].style[iName.css] = iValue - iFix;
+            for (var i = 0, $_This, _Size_;  this[i];  i++) {
+                $_This = $( this[i] );
+
+                _Size_ = $_This.css(iName.css, iValue).css(iName.css);
+
+                if (this[i].tagName == 'TABLE')
+                    $_This.css(iName.css,  _Size_ + 4);
+            }
+
             return this;
         };
     }
@@ -1518,79 +1701,19 @@
         };
     }
 
-    function DOM_Map() {
-
-        var iArgs = $.makeArray( arguments );
-
-        var CoreBack = (typeof iArgs.slice(-1)[0] == 'function')  &&  iArgs.pop();
-
-        var _Not_ = iArgs.shift(),  _Reverse_ = iArgs[0];
-
-        return  function ($_Filter) {
-            var $_Result = this;
-
-            if (CoreBack)  $_Result = $.map($_Result, CoreBack);
-
-            if ($.isNumeric( $_Filter ))
-                $_Result = $.map($_Result,  function (iDOM) {
-
-                    return  (iDOM.nodeType == $_Filter)  ?  iDOM  :  null;
-                });
-            else if ($_Filter)
-                $_Result = $.map($_Result,  function (iDOM) {
-
-                    var _Is_ = $( iDOM ).is( $_Filter );
-
-                    return  (_Not_  ?  (! _Is_)  :  _Is_)  ?  iDOM  :  null;
-                });
-
-            $_Result = this.pushStack( $_Result );
-
-            return  _Reverse_  ?  Array_Reverse.call( $_Result )  :  $_Result;
-        };
-    }
-
     $.fn.extend({
-        add:                function () {
-            return this.pushStack(
-                $.merge(this,  $.apply(BOM, arguments))
-            );
-        },
-        slice:              function () {
+        slice:             function () {
             return  this.pushStack( [ ].slice.apply(this, arguments) );
         },
-        eq:                 function (Index) {
+        eq:                function (Index) {
             return  this.pushStack(
                 [ ].slice.call(this,  Index,  (Index + 1) || undefined)
             );
         },
-        each:               function () {
+        each:              function () {
             return  $.each(this, arguments[0]);
         },
-        is:                 function ($_Match) {
-            var iPath = (typeof $_Match == 'string'),
-                iMatch = (typeof Element.prototype.matches == 'function');
-
-            for (var i = 0;  i < this.length;  i++) {
-                if (this[i] === $_Match)  return true;
-
-                if (iPath && iMatch)  try {
-                    if (this[i].matches( $_Match ))  return true;
-                } catch (iError) { }
-
-                if (! this[i].parentNode)  $('<div />')[0].appendChild( this[i] );
-
-                if (-1  <  $.inArray(this[i], (
-                    iPath  ?  $($_Match, this[i].parentNode)  :  $($_Match)
-                )))
-                    return true;
-            }
-
-            return false;
-        },
-        filter:             DOM_Map(),
-        not:                DOM_Map(true),
-        removeAttr:         function (iAttr) {
+        removeAttr:        function (iAttr) {
             iAttr = iAttr.trim().split(/\s+/);
 
             for (var i = 0;  i < iAttr.length;  i++)
@@ -1598,71 +1721,17 @@
 
             return this;
         },
-        addBack:            function () {
-            return  this.pushStack( $.merge(this, this.prevObject) );
-        },
-        parent:             DOM_Map(function () {
-            return arguments[0].parentElement;
-        }),
-        parents:            DOM_Map('',  true,  function () {
-            return  $.trace(arguments[0], 'parentElement').slice(0, -1);
-        }),
-        parentsUntil:       function () {
-            return  Array_Reverse.call(
-                this.parents().not( $(arguments[0]).parents().addBack() )
-            );
-        },
-        children:           DOM_Map(function () {
-            return  $.makeArray( arguments[0].children );
-        }),
-        contents:           DOM_Map(function (iDOM) {
-            return (iDOM.tagName != 'IFRAME')  ?
-                $.makeArray( iDOM.childNodes )  :  iDOM.contentWindow.document;
-        }),
-        nextAll:            DOM_Map(function () {
-            return  $.trace(arguments[0], 'nextElementSibling');
-        }),
-        prevAll:            DOM_Map('',  true,  function () {
-            return  $.trace(arguments[0], 'previousElementSibling');
-        }),
-        siblings:           function () {
-            var $_Result = this.prevAll().add( this.nextAll() );
-
-            return this.pushStack(
-                arguments[0]  ?  $_Result.filter(arguments[0])  :  $_Result
-            );
-        },
-        find:               function () {
-            var $_Result = [ ];
-
-            for (var i = 0;  i < this.length;  i++)
-                $_Result = $.merge($_Result,  $(arguments[0], this[i]));
-
-            return  this.pushStack($_Result);
-        },
-        has:                function ($_Filter) {
-            if (typeof $_Filter != 'string') {
-                var _UUID_ = $.uuid('Has');
-                $($_Filter).addClass(_UUID_);
-                $_Filter = '.' + _UUID_;
-            }
-
-            return  this.pushStack($.map(this,  function () {
-                if ( $($_Filter, arguments[0]).removeClass(_UUID_).length )
-                    return arguments[0];
-            }));
-        },
-        detach:             function () {
+        detach:            function () {
             for (var i = 0;  i < this.length;  i++)
                 if (this[i].parentNode)
                     this[i].parentNode.removeChild(this[i]);
 
             return this;
         },
-        remove:             function () {
+        remove:            function () {
             return this.detach();
         },
-        empty:              function () {
+        empty:             function () {
             this.children().remove();
 
             for (var i = 0, iChild;  i < this.length;  i++) {
@@ -1673,7 +1742,7 @@
 
             return this;
         },
-        text:               function (iText) {
+        text:              function (iText) {
             var iGetter = (! $.isData(iText)),  iResult = [ ];
 
             if (! iGetter)  this.empty();
@@ -1686,7 +1755,7 @@
 
             return  iResult.length ? iResult.join('') : this;
         },
-        html:               function (iHTML) {
+        html:              function (iHTML) {
             if (! $.isData(iHTML))
                 return this[0].innerHTML;
 
@@ -1697,17 +1766,17 @@
 
             return  this;
         },
-        width:              DOM_Size('Width'),
-        height:             DOM_Size('Height'),
-        scrollTop:          DOM_Scroll('Top'),
-        scrollLeft:         DOM_Scroll('Left'),
-        position:           function () {
+        width:             DOM_Size('Width'),
+        height:            DOM_Size('Height'),
+        scrollTop:         DOM_Scroll('Top'),
+        scrollLeft:        DOM_Scroll('Left'),
+        position:          function () {
             return  {
                 left:    this[0].offsetLeft,
                 top:     this[0].offsetTop
             };
         },
-        offset:             function (iCoordinate) {
+        offset:            function (iCoordinate) {
             if ( $.isPlainObject(iCoordinate) )
                 return this.css($.extend({
                     position:    'fixed'
@@ -1730,51 +1799,13 @@
                 )
             };
         },
-        addClass:           function (new_Class) {
-            if (typeof new_Class != 'string')  return this;
-
-            new_Class = new_Class.trim().split(/\s+/);
-
-            return  this.attr('class',  function (_Index_, old_Class) {
-                old_Class = (old_Class || '').trim().split(/\s+/);
-
-                for (var i = 0, j = old_Class.length;  i < new_Class.length;  i++)
-                    if ($.inArray(new_Class[i], old_Class) == -1)
-                        old_Class[j++] = new_Class[i];
-
-                return  old_Class.join(' ').trim();
-            });
-        },
-        removeClass:        function (iClass) {
-            if (typeof iClass != 'string')  return this;
-
-            iClass = iClass.trim().split(/\s+/);
-
-            return  this.attr('class',  function (_Index_, old_Class) {
-                old_Class = (old_Class || '').trim().split(/\s+/);
-                if (! old_Class[0])  return;
-
-                var new_Class = [ ];
-
-                for (var i = 0, j = 0;  i < old_Class.length;  i++)
-                    if ($.inArray(old_Class[i], iClass) == -1)
-                        new_Class[j++] = old_Class[i];
-
-                return  new_Class.join(' ');
-            });
-        },
-        hasClass:           function (iName) {
-            return  (!!  $.map(this,  function () {
-                return arguments[0].classList.contains(iName);
-            })[0]);
-        },
-        val:                function () {
+        val:               function () {
             if (! $.isData(arguments[0]))
                 return  this[0] && this[0].value;
             else
                 return  this.not('input[type="file"]').prop('value', arguments[0]);
         },
-        serializeArray:     function () {
+        serializeArray:    function () {
             var $_Value = this.find('*[name]:input').not(':button, [disabled]'),
                 iValue = [ ];
 
@@ -1787,7 +1818,7 @@
 
             return iValue;
         },
-        serialize:          function () {
+        serialize:         function () {
             return  $.param( this.serializeArray() );
         }
     });
@@ -3231,37 +3262,46 @@
         return iKF;
     }
 
-    function KeyFrame_Animate(CSS_Final, During_Second, iEasing, iCallback) {
-        var $_This = this.data('_Animate_', 0);
+    function KeyFrame_Animate(CSS_Final, During_Second, iEasing) {
+        var iAnimate = [ ],  $_This = $(this);
 
         $.each(CSS_Final,  function (iName) {
-            if (! $.isNumeric(this))  return  $_This.css(iName, this);
+            var iStyle = this;
 
-            $_This.data('_Animate_',  $_This.data('_Animate_') + 1);
+            iAnimate.push(new Promise(function (iResolve, iReject) {
+                if (! $.isNumeric(iStyle)) {
+                    $_This.css(iName, iStyle);
 
-            var iSpecial = (iName in Animate_Property);
-            var iKeyFrame = KeyFrame(
-                    iSpecial ? $_This[iName]() : $_This.css(iName),
-                    this,
-                    During_Second
-                );
-            $.every(1 / FPS,  function () {
-                if ($_This.data('_Animate_') && iKeyFrame.length) {
-                    if (iSpecial)
-                        $_This[iName]( iKeyFrame.shift() );
-                    else
-                        $_This.css(iName, iKeyFrame.shift());
-                } else {
-                    var iCount = $_This.data('_Animate_') - 1;
-                    $_This.data('_Animate_', iCount);
-
-                    if ((! iCount) && iCallback)  iCallback.call( $_This[0] );
-
-                    return  iKeyFrame = false;
+                    return iResolve();
                 }
-            });
+
+                var iSpecial = (iName in Animate_Property);
+
+                var iKeyFrame = KeyFrame(
+                        iSpecial ? $_This[iName]() : $_This.css(iName),
+                        iStyle,
+                        During_Second
+                    );
+
+                $.every(1 / FPS,  function () {
+                    if (! $_This.data('_Animate_'))
+                        iReject('Animating stoped');
+                    else if ( iKeyFrame.length ) {
+                        if (iSpecial)
+                            $_This[iName]( iKeyFrame.shift() );
+                        else
+                            $_This.css(iName, iKeyFrame.shift());
+
+                        return;
+                    } else
+                        iResolve();
+
+                    return false;
+                });
+            }));
         });
-        return $_This;
+
+        return  Promise.all( iAnimate );
     }
 
     /* ----- Transition Animation ----- */
@@ -3282,44 +3322,62 @@
     var End_Event = 'TransitionEnd';
     var Bind_Name = End_Event.toLowerCase() + ' ' + CSS_Prefix + End_Event;
 
-    function Transition_Animate() {
+    function Transition_Animate(CSS_Final) {
         var iTransition = [
                 'all',  (arguments[1] + 's'),  arguments[2]
-            ].join(' ');
+            ].join(' '),
+            $_This = $(this);
 
-        return  this.on(Bind_Name, arguments[3])
+        return  new Promise(function () {
+            $_This.on(Bind_Name, arguments[0])
                 .css('transition', iTransition).css(
                     CSS_AMP('transition'),  iTransition
                 )
-                .css( arguments[0] );
+                .css( CSS_Final );
+        });
     }
 
     $.fn.extend({
         animate:    function (CSS_Final) {
             if (! this[0])  return this;
 
-            var iArgs = $.makeArray(arguments).slice(1),
-                iCSS = Object.getOwnPropertyNames( CSS_Final );
+            var iCSS = Object.getOwnPropertyNames( CSS_Final );
 
-            this.data('_CSS_Animate_',  function () {
+            this.data('_Animate_', 1).data('_CSS_Animate_',  function () {
                 return  $.extend(arguments[1], $(this).css(iCSS));
             });
 
-            return (
-                (($.browser.msie < 10)  ||  (! $.isEmptyObject(
-                    $.intersect($.makeSet.apply($, iCSS),  Animate_Property)
-                ))) ?
-                    KeyFrame_Animate  :  Transition_Animate
-            ).call(
-                this,
-                CSS_Final,
-                $.isNumeric( iArgs[0] )  ?  (iArgs.shift() / 1000)  :  0.4,
-                (typeof iArgs[0] == 'string')  ?  iArgs.shift()  :  '',
-                (typeof iArgs[0] == 'function')  &&  iArgs[0]
-            );
+            var iEngine = (
+                    (($.browser.msie < 10)  ||  (! $.isEmptyObject(
+                        $.intersect($.makeSet.apply($, iCSS),  Animate_Property)
+                    ))) ?
+                        KeyFrame_Animate  :  Transition_Animate
+                );
+
+            var iArgs = $.makeArray( arguments ).slice(1);
+
+            var During_Second = $.isNumeric( iArgs[0] )  ?
+                    (iArgs.shift() / 1000)  :  0.4,
+                iEasing = (typeof iArgs[0] == 'string')  ?  iArgs.shift()  :  '',
+                iCallback = (typeof iArgs[0] == 'function')  &&  iArgs[0];
+
+            return  this.data('_Animate_Queue_',  function (_, iQueue) {
+                var iProcess = $.proxy(
+                        iEngine,  this,  CSS_Final,  During_Second,  iEasing
+                    );
+
+                iQueue = iQueue ? iQueue.then(iProcess) : iProcess();
+
+                iQueue.then(iCallback);
+
+                return iQueue;
+            });
         },
         stop:       function () {
             return  this.data('_Animate_', 0);
+        },
+        promise:    function () {
+            return this.data('_Animate_Queue_');
         }
     });
 

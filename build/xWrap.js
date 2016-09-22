@@ -21,7 +21,10 @@
 
 })(function () {
 
-    var iQuery = {fn:  { }};
+    var iQuery = {fn: {
+            jquery:    '1.9.1',
+            iquery:    2.0
+        }};
 
 
 

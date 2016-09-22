@@ -270,10 +270,8 @@ define(['extension/iTimer'],  function ($) {
     $.fn.extend = $.extend;
 
     $.fn.extend({
-        splice:             Array.prototype.splice,
-        jquery:             '1.9.1',
-        iquery:             2.0,
-        pushStack:          function ($_New) {
+        splice:         Array.prototype.splice,
+        pushStack:      function ($_New) {
             $_New = $($.uniqueSort(
                 ($_New instanceof Array)  ?  $_New  :  $.makeArray($_New)
             ));
@@ -281,19 +279,19 @@ define(['extension/iTimer'],  function ($) {
 
             return $_New;
         },
-        attr:               function () {
+        attr:           function () {
             return  _DOM_.operate('Attribute', this, arguments[0], arguments[1]);
         },
-        prop:               function () {
+        prop:           function () {
             return  _DOM_.operate('Property', this, arguments[0], arguments[1]);
         },
-        data:               function () {
+        data:           function () {
             return  _DOM_.operate('Data', this, arguments[0], arguments[1]);
         },
-        css:                function () {
+        css:            function () {
             return  _DOM_.operate('Style', this, arguments[0], arguments[1]);
         },
-        addClass:           function (new_Class) {
+        addClass:       function (new_Class) {
             if (typeof new_Class != 'string')  return this;
 
             new_Class = new_Class.trim().split(/\s+/);
@@ -308,7 +306,7 @@ define(['extension/iTimer'],  function ($) {
                 return  old_Class.join(' ').trim();
             });
         },
-        removeClass:        function (iClass) {
+        removeClass:    function (iClass) {
             if (typeof iClass != 'string')  return this;
 
             iClass = iClass.trim().split(/\s+/);
@@ -326,12 +324,12 @@ define(['extension/iTimer'],  function ($) {
                 return  new_Class.join(' ');
             });
         },
-        hasClass:           function (iName) {
+        hasClass:       function (iName) {
             return  (!!  $.map(this,  function () {
                 return arguments[0].classList.contains(iName);
             })[0]);
         },
-        index:              function (iTarget) {
+        index:          function (iTarget) {
             if (! iTarget)
                 return  $.trace(this[0], 'previousElementSibling').length;
 

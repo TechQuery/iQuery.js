@@ -82,18 +82,18 @@ define(['iTraversing'],  function ($) {
     }
 
     $.fn.extend({
-        slice:              function () {
+        slice:             function () {
             return  this.pushStack( [ ].slice.apply(this, arguments) );
         },
-        eq:                 function (Index) {
+        eq:                function (Index) {
             return  this.pushStack(
                 [ ].slice.call(this,  Index,  (Index + 1) || undefined)
             );
         },
-        each:               function () {
+        each:              function () {
             return  $.each(this, arguments[0]);
         },
-        removeAttr:         function (iAttr) {
+        removeAttr:        function (iAttr) {
             iAttr = iAttr.trim().split(/\s+/);
 
             for (var i = 0;  i < iAttr.length;  i++)
@@ -101,17 +101,17 @@ define(['iTraversing'],  function ($) {
 
             return this;
         },
-        detach:             function () {
+        detach:            function () {
             for (var i = 0;  i < this.length;  i++)
                 if (this[i].parentNode)
                     this[i].parentNode.removeChild(this[i]);
 
             return this;
         },
-        remove:             function () {
+        remove:            function () {
             return this.detach();
         },
-        empty:              function () {
+        empty:             function () {
             this.children().remove();
 
             for (var i = 0, iChild;  i < this.length;  i++) {
@@ -122,7 +122,7 @@ define(['iTraversing'],  function ($) {
 
             return this;
         },
-        text:               function (iText) {
+        text:              function (iText) {
             var iGetter = (! $.isData(iText)),  iResult = [ ];
 
             if (! iGetter)  this.empty();
@@ -135,7 +135,7 @@ define(['iTraversing'],  function ($) {
 
             return  iResult.length ? iResult.join('') : this;
         },
-        html:               function (iHTML) {
+        html:              function (iHTML) {
             if (! $.isData(iHTML))
                 return this[0].innerHTML;
 
@@ -146,17 +146,17 @@ define(['iTraversing'],  function ($) {
 
             return  this;
         },
-        width:              DOM_Size('Width'),
-        height:             DOM_Size('Height'),
-        scrollTop:          DOM_Scroll('Top'),
-        scrollLeft:         DOM_Scroll('Left'),
-        position:           function () {
+        width:             DOM_Size('Width'),
+        height:            DOM_Size('Height'),
+        scrollTop:         DOM_Scroll('Top'),
+        scrollLeft:        DOM_Scroll('Left'),
+        position:          function () {
             return  {
                 left:    this[0].offsetLeft,
                 top:     this[0].offsetTop
             };
         },
-        offset:             function (iCoordinate) {
+        offset:            function (iCoordinate) {
             if ( $.isPlainObject(iCoordinate) )
                 return this.css($.extend({
                     position:    'fixed'
@@ -179,13 +179,13 @@ define(['iTraversing'],  function ($) {
                 )
             };
         },
-        val:                function () {
+        val:               function () {
             if (! $.isData(arguments[0]))
                 return  this[0] && this[0].value;
             else
                 return  this.not('input[type="file"]').prop('value', arguments[0]);
         },
-        serializeArray:     function () {
+        serializeArray:    function () {
             var $_Value = this.find('*[name]:input').not(':button, [disabled]'),
                 iValue = [ ];
 
@@ -198,7 +198,7 @@ define(['iTraversing'],  function ($) {
 
             return iValue;
         },
-        serialize:          function () {
+        serialize:         function () {
             return  $.param( this.serializeArray() );
         }
     });

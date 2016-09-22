@@ -101,6 +101,9 @@ define(['jquery'],  function ($) {
         return iResult;
     };
 
+    if ($.fn.iquery)  $.dir = $.trace;
+
+
     $.intersect = function () {
         if (arguments.length < 2)  return arguments[0];
 
