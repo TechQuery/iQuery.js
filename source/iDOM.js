@@ -109,7 +109,7 @@ define(['iTraversing'],  function ($) {
             return this;
         },
         remove:            function () {
-            return this.detach();
+            return  this.detach().data('', null);
         },
         empty:             function () {
             this.children().remove();

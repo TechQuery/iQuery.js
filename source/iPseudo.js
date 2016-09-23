@@ -1,4 +1,4 @@
-define(['iSelector'],  function ($) {
+define(['Info'],  function ($) {
 
     var BOM = self;
 

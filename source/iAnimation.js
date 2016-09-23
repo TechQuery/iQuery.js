@@ -136,7 +136,7 @@ define(['Insert'],  function ($) {
     }
 
     function KeyFrame_Animate(CSS_Final, During_Second, iEasing) {
-        var iAnimate = [ ],  $_This = $(this);
+        var iAnimate = [ ],  $_This = this;
 
         $.each(CSS_Final,  function (iName) {
             var iStyle = this;
@@ -199,7 +199,7 @@ define(['Insert'],  function ($) {
         var iTransition = [
                 'all',  (arguments[1] + 's'),  arguments[2]
             ].join(' '),
-            $_This = $(this);
+            $_This = this;
 
         return  new Promise(function () {
             $_This.on(Bind_Name, arguments[0])
@@ -235,11 +235,28 @@ define(['Insert'],  function ($) {
                 iCallback = (typeof iArgs[0] == 'function')  &&  iArgs[0];
 
             return  this.data('_Animate_Queue_',  function (_, iQueue) {
+                var $_This = $(this);
+
                 var iProcess = $.proxy(
-                        iEngine,  this,  CSS_Final,  During_Second,  iEasing
+                        iEngine,  $_This,  CSS_Final,  During_Second,  iEasing
                     );
 
-                iQueue = iQueue ? iQueue.then(iProcess) : iProcess();
+                var qCount = $_This.data('_Queue_Count_') || 0;
+
+                $_This.data('_Queue_Count_', ++qCount);
+
+                iQueue = (iQueue ? iQueue.then(iProcess) : iProcess())
+                    .then(function () {
+                        var qCount = $_This.data('_Queue_Count_');
+
+                        if (--qCount)
+                            $_This.data('_Queue_Count_', qCount);
+                        else
+                            $_This.data({
+                                _Queue_Count_:     null,
+                                _Animate_Queue_:   null
+                            });
+                    });
 
                 iQueue.then(iCallback);
 
@@ -250,7 +267,9 @@ define(['Insert'],  function ($) {
             return  this.data('_Animate_', 0);
         },
         promise:    function () {
-            return this.data('_Animate_Queue_');
+            return  Promise.all($.map(this,  function (iDOM) {
+                return $(iDOM).data('_Animate_Queue_');
+            }));
         }
     });
 
