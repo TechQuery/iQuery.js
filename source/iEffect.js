@@ -1,0 +1,173 @@
+define(['iAnimation'],  function ($) {
+
+    var BOM = self,  DOM = self.document;
+
+/* ---------- Atom Effect ---------- */
+
+    var Pseudo_Class = $.makeSet([
+            ':link', 'visited', 'hover', 'active', 'focus', 'lang',
+            'enabled', 'disabled', 'checked',
+            'first-child', 'last-child', 'first-of-type', 'last-of-type',
+            'nth-child', 'nth-of-type', 'nth-last-child', 'nth-last-of-type',
+            'only-child', 'only-of-type', 'empty'
+        ].join(' :').split(' '));
+
+    function CSS_Selector_Priority(iSelector) {
+        var iPriority = [0, 0, 0];
+
+        if ( iSelector.match(/\#[^\s>\+~]+/) )  iPriority[0]++ ;
+
+        var iPseudo = (iSelector.match(/:[^\s>\+~]+/g)  ||  [ ]);
+        var pClass = $.map(iPseudo,  function () {
+                if (arguments[0] in Pseudo_Class)  return arguments[0];
+            });
+        iPriority[1] += (
+            iSelector.match(/\.[^\s>\+~]+/g)  ||  [ ]
+        ).concat(
+            iSelector.match(/\[[^\]]+\]/g)  ||  [ ]
+        ).concat(pClass).length;
+
+        iPriority[2] += ((
+            iSelector.match(/[^\#\.\[:]?[^\s>\+~]+/g)  ||  [ ]
+        ).length + (
+            iPseudo.length - pClass.length
+        ));
+
+        return iPriority;
+    }
+
+    function CSS_Rule_Sort(A, B) {
+        var pA = CSS_Selector_Priority(A.selectorText),
+            pB = CSS_Selector_Priority(B.selectorText);
+
+        for (var i = 0;  i < pA.length;  i++)
+            if (pA[i] == pB[i])  continue;
+            else
+                return  (pA[i] > pB[i])  ?  -1  :  1;
+        return 0;
+    }
+
+    var Tag_Style = { },  _BOM_;
+
+    $(DOM).ready(function () {
+        _BOM_ = $('<iframe />', {
+            id:     '_CSS_SandBox_',
+            src:    'about:blank',
+            css:    {display:  'none'}
+        }).appendTo(this.body)[0].contentWindow;
+    });
+
+    function Tag_Default_CSS(iTagName) {
+        if (! Tag_Style[iTagName]) {
+            var $_Default = $('<' + iTagName + ' />').appendTo(
+                    _BOM_.document.body
+                );
+            Tag_Style[iTagName] = $.extend(
+                { },  BOM.getComputedStyle( $_Default[0] )
+            );
+            $_Default.remove();
+        }
+        return Tag_Style[iTagName];
+    }
+
+    var Disable_Value = $.makeSet('none', '0', '0px', 'hidden');
+
+    function Last_Valid_CSS(iName) {
+        var iRule = [this[0]].concat(
+                this.cssRule( iName ).sort( CSS_Rule_Sort ),
+                {
+                    style:    Tag_Default_CSS( this[0].tagName.toLowerCase() )
+                }
+            );
+        for (var i = 0, iValue;  i < iRule.length;  i++) {
+            iValue = iRule[i].style[iName];
+
+            if (iValue  &&  (! (iValue in Disable_Value)))
+                return iValue;
+        }
+    }
+
+    $.fn.extend({
+        hide:    function () {
+            return  this.css('display',  function () {
+                if (arguments[1] != 'none')
+                    $(this).data('_CSS_Display_', arguments[1]);
+                return 'none';
+            });
+        },
+        show:    function () {
+            return  this.each(function () {
+                var $_This = $(this);
+                var iStyle = $_This.css(['display', 'visibility', 'opacity']);
+
+                if (iStyle.display == 'none')
+                    $_This.css('display', (
+                        $_This.data('_CSS_Display_') ||
+                        Last_Valid_CSS.call($_This, 'display')
+                    ));
+                if (iStyle.visibility == 'hidden')
+                    $_This.css('visibility', 'visible');
+
+                if (iStyle.opacity == 0)
+                    $_This.css('opacity', 1);
+            });
+        }
+    });
+
+/* ---------- Animation ShortCut ---------- */
+
+    $.fn.extend($.map({
+        fadeIn:     {opacity:  1},
+        fadeOut:    {opacity:  0},
+        slideUp:    {
+            overflow:            'hidden',
+            height:              0,
+            'padding-left':      0,
+            'padding-right':     0,
+            'padding-top':       0,
+            'padding-bottom':    0,
+            opacity:             0
+        },
+        slideDown:    {
+            overflow:            'auto',
+            height:              'auto',
+            'padding-left':      'auto',
+            'padding-right':     'auto',
+            'padding-top':       'auto',
+            'padding-bottom':    'auto',
+            opacity:             1
+        }
+    },  function (CSS_Next) {
+        return  function () {
+            if (! this[0])  return this;
+
+            var $_This = this,  CSS_Prev = this.data('_CSS_Animate_');
+
+            return  this.animate.apply(this, $.merge(
+                [$.map(CSS_Next,  function (iValue, iKey) {
+                    if (iValue == 'auto') {
+                        iValue = (CSS_Prev || { })[iKey];
+                        if ((! iValue)  &&  (iValue !== 0))
+                            iValue = Last_Valid_CSS.call($_This, iKey);
+                    }
+                    return  (iValue  ||  (iValue === 0))  ?
+                        iValue : CSS_Next[iKey];
+                })],
+                arguments
+            ));
+        };
+    }));
+
+    $.fn.toggle = function () {
+        return  this[[
+            ['show', 'hide'],  ['slideDown', 'slideUp']
+        ][
+            arguments.length && 1
+        ][
+            this.height() && 1
+        ]].apply(
+            this,  arguments
+        );
+    };
+
+});

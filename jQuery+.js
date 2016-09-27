@@ -2,7 +2,7 @@
 //              >>>  jQuery+  <<<
 //
 //
-//    [Version]    v8.1  (2016-09-18)
+//    [Version]    v8.1  (2016-09-27)
 //
 //    [Require]    jQuery  v1.9+
 //
@@ -2196,13 +2196,15 @@
             $_This.each(function () {
                 var $_Box = $(this);
 
-                $_Box.children().fadeOut();
+                $_Box.children().fadeOut().promise().then(function () {
 
-                HTML_Exec.call($_Box.empty()[0],  $.makeArray( $(iHTML) ))
-                    .then(function () {
-                        if (typeof iCallback == 'function')
-                            iCallback.call($_Box[0], iHTML, _, iXHR);
-                    });
+                    return HTML_Exec.call(
+                        $_Box.empty()[0],  $.makeArray( $(iHTML) )
+                    );
+                }).then(function () {
+                    if (typeof iCallback == 'function')
+                        iCallback.call($_Box[0], iHTML, _, iXHR);
+                });
             });
         },  'html');
 

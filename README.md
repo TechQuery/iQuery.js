@@ -92,6 +92,7 @@
  - 统一 **mousewheel 事件**，并新增其快捷方法
  - 封装了 **触屏单指手势事件**（tap、press、swipe），并为桌面端、移动端提供一致的操作体验
  - 新增 **跨页面消息事件**方法 —— `$.fn.onReply()`（基于 `window.postMessage()`）
+ - `$.fn.animate()` 支持类似 [jQuery UI `$.fn.effect()`](http://www.css88.com/jquery-ui-api/effect/) **动画效果名**参数（基于 **CSS Animation** 实现）
 
 
 ### 未实现的 jQuery（最新版）特性
@@ -104,7 +105,7 @@
  - **jQuery 扩展伪类选择符**：只支持 常用且“难以用 **CSS 标准选择符** 或 jQuery API 实现其功能”的
  - 不支持 **XPath 选择器**、操作 **XML 文档**
  - 不支持一些不常用的 **jQuery 静态/实例方法**
- - 暂不支持 **动画队列**
+ - 不支持 **动画队列**外部操作 API
 
 
 ### ECMA、W3C 标准 API 补丁
