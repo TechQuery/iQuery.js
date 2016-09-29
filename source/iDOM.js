@@ -179,11 +179,30 @@ define(['iTraversing'],  function ($) {
                 )
             };
         },
-        val:               function () {
-            if (! $.isData(arguments[0]))
-                return  this[0] && this[0].value;
-            else
-                return  this.not('input[type="file"]').prop('value', arguments[0]);
+        val:               function (iValue) {
+            if (iValue != null) {
+                if (iValue instanceof Array)
+                    this.filter('select[multiple]').each(function () {
+
+                        for (var i = 0;  this.options[i];  i++)
+                            if ($.inArray(this.options[i].value, iValue))
+                                this.options[i].selected = true;
+                    });
+                else if ($.isData( iValue ))
+                    this.not('input[type="file"]').prop('value', iValue);
+
+                return this;
+            }
+
+            if (! this[0])  return;
+
+            if (this[0].tagName != 'SELECT')  return this[0].value;
+
+            iValue = $.map(this[0].selectedOptions,  function () {
+                return arguments[0].value;
+            });
+
+            return  (iValue.length < 2)  ?  iValue[0]  :  iValue;
         },
         serializeArray:    function () {
             var $_Value = this.find('*[name]:input').not(':button, [disabled]'),

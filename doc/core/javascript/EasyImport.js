@@ -2,7 +2,7 @@
 //                >>>  iQuery.js  <<<
 //
 //
-//      [Version]    v2.0  (2016-09-22)  Stable
+//      [Version]    v2.0  (2016-09-29)  Stable
 //
 //      [Usage]      A Light-weight jQuery Compatible API
 //                   with IE 8+ compatibility.
@@ -1003,7 +1003,7 @@
     }
 
     $ = BOM.iQuery = $.extend(iQuery, $, {
-        parseHTML:     function (iHTML, AttrList) {
+        parseHTML:     function (iHTML) {
             var iTag = iHTML.match(
                     /^\s*<([^\s\/\>]+)\s*([^<]*?)\s*(\/?)>([^<]*)((<\/\1>)?)([\s\S]*)/
                 ) || [ ];
@@ -1806,11 +1806,30 @@
                 )
             };
         },
-        val:               function () {
-            if (! $.isData(arguments[0]))
-                return  this[0] && this[0].value;
-            else
-                return  this.not('input[type="file"]').prop('value', arguments[0]);
+        val:               function (iValue) {
+            if (iValue != null) {
+                if (iValue instanceof Array)
+                    this.filter('select[multiple]').each(function () {
+
+                        for (var i = 0;  this.options[i];  i++)
+                            if ($.inArray(this.options[i].value, iValue))
+                                this.options[i].selected = true;
+                    });
+                else if ($.isData( iValue ))
+                    this.not('input[type="file"]').prop('value', iValue);
+
+                return this;
+            }
+
+            if (! this[0])  return;
+
+            if (this[0].tagName != 'SELECT')  return this[0].value;
+
+            iValue = $.map(this[0].selectedOptions,  function () {
+                return arguments[0].value;
+            });
+
+            return  (iValue.length < 2)  ?  iValue[0]  :  iValue;
         },
         serializeArray:    function () {
             var $_Value = this.find('*[name]:input').not(':button, [disabled]'),
@@ -3136,7 +3155,213 @@
 
 (function (BOM, DOM, $) {
 
-    /* ----- Atom Effect ----- */
+/* ---------- JS-Timer Animation ---------- */
+
+    var FPS = 60,
+        Animate_Property = {
+            scrollLeft:    true,
+            scrollTop:     true
+        };
+
+    function KeyFrame(iStart, iEnd, During_Second) {
+        During_Second = Number(During_Second) || 1;
+
+        var iKF = [ ],  KF_Sum = FPS * During_Second;
+        var iStep = (iEnd - iStart) / KF_Sum;
+
+        for (var i = 0, KFV = iStart, j = 0;  i < KF_Sum;  i++) {
+            KFV += iStep;
+            iKF[j++] = Number( KFV.toFixed(2) );
+        }
+        return iKF;
+    }
+
+    function JSTimer_Animate(CSS_Final, During_Second, iEasing) {
+        var iAnimate = [ ],  $_This = this;
+
+        $.each(CSS_Final,  function (iName) {
+            var iStyle = this;
+
+            iAnimate.push(new Promise(function (iResolve, iReject) {
+                if (! $.isNumeric(iStyle)) {
+                    $_This.css(iName, iStyle);
+
+                    return iResolve();
+                }
+
+                var iSpecial = (iName in Animate_Property);
+
+                var iKeyFrame = KeyFrame(
+                        iSpecial ? $_This[iName]() : $_This.css(iName),
+                        iStyle,
+                        During_Second
+                    );
+
+                $.every(1 / FPS,  function () {
+                    if (! $_This.data('_Animate_'))
+                        iReject('Animating stoped');
+                    else if ( iKeyFrame.length ) {
+                        if (iSpecial)
+                            $_This[iName]( iKeyFrame.shift() );
+                        else
+                            $_This.css(iName, iKeyFrame.shift());
+
+                        return;
+                    } else
+                        iResolve();
+
+                    return false;
+                });
+            }));
+        });
+
+        return  Promise.all( iAnimate );
+    }
+
+/* ---------- CSS Animation ---------- */
+
+    var CSS_Prefix = (function (iHash) {
+            for (var iKey in iHash)
+                if ( $.browser[iKey] )  return iHash[iKey];
+        })({
+            mozilla:    'moz',
+            webkit:     'webkit',
+            msie:       'ms'
+        });
+
+    function CSS_AMP() {
+        return  '-' + CSS_Prefix + '-' + arguments[0];
+    }
+
+    /* ----- Transition ----- */
+
+    var Transition_End = 'transitionend ' + CSS_Prefix + 'TransitionEnd';
+
+    function Transition_Animate(CSS_Final) {
+        var iTransition = [
+                'all',  (arguments[1] + 's'),  arguments[2]
+            ].join(' '),
+            $_This = this;
+
+        return  new Promise(function () {
+            $_This.one(Transition_End, arguments[0])
+                .css('transition', iTransition).css(
+                    CSS_AMP('transition'),  iTransition
+                )
+                .css( CSS_Final );
+        });
+    }
+
+    /* ----- KeyFrame ----- */
+
+    var Animation_End = 'animationend ' + CSS_Prefix + 'AnimationEnd';
+
+    function KeyFrame_Animate(iEffect) {
+        var iAnimation = { },  $_This = this;
+
+        iAnimation['animation-duration'] = iAnimation[
+            CSS_AMP('animation-duration')
+        ] = arguments[1] + 's';
+
+        iAnimation['animation-timing-function'] = iAnimation[
+            CSS_AMP('animation-timing-function')
+        ] = arguments[2];
+
+        return  new Promise(function (iResolve) {
+            iEffect = 'animated ' + iEffect;
+
+            $_This.one(Animation_End,  function () {
+
+                $_This.removeClass( iEffect );
+
+                iResolve();
+
+            }).css( iAnimation ).addClass( iEffect );
+        });
+    }
+
+/* ---------- Animation Core ---------- */
+
+    $.fn.extend({
+        animate:    function (CSS_Final) {
+            if (! this[0])  return this;
+
+            var iEngine;
+
+            if (typeof CSS_Final == 'string')
+                iEngine = KeyFrame_Animate;
+            else {
+                var iCSS = Object.getOwnPropertyNames( CSS_Final );
+
+                this.data('_Animate_', 1).data('_CSS_Animate_',  function () {
+                    return  $.extend(arguments[1], $(this).css(iCSS));
+                });
+
+                iEngine = (
+                    (($.browser.msie < 10)  ||  (! $.isEmptyObject(
+                        $.intersect($.makeSet.apply($, iCSS),  Animate_Property)
+                    ))) ?
+                        JSTimer_Animate  :  Transition_Animate
+                );
+            }
+
+            var iArgs = $.makeArray( arguments ).slice(1);
+
+            var During_Second = $.isNumeric( iArgs[0] )  ?
+                    (iArgs.shift() / 1000)  :  0.4,
+                iEasing = (typeof iArgs[0] == 'string')  ?  iArgs.shift()  :  '',
+                iCallback = (typeof iArgs[0] == 'function')  &&  iArgs[0];
+
+            return  this.data('_Animate_Queue_',  function (_, iQueue) {
+                var $_This = $(this);
+
+                var iProcess = $.proxy(
+                        iEngine,  $_This,  CSS_Final,  During_Second,  iEasing
+                    );
+
+                var qCount = $_This.data('_Queue_Count_') || 0;
+
+                $_This.data('_Queue_Count_', ++qCount);
+
+                iQueue = (iQueue ? iQueue.then(iProcess) : iProcess())
+                    .then(function () {
+                        var qCount = $_This.data('_Queue_Count_');
+
+                        if (--qCount)
+                            $_This.data('_Queue_Count_', qCount);
+                        else
+                            $_This.data({
+                                _Queue_Count_:     null,
+                                _Animate_Queue_:   null
+                            });
+                    });
+
+                iQueue.then(iCallback);
+
+                return iQueue;
+            });
+        },
+        stop:       function () {
+            return  this.data('_Animate_', 0);
+        },
+        promise:    function () {
+            return  Promise.all($.map(this,  function (iDOM) {
+                return $(iDOM).data('_Animate_Queue_');
+            }));
+        }
+    });
+
+    $.fn.effect = $.fn.animate;
+
+    $.fx = {interval:  1000 / FPS};
+
+})(self,  self.document,  self.iQuery || iQuery);
+
+
+
+(function (BOM, DOM, $) {
+
+/* ---------- Atom Effect ---------- */
 
     var Pseudo_Class = $.makeSet([
             ':link', 'visited', 'hover', 'active', 'focus', 'lang',
@@ -3248,166 +3473,7 @@
         }
     });
 
-    /* ----- KeyFrame Animation ----- */
-
-    var FPS = 60,
-        Animate_Property = {
-            scrollLeft:    true,
-            scrollTop:     true
-        };
-
-    function KeyFrame(iStart, iEnd, During_Second) {
-        During_Second = Number(During_Second) || 1;
-
-        var iKF = [ ],  KF_Sum = FPS * During_Second;
-        var iStep = (iEnd - iStart) / KF_Sum;
-
-        for (var i = 0, KFV = iStart, j = 0;  i < KF_Sum;  i++) {
-            KFV += iStep;
-            iKF[j++] = Number( KFV.toFixed(2) );
-        }
-        return iKF;
-    }
-
-    function KeyFrame_Animate(CSS_Final, During_Second, iEasing) {
-        var iAnimate = [ ],  $_This = this;
-
-        $.each(CSS_Final,  function (iName) {
-            var iStyle = this;
-
-            iAnimate.push(new Promise(function (iResolve, iReject) {
-                if (! $.isNumeric(iStyle)) {
-                    $_This.css(iName, iStyle);
-
-                    return iResolve();
-                }
-
-                var iSpecial = (iName in Animate_Property);
-
-                var iKeyFrame = KeyFrame(
-                        iSpecial ? $_This[iName]() : $_This.css(iName),
-                        iStyle,
-                        During_Second
-                    );
-
-                $.every(1 / FPS,  function () {
-                    if (! $_This.data('_Animate_'))
-                        iReject('Animating stoped');
-                    else if ( iKeyFrame.length ) {
-                        if (iSpecial)
-                            $_This[iName]( iKeyFrame.shift() );
-                        else
-                            $_This.css(iName, iKeyFrame.shift());
-
-                        return;
-                    } else
-                        iResolve();
-
-                    return false;
-                });
-            }));
-        });
-
-        return  Promise.all( iAnimate );
-    }
-
-    /* ----- Transition Animation ----- */
-
-    var CSS_Prefix = (function (iHash) {
-            for (var iKey in iHash)
-                if ( $.browser[iKey] )  return iHash[iKey];
-        })({
-            mozilla:    'moz',
-            webkit:     'webkit',
-            msie:       'ms'
-        });
-
-    function CSS_AMP() {
-        return  '-' + CSS_Prefix + '-' + arguments[0];
-    }
-
-    var End_Event = 'TransitionEnd';
-    var Bind_Name = End_Event.toLowerCase() + ' ' + CSS_Prefix + End_Event;
-
-    function Transition_Animate(CSS_Final) {
-        var iTransition = [
-                'all',  (arguments[1] + 's'),  arguments[2]
-            ].join(' '),
-            $_This = this;
-
-        return  new Promise(function () {
-            $_This.on(Bind_Name, arguments[0])
-                .css('transition', iTransition).css(
-                    CSS_AMP('transition'),  iTransition
-                )
-                .css( CSS_Final );
-        });
-    }
-
-    $.fn.extend({
-        animate:    function (CSS_Final) {
-            if (! this[0])  return this;
-
-            var iCSS = Object.getOwnPropertyNames( CSS_Final );
-
-            this.data('_Animate_', 1).data('_CSS_Animate_',  function () {
-                return  $.extend(arguments[1], $(this).css(iCSS));
-            });
-
-            var iEngine = (
-                    (($.browser.msie < 10)  ||  (! $.isEmptyObject(
-                        $.intersect($.makeSet.apply($, iCSS),  Animate_Property)
-                    ))) ?
-                        KeyFrame_Animate  :  Transition_Animate
-                );
-
-            var iArgs = $.makeArray( arguments ).slice(1);
-
-            var During_Second = $.isNumeric( iArgs[0] )  ?
-                    (iArgs.shift() / 1000)  :  0.4,
-                iEasing = (typeof iArgs[0] == 'string')  ?  iArgs.shift()  :  '',
-                iCallback = (typeof iArgs[0] == 'function')  &&  iArgs[0];
-
-            return  this.data('_Animate_Queue_',  function (_, iQueue) {
-                var $_This = $(this);
-
-                var iProcess = $.proxy(
-                        iEngine,  $_This,  CSS_Final,  During_Second,  iEasing
-                    );
-
-                var qCount = $_This.data('_Queue_Count_') || 0;
-
-                $_This.data('_Queue_Count_', ++qCount);
-
-                iQueue = (iQueue ? iQueue.then(iProcess) : iProcess())
-                    .then(function () {
-                        var qCount = $_This.data('_Queue_Count_');
-
-                        if (--qCount)
-                            $_This.data('_Queue_Count_', qCount);
-                        else
-                            $_This.data({
-                                _Queue_Count_:     null,
-                                _Animate_Queue_:   null
-                            });
-                    });
-
-                iQueue.then(iCallback);
-
-                return iQueue;
-            });
-        },
-        stop:       function () {
-            return  this.data('_Animate_', 0);
-        },
-        promise:    function () {
-            return  Promise.all($.map(this,  function (iDOM) {
-                return $(iDOM).data('_Animate_Queue_');
-            }));
-        }
-    });
-
-    /* ----- Animation ShortCut ----- */
+/* ---------- Animation ShortCut ---------- */
 
     $.fn.extend($.map({
         fadeIn:     {opacity:  1},
@@ -3462,8 +3528,6 @@
             this,  arguments
         );
     };
-
-    $.fx = {interval:  1000 / FPS};
 
 })(self,  self.document,  self.iQuery || iQuery);
 
@@ -4355,35 +4419,48 @@
 /* ---------- Smart Load ---------- */
 
     function HTML_Exec($_Fragment) {
-        var iDOM,  _This_ = this;
+        var $_Insert = [ ];
 
-        while ( $_Fragment[0] ) {
+        for (var j = 0;  $_Fragment[0];  ) {
             if ($_Fragment[0].tagName != 'SCRIPT')
-                iDOM = $_Fragment[0];
-            else if (! $_Fragment[0].src)
-                iDOM = $('<script />').prop('text', $_Fragment[0].text)[0];
-            else
-                return  (new Promise(function () {
-                    _This_.appendChild(
-                        $('<script />')
-                            .on('load', arguments[0]).on('error', arguments[1])
-                            .prop('src', $_Fragment[0].src)[0]
-                    );
-                    $_Fragment.shift();
+                $_Insert[j++] = $_Fragment[0];
+            else {
+                this.append( $_Insert );
+                $_Insert.length = j = 0;
 
-                })).then($.proxy(arguments.callee, this, $_Fragment));
+                if (! $_Fragment[0].src)
+                    this.each(function () {
+                        $('<script />').prop('text', $_Fragment[0].text)
+                            .appendTo(this);
+                    });
+                else
+                    return  Promise.all($.map(this,  function (_This_) {
+                        return  new Promise(function () {
+                            _This_.appendChild(
+                                $('<script />')
+                                    .on('load', arguments[0])
+                                    .on('error', arguments[1])
+                                    .prop('src', $_Fragment[0].src)[0]
+                            );
+                            $_Fragment.shift();
+                        });
+                    })).then($.proxy(arguments.callee, this, $_Fragment));
+            }
 
-            this.appendChild( iDOM );
             $_Fragment.shift();
         }
+
+        this.append( $_Insert );
 
         return Promise.resolve('');
     }
 
+    $.fn.htmlExec = function () {
+        return  HTML_Exec.call(this,  $.makeArray( $(arguments[0]) ));
+    };
+
     $.fn.load = function (iURL, iData, iCallback) {
         if (! this[0])  return this;
-
-        iURL = $.split(iURL.trim(), /\s+/, 2, ' ');
 
         if (typeof iData == 'function') {
             iCallback = iData;
@@ -4392,22 +4469,24 @@
 
         var $_This = this;
 
-        $[iData ? 'post' : 'get'](iURL[0],  iData,  function (iHTML, _, iXHR) {
+        $[iData ? 'post' : 'get'](
+            iURL.trim().split(/\s+/)[0],
+            iData,
+            function (iHTML, _, iXHR) {
+                iHTML = (typeof iHTML == 'string')  ?  iHTML  :  iXHR.responseText;
 
-            var iHTML = (typeof iHTML == 'string')  ?  iHTML  :  iXHR.responseText;
+                $_This.children().fadeOut(200).promise().then(function () {
 
-            $_This.each(function () {
-                var $_Box = $(this);
+                    return $_This.empty().htmlExec(iHTML);
 
-                $_Box.children().fadeOut();
+                }).then(function () {
 
-                HTML_Exec.call($_Box.empty()[0],  $.makeArray( $(iHTML) ))
-                    .then(function () {
-                        if (typeof iCallback == 'function')
-                            iCallback.call($_Box[0], iHTML, _, iXHR);
-                    });
-            });
-        },  'html');
+                    if (typeof iCallback == 'function')
+                        $_This.each($.proxy(iCallback, null, iHTML, _, iXHR));
+                });
+            },
+            'html'
+        );
 
         return this;
     };
