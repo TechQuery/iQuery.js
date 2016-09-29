@@ -35,35 +35,48 @@ define(['jquery'],  function ($) {
 /* ---------- Smart Load ---------- */
 
     function HTML_Exec($_Fragment) {
-        var iDOM,  _This_ = this;
+        var $_Insert = [ ];
 
-        while ( $_Fragment[0] ) {
+        for (var j = 0;  $_Fragment[0];  ) {
             if ($_Fragment[0].tagName != 'SCRIPT')
-                iDOM = $_Fragment[0];
-            else if (! $_Fragment[0].src)
-                iDOM = $('<script />').prop('text', $_Fragment[0].text)[0];
-            else
-                return  (new Promise(function () {
-                    _This_.appendChild(
-                        $('<script />')
-                            .on('load', arguments[0]).on('error', arguments[1])
-                            .prop('src', $_Fragment[0].src)[0]
-                    );
-                    $_Fragment.shift();
+                $_Insert[j++] = $_Fragment[0];
+            else {
+                this.append( $_Insert );
+                $_Insert.length = j = 0;
 
-                })).then($.proxy(arguments.callee, this, $_Fragment));
+                if (! $_Fragment[0].src)
+                    this.each(function () {
+                        $('<script />').prop('text', $_Fragment[0].text)
+                            .appendTo(this);
+                    });
+                else
+                    return  Promise.all($.map(this,  function (_This_) {
+                        return  new Promise(function () {
+                            _This_.appendChild(
+                                $('<script />')
+                                    .on('load', arguments[0])
+                                    .on('error', arguments[1])
+                                    .prop('src', $_Fragment[0].src)[0]
+                            );
+                            $_Fragment.shift();
+                        });
+                    })).then($.proxy(arguments.callee, this, $_Fragment));
+            }
 
-            this.appendChild( iDOM );
             $_Fragment.shift();
         }
+
+        this.append( $_Insert );
 
         return Promise.resolve('');
     }
 
+    $.fn.htmlExec = function () {
+        return  HTML_Exec.call(this,  $.makeArray( $(arguments[0]) ));
+    };
+
     $.fn.load = function (iURL, iData, iCallback) {
         if (! this[0])  return this;
-
-        iURL = $.split(iURL.trim(), /\s+/, 2, ' ');
 
         if (typeof iData == 'function') {
             iCallback = iData;
@@ -72,24 +85,24 @@ define(['jquery'],  function ($) {
 
         var $_This = this;
 
-        $[iData ? 'post' : 'get'](iURL[0],  iData,  function (iHTML, _, iXHR) {
+        $[iData ? 'post' : 'get'](
+            iURL.trim().split(/\s+/)[0],
+            iData,
+            function (iHTML, _, iXHR) {
+                iHTML = (typeof iHTML == 'string')  ?  iHTML  :  iXHR.responseText;
 
-            var iHTML = (typeof iHTML == 'string')  ?  iHTML  :  iXHR.responseText;
+                $_This.children().fadeOut(200).promise().then(function () {
 
-            $_This.each(function () {
-                var $_Box = $(this);
+                    return $_This.empty().htmlExec(iHTML);
 
-                $_Box.children().fadeOut().promise().then(function () {
-
-                    return HTML_Exec.call(
-                        $_Box.empty()[0],  $.makeArray( $(iHTML) )
-                    );
                 }).then(function () {
+
                     if (typeof iCallback == 'function')
-                        iCallback.call($_Box[0], iHTML, _, iXHR);
+                        $_This.each($.proxy(iCallback, null, iHTML, _, iXHR));
                 });
-            });
-        },  'html');
+            },
+            'html'
+        );
 
         return this;
     };

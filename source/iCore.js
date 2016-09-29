@@ -100,7 +100,7 @@ define(['extension/iTimer'],  function ($) {
     }
 
     $ = BOM.iQuery = $.extend(iQuery, $, {
-        parseHTML:     function (iHTML, AttrList) {
+        parseHTML:     function (iHTML) {
             var iTag = iHTML.match(
                     /^\s*<([^\s\/\>]+)\s*([^<]*?)\s*(\/?)>([^<]*)((<\/\1>)?)([\s\S]*)/
                 ) || [ ];
