@@ -1,6 +1,6 @@
 define(['jquery'],  function ($) {
 
-    var BOM = self;
+    var BOM = self,  DOM = self.document;
 
     var iOperator = {
             '+':    function () {
@@ -10,8 +10,7 @@ define(['jquery'],  function ($) {
                 return  arguments[0] - arguments[1];
             }
         },
-        Array_Reverse = Array.prototype.reverse,
-        Rolling_Style = $.makeSet('auto', 'scroll');
+        Array_Reverse = Array.prototype.reverse;
 
     $.fn.extend({
         reduce:           function (iMethod, iKey, iCallback) {
@@ -52,27 +51,9 @@ define(['jquery'],  function ($) {
             ));
         },
         scrollParents:    function () {
-            return Array_Reverse.call(this.pushStack(
-                $.map(this.eq(0).parents(),  function ($_Parent) {
-                    $_Parent = $($_Parent);
-
-                    var iCSS = $_Parent.css([
-                            'max-width', 'max-height', 'overflow-x', 'overflow-y'
-                        ]);
-
-                    if (
-                        (
-                            ($_Parent.width() || parseFloat(iCSS['max-width']))  &&
-                            (iCSS['overflow-x'] in Rolling_Style)
-                        )  ||
-                        (
-                            ($_Parent.height() || parseFloat(iCSS['max-height']))  &&
-                            (iCSS['overflow-y'] in Rolling_Style)
-                        )
-                    )
-                        return $_Parent[0];
-                })
-            ));
+            return Array_Reverse.call(this.pushStack($.merge(
+                this.eq(0).parents(':scrollable'),  [ DOM ]
+            )));
         },
         inViewport:       function () {
             for (var i = 0, _OS_, $_BOM, BOM_W, BOM_H;  this[i];  i++) {

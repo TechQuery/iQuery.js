@@ -1,6 +1,8 @@
 define(['jquery'],  function ($) {
 
-/* ---------- Enhanced :image ---------- */
+/* ---------- Enhance jQuery Pseudo ---------- */
+
+    /* ----- :image ----- */
 
     var pImage = $.extend($.makeSet('IMG', 'SVG', 'CANVAS'), {
             INPUT:    {type:  'image'},
@@ -15,7 +17,7 @@ define(['jquery'],  function ($) {
         return  ($(iDOM).css('background-image') != 'none');
     };
 
-/* ---------- Enhanced :button ---------- */
+    /* ----- :button ----- */
 
     var pButton = $.makeSet('button', 'image', 'submit', 'reset');
 
@@ -25,7 +27,7 @@ define(['jquery'],  function ($) {
         );
     };
 
-/* ---------- Enhanced :input ---------- */
+    /* ----- :input ----- */
 
     var pInput = $.makeSet('INPUT', 'TEXTAREA', 'BUTTON', 'SELECT');
 
@@ -36,6 +38,8 @@ define(['jquery'],  function ($) {
     };
 
 /* ---------- iQuery Extended Pseudo ---------- */
+
+    /* ----- :list, :data ----- */
 
     var pList = $.makeSet('UL', 'OL', 'DL', 'TBODY', 'SELECT', 'DATALIST');
 
@@ -48,6 +52,8 @@ define(['jquery'],  function ($) {
         }
     });
 
+    /* ----- :focusable ----- */
+
     var pFocusable = [
             'a[href],  map[name] area[href]',
             'label, input, textarea, button, select, option, object',
@@ -57,6 +63,33 @@ define(['jquery'],  function ($) {
     $.expr[':'].focusable = function () {
         return arguments[0].matches(pFocusable);
     };
+
+    /* ----- :scrollable ----- */
+
+    var Rolling_Style = $.makeSet('auto', 'scroll');
+
+    $.expr[':'].scrollable = function () {
+        var $_This = $( arguments[0] );
+
+        var iCSS = $_This.css([
+                'width',       'height',
+                'max-width',   'max-height',
+                'overflow-x',  'overflow-y'
+            ]);
+
+        return (
+            (
+                (parseFloat(iCSS.width) || parseFloat(iCSS['max-width']))  &&
+                (iCSS['overflow-x'] in Rolling_Style)
+            )  ||
+            (
+                (parseFloat(iCSS.height) || parseFloat(iCSS['max-height']))  &&
+                (iCSS['overflow-y'] in Rolling_Style)
+            )
+        );
+    };
+
+    /* ----- :media ----- */
 
     var pMedia = $.makeSet('IFRAME', 'OBJECT', 'EMBED', 'AUDIO', 'VIDEO');
 

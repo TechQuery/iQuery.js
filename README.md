@@ -69,10 +69,12 @@
  - 更多 jQuery **伪类选择符**：
    - **:image** 还支持 `img, link[type="image/x-icon"], svg, canvas` 及设置了 `background-image` 的普通元素
    - **:button** 还支持 `input[type="submit"], input[type="reset"], input[type="image"]`
+   - **:input** 还支持 contentEditable、designMode 属性
    - 自带 **:focusable 伪类**（[jQuery UI](http://api.jqueryui.com/) 标准）
    - 自带 **:data() 伪类**（[jQuery UI](http://api.jqueryui.com/) 标准）
    - 新增 **:list 伪类**，等价于 `ul, ol, dl, tbody, select, datalist`
    - 新增 **:media 伪类**，等价于 `iframe, object, embed, audio, video` 及尺寸较大的 `:image`
+   - 新增 **:scrollable 伪类**
  - 新增 **子元素插入**方法 —— `$.fn.insertTo()`
  - 新增 **祖先元素交集**方法 —— `$.fn.sameParents()`
  - 新增 **有滚动条的祖先元素**方法 —— `$.fn.scrollParents()`

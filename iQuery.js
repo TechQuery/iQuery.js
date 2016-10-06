@@ -2,7 +2,7 @@
 //                >>>  iQuery.js  <<<
 //
 //
-//      [Version]    v2.0  (2016-09-29)  Stable
+//      [Version]    v2.0  (2016-10-07)  Stable
 //
 //      [Usage]      A Light-weight jQuery Compatible API
 //                   with IE 8+ compatibility.
@@ -1411,7 +1411,9 @@
 
 (function (BOM, DOM, $) {
 
-/* ---------- Enhanced :image ---------- */
+/* ---------- Enhance jQuery Pseudo ---------- */
+
+    /* ----- :image ----- */
 
     var pImage = $.extend($.makeSet('IMG', 'SVG', 'CANVAS'), {
             INPUT:    {type:  'image'},
@@ -1426,7 +1428,7 @@
         return  ($(iDOM).css('background-image') != 'none');
     };
 
-/* ---------- Enhanced :button ---------- */
+    /* ----- :button ----- */
 
     var pButton = $.makeSet('button', 'image', 'submit', 'reset');
 
@@ -1436,7 +1438,7 @@
         );
     };
 
-/* ---------- Enhanced :input ---------- */
+    /* ----- :input ----- */
 
     var pInput = $.makeSet('INPUT', 'TEXTAREA', 'BUTTON', 'SELECT');
 
@@ -1447,6 +1449,8 @@
     };
 
 /* ---------- iQuery Extended Pseudo ---------- */
+
+    /* ----- :list, :data ----- */
 
     var pList = $.makeSet('UL', 'OL', 'DL', 'TBODY', 'SELECT', 'DATALIST');
 
@@ -1459,6 +1463,8 @@
         }
     });
 
+    /* ----- :focusable ----- */
+
     var pFocusable = [
             'a[href],  map[name] area[href]',
             'label, input, textarea, button, select, option, object',
@@ -1468,6 +1474,33 @@
     $.expr[':'].focusable = function () {
         return arguments[0].matches(pFocusable);
     };
+
+    /* ----- :scrollable ----- */
+
+    var Rolling_Style = $.makeSet('auto', 'scroll');
+
+    $.expr[':'].scrollable = function () {
+        var $_This = $( arguments[0] );
+
+        var iCSS = $_This.css([
+                'width',       'height',
+                'max-width',   'max-height',
+                'overflow-x',  'overflow-y'
+            ]);
+
+        return (
+            (
+                (parseFloat(iCSS.width) || parseFloat(iCSS['max-width']))  &&
+                (iCSS['overflow-x'] in Rolling_Style)
+            )  ||
+            (
+                (parseFloat(iCSS.height) || parseFloat(iCSS['max-height']))  &&
+                (iCSS['overflow-y'] in Rolling_Style)
+            )
+        );
+    };
+
+    /* ----- :media ----- */
 
     var pMedia = $.makeSet('IFRAME', 'OBJECT', 'EMBED', 'AUDIO', 'VIDEO');
 
@@ -1685,17 +1718,18 @@
         };
 
         return  function (iPX) {
-            iPX = parseInt(iPX);
+            iPX = parseFloat(iPX);
 
             if ( isNaN(iPX) ) {
                 iPX = Scroll_DOM.call(this[0])[iName.scroll];
 
-                return  (iPX !== undefined) ? iPX : (
+                return  (iPX != null)  ?  iPX  :  (
                     this[0].documentElement[iName.scroll] ||
                     this[0].defaultView[iName.offset] ||
                     this[0].body[iName.scroll]
                 );
             }
+
             for (var i = 0;  i < this.length;  i++) {
                 if (this[i][iName.scroll] !== undefined) {
                     Scroll_DOM.call(this[i])[iName.scroll] = iPX;
@@ -1705,6 +1739,8 @@
                     this[i].defaultView[iName.offset] =
                     this[i].body[iName.scroll] = iPX;
             }
+
+            return this;
         };
     }
 
@@ -2396,7 +2432,7 @@
 
             $_Target.data('_Gesture_Event_', null);
 
-            var iEnd = get_Touch(iEvent);
+            var iEnd = get_Touch( iEvent.originalEvent );
 
             iEvent = {
                 target:    $_Target[0],
@@ -3543,8 +3579,7 @@
                 return  arguments[0] - arguments[1];
             }
         },
-        Array_Reverse = Array.prototype.reverse,
-        Rolling_Style = $.makeSet('auto', 'scroll');
+        Array_Reverse = Array.prototype.reverse;
 
     $.fn.extend({
         reduce:           function (iMethod, iKey, iCallback) {
@@ -3585,27 +3620,9 @@
             ));
         },
         scrollParents:    function () {
-            return Array_Reverse.call(this.pushStack(
-                $.map(this.eq(0).parents(),  function ($_Parent) {
-                    $_Parent = $($_Parent);
-
-                    var iCSS = $_Parent.css([
-                            'max-width', 'max-height', 'overflow-x', 'overflow-y'
-                        ]);
-
-                    if (
-                        (
-                            ($_Parent.width() || parseFloat(iCSS['max-width']))  &&
-                            (iCSS['overflow-x'] in Rolling_Style)
-                        )  ||
-                        (
-                            ($_Parent.height() || parseFloat(iCSS['max-height']))  &&
-                            (iCSS['overflow-y'] in Rolling_Style)
-                        )
-                    )
-                        return $_Parent[0];
-                })
-            ));
+            return Array_Reverse.call(this.pushStack($.merge(
+                this.eq(0).parents(':scrollable'),  [ DOM ]
+            )));
         },
         inViewport:       function () {
             for (var i = 0, _OS_, $_BOM, BOM_W, BOM_H;  this[i];  i++) {

@@ -58,17 +58,18 @@ define(['iTraversing'],  function ($) {
         };
 
         return  function (iPX) {
-            iPX = parseInt(iPX);
+            iPX = parseFloat(iPX);
 
             if ( isNaN(iPX) ) {
                 iPX = Scroll_DOM.call(this[0])[iName.scroll];
 
-                return  (iPX !== undefined) ? iPX : (
+                return  (iPX != null)  ?  iPX  :  (
                     this[0].documentElement[iName.scroll] ||
                     this[0].defaultView[iName.offset] ||
                     this[0].body[iName.scroll]
                 );
             }
+
             for (var i = 0;  i < this.length;  i++) {
                 if (this[i][iName.scroll] !== undefined) {
                     Scroll_DOM.call(this[i])[iName.scroll] = iPX;
@@ -78,6 +79,8 @@ define(['iTraversing'],  function ($) {
                     this[i].defaultView[iName.offset] =
                     this[i].body[iName.scroll] = iPX;
             }
+
+            return this;
         };
     }
 

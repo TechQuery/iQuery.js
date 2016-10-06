@@ -65,7 +65,7 @@ define(['jquery'],  function ($) {
 
             $_Target.data('_Gesture_Event_', null);
 
-            var iEnd = get_Touch(iEvent);
+            var iEnd = get_Touch( iEvent.originalEvent );
 
             iEvent = {
                 target:    $_Target[0],
