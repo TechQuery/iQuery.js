@@ -77,6 +77,18 @@ define(['jquery'],  function ($) {
         Object.defineProperty(DOM_Proto, 'children', Children_Define);
 
 
+/* ---------- Scrolling Element ---------- */
+
+    var DocProto = DOM.constructor.prototype;
+
+    if (! Object.getOwnPropertyDescriptor(DocProto, 'scrollingElement'))
+        Object.defineProperty(DocProto, 'scrollingElement', {
+            get:    function () {
+                return  ($.browser.webkit || (DOM.compatMode == 'BackCompat'))  ?
+                    DOM.body  :  DOM.documentElement;
+            }
+        });
+
 /* ---------- Selected Options ---------- */
 
     if ($.browser.msie < 12)

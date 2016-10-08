@@ -42,13 +42,10 @@ define(['iTraversing'],  function ($) {
         };
     }
 
+    var Scroll_Root = $.makeSet('#document', 'HTML', 'BODY');
+
     function Scroll_DOM() {
-        return (
-            ($.browser.webkit || (
-                (this.tagName || '').toLowerCase()  !=  'body'
-            )) ?
-            this : this.ownerDocument.documentElement
-        );
+        return  (this.nodeName in Scroll_Root)  ?  DOM.scrollingElement  :  this;
     }
 
     function DOM_Scroll(iName) {

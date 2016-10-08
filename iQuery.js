@@ -2,7 +2,7 @@
 //                >>>  iQuery.js  <<<
 //
 //
-//      [Version]    v2.0  (2016-10-08)  Stable
+//      [Version]    v2.0  (2016-10-09)  Stable
 //
 //      [Usage]      A Light-weight jQuery Compatible API
 //                   with IE 8+ compatibility.
@@ -1479,10 +1479,10 @@
 
     var Rolling_Style = $.makeSet('auto', 'scroll');
 
-    $.expr[':'].scrollable = function () {
-        var $_This = $( arguments[0] );
+    $.expr[':'].scrollable = function (iDOM) {
+        if (iDOM === iDOM.ownerDocument.scrollingElement)  return true;
 
-        var iCSS = $_This.css([
+        var iCSS = $(iDOM).css([
                 'width',       'height',
                 'max-width',   'max-height',
                 'overflow-x',  'overflow-y'
@@ -1703,13 +1703,10 @@
         };
     }
 
+    var Scroll_Root = $.makeSet('#document', 'HTML', 'BODY');
+
     function Scroll_DOM() {
-        return (
-            ($.browser.webkit || (
-                (this.tagName || '').toLowerCase()  !=  'body'
-            )) ?
-            this : this.ownerDocument.documentElement
-        );
+        return  (this.nodeName in Scroll_Root)  ?  DOM.scrollingElement  :  this;
     }
 
     function DOM_Scroll(iName) {
@@ -2997,6 +2994,18 @@
     if (! DOM.head.children[0])
         Object.defineProperty(DOM_Proto, 'children', Children_Define);
 
+
+/* ---------- Scrolling Element ---------- */
+
+    var DocProto = DOM.constructor.prototype;
+
+    if (! Object.getOwnPropertyDescriptor(DocProto, 'scrollingElement'))
+        Object.defineProperty(DocProto, 'scrollingElement', {
+            get:    function () {
+                return  ($.browser.webkit || (DOM.compatMode == 'BackCompat'))  ?
+                    DOM.body  :  DOM.documentElement;
+            }
+        });
 
 /* ---------- Selected Options ---------- */
 
@@ -4873,5 +4882,4 @@
 })(self,  self.document,  self.iQuery || iQuery);
 
 
-;
 });

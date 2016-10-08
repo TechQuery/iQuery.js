@@ -127,6 +127,7 @@
  - 重写 `Error.prototype.valueOf()`，使 IE 10- 返回可查询的错误码（附带 官方文档 URL）
  - 新增 **DOMHttpRequest 对象**，封装了 **JSONP Get**、 **iframe Post**
  - 自带 `HTMLDocument.prototype.currentScript` 属性
+ - 自带 `HTMLDocument.prototype.scrollingElement` 属性
  - 自带 `Element.prototype.textContent` 属性
  - 自带 `Element.prototype.innerHTML` 的 IE 8 补丁
  - 自带 **HTMLCollection 对象**，修复 IE 10- `Element.prototype.children` 属性在其元素有 name 属性时的“数字键值缺失”Bug

@@ -2,7 +2,7 @@
 //              >>>  jQuery+  <<<
 //
 //
-//    [Version]    v8.2  (2016-10-08)
+//    [Version]    v8.2  (2016-10-09)
 //
 //    [Require]    jQuery  v1.9+
 //
@@ -733,10 +733,10 @@
 
     var Rolling_Style = $.makeSet('auto', 'scroll');
 
-    $.expr[':'].scrollable = function () {
-        var $_This = $( arguments[0] );
+    $.expr[':'].scrollable = function (iDOM) {
+        if (iDOM === iDOM.ownerDocument.scrollingElement)  return true;
 
-        var iCSS = $_This.css([
+        var iCSS = $(iDOM).css([
                 'width',       'height',
                 'max-width',   'max-height',
                 'overflow-x',  'overflow-y'
@@ -1406,6 +1406,18 @@
     if (! DOM.head.children[0])
         Object.defineProperty(DOM_Proto, 'children', Children_Define);
 
+
+/* ---------- Scrolling Element ---------- */
+
+    var DocProto = DOM.constructor.prototype;
+
+    if (! Object.getOwnPropertyDescriptor(DocProto, 'scrollingElement'))
+        Object.defineProperty(DocProto, 'scrollingElement', {
+            get:    function () {
+                return  ($.browser.webkit || (DOM.compatMode == 'BackCompat'))  ?
+                    DOM.body  :  DOM.documentElement;
+            }
+        });
 
 /* ---------- Selected Options ---------- */
 

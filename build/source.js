@@ -21,7 +21,7 @@
             .replace(/\}\);\s*$/,  '})(' + aParameter + ");\n\n");
     },
     wrap:            {
-        startFile:    'xWrap_0.txt',
+        startFile:    'iQuery_Wrap.txt',
         end:          '});'
     },
     optimize:        'none'
