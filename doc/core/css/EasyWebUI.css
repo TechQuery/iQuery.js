@@ -8,7 +8,7 @@
  *    and can be used in the Web UI development of
  *    Any Platform.
  *
- *    [Version]    v1.0  (2016-08-29)
+ *    [Version]    v1.0  (2016-09-13)
  *
  *    [Require]    CSS 2.1  (Best Effect with CSS 3),
  *
@@ -149,6 +149,45 @@ table td > * {
         max-width:    25em;
     }
 }
+table.Page > tfoot {
+    border-top:    1px  solid  lightgray;
+}
+table.Page > tfoot input[type="number"] {
+    width:    5em;
+}
+table.Page > tfoot .NavBar > li {
+    padding:       0.5em  1em;
+    background:    white;
+}
+table.Page > tfoot .NavBar > li:hover,
+table.Page > tfoot .NavBar > li.active {
+    background:    darkgray;
+    color:         white;
+}
+table.Page > tfoot .NavBar {
+    white-space:    pre-line;
+    max-height:     3.15em;
+    overflow:       hidden;
+    position:       relative;
+}
+table.Page > tfoot .NavBar:after {
+    content:        "...";
+    font-size:      inherit;
+    line-height:    normal;
+    height:         auto;
+    width:          auto;
+    visibility:     visible;
+    position:       absolute;
+    right:          0;
+    bottom:         1.25em;
+}
+table.Page > tfoot .NavBar:hover {
+    max-height:    none;
+}
+table.Page > tfoot .NavBar:hover:after {
+    display:    none;
+}
+
 /* ----- Form Elements ----- */
 form {
     padding:    0  1em;
@@ -773,7 +812,6 @@ ul.NavBar {
 }
 ul.NavBar > li {
     display:           inline-block;
-    padding:           0.5em;
     text-align:        center;
     vertical-align:    middle;
     cursor:            pointer;
@@ -788,6 +826,9 @@ ul.NavBar > li > a {
     display:    block;
     width:      100%;
     outline:    none;
+}
+ul.NavBar > li:empty,  ul.NavBar > li > a  {
+    padding:    0.5em;
 }
 ul.NavBar.visible > li:nth-child(n+2) > a {
     border-left:    1px  solid  rgb(200, 200, 200);
@@ -1138,6 +1179,12 @@ img.UserLogo {
     left:             -2em;
     top:              0.7em;
 }
+.Tree li.opened:before {
+    content:    "-";
+}
+.Tree li.closed:before {
+    content:    "+";
+}
 .Tree li > *:hover,
 .Tree li:focus > *,
 .Tree li.active > * {
@@ -1232,6 +1279,15 @@ img.UserLogo {
 }
 .Orange_O {
     background:      rgb(254, 178, 18)  !important;
+    color:           white  !important;
+    border-color:    transparent  !important;
+}
+.Purple {
+    color:           mediumpurple  !important;
+    border-color:    mediumpurple  !important;
+}
+.Purple_O {
+    background:      mediumpurple  !important;
     color:           white  !important;
     border-color:    transparent  !important;
 }

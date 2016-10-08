@@ -401,6 +401,44 @@
 })(self,  self.document,  self.jQuery || self.Zepto);
 
 
+
+(function (BOM, DOM, $) {
+
+    $.fn.checkAll = function ($_forAll, onChange) {
+        if (typeof $_forAll == 'function') {
+            onChange = $_forAll;
+            $_forAll = '';
+        }
+
+        return  this.each(function () {
+            var $_This = $(this);
+
+            var iAll = $_forAll ?
+                    $_This.find( $_forAll )[0]  :
+                    $('input[type="checkbox"]', this)[0];
+
+            $_This.on('change',  'input[type="checkbox"]',  function () {
+                var $_All = $_This.find('input[type="checkbox"]').not(iAll);
+
+                if (this === iAll)
+                    $_All.prop('checked', this.checked);
+                else
+                    iAll.checked = (! $_All.not(':checked')[0]);
+
+                if (typeof onChange == 'function')
+                    onChange.apply($_This[0], [
+                        arguments[0],
+                        $.map($_All.filter(':checked'),  function () {
+                            return arguments[0].value;
+                        })
+                    ]);
+            });
+        });
+    };
+
+})(self,  self.document,  self.jQuery || self.Zepto);
+
+
 /* ---------- 数据表 控件  v0.2 ---------- */
 
 
@@ -712,18 +750,22 @@
                 }),
                 _DOM_ = $_Context[0].ownerDocument;
 
-            $_Context.scroll(function () {
-                if (arguments[0].target !== this)  return;
+            ($_Context.is(':scrollable') ?
+                $_Context  :  $_Context.scrollParents().eq(0)
+            ).scroll(function () {
+                if ($.contains($_Context[0], arguments[0].target))  return;
 
                 var iAnchor = $_Context.offset(),
-                    iFontSize = $(_DOM_.body).css('font-size') / 2;
+                    iFontSize = parseFloat($(_DOM_.body).css('font-size')) / 2;
 
                 var $_Anchor = $(_DOM_.elementFromPoint(
-                        iAnchor.left + $_Context.css('padding-left') + iFontSize,
-                        iAnchor.top + $_Context.css('padding-top') + iFontSize
+                        iAnchor.left + iFontSize +
+                            parseFloat( $_Context.css('padding-left') ),
+                        iAnchor.top + iFontSize +
+                            parseFloat( $_Context.css('padding-top') )
                     )).prevAll('h1, h2, h3');
 
-                if (! $.contains(this, $_Anchor[0]))  return;
+                if (! $.contains($_Context[0], $_Anchor[0]))  return;
 
                 $_Anchor = $(
                     'a[href="#' + $_Anchor[0].id + '"]',  iMainNav.$_View[0]
@@ -732,11 +774,12 @@
                     .removeClass('active');
 
                 $.ListView.instanceOf( $_Anchor ).focus( $_Anchor[0].parentNode );
+            });
 
-            }).on('Refresh',  function () {
+            iMainNav.$_View.on('Refresh',  function () {
 
                 iMainNav.clear().render(
-                    toTreeData.call( $('h1, h2, h3', this) )
+                    toTreeData.call( $_Context.find('h1, h2, h3') )
                 );
                 return false;
 
@@ -809,33 +852,21 @@
             var iOrgTree = $.TreeView(
                     $.ListView(this, false, onInsert),
                     Sub_Key,
-                    2,
-                    function (iFork, iDepth, iData) {
-                        iFork.$_View.parent().cssRule({
-                            ':before':    {content:  (
-                                '"'  +  (iData ? '-' : '+')  +  '"  !important'
-                            )}
-                        });
+                    1,
+                    function (iFork, _, iData) {
+                        iFork.$_View.parent().addClass(iData ? 'opened' : 'closed');
                     }
                 ).on('focus',  function (iEvent) {
-                    var _This_ = iEvent.currentTarget;
+                    var $_This = $( iEvent.currentTarget );
 
-                    $(':input', _This_).focus();
+                    $_This.find(':input').focus();
 
-                    var iRule = Array.prototype.slice.call(
-                            BOM.getMatchedCSSRules(_This_, ':before'),  -1
-                        )[0];
+                    if (! iEvent.isPseudo())  return;
 
-                    if (! (
-                        iEvent.isPseudo() &&
-                        $(iRule.parentStyleSheet.ownerNode)
-                            .hasClass('iQuery_CSS-Rule')
-                    ))
-                        return;
-
-                    iRule.style.setProperty('content', (
-                        (iRule.style.content[1] == '-')  ?  '"+"'  :  '"-"'
-                    ), 'important');
+                    if ( $_This.hasClass('opened') )
+                        $_This.removeClass('opened').addClass('closed');
+                    else
+                        $_This.removeClass('closed').addClass('opened');
                 });
 
             iOrgTree.$_View.on('Insert',  '.ListView_Item',  function () {
@@ -865,52 +896,91 @@
 
 (function (BOM, DOM, $) {
 
-/* ---------- 滚动悬停  v0.1 ---------- */
+/* ---------- 滚动悬停  v0.2 ---------- */
 
-    var $_DOM = $(DOM),  Fixed_List = [ ];
+    var $_BOM = $(BOM),  $_DOM = $(DOM),  Fixed_List = [ ];
+
+    function Scroll_Fixed() {
+        this.$_View = $( arguments[0] );
+        this.onChange = arguments[1];
+
+        this.$_Shim = $( this.$_View[0].outerHTML ).css('opacity', 0);
+        this.offset = this.$_View.offset();
+    }
+
+    Scroll_Fixed.limitMap = {
+        width:     ['left', 'Left'],
+        height:    ['top', 'Top']
+    };
+
+    $.extend(Scroll_Fixed.prototype, {
+        getLimit:    function () {
+            var LM = this.constructor.limitMap,  iLimit = { };
+
+            for (var iKey in LM)
+                iLimit['max-' + iKey] = $_BOM[iKey]()
+                    - (
+                        this.$_View.offset()[ LM[iKey][0] ]  -
+                        $_DOM['scroll' + LM[iKey][1]]()
+                    )
+                    - ($_DOM[iKey]() - (
+                        this.offset[ LM[iKey][0] ]  +
+                        parseFloat( this.$_Shim.css( iKey ) )
+                    ));
+
+            return iLimit;
+        },
+        render:      function () {
+            this.$_View.css({
+                position:     'fixed',
+                top:          0,
+                'z-index':    100
+            }).after( this.$_Shim ).css( this.getLimit() );
+
+            if (this.onChange)  this.onChange.call(this.$_View[0], 'fixed');
+
+            return this;
+        },
+        destroy:     function () {
+            this.$_View.css({
+                position:        'static',
+                'max-width':     'auto',
+                'max-height':    'auto'
+            });
+
+            if (this.onChange)  this.onChange.call(this.$_View[0], 'static');
+
+            this.$_Shim.remove();
+
+            return this;
+        },
+        toggleAt:    function (Scroll_Top) {
+            var iPosition = this.$_View.css('position');
+
+            if (Scroll_Top < this.offset.top) {
+
+                if (iPosition != 'static')  this.destroy();
+
+            } else if (iPosition != 'fixed')  this.render();
+
+            return this;
+        }
+    });
 
     $_DOM.scroll(function () {
         var iOffset = $_DOM.scrollTop();
 
-        for (var i = 0, $_Fixed, $_Shim;  Fixed_List[i];  i++) {
-            $_Fixed = $( Fixed_List[i].element );
-
-            if (iOffset < Fixed_List[i].offset.top) {
-
-                if ($_Fixed.css('position') == 'static')  continue;
-
-                $_Fixed.css('position', 'static');
-
-                Fixed_List[i].callback.call($_Fixed[0], 'static', iOffset);
-
-                $_Shim = $( $_Fixed[0].nextElementSibling );
-
-                if (
-                    $_Shim.removeAttr('style')[0].outerHTML ==
-                    $_Fixed.clone(true).removeAttr('style')[0].outerHTML
-                )
-                    $_Shim.remove();
-
-            } else if ($_Fixed.css('position') != 'fixed') {
-                $_Fixed.after( $_Fixed[0].outerHTML ).css({
-                    position:     'fixed',
-                    top:          0,
-                    'z-index':    100
-                });
-
-                Fixed_List[i].callback.call($_Fixed[0], 'fixed', iOffset);
-            }
-        }
+        for (var i = 0;  Fixed_List[i];  i++)
+            Fixed_List[i].toggleAt( iOffset );
     });
 
     $.fn.scrollFixed = function (iCallback) {
 
-        $.merge(Fixed_List,  $.map(this,  function (iDOM) {
-            return {
-                element:     iDOM,
-                offset:      $(iDOM).offset(),
-                callback:    iCallback
-            };
+        iCallback = (typeof iCallback == 'function')  &&  iCallback;
+
+        $.merge(Fixed_List,  $.map(this,  function () {
+
+            return  new Scroll_Fixed(arguments[0], iCallback);
         }));
 
         return this;
@@ -1181,7 +1251,7 @@
 //          >>>  EasyWebUI Component Library  <<<
 //
 //
-//      [Version]     v3.1  (2016-08-29)  Stable
+//      [Version]     v3.3  (2016-10-07)  Stable
 //
 //      [Based on]    iQuery v1  or  jQuery (with jQuery+),
 //
