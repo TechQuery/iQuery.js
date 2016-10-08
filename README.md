@@ -87,6 +87,7 @@
  - .css() 赋值一律默认 important 优先级，确保赋值的有效性
  - `$.fn.show()` 兼容 **元素非固有 display 属性值**，避免破坏 复杂布局
  - 新增 **DOM 元素 z-index 集成**方法 —— `$.fn.zIndex()`，集 **取实际值、赋值、同辈置顶/沉底** 功能于一身
+ - 新增 **CSS 厂商命名获取**方法 —— `$.cssName()`
  - 新增 **CSS 规则全局设置**方法 —— `$.cssRule()`
  - 新增 **DOM 元素 CSS 规则读写**方法 —— `$.fn.cssRule()`
  - 新增 **DOM 选中内容读写**方法 —— `$.fn.selection()`

@@ -79,7 +79,10 @@ define(['jquery'],  function ($) {
             $( arguments[0] ).each(function () {
                 var $_Scroll = $_This.has(this);
 
-                var iCoord = $(this).offset(),  _Coord_ = $_Scroll.offset();
+                var _Coord_ = $_Scroll.offset() || {
+                        left: 0,  top: 0
+                    },
+                    iCoord = $(this).offset();
 
                 if (! $_Scroll.length)  return;
 

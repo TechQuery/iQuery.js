@@ -1,4 +1,4 @@
-define(['Insert'],  function ($) {
+define(['extension/iCSS'],  function ($) {
 
 /* ---------- JS-Timer Animation ---------- */
 
@@ -65,63 +65,35 @@ define(['Insert'],  function ($) {
 
 /* ---------- CSS Animation ---------- */
 
-    var CSS_Prefix = (function (iHash) {
-            for (var iKey in iHash)
-                if ( $.browser[iKey] )  return iHash[iKey];
-        })({
-            mozilla:    'moz',
-            webkit:     'webkit',
-            msie:       'ms'
-        });
-
-    function CSS_AMP() {
-        return  '-' + CSS_Prefix + '-' + arguments[0];
-    }
-
-    /* ----- Transition ----- */
-
-    var Transition_End = 'transitionend ' + CSS_Prefix + 'TransitionEnd';
-
-    function Transition_Animate(CSS_Final) {
-        var iTransition = [
-                'all',  (arguments[1] + 's'),  arguments[2]
-            ].join(' '),
-            $_This = this;
-
-        return  new Promise(function () {
-            $_This.one(Transition_End, arguments[0])
-                .css('transition', iTransition).css(
-                    CSS_AMP('transition'),  iTransition
-                )
-                .css( CSS_Final );
-        });
-    }
-
-    /* ----- KeyFrame ----- */
-
-    var Animation_End = 'animationend ' + CSS_Prefix + 'AnimationEnd';
+    var NameFixer = $.cssName('AnimationEvent');
 
     function KeyFrame_Animate(iEffect) {
+
+        if (typeof iEffect != 'string') {
+            var CSS_Final = iEffect;  iEffect = $.uuid();
+
+            var iStyle = $.cssRule(
+                    '@'  +  NameFixer('keyframes')  +  ' '  +  iEffect,
+                    {to:  CSS_Final}
+                );
+        }
         var iAnimation = { },  $_This = this;
 
-        iAnimation['animation-duration'] = iAnimation[
-            CSS_AMP('animation-duration')
-        ] = arguments[1] + 's';
+        iAnimation[ NameFixer('animation-name') ] = iEffect;
 
-        iAnimation['animation-timing-function'] = iAnimation[
-            CSS_AMP('animation-timing-function')
-        ] = arguments[2];
+        iAnimation[ NameFixer('animation-duration') ] = arguments[1] + 's';
+
+        iAnimation[ NameFixer('animation-timing-function') ] = arguments[2];
 
         return  new Promise(function (iResolve) {
-            iEffect = 'animated ' + iEffect;
 
-            $_This.one(Animation_End,  function () {
+            $_This.one('animationend WebkitAnimationEnd',  function () {
 
-                $_This.removeClass( iEffect );
+                if (iStyle)  $( iStyle.ownerNode ).remove();
 
                 iResolve();
 
-            }).css( iAnimation ).addClass( iEffect );
+            }).css( iAnimation );
         });
     }
 
@@ -131,11 +103,9 @@ define(['Insert'],  function ($) {
         animate:    function (CSS_Final) {
             if (! this[0])  return this;
 
-            var iEngine;
+            var iEngine = KeyFrame_Animate;
 
-            if (typeof CSS_Final == 'string')
-                iEngine = KeyFrame_Animate;
-            else {
+            if (typeof CSS_Final != 'string') {
                 var iCSS = Object.getOwnPropertyNames( CSS_Final );
 
                 this.data('_Animate_', 1).data('_CSS_Animate_',  function () {
@@ -146,7 +116,7 @@ define(['Insert'],  function ($) {
                     (($.browser.msie < 10)  ||  (! $.isEmptyObject(
                         $.intersect($.makeSet.apply($, iCSS),  Animate_Property)
                     ))) ?
-                        JSTimer_Animate  :  Transition_Animate
+                        JSTimer_Animate  :  KeyFrame_Animate
                 );
             }
 
@@ -187,7 +157,10 @@ define(['Insert'],  function ($) {
             });
         },
         stop:       function () {
-            return  this.data('_Animate_', 0);
+            if ( arguments[0] )  this.data('_Animate_Queue_', null);
+
+            return  this.data('_Animate_', 0)
+                .css(NameFixer('animation-play-state'), 'paused');
         },
         promise:    function () {
             return  Promise.all($.map(this,  function (iDOM) {
@@ -195,6 +168,14 @@ define(['Insert'],  function ($) {
             }));
         }
     });
+
+    $.expr[':'].animated = function () {
+        var $_This = $( arguments[0] );
+
+        return  $_This.data('_Animate_') || (
+            $_This.css( NameFixer('animation-play-state') )  ==  'running'
+        );
+    };
 
     $.fn.effect = $.fn.animate;
 

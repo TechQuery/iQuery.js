@@ -1,5 +1,26 @@
 define(['jquery'],  function ($) {
 
+    var BOM = self;
+
+/* ---------- CSS Prefix ---------- */
+
+    var CSS_Prefix = (function (iHash) {
+            for (var iKey in iHash)
+                if ( $.browser[iKey] )  return iHash[iKey];
+        })({
+            mozilla:    'moz',
+            webkit:     'webkit',
+            msie:       'ms'
+        });
+
+    $.cssName = function (Test_Type) {
+        return  function (iName) {
+            BOM[Test_Type]  ?  iName  :  ('-' + CSS_Prefix + '-' + iName);
+        };
+    };
+
+/* ---------- CSS Rule ---------- */
+
     var Code_Indent = $.browser.modern ? '' : ' '.repeat(4);
 
     function CSS_Attribute(iName, iValue) {
@@ -31,18 +52,18 @@ define(['jquery'],  function ($) {
         return Rule_Text.join("\n");
     }
 
-    $.cssRule = function (iMedia, iRule) {
-        if (typeof iMedia != 'string') {
-            iRule = iMedia;
-            iMedia = null;
+    $.cssRule = function (At_Wrapper, iRule) {
+        if (typeof At_Wrapper != 'string') {
+            iRule = At_Wrapper;
+            At_Wrapper = null;
         }
         var CSS_Text = CSS_Rule2Text(iRule);
 
         var $_Style = $('<style />', {
                 type:       'text/css',
                 'class':    'iQuery_CSS-Rule',
-                text:       (! iMedia) ? CSS_Text : [
-                    '@media ' + iMedia + ' {',
+                text:       (! At_Wrapper) ? CSS_Text : [
+                    At_Wrapper + ' {',
                     CSS_Text.replace(/\n/m, "\n    "),
                     '}'
                 ].join("\n")

@@ -50,7 +50,8 @@ define(['extension/iPseudo'],  function ($) {
                     if (this[i].matches( $_Match ))  return true;
                 } catch (iError) { }
 
-                if (! this[i].parentNode)  $('<div />')[0].appendChild( this[i] );
+                if ((this[i].nodeType < 9)  &&  (! this[i].parentElement))
+                    $('<div />')[0].appendChild( this[i] );
 
                 if (-1  <  $.inArray(this[i], (
                     iPath  ?  $($_Match, this[i].parentNode)  :  $($_Match)
