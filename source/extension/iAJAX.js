@@ -129,7 +129,7 @@ define(['jquery'],  function ($) {
 
     if ($.browser.msie < 10)
         $.ajaxTransport('+*',  function (iOption) {
-            var iXHR,  iForm = iOption.data.ownerNode;
+            var iXHR,  iForm = (iOption.data || '').ownerNode;
 
             if (
                 (iOption.data instanceof BOM.FormData)  &&

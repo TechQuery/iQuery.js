@@ -2,7 +2,7 @@
 //              >>>  jQuery+  <<<
 //
 //
-//    [Version]    v8.2  (2016-10-09)
+//    [Version]    v8.2  (2016-10-10)
 //
 //    [Require]    jQuery  v1.9+
 //
@@ -185,33 +185,30 @@
 
         this.then = function (onResolve, onReject) {
             return  new _Self_(function (iResolve, iReject) {
+                var _CB_ = [onResolve, onReject, iResolve, iReject];
+
                 if (_This_.state == -1)
-                    _This_.callback.push([
-                        onResolve,  onReject,  iResolve,  iReject
-                    ]);
+                    _This_.callback.push(_CB_);
                 else
-                    arguments[_This_.state](_This_.value);
+                    _Complete_.call(_This_, _CB_);
             });
         };
 
         BOM.setTimeout(function () {
             iMain(function () {
-                _Complete_.call(_This_, 0, arguments[0]);
+                _Complete_All_.call(_This_, 0, arguments[0]);
             },  function () {
-                _Complete_.call(_This_, 1, arguments[0]);
+                _Complete_All_.call(_This_, 1, arguments[0]);
             });
         });
     }
 
-    function _Complete_(iType) {
-        if (this.state > -1)  return;
+    function _Complete_(_CB_) {
+        var _Value_;
 
-        this.state = iType;  this.value = arguments[1];
-
-        for (var _CB_, _Value_;  _CB_ = this.callback.shift();  )  try {
-
-            if (typeof _CB_[iType] == 'function') {
-                _Value_ = _CB_[iType]( this.value );
+        try {
+            if (typeof _CB_[this.state] == 'function') {
+                _Value_ = _CB_[this.state]( this.value );
 
                 if (_Value_ === this._public_)
                     throw  TypeError("Can't return the same Promise object !");
@@ -226,6 +223,15 @@
         } catch (iError) {
             _CB_[3]( iError );
         }
+    }
+
+    function _Complete_All_(iType) {
+        if (this.state > -1)  return;
+
+        this.state = iType;  this.value = arguments[1];
+
+        while ( this.callback[0] )
+            _Complete_.call(this, this.callback.shift());
     }
 
     Promise.resolve = function (iValue) {
@@ -1756,7 +1762,8 @@
                 return  arguments[0] - arguments[1];
             }
         },
-        Array_Reverse = Array.prototype.reverse;
+        Array_Reverse = $.fn.iquery ?
+            Array.prototype.reverse  :  function () { return this; };
 
     $.fn.extend({
         reduce:           function (iMethod, iKey, iCallback) {
@@ -1825,10 +1832,7 @@
             $( arguments[0] ).each(function () {
                 var $_Scroll = $_This.has(this);
 
-                var _Coord_ = $_Scroll.offset() || {
-                        left: 0,  top: 0
-                    },
-                    iCoord = $(this).offset();
+                var iCoord = $(this).offset(),  _Coord_ = $_Scroll.offset();
 
                 if (! $_Scroll.length)  return;
 
@@ -2559,7 +2563,7 @@
 
     if ($.browser.msie < 10)
         $.ajaxTransport('+*',  function (iOption) {
-            var iXHR,  iForm = iOption.data.ownerNode;
+            var iXHR,  iForm = (iOption.data || '').ownerNode;
 
             if (
                 (iOption.data instanceof BOM.FormData)  &&

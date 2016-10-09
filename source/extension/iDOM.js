@@ -10,7 +10,8 @@ define(['jquery'],  function ($) {
                 return  arguments[0] - arguments[1];
             }
         },
-        Array_Reverse = Array.prototype.reverse;
+        Array_Reverse = $.fn.iquery ?
+            Array.prototype.reverse  :  function () { return this; };
 
     $.fn.extend({
         reduce:           function (iMethod, iKey, iCallback) {
@@ -79,10 +80,7 @@ define(['jquery'],  function ($) {
             $( arguments[0] ).each(function () {
                 var $_Scroll = $_This.has(this);
 
-                var _Coord_ = $_Scroll.offset() || {
-                        left: 0,  top: 0
-                    },
-                    iCoord = $(this).offset();
+                var iCoord = $(this).offset(),  _Coord_ = $_Scroll.offset();
 
                 if (! $_Scroll.length)  return;
 

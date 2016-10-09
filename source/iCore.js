@@ -99,7 +99,9 @@ define(['extension/iTimer'],  function ($) {
         return iPath;
     }
 
-    $ = BOM.iQuery = $.extend(iQuery, $, {
+    iQuery.fn = iQuery.prototype;
+
+    $ = BOM.iQuery = $.extend(true, iQuery, $, {
         parseHTML:     function (iHTML) {
             var iTag = iHTML.match(
                     /^\s*<([^\s\/\>]+)\s*([^<]*?)\s*(\/?)>([^<]*)((<\/\1>)?)([\s\S]*)/
@@ -204,7 +206,6 @@ define(['extension/iTimer'],  function ($) {
 
     /* ----- iQuery Instance Method ----- */
 
-    $.fn = $.prototype;
     $.fn.extend = $.extend;
 
     $.fn.extend({
