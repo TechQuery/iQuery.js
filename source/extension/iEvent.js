@@ -52,7 +52,9 @@ define(['jquery'],  function ($) {
     $_DOM.bind(
         $.browser.mobile ? 'touchstart MSPointerDown' : 'mousedown',
         function (iEvent) {
-            $(iEvent.target).data('_Gesture_Event_', get_Touch(iEvent));
+            $(iEvent.target).data(
+                '_Gesture_Event_',  get_Touch( iEvent.originalEvent )
+            );
         }
     ).bind(
         $.browser.mobile ? 'touchend touchcancel MSPointerUp' : 'mouseup',

@@ -134,6 +134,18 @@ define(['jquery'],  function ($) {
         }
     });
 
+/* ---------- URL Origin ---------- */
+
+    var Origin_Define = {
+            get:    function () {
+                return  (this.href.match(/^(\w+:)?\/\/[^\/]+/) || [ ])[0];
+            }
+        };
+    Object.defineProperty(
+        BOM.location.constructor.prototype,  'origin',  Origin_Define
+    );
+    Object.defineProperty(HTMLAnchorElement.prototype, 'origin', Origin_Define);
+
 
     if (! ($.browser.msie < 10))  return;
 

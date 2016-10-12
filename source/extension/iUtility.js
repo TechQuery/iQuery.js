@@ -142,10 +142,10 @@ define(['jquery'],  function ($) {
                 arguments[0] || BOM.location.href
             ).match(/([^\?\#]+)(\?|\#)?/)[1].split('/').slice(0, -1).join('/');
         },
-        urlDomain:        function () {
-            return ((
-                arguments[0] || BOM.location.href
-            ).match(/^(\w+:)?\/\/[^\/]+/) || [ ])[0];
+        urlDomain:        function (iURL) {
+            return (
+                (! iURL)  ?  BOM.location  :  $('<a />', {href: iURL})[0]
+            ).origin;
         },
         isCrossDomain:    function () {
             var iDomain = this.urlDomain( arguments[0] );

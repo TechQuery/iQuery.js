@@ -2,7 +2,7 @@
 //              >>>  jQuery+  <<<
 //
 //
-//    [Version]    v8.2  (2016-10-10)
+//    [Version]    v8.2  (2016-10-12)
 //
 //    [Require]    jQuery  v1.9+
 //
@@ -598,10 +598,10 @@
                 arguments[0] || BOM.location.href
             ).match(/([^\?\#]+)(\?|\#)?/)[1].split('/').slice(0, -1).join('/');
         },
-        urlDomain:        function () {
-            return ((
-                arguments[0] || BOM.location.href
-            ).match(/^(\w+:)?\/\/[^\/]+/) || [ ])[0];
+        urlDomain:        function (iURL) {
+            return (
+                (! iURL)  ?  BOM.location  :  $('<a />', {href: iURL})[0]
+            ).origin;
         },
         isCrossDomain:    function () {
             var iDomain = this.urlDomain( arguments[0] );
@@ -835,7 +835,9 @@
     $_DOM.bind(
         $.browser.mobile ? 'touchstart MSPointerDown' : 'mousedown',
         function (iEvent) {
-            $(iEvent.target).data('_Gesture_Event_', get_Touch(iEvent));
+            $(iEvent.target).data(
+                '_Gesture_Event_',  get_Touch( iEvent.originalEvent )
+            );
         }
     ).bind(
         $.browser.mobile ? 'touchend touchcancel MSPointerUp' : 'mouseup',
@@ -1469,6 +1471,18 @@
             return  new DOMStringMap(this);
         }
     });
+
+/* ---------- URL Origin ---------- */
+
+    var Origin_Define = {
+            get:    function () {
+                return  (this.href.match(/^(\w+:)?\/\/[^\/]+/) || [ ])[0];
+            }
+        };
+    Object.defineProperty(
+        BOM.location.constructor.prototype,  'origin',  Origin_Define
+    );
+    Object.defineProperty(HTMLAnchorElement.prototype, 'origin', Origin_Define);
 
 
     if (! ($.browser.msie < 10))  return;
