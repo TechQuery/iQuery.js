@@ -119,7 +119,7 @@
  - 自带 `Array.prototype.indexOf()` 标准方法
  - 自带 `Array.prototype.reduce()` 标准方法
  - 自带 `Function.prototype.name` 属性补丁
- - 自带 `Object.getOwnPropertyNames()` 标准方法
+ - 自带 `Object.keys()` 标准方法
  - 自带 `Object.getPrototypeOf()` 标准方法
  - 自带 `Date.now()` 标准方法
  - 新增 JSON **format 格式化显示**方法、 **parseAll 深度解析**方法（$.parseJSON() 被其增强）

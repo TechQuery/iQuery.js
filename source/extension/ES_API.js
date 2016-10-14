@@ -4,8 +4,8 @@ define(function () {
 
     /* ----- Object Patch ----- */
 
-    if (! Object.getOwnPropertyNames)
-        Object.getOwnPropertyNames = function (iObject) {
+    if (! Object.keys)
+        Object.keys = function (iObject) {
             var iKey = [ ];
 
             for (var _Key_ in iObject)

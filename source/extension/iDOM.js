@@ -159,7 +159,11 @@ define(['jquery'],  function ($) {
     }
 
     $.fn.value = function (iAttr, iFiller) {
-        var $_Value = '[' + iAttr + ']';
+        var $_Value = $.isEmptyObject( iFiller )  ?
+                ('[' + iAttr + ']')  :
+                $.map(Object.keys(iFiller),  function () {
+                    return  '[' + iAttr + '="' + arguments[0] + '"]';
+                }).join(', ');
 
         $_Value = this.filter( $_Value ).add( this.find($_Value) );
 

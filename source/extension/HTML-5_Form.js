@@ -85,24 +85,22 @@ define(['jquery'],  function ($) {
 /* ---------- Form Element API ---------- */
 
     function Value_Check() {
-        var $_This = $(this);
-
-        if ((typeof $_This.attr('required') == 'string')  &&  (! this.value))
+        if ((! this[0].value)  &&  (this.attr('required') != null))
             return false;
 
-        var iRegEx = $_This.attr('pattern');
+        var iRegEx = this.attr('pattern');
         if (iRegEx)  try {
-            return  RegExp(iRegEx).test(this.value);
+            return  RegExp( iRegEx ).test( this[0].value );
         } catch (iError) { }
 
-        if ((this.tagName.toLowerCase() == 'input')  &&  (this.type == 'number')) {
-            var iNumber = Number(this.value),
-                iMin = Number( $_This.attr('min') );
+        if ((this[0].tagName == 'INPUT')  &&  (this[0].type == 'number')) {
+            var iNumber = Number( this[0].value ),
+                iMin = Number( this.attr('min') );
             if (
                 isNaN(iNumber)  ||
                 (iNumber < iMin)  ||
-                (iNumber > Number( $_This.attr('max') ))  ||
-                ((iNumber - iMin)  %  Number( $_This.attr('step') ))
+                (iNumber > Number( this.attr('max') ))  ||
+                ((iNumber - iMin)  %  Number( this.attr('step') ))
             )
                 return false;
         }
@@ -110,11 +108,27 @@ define(['jquery'],  function ($) {
         return true;
     }
 
-    HTMLInputElement.prototype.checkValidity = Value_Check;
-    HTMLSelectElement.prototype.checkValidity = Value_Check;
-    HTMLTextAreaElement.prototype.checkValidity = Value_Check;
+    var Invalid_Event = {
+            type:          'invalid',
+            bubbles:       false,
+            cancelable:    false
+        };
+
+    function Check_Wrapper() {
+        var $_This = $(this);
+
+        if (Value_Check.apply($_This, arguments))  return true;
+
+        return  (! $_This.trigger(Invalid_Event));
+    }
+
+    HTMLInputElement.prototype.checkValidity = Check_Wrapper;
+    HTMLSelectElement.prototype.checkValidity = Check_Wrapper;
+    HTMLTextAreaElement.prototype.checkValidity = Check_Wrapper;
 
     HTMLFormElement.prototype.checkValidity = function () {
+        if (this.getAttribute('novalidate') != null)  return true;
+
         var $_Input = $('*[name]:input', this);
 
         for (var i = 0;  i < $_Input.length;  i++)
@@ -124,7 +138,8 @@ define(['jquery'],  function ($) {
                 $.wait(1,  function () {
                     $_Input[i].style.borderColor = '';
                 });
-                return false;
+
+                return  (! $(this).trigger(Invalid_Event));
             }
 
         return true;

@@ -2,7 +2,7 @@
 //              >>>  jQuery+  <<<
 //
 //
-//    [Version]    v8.2  (2016-10-12)
+//    [Version]    v8.2  (2016-10-14)
 //
 //    [Require]    jQuery  v1.9+
 //
@@ -25,8 +25,8 @@
 
     /* ----- Object Patch ----- */
 
-    if (! Object.getOwnPropertyNames)
-        Object.getOwnPropertyNames = function (iObject) {
+    if (! Object.keys)
+        Object.keys = function (iObject) {
             var iKey = [ ];
 
             for (var _Key_ in iObject)
@@ -382,8 +382,7 @@
         if ((typeof iLeft != 'object')  ||  (typeof iRight != 'object'))
             return  (iLeft === iRight);
 
-        var Left_Key = Object.getOwnPropertyNames(iLeft),
-            Right_Key = Object.getOwnPropertyNames(iRight);
+        var Left_Key = Object.keys(iLeft),  Right_Key = Object.keys(iRight);
 
         if (Left_Key.length != Right_Key.length)  return false;
 
@@ -575,18 +574,17 @@
         paramSign:        function (iData) {
             iData = (typeof iData == 'string')  ?  this.paramJSON(iData)  :  iData;
 
-            return $.map(
-                Object.getOwnPropertyNames(iData).sort(),
-                function (iKey) {
-                    switch (typeof iData[iKey]) {
-                        case 'function':    return;
-                        case 'object':      try {
-                            return  iKey + '=' + JSON.stringify(iData[iKey]);
-                        } catch (iError) { }
-                    }
-                    return  iKey + '=' + iData[iKey];
+            return  $.map(Object.keys(iData).sort(),  function (iKey) {
+
+                switch (typeof iData[iKey]) {
+                    case 'function':    return;
+                    case 'object':      try {
+                        return  iKey + '=' + JSON.stringify(iData[iKey]);
+                    } catch (iError) { }
                 }
-            ).join(arguments[1] || '&');
+                return  iKey + '=' + iData[iKey];
+
+            }).join(arguments[1] || '&');
         },
         fileName:         function () {
             return (
@@ -1476,7 +1474,7 @@
 
     var Origin_Define = {
             get:    function () {
-                return  (this.href.match(/^(\w+:)?\/\/[^\/]+/) || [ ])[0];
+                return  (this.href.match(/^(\w+:)?\/\/[^\/]+/) || '')[0]  ||  '';
             }
         };
     Object.defineProperty(
@@ -1925,7 +1923,11 @@
     }
 
     $.fn.value = function (iAttr, iFiller) {
-        var $_Value = '[' + iAttr + ']';
+        var $_Value = $.isEmptyObject( iFiller )  ?
+                ('[' + iAttr + ']')  :
+                $.map(Object.keys(iFiller),  function () {
+                    return  '[' + iAttr + '="' + arguments[0] + '"]';
+                }).join(', ');
 
         $_Value = this.filter( $_Value ).add( this.find($_Value) );
 
@@ -2382,24 +2384,22 @@
 /* ---------- Form Element API ---------- */
 
     function Value_Check() {
-        var $_This = $(this);
-
-        if ((typeof $_This.attr('required') == 'string')  &&  (! this.value))
+        if ((! this[0].value)  &&  (this.attr('required') != null))
             return false;
 
-        var iRegEx = $_This.attr('pattern');
+        var iRegEx = this.attr('pattern');
         if (iRegEx)  try {
-            return  RegExp(iRegEx).test(this.value);
+            return  RegExp( iRegEx ).test( this[0].value );
         } catch (iError) { }
 
-        if ((this.tagName.toLowerCase() == 'input')  &&  (this.type == 'number')) {
-            var iNumber = Number(this.value),
-                iMin = Number( $_This.attr('min') );
+        if ((this[0].tagName == 'INPUT')  &&  (this[0].type == 'number')) {
+            var iNumber = Number( this[0].value ),
+                iMin = Number( this.attr('min') );
             if (
                 isNaN(iNumber)  ||
                 (iNumber < iMin)  ||
-                (iNumber > Number( $_This.attr('max') ))  ||
-                ((iNumber - iMin)  %  Number( $_This.attr('step') ))
+                (iNumber > Number( this.attr('max') ))  ||
+                ((iNumber - iMin)  %  Number( this.attr('step') ))
             )
                 return false;
         }
@@ -2407,11 +2407,27 @@
         return true;
     }
 
-    HTMLInputElement.prototype.checkValidity = Value_Check;
-    HTMLSelectElement.prototype.checkValidity = Value_Check;
-    HTMLTextAreaElement.prototype.checkValidity = Value_Check;
+    var Invalid_Event = {
+            type:          'invalid',
+            bubbles:       false,
+            cancelable:    false
+        };
+
+    function Check_Wrapper() {
+        var $_This = $(this);
+
+        if (Value_Check.apply($_This, arguments))  return true;
+
+        return  (! $_This.trigger(Invalid_Event));
+    }
+
+    HTMLInputElement.prototype.checkValidity = Check_Wrapper;
+    HTMLSelectElement.prototype.checkValidity = Check_Wrapper;
+    HTMLTextAreaElement.prototype.checkValidity = Check_Wrapper;
 
     HTMLFormElement.prototype.checkValidity = function () {
+        if (this.getAttribute('novalidate') != null)  return true;
+
         var $_Input = $('*[name]:input', this);
 
         for (var i = 0;  i < $_Input.length;  i++)
@@ -2421,7 +2437,8 @@
                 $.wait(1,  function () {
                     $_Input[i].style.borderColor = '';
                 });
-                return false;
+
+                return  (! $(this).trigger(Invalid_Event));
             }
 
         return true;

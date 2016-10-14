@@ -119,18 +119,17 @@ define(['jquery'],  function ($) {
         paramSign:        function (iData) {
             iData = (typeof iData == 'string')  ?  this.paramJSON(iData)  :  iData;
 
-            return $.map(
-                Object.getOwnPropertyNames(iData).sort(),
-                function (iKey) {
-                    switch (typeof iData[iKey]) {
-                        case 'function':    return;
-                        case 'object':      try {
-                            return  iKey + '=' + JSON.stringify(iData[iKey]);
-                        } catch (iError) { }
-                    }
-                    return  iKey + '=' + iData[iKey];
+            return  $.map(Object.keys(iData).sort(),  function (iKey) {
+
+                switch (typeof iData[iKey]) {
+                    case 'function':    return;
+                    case 'object':      try {
+                        return  iKey + '=' + JSON.stringify(iData[iKey]);
+                    } catch (iError) { }
                 }
-            ).join(arguments[1] || '&');
+                return  iKey + '=' + iData[iKey];
+
+            }).join(arguments[1] || '&');
         },
         fileName:         function () {
             return (

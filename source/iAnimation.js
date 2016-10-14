@@ -106,7 +106,7 @@ define(['extension/iCSS'],  function ($) {
             var iEngine = KeyFrame_Animate;
 
             if (typeof CSS_Final != 'string') {
-                var iCSS = Object.getOwnPropertyNames( CSS_Final );
+                var iCSS = Object.keys( CSS_Final );
 
                 this.data('_Animate_', 1).data('_CSS_Animate_',  function () {
                     return  $.extend(arguments[1], $(this).css(iCSS));

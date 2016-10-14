@@ -54,8 +54,7 @@ define(['jquery'],  function ($) {
         if ((typeof iLeft != 'object')  ||  (typeof iRight != 'object'))
             return  (iLeft === iRight);
 
-        var Left_Key = Object.getOwnPropertyNames(iLeft),
-            Right_Key = Object.getOwnPropertyNames(iRight);
+        var Left_Key = Object.keys(iLeft),  Right_Key = Object.keys(iRight);
 
         if (Left_Key.length != Right_Key.length)  return false;
 
