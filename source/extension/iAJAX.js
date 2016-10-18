@@ -168,10 +168,13 @@ define(['jquery'],  function ($) {
 
 /* ---------- Form Element AJAX Submit ---------- */
 
-    $.fn.ajaxSubmit = function (iCallback) {
-        if (! this.length)  return this;
+    $.fn.ajaxSubmit = function (DataType, iCallback) {
+        if (typeof DataType == 'function') {
+            iCallback = DataType;
+            DataType = '';
+        }
 
-        function AJAX_Submit() {
+        this.sameParents().eq(0).on('submit',  'form',  function () {
             var $_Form = $(this);
 
             if ((! this.checkValidity())  ||  $_Form.data('_AJAX_Submitting_'))
@@ -181,24 +184,29 @@ define(['jquery'],  function ($) {
 
             var iMethod = ($_Form.attr('method') || 'Get').toLowerCase();
 
-            if (typeof $[iMethod] == 'function')
-                $[iMethod](
-                    this.action,
-                    $.paramJSON('?' + $_Form.serialize()),
-                    function () {
-                        $_Form.data('_AJAX_Submitting_', 0);
-                        iCallback.apply($_Form[0], arguments);
-                    }
-                );
+            if (typeof $[iMethod] != 'function')  return;
+
             arguments[0].preventDefault();
-        }
 
-        var $_Form = this.filter('form');
+            var iOption = {
+                    type:        iMethod,
+                    dataType:    DataType || 'json'
+                };
 
-        if ( $_Form[0] )
-            $_Form.submit(AJAX_Submit);
-        else
-            this.on('submit', 'form:visible', AJAX_Submit);
+            if (! $_Form.find('input[type="file"]')[0])
+                iOption.data = $_Form.serialize();
+            else {
+                iOption.data = new BOM.FormData( $_Form[0] );
+                iOption.contentType = iOption.processData = false;
+            }
+
+            $.ajax(this.action, iOption).then(function () {
+                $_Form.data('_AJAX_Submitting_', 0);
+
+                if (typeof iCallback == 'function')
+                    iCallback.call($_Form[0], arguments[0]);
+            });
+        });
 
         return this;
     };
