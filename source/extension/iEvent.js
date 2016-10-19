@@ -144,6 +144,38 @@ define(['jquery'],  function ($) {
         return this;
     };
 
+/* ---------- User Idle Event ---------- */
+
+    var End_Event = [
+            'keydown', 'mousedown', 'touchstart', 'MSPointerDown',
+            'mousemove', 'touchmove', 'MSPointerMove'
+        ].join(' ');
+
+    $.fn.onIdleFor = function (iSecond, iCallback) {
+        return  this.each(function () {
+            var iNO,  _Self_ = arguments.callee,  $_This = $(this);
+
+            function iCancel() {
+                BOM.clearTimeout( iNO );
+
+                _Self_.call( $_This[0] );
+            }
+
+            iNO = $.wait(iSecond,  function () {
+                $_This.off(End_Event, iCancel);
+
+                iCallback.call($_This[0], $.Event({
+                    type:      'idle',
+                    target:    $_This[0]
+                }));
+
+                _Self_.call( $_This[0] );
+            });
+
+            $_This.one(End_Event, iCancel);
+        });
+    };
+
 /* ---------- Cross Page Event ---------- */
 
     function CrossPageEvent(iType, iSource) {

@@ -94,6 +94,8 @@
  - `$.fn.focus()` 会让所有可见元素获得焦点
  - 统一 **mousewheel 事件**，并新增其快捷方法
  - 封装了 **触屏单指手势事件**（tap、press、swipe），并为桌面端、移动端提供一致的操作体验
+ - 新增 **用户输入事件**方法 —— `$.fn.input()`
+ - 新增 **用户操作空闲事件**方法 —— `$.fn.onIdleFor()`
  - 新增 **跨页面消息事件**方法 —— `$.fn.onReply()`（基于 `window.postMessage()`）
  - `$.fn.animate()` 支持类似 [jQuery UI `$.fn.effect()`](http://www.css88.com/jquery-ui-api/effect/) **动画效果名**参数（基于 **CSS Animation** 实现）
 

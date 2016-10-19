@@ -173,14 +173,14 @@ define(['jquery'],  function ($) {
         var Data_Set = (typeof iFiller != 'function');
 
         return  this.pushStack($.map($_Value,  function (iDOM) {
-            var iKey = this.getAttribute( iAttr );
+            var iKey = iDOM.getAttribute( iAttr );
 
-            var iValue = Data_Set  ?  iFiller[iKey]  :  iFiller.apply(this, [
+            var iValue = Data_Set  ?  iFiller[iKey]  :  iFiller.apply(iDOM, [
                     iKey,  arguments[0],  $_Value
                 ]);
 
             if (iValue != null) {
-                Value_Operator.call(this, iValue);
+                Value_Operator.call(iDOM, iValue);
                 return iDOM;
             }
         }));

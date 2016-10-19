@@ -2,7 +2,7 @@
 //              >>>  jQuery+  <<<
 //
 //
-//    [Version]    v8.2  (2016-10-18)
+//    [Version]    v8.3  (2016-10-19)
 //
 //    [Require]    jQuery  v1.9+
 //
@@ -598,7 +598,7 @@
         },
         urlDomain:        function (iURL) {
             return (
-                (! iURL)  ?  BOM.location  :  $('<a />', {href: iURL})[0]
+                (! iURL)  ?  BOM.location  :  BOM.jQuery('<a />', {href: iURL})[0]
             ).origin;
         },
         isCrossDomain:    function () {
@@ -923,6 +923,38 @@
         });
 
         return this;
+    };
+
+/* ---------- User Idle Event ---------- */
+
+    var End_Event = [
+            'keydown', 'mousedown', 'touchstart', 'MSPointerDown',
+            'mousemove', 'touchmove', 'MSPointerMove'
+        ].join(' ');
+
+    $.fn.onIdleFor = function (iSecond, iCallback) {
+        return  this.each(function () {
+            var iNO,  _Self_ = arguments.callee,  $_This = $(this);
+
+            function iCancel() {
+                BOM.clearTimeout( iNO );
+
+                _Self_.call( $_This[0] );
+            }
+
+            iNO = $.wait(iSecond,  function () {
+                $_This.off(End_Event, iCancel);
+
+                iCallback.call($_This[0], $.Event({
+                    type:      'idle',
+                    target:    $_This[0]
+                }));
+
+                _Self_.call( $_This[0] );
+            });
+
+            $_This.one(End_Event, iCancel);
+        });
     };
 
 /* ---------- Cross Page Event ---------- */
@@ -1937,14 +1969,14 @@
         var Data_Set = (typeof iFiller != 'function');
 
         return  this.pushStack($.map($_Value,  function (iDOM) {
-            var iKey = this.getAttribute( iAttr );
+            var iKey = iDOM.getAttribute( iAttr );
 
-            var iValue = Data_Set  ?  iFiller[iKey]  :  iFiller.apply(this, [
+            var iValue = Data_Set  ?  iFiller[iKey]  :  iFiller.apply(iDOM, [
                     iKey,  arguments[0],  $_Value
                 ]);
 
             if (iValue != null) {
-                Value_Operator.call(this, iValue);
+                Value_Operator.call(iDOM, iValue);
                 return iDOM;
             }
         }));

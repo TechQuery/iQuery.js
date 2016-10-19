@@ -143,7 +143,7 @@ define(['jquery'],  function ($) {
         },
         urlDomain:        function (iURL) {
             return (
-                (! iURL)  ?  BOM.location  :  $('<a />', {href: iURL})[0]
+                (! iURL)  ?  BOM.location  :  BOM.jQuery('<a />', {href: iURL})[0]
             ).origin;
         },
         isCrossDomain:    function () {
