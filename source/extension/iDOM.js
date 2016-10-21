@@ -183,7 +183,7 @@ define(['jquery'],  function ($) {
                 Value_Operator.call(iDOM, iValue);
                 return iDOM;
             }
-        }));
+        })).change();
     };
 
 /* ---------- HTML DOM SandBox ---------- */

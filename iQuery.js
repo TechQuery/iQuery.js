@@ -2,7 +2,7 @@
 //                >>>  iQuery.js  <<<
 //
 //
-//      [Version]    v2.0  (2016-10-19)  Stable
+//      [Version]    v2.0  (2016-10-21)  Stable
 //
 //      [Usage]      A Light-weight jQuery Compatible API
 //                   with IE 8+ compatibility.
@@ -836,10 +836,10 @@
                 arguments[0] || BOM.location.href
             ).match(/([^\?\#]+)(\?|\#)?/)[1].split('/').slice(0, -1).join('/');
         },
-        urlDomain:        function (iURL) {
-            return (
-                (! iURL)  ?  BOM.location  :  BOM.jQuery('<a />', {href: iURL})[0]
-            ).origin;
+        urlDomain:        function () {
+            return ((
+                arguments[0] || BOM.location.href
+            ).match(/^(\w+:)?\/\/[^\/]+/) || '')[0];
         },
         isCrossDomain:    function () {
             var iDomain = this.urlDomain( arguments[0] );
@@ -3095,7 +3095,7 @@
 
     var Origin_Define = {
             get:    function () {
-                return  (this.href.match(/^(\w+:)?\/\/[^\/]+/) || '')[0]  ||  '';
+                return  $.urlDomain( this.href )  ||  '';
             }
         };
     Object.defineProperty(
@@ -3978,7 +3978,7 @@
                 Value_Operator.call(iDOM, iValue);
                 return iDOM;
             }
-        }));
+        })).change();
     };
 
 /* ---------- HTML DOM SandBox ---------- */
@@ -4555,24 +4555,26 @@
 
         var $_This = this;
 
-        $[iData ? 'post' : 'get'](
-            iURL.trim().split(/\s+/)[0],
-            iData,
-            function (iHTML, _, iXHR) {
-                iHTML = (typeof iHTML == 'string')  ?  iHTML  :  iXHR.responseText;
+        iURL = iURL.trim().split(/\s+/);
 
-                $_This.children().fadeOut(200).promise().then(function () {
+        $[iData ? 'post' : 'get'](iURL[0],  iData,  function (iHTML, _, iXHR) {
 
-                    return $_This.empty().htmlExec(iHTML);
+            iHTML = (typeof iHTML == 'string')  ?  iHTML  :  iXHR.responseText;
 
-                }).then(function () {
+            $_This.children().fadeOut(200).promise().then(function () {
 
-                    if (typeof iCallback == 'function')
-                        $_This.each($.proxy(iCallback, null, iHTML, _, iXHR));
-                });
-            },
-            'html'
-        );
+                $_This.empty();
+
+                if (! iURL[1])  return $_This.htmlExec(iHTML);
+
+                $('<div />').append( iHTML ).find( iURL[1] ).appendTo( $_This );
+
+            }).then(function () {
+
+                if (typeof iCallback == 'function')
+                    $_This.each($.proxy(iCallback, null, iHTML, _, iXHR));
+            });
+        },  'html');
 
         return this;
     };

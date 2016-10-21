@@ -85,24 +85,26 @@ define(['jquery'],  function ($) {
 
         var $_This = this;
 
-        $[iData ? 'post' : 'get'](
-            iURL.trim().split(/\s+/)[0],
-            iData,
-            function (iHTML, _, iXHR) {
-                iHTML = (typeof iHTML == 'string')  ?  iHTML  :  iXHR.responseText;
+        iURL = iURL.trim().split(/\s+/);
 
-                $_This.children().fadeOut(200).promise().then(function () {
+        $[iData ? 'post' : 'get'](iURL[0],  iData,  function (iHTML, _, iXHR) {
 
-                    return $_This.empty().htmlExec(iHTML);
+            iHTML = (typeof iHTML == 'string')  ?  iHTML  :  iXHR.responseText;
 
-                }).then(function () {
+            $_This.children().fadeOut(200).promise().then(function () {
 
-                    if (typeof iCallback == 'function')
-                        $_This.each($.proxy(iCallback, null, iHTML, _, iXHR));
-                });
-            },
-            'html'
-        );
+                $_This.empty();
+
+                if (! iURL[1])  return $_This.htmlExec(iHTML);
+
+                $('<div />').append( iHTML ).find( iURL[1] ).appendTo( $_This );
+
+            }).then(function () {
+
+                if (typeof iCallback == 'function')
+                    $_This.each($.proxy(iCallback, null, iHTML, _, iXHR));
+            });
+        },  'html');
 
         return this;
     };

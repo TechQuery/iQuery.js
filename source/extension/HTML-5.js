@@ -138,7 +138,7 @@ define(['jquery'],  function ($) {
 
     var Origin_Define = {
             get:    function () {
-                return  (this.href.match(/^(\w+:)?\/\/[^\/]+/) || '')[0]  ||  '';
+                return  $.urlDomain( this.href )  ||  '';
             }
         };
     Object.defineProperty(
