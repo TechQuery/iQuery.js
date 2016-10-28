@@ -169,12 +169,14 @@ define(['jquery'],  function ($) {
 /* ---------- Form Element AJAX Submit ---------- */
 
     $.fn.ajaxSubmit = function (DataType, iCallback) {
+        if (! this[0])  return this;
+
         if (typeof DataType == 'function') {
             iCallback = DataType;
             DataType = '';
         }
 
-        this.sameParents().eq(0).on('submit',  'form',  function () {
+        function AJAX_Submit() {
             var $_Form = $(this);
 
             if ((! this.checkValidity())  ||  $_Form.data('_AJAX_Submitting_'))
@@ -206,7 +208,14 @@ define(['jquery'],  function ($) {
                 if (typeof iCallback == 'function')
                     iCallback.call($_Form[0], arguments[0]);
             });
-        });
+        }
+
+        var $_This = (this.length < 2)  ?  this  :  this.sameParents().eq(0);
+
+        if ($_This[0].tagName == 'FORM')
+            $_This.submit( AJAX_Submit );
+        else
+            $_This.on('submit', 'form', AJAX_Submit);
 
         return this;
     };

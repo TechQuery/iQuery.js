@@ -146,10 +146,7 @@ define(['jquery'],  function ($) {
 
 /* ---------- User Idle Event ---------- */
 
-    var End_Event = [
-            'keydown', 'mousedown', 'touchstart', 'MSPointerDown',
-            'mousemove', 'touchmove', 'MSPointerMove'
-        ].join(' ');
+    var End_Event = 'keydown mousedown scroll';
 
     $.fn.onIdleFor = function (iSecond, iCallback) {
         return  this.each(function () {
@@ -157,6 +154,8 @@ define(['jquery'],  function ($) {
 
             function iCancel() {
                 BOM.clearTimeout( iNO );
+
+                $_This.off(End_Event, arguments.callee);
 
                 _Self_.call( $_This[0] );
             }
