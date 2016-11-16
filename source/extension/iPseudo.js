@@ -64,6 +64,18 @@ define(['jquery'],  function ($) {
         return arguments[0].matches(pFocusable);
     };
 
+    /* ----- :field ----- */
+
+    $.expr[':'].field = function (iDOM) {
+        return (
+            iDOM.getAttribute('name')  &&  $.expr[':'].input(iDOM)
+        )  &&  !(
+            iDOM.disabled  &&
+            $.expr[':'].button(iDOM)  &&
+            $(iDOM).parents('fieldset[disabled]')[0]
+        )
+    };
+
     /* ----- :scrollable ----- */
 
     var Rolling_Style = $.makeSet('auto', 'scroll');

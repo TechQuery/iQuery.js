@@ -2,7 +2,7 @@
 //                >>>  iQuery.js  <<<
 //
 //
-//      [Version]    v2.0  (2016-10-28)  Stable
+//      [Version]    v2.0  (2016-11-16)  Stable
 //
 //      [Usage]      A Light-weight jQuery Compatible API
 //                   with IE 8+ compatibility.
@@ -1480,6 +1480,18 @@
         return arguments[0].matches(pFocusable);
     };
 
+    /* ----- :field ----- */
+
+    $.expr[':'].field = function (iDOM) {
+        return (
+            iDOM.getAttribute('name')  &&  $.expr[':'].input(iDOM)
+        )  &&  !(
+            iDOM.disabled  &&
+            $.expr[':'].button(iDOM)  &&
+            $(iDOM).parents('fieldset[disabled]')[0]
+        )
+    };
+
     /* ----- :scrollable ----- */
 
     var Rolling_Style = $.makeSet('auto', 'scroll');
@@ -1871,8 +1883,7 @@
             return  (iValue.length < 2)  ?  iValue[0]  :  iValue;
         },
         serializeArray:    function () {
-            var $_Value = this.find('*[name]:input').not(':button, [disabled]'),
-                iValue = [ ];
+            var $_Value = this.find('*:field'),  iValue = [ ];
 
             for (var i = 0, j = 0;  i < $_Value.length;  i++)
                 if (
@@ -3966,7 +3977,7 @@
 
         var Data_Set = (typeof iFiller != 'function');
 
-        return  this.pushStack($.map($_Value,  function (iDOM) {
+        $_Value = this.pushStack($.map($_Value,  function (iDOM) {
             var iKey = iDOM.getAttribute( iAttr );
 
             var iValue = Data_Set  ?  iFiller[iKey]  :  iFiller.apply(iDOM, [
@@ -3977,7 +3988,11 @@
                 Value_Operator.call(iDOM, iValue);
                 return iDOM;
             }
-        })).change();
+        }));
+
+        $_Value.filter(':input').change();
+
+        return $_Value;
     };
 
 /* ---------- HTML DOM SandBox ---------- */
@@ -4664,69 +4679,6 @@
     Object.defineProperty(HTMLTextAreaElement.prototype, 'value', Value_Patch);
 
 
-/* ---------- Form Element API ---------- */
-
-    function Value_Check() {
-        if ((! this[0].value)  &&  (this.attr('required') != null))
-            return false;
-
-        var iRegEx = this.attr('pattern');
-        if (iRegEx)  try {
-            return  RegExp( iRegEx ).test( this[0].value );
-        } catch (iError) { }
-
-        if ((this[0].tagName == 'INPUT')  &&  (this[0].type == 'number')) {
-            var iNumber = Number( this[0].value ),
-                iMin = Number( this.attr('min') );
-            if (
-                isNaN(iNumber)  ||
-                (iNumber < iMin)  ||
-                (iNumber > Number( this.attr('max') ))  ||
-                ((iNumber - iMin)  %  Number( this.attr('step') ))
-            )
-                return false;
-        }
-
-        return true;
-    }
-
-    var Invalid_Event = {
-            type:          'invalid',
-            bubbles:       false,
-            cancelable:    false
-        };
-
-    function Check_Wrapper() {
-        var $_This = $(this);
-
-        if (Value_Check.apply($_This, arguments))  return true;
-
-        return  (! $_This.trigger(Invalid_Event));
-    }
-
-    HTMLInputElement.prototype.checkValidity = Check_Wrapper;
-    HTMLSelectElement.prototype.checkValidity = Check_Wrapper;
-    HTMLTextAreaElement.prototype.checkValidity = Check_Wrapper;
-
-    HTMLFormElement.prototype.checkValidity = function () {
-        if (this.getAttribute('novalidate') != null)  return true;
-
-        var $_Input = $('*[name]:input', this);
-
-        for (var i = 0;  i < $_Input.length;  i++)
-            if (! $_Input[i].checkValidity()) {
-                $_Input[i].style.borderColor = 'red';
-
-                $.wait(1,  function () {
-                    $_Input[i].style.borderColor = '';
-                });
-
-                return  (! $(this).trigger(Invalid_Event));
-            }
-
-        return true;
-    };
-
 /* ---------- Form Data Object ---------- */
 
     if (! ($.browser.msie < 10))  return;
@@ -4913,6 +4865,55 @@
                 }
             };
         });
+
+/* ---------- Form Field Validation ---------- */
+
+    function Value_Check() {
+        if ((! this.value)  &&  (this.getAttribute('required') != null))
+            return false;
+
+        var iRegEx = this.getAttribute('pattern');
+        if (iRegEx)  try {
+            return  RegExp( iRegEx ).test( this.value );
+        } catch (iError) { }
+
+        if (
+            (this.tagName == 'INPUT')  &&
+            (this.getAttribute('type') == 'number')
+        ) {
+            var iNumber = Number( this.value ),
+                iMin = Number( this.getAttribute('min') );
+            if (
+                isNaN(iNumber)  ||
+                (iNumber < iMin)  ||
+                (iNumber > Number( this.getAttribute('max') ))  ||
+                ((iNumber - iMin)  %  Number( this.getAttribute('step') ))
+            )
+                return false;
+        }
+
+        return true;
+    }
+
+    $.fn.validate = function () {
+        var $_Field = this.find(':field');
+
+        for (var i = 0;  $_Field[i];  i++)
+            if ((
+                (typeof $_Field[i].checkValidity == 'function')  &&
+                (! $_Field[i].checkValidity())
+            )  ||  (
+                ! Value_Check.call( $_Field[i] )
+            )) {
+                $_Field = $( $_Field[i] );
+
+                $_Field.scrollParents().eq(0).scrollTo( $_Field.focus() );
+
+                return false;
+            }
+
+        return true;
+    };
 
 /* ---------- Form Element AJAX Submit ---------- */
 

@@ -172,7 +172,7 @@ define(['jquery'],  function ($) {
 
         var Data_Set = (typeof iFiller != 'function');
 
-        return  this.pushStack($.map($_Value,  function (iDOM) {
+        $_Value = this.pushStack($.map($_Value,  function (iDOM) {
             var iKey = iDOM.getAttribute( iAttr );
 
             var iValue = Data_Set  ?  iFiller[iKey]  :  iFiller.apply(iDOM, [
@@ -183,7 +183,11 @@ define(['jquery'],  function ($) {
                 Value_Operator.call(iDOM, iValue);
                 return iDOM;
             }
-        })).change();
+        }));
+
+        $_Value.filter(':input').change();
+
+        return $_Value;
     };
 
 /* ---------- HTML DOM SandBox ---------- */

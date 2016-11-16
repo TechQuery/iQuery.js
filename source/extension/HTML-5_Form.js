@@ -82,69 +82,6 @@ define(['jquery'],  function ($) {
     Object.defineProperty(HTMLTextAreaElement.prototype, 'value', Value_Patch);
 
 
-/* ---------- Form Element API ---------- */
-
-    function Value_Check() {
-        if ((! this[0].value)  &&  (this.attr('required') != null))
-            return false;
-
-        var iRegEx = this.attr('pattern');
-        if (iRegEx)  try {
-            return  RegExp( iRegEx ).test( this[0].value );
-        } catch (iError) { }
-
-        if ((this[0].tagName == 'INPUT')  &&  (this[0].type == 'number')) {
-            var iNumber = Number( this[0].value ),
-                iMin = Number( this.attr('min') );
-            if (
-                isNaN(iNumber)  ||
-                (iNumber < iMin)  ||
-                (iNumber > Number( this.attr('max') ))  ||
-                ((iNumber - iMin)  %  Number( this.attr('step') ))
-            )
-                return false;
-        }
-
-        return true;
-    }
-
-    var Invalid_Event = {
-            type:          'invalid',
-            bubbles:       false,
-            cancelable:    false
-        };
-
-    function Check_Wrapper() {
-        var $_This = $(this);
-
-        if (Value_Check.apply($_This, arguments))  return true;
-
-        return  (! $_This.trigger(Invalid_Event));
-    }
-
-    HTMLInputElement.prototype.checkValidity = Check_Wrapper;
-    HTMLSelectElement.prototype.checkValidity = Check_Wrapper;
-    HTMLTextAreaElement.prototype.checkValidity = Check_Wrapper;
-
-    HTMLFormElement.prototype.checkValidity = function () {
-        if (this.getAttribute('novalidate') != null)  return true;
-
-        var $_Input = $('*[name]:input', this);
-
-        for (var i = 0;  i < $_Input.length;  i++)
-            if (! $_Input[i].checkValidity()) {
-                $_Input[i].style.borderColor = 'red';
-
-                $.wait(1,  function () {
-                    $_Input[i].style.borderColor = '';
-                });
-
-                return  (! $(this).trigger(Invalid_Event));
-            }
-
-        return true;
-    };
-
 /* ---------- Form Data Object ---------- */
 
     if (! ($.browser.msie < 10))  return;

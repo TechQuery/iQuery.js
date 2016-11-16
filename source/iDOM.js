@@ -205,8 +205,7 @@ define(['iTraversing'],  function ($) {
             return  (iValue.length < 2)  ?  iValue[0]  :  iValue;
         },
         serializeArray:    function () {
-            var $_Value = this.find('*[name]:input').not(':button, [disabled]'),
-                iValue = [ ];
+            var $_Value = this.find('*:field'),  iValue = [ ];
 
             for (var i = 0, j = 0;  i < $_Value.length;  i++)
                 if (

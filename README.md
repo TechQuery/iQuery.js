@@ -64,6 +64,7 @@
  - 更智能的 `$.get()`、`$.post()`：支持 form 元素、FormData 对象的请求数据形式，整合 XHR、XDR、JSONP、iframe **自适应 跨域请求**， **自动转换响应内容**为 HTML、XML 或 JSON 对象实例
  - 新增 `$.delete()`、`$.put()`，方便实现基于 **RESTful API** 的单页应用
  - 重构 `$.fn.load()` 内部实现，与 **W3C HTML 解析规则** 保持一致，方便 DOM 片段清理、脚本调试
+ - 新增基于 **HTML 5 表单字段 验证规则**的 `$.fn.validate()`
  - 封装了 **表单元素无刷新提交**，并可直接绑定响应回调 —— `$.fn.ajaxSubmit()`（基于前述的几个 **AJAX 增强方法** 构建）
  - 新增 **选择符合法性判断**方法 —— `$.isSelector()`
  - 更多 jQuery **伪类选择符**：
@@ -72,9 +73,10 @@
    - **:input** 还支持 contentEditable、designMode 属性
    - 自带 **:focusable 伪类**（[jQuery UI](http://api.jqueryui.com/) 标准）
    - 自带 **:data() 伪类**（[jQuery UI](http://api.jqueryui.com/) 标准）
+   - 自带 **:field 伪类**，匹配所有含 **可提交字段**的元素
    - 新增 **:list 伪类**，等价于 `ul, ol, dl, tbody, select, datalist`
    - 新增 **:media 伪类**，等价于 `iframe, object, embed, audio, video` 及尺寸较大的 `:image`
-   - 新增 **:scrollable 伪类**
+   - 新增 **:scrollable 伪类**，匹配所有 **内容可滚动**的元素
  - 新增 **子元素插入**方法 —— `$.fn.insertTo()`
  - 新增 **祖先元素交集**方法 —— `$.fn.sameParents()`
  - 新增 **有滚动条的祖先元素**方法 —— `$.fn.scrollParents()`
@@ -142,7 +144,7 @@
  - 修正 IE 8 DOM Attribute 系列方法对 JavaScript 关键字的特殊处理
  - 自带 **CSSStyleDeclaration 对象**，为 IE 8 提供 **getComputedStyle** 支持，并封装了 M$ DirectX 滤镜属性转换
  - 自带 Google Chrome **元素 CSS 规则对象 获取**方法 `Window.getMatchedCSSRules()`
- - 自带 **HTML 5 Form API**，为 IE 10-、iOS WebKit 提供兼容支持
+ - 自带 **HTML 5 Form Placeholder** 补丁，为 IE 10-、iOS WebKit 提供兼容支持
  - 自带 **FormData 构造函数**，为 IE 10- 提供 表单数据封装
  - 自带 DOMParser 对象，为 IE 8 提供 **XML 文档解析**支持
 
