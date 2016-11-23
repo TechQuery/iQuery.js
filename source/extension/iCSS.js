@@ -13,11 +13,9 @@ define(['jquery'],  function ($) {
             msie:       'ms'
         });
 
-    $.cssName = function (Test_Type) {
-        return  function (iName) {
-            BOM[Test_Type]  ?  iName  :  ('-' + CSS_Prefix + '-' + iName);
-        };
-    };
+    $.cssName = $.curry(function (Test_Type, iName) {
+        return  BOM[Test_Type]  ?  iName  :  ('-' + CSS_Prefix + '-' + iName);
+    });
 
 /* ---------- CSS Rule ---------- */
 

@@ -186,7 +186,7 @@ define(['jquery'],  function ($) {
             if (
                 isNaN(iNumber)  ||
                 (iNumber < iMin)  ||
-                (iNumber > Number( this.getAttribute('max') ))  ||
+                (iNumber > Number(this.getAttribute('max') || Infinity))  ||
                 ((iNumber - iMin)  %  Number( this.getAttribute('step') ))
             )
                 return false;
@@ -196,7 +196,7 @@ define(['jquery'],  function ($) {
     }
 
     $.fn.validate = function () {
-        var $_Field = this.find(':field');
+        var $_Field = this.find(':field').removeClass('invalid');
 
         for (var i = 0;  $_Field[i];  i++)
             if ((
@@ -205,7 +205,7 @@ define(['jquery'],  function ($) {
             )  ||  (
                 ! Value_Check.call( $_Field[i] )
             )) {
-                $_Field = $( $_Field[i] );
+                $_Field = $( $_Field[i] ).addClass('invalid');
 
                 $_Field.scrollParents().eq(0).scrollTo( $_Field.focus() );
 
@@ -228,7 +228,7 @@ define(['jquery'],  function ($) {
         function AJAX_Submit() {
             var $_Form = $(this);
 
-            if ((! this.checkValidity())  ||  $_Form.data('_AJAX_Submitting_'))
+            if ((! $_Form.validate())  ||  $_Form.data('_AJAX_Submitting_'))
                 return false;
 
             $_Form.data('_AJAX_Submitting_', 1);

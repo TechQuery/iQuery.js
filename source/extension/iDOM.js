@@ -103,21 +103,26 @@ define(['jquery'],  function ($) {
     var RE_URL = /^(\w+:)?\/\/[\u0021-\u007e\uff61-\uffef]+$/;
 
     function Value_Operator(iValue) {
-        var $_This = $(this),
-            End_Element = (! this.children.length);
+
+        var $_This = $(this),  End_Element = (! this.children.length);
 
         var _Set_ = $.isData(iValue),
             iURL = (typeof iValue == 'string')  &&  iValue.trim();
+
         var isURL = iURL && iURL.split('#')[0].match(RE_URL);
 
         switch ( this.tagName.toLowerCase() ) {
             case 'a':           {
                 if (_Set_) {
-                    if (isURL)  $_This.attr('href', iURL);
-                    if (End_Element)  $_This.text(iValue);
+                    if ( isURL )
+                        this.href = iURL;
+                    else if (iURL.match( /.+?@[^@]{3,}/ ))
+                        this.href = 'mailto:' + iURL;
+
+                    if (End_Element)  this.textContent = iValue;
                     return;
                 }
-                return  $_This.attr('href')  ||  (End_Element && $_This.text());
+                return  this.href  ||  (End_Element && this.textContent);
             }
             case 'img':         return  $_This.attr('src', iValue);
             case 'textarea':    ;
@@ -151,9 +156,10 @@ define(['jquery'],  function ($) {
                         $_This.html(iValue);
                     return;
                 }
-                iURL = $_This.css('background-image')
-                    .match(/^url\(('|")?([^'"]+)('|")?\)/);
-                return  End_Element  ?  $_This.text()  :  (iURL && iURL[2]);
+                iURL = $_This.css('background-image').match(
+                    /^url\(('|")?([^'"]+)('|")?\)/
+                );
+                return  End_Element  ?  this.textContent  :  (iURL && iURL[2]);
             }
         }
     }

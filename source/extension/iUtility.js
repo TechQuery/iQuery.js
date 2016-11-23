@@ -57,14 +57,6 @@ define(['jquery'],  function ($) {
 
             return iType;
         },
-        isSelector:       function () {
-            try {
-                DOM.querySelector(arguments[0])
-            } catch (iError) {
-                return false;
-            }
-            return true;
-        },
         split:            function (iString, iSplit, iLimit, iJoin) {
             iString = iString.split(iSplit);
             if (iLimit) {
@@ -76,9 +68,24 @@ define(['jquery'],  function ($) {
             return iString;
         },
         byteLength:       function () {
-            return  arguments[0].replace(
+            return arguments[0].replace(
                 /[^\u0021-\u007e\uff61-\uffef]/g,  'xx'
             ).length;
+        },
+        curry:            function curry(iOrigin) {
+            return  function iProxy() {
+                return  (arguments.length >= iOrigin.length)  ?
+                    iOrigin.apply(this, arguments)  :
+                    $.proxy.apply($,  $.merge([iProxy, this],  arguments));
+            };
+        },
+        isSelector:       function () {
+            try {
+                DOM.querySelector(arguments[0])
+            } catch (iError) {
+                return false;
+            }
+            return true;
         },
         paramJSON:        function (Args_Str) {
             Args_Str = (

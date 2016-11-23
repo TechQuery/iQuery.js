@@ -70,8 +70,8 @@ define(['jquery'],  function ($) {
         return (
             iDOM.getAttribute('name')  &&  $.expr[':'].input(iDOM)
         )  &&  !(
-            iDOM.disabled  &&
-            $.expr[':'].button(iDOM)  &&
+            iDOM.disabled  ||
+            $.expr[':'].button(iDOM)  ||
             $(iDOM).parents('fieldset[disabled]')[0]
         )
     };

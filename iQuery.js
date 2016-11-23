@@ -2,7 +2,7 @@
 //                >>>  iQuery.js  <<<
 //
 //
-//      [Version]    v2.0  (2016-11-16)  Stable
+//      [Version]    v2.0  (2016-11-23)  Stable
 //
 //      [Usage]      A Light-weight jQuery Compatible API
 //                   with IE 8+ compatibility.
@@ -752,14 +752,6 @@
 
             return iType;
         },
-        isSelector:       function () {
-            try {
-                DOM.querySelector(arguments[0])
-            } catch (iError) {
-                return false;
-            }
-            return true;
-        },
         split:            function (iString, iSplit, iLimit, iJoin) {
             iString = iString.split(iSplit);
             if (iLimit) {
@@ -771,9 +763,24 @@
             return iString;
         },
         byteLength:       function () {
-            return  arguments[0].replace(
+            return arguments[0].replace(
                 /[^\u0021-\u007e\uff61-\uffef]/g,  'xx'
             ).length;
+        },
+        curry:            function curry(iOrigin) {
+            return  function iProxy() {
+                return  (arguments.length >= iOrigin.length)  ?
+                    iOrigin.apply(this, arguments)  :
+                    $.proxy.apply($,  $.merge([iProxy, this],  arguments));
+            };
+        },
+        isSelector:       function () {
+            try {
+                DOM.querySelector(arguments[0])
+            } catch (iError) {
+                return false;
+            }
+            return true;
         },
         paramJSON:        function (Args_Str) {
             Args_Str = (
@@ -1486,8 +1493,8 @@
         return (
             iDOM.getAttribute('name')  &&  $.expr[':'].input(iDOM)
         )  &&  !(
-            iDOM.disabled  &&
-            $.expr[':'].button(iDOM)  &&
+            iDOM.disabled  ||
+            $.expr[':'].button(iDOM)  ||
             $(iDOM).parents('fieldset[disabled]')[0]
         )
     };
@@ -3273,11 +3280,9 @@
             msie:       'ms'
         });
 
-    $.cssName = function (Test_Type) {
-        return  function (iName) {
-            BOM[Test_Type]  ?  iName  :  ('-' + CSS_Prefix + '-' + iName);
-        };
-    };
+    $.cssName = $.curry(function (Test_Type, iName) {
+        return  BOM[Test_Type]  ?  iName  :  ('-' + CSS_Prefix + '-' + iName);
+    });
 
 /* ---------- CSS Rule ---------- */
 
@@ -3908,21 +3913,26 @@
     var RE_URL = /^(\w+:)?\/\/[\u0021-\u007e\uff61-\uffef]+$/;
 
     function Value_Operator(iValue) {
-        var $_This = $(this),
-            End_Element = (! this.children.length);
+
+        var $_This = $(this),  End_Element = (! this.children.length);
 
         var _Set_ = $.isData(iValue),
             iURL = (typeof iValue == 'string')  &&  iValue.trim();
+
         var isURL = iURL && iURL.split('#')[0].match(RE_URL);
 
         switch ( this.tagName.toLowerCase() ) {
             case 'a':           {
                 if (_Set_) {
-                    if (isURL)  $_This.attr('href', iURL);
-                    if (End_Element)  $_This.text(iValue);
+                    if ( isURL )
+                        this.href = iURL;
+                    else if (iURL.match( /.+?@[^@]{3,}/ ))
+                        this.href = 'mailto:' + iURL;
+
+                    if (End_Element)  this.textContent = iValue;
                     return;
                 }
-                return  $_This.attr('href')  ||  (End_Element && $_This.text());
+                return  this.href  ||  (End_Element && this.textContent);
             }
             case 'img':         return  $_This.attr('src', iValue);
             case 'textarea':    ;
@@ -3956,9 +3966,10 @@
                         $_This.html(iValue);
                     return;
                 }
-                iURL = $_This.css('background-image')
-                    .match(/^url\(('|")?([^'"]+)('|")?\)/);
-                return  End_Element  ?  $_This.text()  :  (iURL && iURL[2]);
+                iURL = $_This.css('background-image').match(
+                    /^url\(('|")?([^'"]+)('|")?\)/
+                );
+                return  End_Element  ?  this.textContent  :  (iURL && iURL[2]);
             }
         }
     }
@@ -4886,7 +4897,7 @@
             if (
                 isNaN(iNumber)  ||
                 (iNumber < iMin)  ||
-                (iNumber > Number( this.getAttribute('max') ))  ||
+                (iNumber > Number(this.getAttribute('max') || Infinity))  ||
                 ((iNumber - iMin)  %  Number( this.getAttribute('step') ))
             )
                 return false;
@@ -4896,7 +4907,7 @@
     }
 
     $.fn.validate = function () {
-        var $_Field = this.find(':field');
+        var $_Field = this.find(':field').removeClass('invalid');
 
         for (var i = 0;  $_Field[i];  i++)
             if ((
@@ -4905,7 +4916,7 @@
             )  ||  (
                 ! Value_Check.call( $_Field[i] )
             )) {
-                $_Field = $( $_Field[i] );
+                $_Field = $( $_Field[i] ).addClass('invalid');
 
                 $_Field.scrollParents().eq(0).scrollTo( $_Field.focus() );
 
@@ -4928,7 +4939,7 @@
         function AJAX_Submit() {
             var $_Form = $(this);
 
-            if ((! this.checkValidity())  ||  $_Form.data('_AJAX_Submitting_'))
+            if ((! $_Form.validate())  ||  $_Form.data('_AJAX_Submitting_'))
                 return false;
 
             $_Form.data('_AJAX_Submitting_', 1);
