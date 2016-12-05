@@ -124,10 +124,18 @@ define(['jquery'],  function ($) {
                 }
                 return  this.href  ||  (End_Element && this.textContent);
             }
-            case 'img':         return  $_This.attr('src', iValue);
+            case 'img':
+                return  this[(_Set_ ? 'set' : 'get') + 'Attribute']('src', iValue);
             case 'textarea':    ;
-            case 'select':      return $_This.val(iValue);
-            case 'option':      return $_This.text(iValue);
+            case 'select':      if (_Set_) {
+                this.value = iValue;
+                break;
+            }
+            case 'option':      if (_Set_) {
+                this[this.hasAttribute('value') ? 'value' : 'textContent'] = iValue;
+                break;
+            } else
+                return this.value;
             case 'input':       {
                 var _Value_ = this.value;
 

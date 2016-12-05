@@ -91,7 +91,9 @@ define(['jquery'],  function ($) {
 
             iHTML = (typeof iHTML == 'string')  ?  iHTML  :  iXHR.responseText;
 
-            $_This.children().fadeOut(200).promise().then(function () {
+            Promise.resolve(
+                $_This.children().fadeOut(200).promise()
+            ).then(function () {
 
                 $_This.empty();
 
