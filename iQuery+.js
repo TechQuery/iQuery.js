@@ -103,7 +103,7 @@
 
         var iView = $.CommonView.call(this, $_View).on('update', iArgs[0]);
 
-        if ((iView !== this)  ||  (! iView.$_View[0].children[0]))
+        if ((iView !== this)  ||  (! iView.$_View.children()[0]))
             return iView;
 
         this.selector = $_Item;
@@ -360,7 +360,7 @@
 
         var _This_ = $.ListView.apply(this, arguments);
 
-        if ((_This_ !== this)  ||  (! _This_.$_View[0].children[0]))
+        if ((_This_ !== this)  ||  (! _This_.$_View.children()[0]))
             return _This_;
 
         _This_.viewPort = [0, 1];
@@ -368,14 +368,20 @@
         _This_.on('insert',  function ($_Item, _, Index) {
             var $_Prev = _This_[--Index];
 
-            if ($_Prev  &&  (! $_Prev.inViewport())) {
-                _This_.viewPort[1] = Index;
-
-                _Self_.toggle( $_Item );
-            } else
+            if ((! $_Prev)  ||  $_Prev.inViewport()) {
                 _Self_.toggle($_Item, true);
+                return;
+            }
 
-        }).$_View.scrollParents().eq(0).scroll(function () {
+            _This_.viewPort[1] = Index;
+
+            _Self_.toggle( $_Item ).filter('[data-src]').one('load',  function () {
+
+                this.width = $(this).css('width');
+
+                this.height = $(this).css('height');
+            });
+        }).$_View.add( document ).scroll(function () {
 
             var View_Port = [ ];
 
@@ -400,25 +406,41 @@
         return _This_;
     }
 
+    function iShow() {
+        if ( this.dataset.src )  this.src = this.dataset.src;
+
+        if ( this.dataset.style )
+            this.style.backgroundImage = this.dataset.style;
+    }
+
+    function iHide() {
+        var iURL = this.getAttribute('src'),
+            BGI = this.style.backgroundImage;
+
+        if ( iURL ) {
+            this.removeAttribute('src');
+
+            this.setAttribute('data-src', iURL);
+        }
+
+        if (BGI.length > 7) {
+            this.style.backgroundImage = '';
+
+            this.setAttribute('data-style', BGI);
+        }
+    }
+
     return  $.GalleryView = $.inherit($.ListView, GalleryView, {
-        toggle:    function ($_Item, iShow) {
+        instanceOf:    function () {
+            var iView = $.ListView.instanceOf.apply(this, arguments);
 
-            $_Item = $_Item.add( $_Item.find('*') );
+            return  iView  ||  $.ListView.instanceOf.apply($.ListView, arguments);
+        },
+        toggle:        function ($_Item) {
 
-            if ( iShow )
-                $_Item.filter('[data-src]:media').each(function () {
-
-                    if ( this.dataset.src )  this.src = this.dataset.src;
-                });
-            else
-                $_Item.filter('[src]:media').each(function () {
-
-                    var iURL = this.getAttribute('src');
-
-                    this.removeAttribute('src');
-
-                    this.setAttribute('data-src', iURL);
-                });
+            return  $_Item.add( $_Item.find('*') ).filter(':media').each(
+                arguments[1]  ?  iShow  :  iHide
+            );
         }
     });
 })(self, self.document, self.jQuery);
@@ -444,7 +466,7 @@
         var _This_ = $.CommonView.call(this, iListView.$_View)
                 .on('branch', iArgs[0]);
 
-        if ((_This_ !== this)  ||  (! _This_.$_View[0].children[0]))
+        if ((_This_ !== this)  ||  (! _This_.$_View.children()[0]))
             return _This_;
 
         this.$_View = iListView.$_View;

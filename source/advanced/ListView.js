@@ -18,7 +18,7 @@ define(['jquery', 'CommonView'],  function ($) {
 
         var iView = $.CommonView.call(this, $_View).on('update', iArgs[0]);
 
-        if ((iView !== this)  ||  (! iView.$_View[0].children[0]))
+        if ((iView !== this)  ||  (! iView.$_View.children()[0]))
             return iView;
 
         this.selector = $_Item;
