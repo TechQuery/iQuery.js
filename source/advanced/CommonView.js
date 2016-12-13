@@ -20,7 +20,7 @@ define(['jquery', 'jQuery+'],  function ($) {
         return this;
     }
 
-    $.extend(CommonView, {
+    return  $.CommonView = $.inherit($.Observer, CommonView, {
         getClass:      function () {
             return  this.prototype.toString.call({constructor: this});
         },
@@ -36,23 +36,20 @@ define(['jquery', 'jQuery+'],  function ($) {
 
             } while ($_Instance[0]  &&  (Check_Parent !== false));
         }
-    });
-
-    CommonView.prototype = $.extend(new $.Observer(),  {
-        constructor:    CommonView,
-        toString:       function () {
+    }, {
+        toString:    function () {
             var iName = this.constructor.name;
 
             iName = (typeof iName == 'function')  ?  this.constructor.name()  :  iName;
 
             return  '[object ' + iName + ']';
         },
-        render:         function () {
+        render:      function () {
             this.trigger('render', arguments);
 
             return this;
         },
-        valueOf:        function () {
+        valueOf:     function () {
             return $.map(
                 this.$_View.find('*').addBack().filter('form'),
                 function () {
@@ -60,7 +57,7 @@ define(['jquery', 'jQuery+'],  function ($) {
                 }
             );
         },
-        clear:          function () {
+        clear:       function () {
             var $_Data = this.$_View.find('*').addBack().filter('form')
                     .one('reset',  function () {
                         arguments[0].stopPropagation();
@@ -72,7 +69,4 @@ define(['jquery', 'jQuery+'],  function ($) {
             return this;
         }
     });
-
-    $.CommonView = CommonView;
-
 });

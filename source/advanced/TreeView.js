@@ -61,14 +61,8 @@ define(['jquery', 'ListView'],  function ($) {
         $.fn.on.apply(iListView.$_View.addClass('TreeNode'), this.listener);
     }
 
-    $.extend(TreeView, {
-        getClass:      $.CommonView.getClass,
-        instanceOf:    $.CommonView.instanceOf
-    });
-
-    TreeView.prototype = $.extend(new $.CommonView(),  {
-        constructor:    TreeView,
-        render:         function ($_Fork, iData) {
+    return  $.TreeView = $.inherit($.CommonView, TreeView, null, {
+        render:     function ($_Fork, iData) {
             if (iData  ||  (! ($_Fork instanceof Array)))
                 $_Fork = $($_Fork);
             else {
@@ -82,12 +76,12 @@ define(['jquery', 'ListView'],  function ($) {
 
             return this;
         },
-        clear:          function () {
+        clear:      function () {
             this[0][0].clear();
 
             return this;
         },
-        branch:         function ($_Item, iData) {
+        branch:     function ($_Item, iData) {
             var iFork = ($_Item instanceof $.ListView)  ?  $_Item  :  (
                     $.ListView.instanceOf( $_Item ).fork( $_Item )
                 );
@@ -110,11 +104,8 @@ define(['jquery', 'ListView'],  function ($) {
 
             return iFork;
         },
-        valueOf:        function () {
+        valueOf:    function () {
             return this[0][0].valueOf();
         }
     });
-
-    $.TreeView = TreeView;
-
 });

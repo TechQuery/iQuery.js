@@ -106,18 +106,8 @@ define(['jquery'],  function ($) {
     var pMedia = $.makeSet('IFRAME', 'OBJECT', 'EMBED', 'AUDIO', 'VIDEO');
 
     $.expr[':'].media = function (iDOM) {
-        if (iDOM.tagName in pMedia)  return true;
 
-        if (! $.expr[':'].image(iDOM))  return;
-
-        var iSize = $.map($(iDOM).css([
-                'width', 'height', 'min-width', 'min-height'
-            ]), parseFloat);
-
-        return (
-            (Math.max(iSize.width, iSize['min-width']) > 240)  ||
-            (Math.max(iSize.height, iSize['min-height']) > 160)
-        );
+        return  (iDOM.tagName in pMedia)  ||  $.expr[':'].image(iDOM);
     };
 
 });

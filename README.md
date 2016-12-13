@@ -52,7 +52,8 @@
  - 新增 **对象值相等**判断方法 —— `$.isEqual()`
  - 新增 **集合对象**（可用于 in 操作符）生成方法 —— `$.makeSet()`
  - 新增 **对象链回溯**方法 —— `$.trace()`
- - 新增 **数组/对象交集方法** —— `$.intersect()`
+ - 新增 **数组/对象交集**方法 —— `$.intersect()`
+ - 新增 **对象原型继承**快捷方法 —— `$.inherit()`
  - 新增 **纯数据类型**判断方法 —— `$.isData()`
  - 新增 **对象构造函数名**获取方法 —— `$.Type()`
  - 新增 **字符串部分分割**方法 —— `$.split()`（借鉴 PHP）
@@ -76,7 +77,7 @@
    - 自带 **:data() 伪类**（[jQuery UI](http://api.jqueryui.com/) 标准）
    - 自带 **:field 伪类**，匹配所有含 **可提交字段**的元素
    - 新增 **:list 伪类**，等价于 `ul, ol, dl, tbody, select, datalist`
-   - 新增 **:media 伪类**，等价于 `iframe, object, embed, audio, video` 及尺寸较大的 `:image`
+   - 新增 **:media 伪类**，等价于 `:image, iframe, object, embed, audio, video`
    - 新增 **:scrollable 伪类**，匹配所有 **内容可滚动**的元素
  - 新增 **子元素插入**方法 —— `$.fn.insertTo()`
  - 新增 **祖先元素交集**方法 —— `$.fn.sameParents()`

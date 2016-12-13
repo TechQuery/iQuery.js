@@ -2,7 +2,7 @@
 //              >>>  jQuery+  <<<
 //
 //
-//    [Version]    v8.5  (2016-12-05)
+//    [Version]    v8.6  (2016-12-13)
 //
 //    [Require]    jQuery  v1.9+
 //
@@ -451,6 +451,21 @@
         return  arguments.callee.apply(this, iArgs);
     };
 
+    $.inherit = function (iSup, iSub, iStatic, iProto) {
+
+        for (var iKey in iSup)
+            if (iSup.hasOwnProperty( iKey ))  iSub[iKey] = iSup[iKey];
+
+        for (var iKey in iStatic)  iSub[iKey] = iStatic[iKey];
+
+        iSub.prototype = new iSup();
+        iSub.prototype.constructor = iSub;
+
+        for (var iKey in iProto)  iSub.prototype[iKey] = iProto[iKey];
+
+        return iSub;
+    };
+
 })(self, self.document, self.jQuery);
 
 
@@ -782,18 +797,8 @@
     var pMedia = $.makeSet('IFRAME', 'OBJECT', 'EMBED', 'AUDIO', 'VIDEO');
 
     $.expr[':'].media = function (iDOM) {
-        if (iDOM.tagName in pMedia)  return true;
 
-        if (! $.expr[':'].image(iDOM))  return;
-
-        var iSize = $.map($(iDOM).css([
-                'width', 'height', 'min-width', 'min-height'
-            ]), parseFloat);
-
-        return (
-            (Math.max(iSize.width, iSize['min-width']) > 240)  ||
-            (Math.max(iSize.height, iSize['min-height']) > 160)
-        );
+        return  (iDOM.tagName in pMedia)  ||  $.expr[':'].image(iDOM);
     };
 
 })(self, self.document, self.jQuery);

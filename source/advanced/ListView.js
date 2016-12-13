@@ -1,4 +1,4 @@
-/* ---------- ListView Interface  v0.9 ---------- */
+/* ---------- ListView Interface  v0.8 ---------- */
 
 //  Thanks "EasyWebApp" Project --- http://git.oschina.net/Tech_Query/EasyWebApp
 
@@ -6,16 +6,15 @@ define(['jquery', 'CommonView'],  function ($) {
 
     var Click_Type = $.browser.mobile ? 'tap' : 'click';
 
-    function ListView($_View, $_Item, iDelay, onUpdate) {
+    function ListView($_View, $_Item, onUpdate) {
         var _Self_ = arguments.callee;
 
         if (!  (this instanceof _Self_))
-            return  new _Self_($_View, $_Item, iDelay, onUpdate);
+            return  new _Self_($_View, $_Item, onUpdate);
 
         var iArgs = $.makeArray(arguments).slice(1);
 
         $_Item = (iArgs[0] instanceof Array)  &&  iArgs.shift();
-        iDelay = (typeof iArgs[0] == 'boolean')  ?  iArgs.shift()  :  null;
 
         var iView = $.CommonView.call(this, $_View).on('update', iArgs[0]);
 
@@ -36,11 +35,6 @@ define(['jquery', 'CommonView'],  function ($) {
         _Self_.findView(this.$_View, false);
 
         this.$_Template = this[0].clone(true);
-
-        iDelay = (iDelay !== false)  ?
-            $('*', this[0][0]).add( this[0][0] ).filter(':media')[0]  :  iDelay;
-
-        this.cache = iDelay && [ ];
 
         this.$_View.on(Click_Type,  '.ListView_Item',  function (iEvent) {
 
@@ -67,12 +61,14 @@ define(['jquery', 'CommonView'],  function ($) {
                 $_This.data('TV_Focused', 1);
             }
         });
+
+        return this;
     }
 
-    $.extend(ListView, {
-        getClass:      $.CommonView.getClass,
-        instanceOf:    $.CommonView.instanceOf,
-        findView:      function ($_View, Init_Instance) {
+    var $_DOM = $(DOM);
+
+    return  $.ListView = $.inherit($.CommonView, ListView, {
+        findView:    function ($_View, Init_Instance) {
             $_View = $($_View).find('*:list, *[multiple]')
                 .not('input[type="file"]');
 
@@ -85,12 +81,7 @@ define(['jquery', 'CommonView'],  function ($) {
 
             return $_View;
         }
-    });
-
-    var $_DOM = $(DOM);
-
-    ListView.prototype = $.extend(new $.CommonView(),  {
-        constructor:    ListView,
+    }, {
         getSelector:    function () {
             return  this.selector ?
                 this.selector.join(', ') : [
@@ -167,31 +158,11 @@ define(['jquery', 'CommonView'],  function ($) {
                 .insertTo(this.$_View,  Index * $_Item.length);
         },
         render:         function (iData, iFrom) {
-            var iDelay = (this.cache instanceof Array),  $_Scroll;
-
-            if (iDelay)
-                iData = iData  ?  $.merge(this.cache, iData)  :  this.cache;
-
             iFrom = iFrom || 0;
 
-            for (var i = 0, $_Item;  i < iData.length;  i++) {
-                $_Item = this.insert(iData[i],  i + iFrom);
+            for (var i = 0;  i < iData.length;  i++)
+                this.insert(iData[i],  i + iFrom);
 
-                $_Scroll = $_Scroll  ||  $( $_Item.scrollParents()[0] );
-
-                if ((! $_Item.inViewport())  &&  iDelay) {
-
-                    this.cache = iData.slice(++i);
-
-                    if (! this.cache[0])  break;
-
-                    $_Scroll.one('scroll', $.proxy(
-                        this.render,  this,  null,  i + iFrom
-                    ));
-
-                    return this;
-                }
-            }
             if ( iData.length )  this.trigger('afterRender', [iData]);
 
             return this;
@@ -229,9 +200,6 @@ define(['jquery', 'CommonView'],  function ($) {
         clear:          function () {
             this.splice(0, this.length);
             this.$_View.empty();
-
-            if (this.cache instanceof Array)
-                this.cache.length = 0;
 
             return this;
         },
@@ -289,7 +257,4 @@ define(['jquery', 'CommonView'],  function ($) {
             return iFork;
         }
     });
-
-    $.ListView = ListView;
-
 });

@@ -123,4 +123,19 @@ define(['jquery'],  function ($) {
         return  arguments.callee.apply(this, iArgs);
     };
 
+    $.inherit = function (iSup, iSub, iStatic, iProto) {
+
+        for (var iKey in iSup)
+            if (iSup.hasOwnProperty( iKey ))  iSub[iKey] = iSup[iKey];
+
+        for (var iKey in iStatic)  iSub[iKey] = iStatic[iKey];
+
+        iSub.prototype = new iSup();
+        iSub.prototype.constructor = iSub;
+
+        for (var iKey in iProto)  iSub.prototype[iKey] = iProto[iKey];
+
+        return iSub;
+    };
+
 });
