@@ -2,7 +2,7 @@
 //                >>>  iQuery.js  <<<
 //
 //
-//      [Version]    v2.0  (2016-12-13)  Stable
+//      [Version]    v2.0  (2016-12-15)  Stable
 //
 //      [Usage]      A Light-weight jQuery Compatible API
 //                   with IE 8+ compatibility.
@@ -46,6 +46,26 @@
         return  (iObject != null)  &&  (
             iObject.constructor.prototype || iObject.__proto__
         );
+    };
+
+    Object.create = Object.create  ||  function (iProto, iProperty) {
+        if (typeof iProto != 'object')
+            throw TypeError('Object prototype may only be an Object or null');
+
+        function iTemp() { }
+
+        iTemp.prototype = iProto;
+
+        var iObject = new iTemp();
+
+        for (var iKey in iProperty)
+            if (
+                this.prototype.hasOwnProperty.call(iProperty, iKey)  &&
+                (iProperty[iKey].value !== undefined)
+            )
+                iObject[iKey] = iProperty[iKey].value;
+
+        return iObject;
     };
 
     /* ----- String Extension ----- */
@@ -148,30 +168,6 @@
             return iValue;
         });
     };
-
-    /* ----- Console Fix  v0.1 ----- */
-
-    if (BOM.console)  return;
-
-    function _Notice_() {
-        var iString = [ ];
-
-        for (var i = 0, j = 0;  i < arguments.length;  i++)  try {
-            iString[j++] = BOM.JSON.stringify( arguments[i].valueOf() );
-        } catch (iError) {
-            iString[j++] = arguments[i];
-        }
-
-        BOM.status = iString.join(' ');
-    }
-
-    BOM.console = { };
-
-    var Console_Method = ['log', 'info', 'warn', 'error', 'dir'];
-
-    for (var i = 0;  i < Console_Method.length;  i++)
-        BOM.console[ Console_Method[i] ] = _Notice_;
-
 })(self,  self.document);
 
 
@@ -464,7 +460,7 @@
 
         for (var iKey in iStatic)  iSub[iKey] = iStatic[iKey];
 
-        iSub.prototype = new iSup();
+        iSub.prototype = Object.create( iSup.prototype );
         iSub.prototype.constructor = iSub;
 
         for (var iKey in iProto)  iSub.prototype[iKey] = iProto[iKey];
@@ -1452,7 +1448,7 @@
             return  (pImage[iDOM.tagName] === true)  ||
                 (pImage[iDOM.tagName].type == iDOM.type.toLowerCase());
 
-        return  ($(iDOM).css('background-image') != 'none');
+        return  (! $(iDOM).css('background-image').indexOf('url('));
     };
 
     /* ----- :button ----- */

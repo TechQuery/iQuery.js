@@ -127,6 +127,7 @@
  - 自带 `Function.prototype.name` 属性补丁
  - 自带 `Object.keys()` 标准方法
  - 自带 `Object.getPrototypeOf()` 标准方法
+ - 自带 `Object.create()` 标准方法
  - 自带 `Date.now()` 标准方法
  - 新增 JSON **format 格式化显示**方法、 **parseAll 深度解析**方法（$.parseJSON() 被其增强）
  - 自带 `Promise()` 标准对象构造函数
@@ -155,6 +156,7 @@
 
  - 通用 **CommonView 对象**生成方法 —— `$.CommonView()`
  - 通用 **ListView 对象**生成方法 —— `$.ListView()`
+ - ListView 多媒体优化版 **GalleryView 对象**生成方法 —— `$.GalleryView()`
  - 通用 **TreeView 对象**生成方法 —— `$.TreeView()`
  - **HTML 5  History API  Polyfill** —— 为 IE 10- 提供兼容支持（需 服务器端响应 `./blank.html` 或 404 页面）
  - Base64 文本转 **二进制对象**方法 —— `$.toBlob()`

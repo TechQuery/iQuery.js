@@ -14,7 +14,7 @@ define(['jquery'],  function ($) {
             return  (pImage[iDOM.tagName] === true)  ||
                 (pImage[iDOM.tagName].type == iDOM.type.toLowerCase());
 
-        return  ($(iDOM).css('background-image') != 'none');
+        return  (! $(iDOM).css('background-image').indexOf('url('));
     };
 
     /* ----- :button ----- */

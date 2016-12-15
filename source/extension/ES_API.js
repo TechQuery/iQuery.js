@@ -21,6 +21,26 @@ define(function () {
         );
     };
 
+    Object.create = Object.create  ||  function (iProto, iProperty) {
+        if (typeof iProto != 'object')
+            throw TypeError('Object prototype may only be an Object or null');
+
+        function iTemp() { }
+
+        iTemp.prototype = iProto;
+
+        var iObject = new iTemp();
+
+        for (var iKey in iProperty)
+            if (
+                this.prototype.hasOwnProperty.call(iProperty, iKey)  &&
+                (iProperty[iKey].value !== undefined)
+            )
+                iObject[iKey] = iProperty[iKey].value;
+
+        return iObject;
+    };
+
     /* ----- String Extension ----- */
 
     var _Trim_ = ''.trim;
@@ -121,28 +141,4 @@ define(function () {
             return iValue;
         });
     };
-
-    /* ----- Console Fix  v0.1 ----- */
-
-    if (BOM.console)  return;
-
-    function _Notice_() {
-        var iString = [ ];
-
-        for (var i = 0, j = 0;  i < arguments.length;  i++)  try {
-            iString[j++] = BOM.JSON.stringify( arguments[i].valueOf() );
-        } catch (iError) {
-            iString[j++] = arguments[i];
-        }
-
-        BOM.status = iString.join(' ');
-    }
-
-    BOM.console = { };
-
-    var Console_Method = ['log', 'info', 'warn', 'error', 'dir'];
-
-    for (var i = 0;  i < Console_Method.length;  i++)
-        BOM.console[ Console_Method[i] ] = _Notice_;
-
 });
