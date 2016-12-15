@@ -69,13 +69,14 @@ define(['jquery', 'CommonView'],  function ($) {
 
     return  $.ListView = $.inherit($.CommonView, ListView, {
         findView:    function ($_View, Init_Instance) {
-            $_View = $($_View).find('*:list, *[multiple]')
-                .not('input[type="file"]');
+            $_View = $( $_View ).find(':list, :data("' + this.getClass() + '")');
 
             if (Init_Instance === true) {
-                for (var i = 0;  i < $_View.length;  i++)
+
+                for (var i = 0;  $_View[i];  i++)
                     if (! this.instanceOf($_View[i], false))
                         this( $_View[i] );
+
             } else if (Init_Instance === false)
                 $_View.data(this.getClass(), null);
 

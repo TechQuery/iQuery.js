@@ -15,8 +15,6 @@ define(['jquery', 'ListView'],  function ($) {
         if ((_This_ !== this)  ||  (! _This_.$_View.children()[0]))
             return _This_;
 
-        _This_.viewPort = [0, 1];
-
         _This_.on('insert',  function ($_Item, _, Index) {
             var $_Prev = _This_[--Index];
 
@@ -25,35 +23,17 @@ define(['jquery', 'ListView'],  function ($) {
                 return;
             }
 
-            _This_.viewPort[1] = Index;
-
             _Self_.toggle( $_Item ).filter('[data-src]').one('load',  function () {
 
                 this.width = $(this).css('width');
 
                 this.height = $(this).css('height');
             });
-        }).$_View.add( document ).scroll(function () {
+        }).$_View.add( document ).scroll($.throttle(function () {
 
-            var View_Port = [ ];
-
-            for (var i = _This_.viewPort[0];  _This_[i];  i++)
-                if ( _This_[i].inViewport() ) {
-                    if (View_Port[0] === undefined)  View_Port[0] = i;
-
-                    _Self_.toggle(_This_[i], true);
-                } else {
-                    if (View_Port[1] === undefined)  View_Port[1] = i;
-
-                    _Self_.toggle( _This_[i] );
-                }
-
-            if (View_Port[0] != null)
-                _This_.viewPort[0] = View_Port[0];
-
-            if (View_Port[1] != null)
-                _This_.viewPort[1] = View_Port[1];
-        });
+            for (var i = 0;  _This_[i];  i++)
+                _Self_.toggle(_This_[i], _This_[i].inViewport());
+        }));
 
         return _This_;
     }
