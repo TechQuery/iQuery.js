@@ -124,7 +124,7 @@ define(['jquery'],  function ($) {
         for (var i = 0, iAttr;  i < iElement.attributes.length;  i++) {
             iAttr = iElement.attributes[i];
             if (iAttr.nodeName.slice(0, 5) == 'data-')
-                this[ iAttr.nodeName.slice(5).toCamelCase() ] = iAttr.nodeValue;
+                this[$.camelCase( iAttr.nodeName.slice(5) )] = iAttr.nodeValue;
         }
     }
 

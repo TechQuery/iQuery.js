@@ -122,7 +122,7 @@ define(['jquery'],  function ($) {
 
         for (var iName in iStyle) {
             this[iName] = (iName in PX_Attr)  &&  iStyle[
-                ('pixel-' + iName).toCamelCase()
+                $.camelCase('pixel-' + iName)
             ];
             this[iName] = (typeof this[iName] == 'number')  ?
                 (this[iName] + 'px')  :  (iStyle[iName] + '');
@@ -142,7 +142,7 @@ define(['jquery'],  function ($) {
     }
 
     CSSStyleDeclaration.prototype.getPropertyValue = function () {
-        return  this[ arguments[0].toCamelCase() ];
+        return  this[$.camelCase( arguments[0] )];
     };
 
     BOM.getComputedStyle = function () {

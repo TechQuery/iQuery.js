@@ -70,21 +70,6 @@ define(function () {
         return  (new Array(Times + 1)).join(this);
     };
 
-    String.prototype.toCamelCase = function () {
-        var iName = this.split(arguments[0] || '-');
-
-        for (var i = 1;  i < iName.length;  i++)
-            iName[i] = iName[i][0].toUpperCase() + iName[i].slice(1);
-
-        return iName.join('');
-    };
-
-    String.prototype.toHyphenCase = function () {
-        return  this.replace(/([a-z0-9])[\s_]?([A-Z])/g,  function () {
-            return  arguments[1] + '-' + arguments[2].toLowerCase();
-        });
-    };
-
     /* ----- Array Extension ----- */
 
     Array.prototype.indexOf = Array.prototype.indexOf  ||  function () {
@@ -124,21 +109,4 @@ define(function () {
 
     Date.now = Date.now  ||  function () { return  +(new Date()); };
 
-
-    /* ----- JSON Extension  v0.4 ----- */
-
-    BOM.JSON.format = function () {
-        return  this.stringify(arguments[0], null, 4)
-            .replace(/(\s+"[^"]+":) ([^\s]+)/g, '$1    $2');
-    };
-
-    BOM.JSON.parseAll = function (iJSON) {
-        return  BOM.JSON.parse(iJSON,  function (iKey, iValue) {
-            if (iKey && (typeof iValue == 'string'))  try {
-                return  BOM.JSON.parse(iValue);
-            } catch (iError) { }
-
-            return iValue;
-        });
-    };
 });

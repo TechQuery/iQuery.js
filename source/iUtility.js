@@ -6,7 +6,23 @@ define(['iObject'],  function ($) {
         trim:             function () {
             return  arguments[0].trim();
         },
-        parseJSON:        BOM.JSON.parseAll,
+        camelCase:        function () {
+            var iName = arguments[0].split(arguments[1] || '-');
+
+            for (var i = 1;  i < iName.length;  i++)
+                iName[i] = iName[i][0].toUpperCase() + iName[i].slice(1);
+
+            return iName.join('');
+        },
+        parseJSON:        function (iJSON) {
+            return  BOM.JSON.parse(iJSON,  function (iKey, iValue) {
+                if (iKey && (typeof iValue == 'string'))  try {
+                    return  BOM.JSON.parse(iValue);
+                } catch (iError) { }
+
+                return iValue;
+            });
+        },
         parseXML:         function (iString) {
             iString = iString.trim();
             if ((iString[0] != '<') || (iString[iString.length - 1] != '>'))

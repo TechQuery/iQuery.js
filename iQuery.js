@@ -2,7 +2,7 @@
 //                >>>  iQuery.js  <<<
 //
 //
-//      [Version]    v2.0  (2016-12-15)  Stable
+//      [Version]    v2.0  (2016-12-22)  Stable
 //
 //      [Usage]      A Light-weight jQuery Compatible API
 //                   with IE 8+ compatibility.
@@ -97,21 +97,6 @@
         return  (new Array(Times + 1)).join(this);
     };
 
-    String.prototype.toCamelCase = function () {
-        var iName = this.split(arguments[0] || '-');
-
-        for (var i = 1;  i < iName.length;  i++)
-            iName[i] = iName[i][0].toUpperCase() + iName[i].slice(1);
-
-        return iName.join('');
-    };
-
-    String.prototype.toHyphenCase = function () {
-        return  this.replace(/([a-z0-9])[\s_]?([A-Z])/g,  function () {
-            return  arguments[1] + '-' + arguments[2].toLowerCase();
-        });
-    };
-
     /* ----- Array Extension ----- */
 
     Array.prototype.indexOf = Array.prototype.indexOf  ||  function () {
@@ -151,23 +136,6 @@
 
     Date.now = Date.now  ||  function () { return  +(new Date()); };
 
-
-    /* ----- JSON Extension  v0.4 ----- */
-
-    BOM.JSON.format = function () {
-        return  this.stringify(arguments[0], null, 4)
-            .replace(/(\s+"[^"]+":) ([^\s]+)/g, '$1    $2');
-    };
-
-    BOM.JSON.parseAll = function (iJSON) {
-        return  BOM.JSON.parse(iJSON,  function (iKey, iValue) {
-            if (iKey && (typeof iValue == 'string'))  try {
-                return  BOM.JSON.parse(iValue);
-            } catch (iError) { }
-
-            return iValue;
-        });
-    };
 })(self,  self.document);
 
 
@@ -631,7 +599,23 @@
         trim:             function () {
             return  arguments[0].trim();
         },
-        parseJSON:        BOM.JSON.parseAll,
+        camelCase:        function () {
+            var iName = arguments[0].split(arguments[1] || '-');
+
+            for (var i = 1;  i < iName.length;  i++)
+                iName[i] = iName[i][0].toUpperCase() + iName[i].slice(1);
+
+            return iName.join('');
+        },
+        parseJSON:        function (iJSON) {
+            return  BOM.JSON.parse(iJSON,  function (iKey, iValue) {
+                if (iKey && (typeof iValue == 'string'))  try {
+                    return  BOM.JSON.parse(iValue);
+                } catch (iError) { }
+
+                return iValue;
+            });
+        },
         parseXML:         function (iString) {
             iString = iString.trim();
             if ((iString[0] != '<') || (iString[iString.length - 1] != '>'))
@@ -773,6 +757,11 @@
             }
             return iString;
         },
+        hyphenCase:       function () {
+            return  arguments[0].replace(/([a-z0-9])[\s_]?([A-Z])/g,  function () {
+                return  arguments[1] + '-' + arguments[2].toLowerCase();
+            });
+        },
         byteLength:       function () {
             return arguments[0].replace(
                 /[^\u0021-\u007e\uff61-\uffef]/g,  'xx'
@@ -792,6 +781,10 @@
                 return false;
             }
             return true;
+        },
+        formatJSON:       function () {
+            return  BOM.JSON.stringify(arguments[0], null, 4)
+                .replace(/(\s+"[^"]+":) ([^\s]+)/g, '$1    $2');
         },
         paramJSON:        function (Args_Str) {
             Args_Str = (
@@ -1318,7 +1311,7 @@
 
             if (iName) {
                 iData = iData || { };
-                iData = iData[iName]  ||  iData[ iName.toCamelCase() ];
+                iData = iData[iName]  ||  iData[$.camelCase( iName )];
 
                 if (typeof iData == 'string')  try {
                     iData = BOM.JSON.parseAll(iData);
@@ -2789,7 +2782,7 @@
 
         for (var iName in iStyle) {
             this[iName] = (iName in PX_Attr)  &&  iStyle[
-                ('pixel-' + iName).toCamelCase()
+                $.camelCase('pixel-' + iName)
             ];
             this[iName] = (typeof this[iName] == 'number')  ?
                 (this[iName] + 'px')  :  (iStyle[iName] + '');
@@ -2809,7 +2802,7 @@
     }
 
     CSSStyleDeclaration.prototype.getPropertyValue = function () {
-        return  this[ arguments[0].toCamelCase() ];
+        return  this[$.camelCase( arguments[0] )];
     };
 
     BOM.getComputedStyle = function () {
@@ -3118,7 +3111,7 @@
         for (var i = 0, iAttr;  i < iElement.attributes.length;  i++) {
             iAttr = iElement.attributes[i];
             if (iAttr.nodeName.slice(0, 5) == 'data-')
-                this[ iAttr.nodeName.slice(5).toCamelCase() ] = iAttr.nodeValue;
+                this[$.camelCase( iAttr.nodeName.slice(5) )] = iAttr.nodeValue;
         }
     }
 

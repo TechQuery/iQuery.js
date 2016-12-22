@@ -58,11 +58,14 @@
  - 新增 **纯数据类型**判断方法 —— `$.isData()`
  - 新增 **对象构造函数名**获取方法 —— `$.Type()`
  - 新增 **字符串部分分割**方法 —— `$.split()`（借鉴 PHP）
+ - 新增 **连字符格式转换**方法 —— `$.hyphenCase()`
  - 新增 **字符串字节长度**方法 —— `$.byteLength()`
  - 新增 **函数柯里化**方法 —— `$.curry()`
  - 新增 **URL 信息提取**方法 —— `$.fileName()`、`$.filePath()`、`$.urlDomain()`
  - 新增 **URL 参数对象化**方法（$.param() 的逆方法）—— `$.paramJSON()`，其返回值自带的 .toString() 有 **JSON 格式化（美化）输出**能力
  - 新增 **URL 参数签名**方法 —— `$.paramSign()`
+ - `$.parseJSON()` 支持 **递归解析**，会将 JSON 字符串中的内层字符串 eval 为 JS 实值/例
+ - 新增 **JSON 格式化显示**方法 —— `$.formatJSON()`
  - 新增 **多条件观察者**基础对象 —— `$.Observer()`
  - 更智能的 `$.get()`、`$.post()`：支持 form 元素、FormData 对象的请求数据形式，整合 XHR、XDR、JSONP、iframe **自适应 跨域请求**， **自动转换响应内容**为 HTML、XML 或 JSON 对象实例
  - 新增 `$.delete()`、`$.put()`，方便实现基于 **RESTful API** 的单页应用
@@ -121,8 +124,7 @@
 ### ECMA、W3C 标准 API 补丁
 
  - 自带 支持“非空白符”的 `String.prototype.trim()`（借鉴 PHP）
- - 新增 `String.prototype.repeat` 标准草案方法
- - 新增 String **toCamelCase**（驼峰命名法）、 **toHyphenCase**（连字符命名法） **书写格式转换**方法
+ - 自带 `String.prototype.repeat` 标准方法
  - 自带 `Array.prototype.indexOf()` 标准方法
  - 自带 `Array.prototype.reduce()` 标准方法
  - 自带 `Function.prototype.name` 属性补丁
@@ -130,7 +132,6 @@
  - 自带 `Object.getPrototypeOf()` 标准方法
  - 自带 `Object.create()` 标准方法
  - 自带 `Date.now()` 标准方法
- - 新增 JSON **format 格式化显示**方法、 **parseAll 深度解析**方法（$.parseJSON() 被其增强）
  - 自带 `Promise()` 标准对象构造函数
  - 重写 `Error.prototype.valueOf()`，使 IE 10- 返回可查询的错误码（附带 官方文档 URL）
  - 新增 **DOMHttpRequest 对象**，封装了 **JSONP Get**、 **iframe Post**

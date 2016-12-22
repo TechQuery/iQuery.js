@@ -129,7 +129,7 @@ define(['iCore'],  function ($) {
 
             if (iName) {
                 iData = iData || { };
-                iData = iData[iName]  ||  iData[ iName.toCamelCase() ];
+                iData = iData[iName]  ||  iData[$.camelCase( iName )];
 
                 if (typeof iData == 'string')  try {
                     iData = BOM.JSON.parseAll(iData);

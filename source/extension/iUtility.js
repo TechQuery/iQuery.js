@@ -67,6 +67,11 @@ define(['jquery'],  function ($) {
             }
             return iString;
         },
+        hyphenCase:       function () {
+            return  arguments[0].replace(/([a-z0-9])[\s_]?([A-Z])/g,  function () {
+                return  arguments[1] + '-' + arguments[2].toLowerCase();
+            });
+        },
         byteLength:       function () {
             return arguments[0].replace(
                 /[^\u0021-\u007e\uff61-\uffef]/g,  'xx'
@@ -86,6 +91,10 @@ define(['jquery'],  function ($) {
                 return false;
             }
             return true;
+        },
+        formatJSON:       function () {
+            return  BOM.JSON.stringify(arguments[0], null, 4)
+                .replace(/(\s+"[^"]+":) ([^\s]+)/g, '$1    $2');
         },
         paramJSON:        function (Args_Str) {
             Args_Str = (
