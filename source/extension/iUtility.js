@@ -179,4 +179,39 @@ define(['jquery'],  function ($) {
         ].join('|'))
     });
 
+/* ---------- CRC-32  v0.1 ---------- */
+
+//  Thanks "Bakasen" for http://blog.csdn.net/bakasen/article/details/6043797
+
+    $.extend({
+        CRC_32:           (function () {
+            var iTable = new Array(256);
+
+            for (var i = 0, iCell;  i < 256;  i++) {
+                iCell = i;
+
+                for (var j = 0;  j < 8;  j++)
+                    if (iCell & 1)
+                        iCell = ((iCell >> 1) & 0x7FFFFFFF)  ^  0xEDB88320;
+                    else
+                        iCell = (iCell >> 1)  &  0x7FFFFFFF;
+
+                iTable[i] = iCell;
+            }
+
+            return iTable;
+        })(),
+        crc32:            function (iRAW) {
+            iRAW = '' + iRAW;
+
+            var iValue = 0xFFFFFFFF;
+
+            for (var i = 0;  iRAW[i];  i++)
+                iValue = ((iValue >> 8) & 0x00FFFFFF)  ^  this.CRC_32[
+                    (iValue & 0xFF)  ^  iRAW.charCodeAt(i)
+                ];
+
+            return  iValue ^ 0xFFFFFFFF;
+        }
+    });
 });

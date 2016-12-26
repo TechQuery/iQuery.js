@@ -9,13 +9,96 @@ define(['jquery'],  function ($) {
         this.readyState = 0;
         this.responseType = 'text';
     };
-    BOM.DOMHttpRequest.JSONP = { };
 
     var Success_State = {
             readyState:    4,
             status:        200,
             statusText:    'OK'
         };
+
+    function Allow_Send() {
+        return  (this.readyState == 1)  ||  (this.readyState == 4);
+    }
+
+    function iFrame_Send() {
+        var iDHR = this,
+            iTarget = this.$_Transport.submit(
+                $.proxy(Allow_Send, this)
+            ).attr('target');
+
+        if ((! iTarget)  ||  iTarget.match(/^_(top|parent|self|blank)$/i)) {
+            iTarget = $.uuid('DHR');
+            this.$_Transport.attr('target', iTarget);
+        }
+
+        $('iframe[name="' + iTarget + '"]').sandBox(function () {
+
+            $.extend(iDHR, Success_State, {
+                responseType:    'text',
+                response:        iDHR.responseText =
+                    $(this).contents().find('body').text()
+            });
+
+            iDHR.onload();
+
+            return false;
+
+        }).attr('name', iTarget);
+
+        this.$_Transport.submit();
+    }
+
+    var JSONP_Map = { };
+
+    BOM.DOMHttpRequest.JSONP = { };
+
+    function Signed_URL(iURL) {
+        iURL = iURL.replace(/&?\w+=\?/, '');
+
+        return  iURL.split('?')[0] + '?' + $.paramSign(iURL);
+    }
+
+    function Script_Send() {
+        var iDHR = this,  iURL = Signed_URL( this.responseURL );
+
+        var _UUID_ = 'DHR_'  +  ($.crc32( iURL )  >>>  0),
+            iCB = this.constructor.JSONP;
+
+        JSONP_Map[_UUID_] = JSONP_Map[_UUID_]  ||  [ ];
+
+        JSONP_Map[_UUID_].push( iDHR );
+
+        iCB[_UUID_] = iCB[_UUID_]  ||  function (iData) {
+            iData = $.extend({
+                responseType:    'json',
+                response:        iData,
+                responseText:    JSON.stringify( iData )
+            }, Success_State);
+
+            for (var i = 0, _DHR_;  JSONP_Map[_UUID_][i];  i++)
+                if (Signed_URL( JSONP_Map[_UUID_][i].responseURL )  ==  iURL) {
+
+                    _DHR_ = JSONP_Map[_UUID_].splice(i, 1)[0];
+
+                    $.extend(_DHR_, iData).onload();
+
+                    _DHR_.$_Transport.remove();
+                }
+
+            if (! JSONP_Map[_UUID_][0])  delete this[_UUID_];
+        };
+
+        this.$_Transport = $('<script />', {
+            type:       'text/javascript',
+            charset:    'UTF-8',
+            src:        this.responseURL = $.extendURL(
+                this.responseURL.replace(
+                    /(\w+)=\?/,  '$1=DOMHttpRequest.JSONP.' + _UUID_
+                ),
+                arguments[0]
+            )
+        }).appendTo( DOM.head );
+    }
 
     $.extend(BOM.DOMHttpRequest.prototype, {
         open:                function () {
@@ -26,68 +109,17 @@ define(['jquery'],  function ($) {
             console.warn("JSONP/iframe doesn't support Changing HTTP Headers...");
         },
         send:                function (iData) {
-            var iDHR = this,  _UUID_ = $.uuid('DHR');
+            if (! Allow_Send.call(this))  return;
 
             this.$_Transport =
                 (iData instanceof BOM.FormData)  &&  $(iData.ownerNode);
 
             if (this.$_Transport && (
                 iData.ownerNode.method.toUpperCase() == 'POST'
-            )) {
-                //  <iframe />
-                var iTarget = this.$_Transport.submit(function () {
-                        if ( $(this).data('_AJAX_Submitting_') )  return false;
-                    }).attr('target');
-
-                if ((! iTarget)  ||  iTarget.match(/^_(top|parent|self|blank)$/i)) {
-                    this.$_Transport.attr('target', _UUID_);
-                    iTarget = _UUID_;
-                }
-
-                $('iframe[name="' + iTarget + '"]').sandBox(function () {
-                    iDHR.$_Transport.data('_AJAX_Submitting_', 0);
-                    try {
-                        iDHR.responseText = $(this).contents().find('body').text();
-                    } catch (iError) { }
-
-                    $.extend(iDHR, Success_State, {
-                        responseType:    'text',
-                        response:        iDHR.responseText
-                    });
-                    iDHR.onload();
-                }).attr('name', iTarget);
-
-                this.$_Transport.submit();
-            } else {
-                //  <script />, JSONP
-                var iURL = this.responseURL.match(/([^\?=&]+\?|\?)?(\w.+)?/);
-
-                if (! iURL)  throw 'Illegal JSONP URL !';
-
-                this.constructor.JSONP[_UUID_] = function (iJSON) {
-                    $.extend(iDHR, Success_State, {
-                        responseType:    'json',
-                        response:        iJSON,
-                        responseText:    JSON.stringify(iJSON)
-                    });
-                    iDHR.onload();
-
-                    delete this[_UUID_];
-                    iDHR.$_Transport.remove();
-                };
-                this.responseURL = iURL[1] + $.param(
-                    $.extend(arguments[0] || { },  $.paramJSON(
-                        '?' + iURL[2].replace(
-                            /(\w+)=\?/,  '$1=DOMHttpRequest.JSONP.' + _UUID_
-                        )
-                    ))
-                );
-                this.$_Transport = $('<script />', {
-                    type:       'text/javascript',
-                    charset:    'UTF-8',
-                    src:        this.responseURL
-                }).appendTo(DOM.head);
-            }
+            ))
+                iFrame_Send.call( this );
+            else
+                Script_Send.call(this, iData);
 
             this.readyState = 2;
         },
