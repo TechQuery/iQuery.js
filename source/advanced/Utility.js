@@ -2,6 +2,34 @@ define(['jquery'],  function ($) {
 
     var BOM = self;
 
+/* ---------- Bit Operation for Big Number  v0.1 ---------- */
+
+    $.bitOperate = function (iType, iLeft, iRight) {
+
+        iLeft = (typeof iLeft == 'string')  ?  iLeft  :  iLeft.toString(2);
+        iRight = (typeof iRight == 'string')  ?  iRight  :  iRight.toString(2);
+
+        var iLength = Math.max(iLeft.length, iRight.length);
+
+        iLeft = $.leftPad(iLeft, iLength, 0);
+        iRight = $.leftPad(iRight, iLength, 0);
+
+        var iResult = '';
+
+        for (var i = 0, _Left_, _Right_;  iLeft[i] || iRight[i];  i += 31) {
+            _Left_ = parseInt(iLeft.slice(i, i + 31),  2),
+            _Right_ = parseInt(iRight.slice(i, i + 31),  2);
+
+            switch (iType) {
+                case '&':    iResult += (_Left_ & _Right_).toString(2);  break;
+                case '|':    iResult += (_Left_ | _Right_).toString(2);  break;
+                case '^':    iResult += (_Left_ ^ _Right_).toString(2);  break;
+                case '~':    iResult += (~_Left_).toString(2);
+            }
+        }
+        return iResult;
+    };
+
 /* ---------- Base64 to Blob  v0.1 ---------- */
 
 //  Thanks "axes" --- http://www.cnblogs.com/axes/p/4603984.html
@@ -31,6 +59,41 @@ define(['jquery'],  function ($) {
         return  iBuilder.getBlob( iType );
     };
 
+/* ---------- CRC-32  v0.1 ---------- */
+
+//  Thanks "Bakasen" for http://blog.csdn.net/bakasen/article/details/6043797
+
+    var CRC_32_Table = (function () {
+            var iTable = new Array(256);
+
+            for (var i = 0, iCell;  i < 256;  i++) {
+                iCell = i;
+
+                for (var j = 0;  j < 8;  j++)
+                    if (iCell & 1)
+                        iCell = ((iCell >> 1) & 0x7FFFFFFF)  ^  0xEDB88320;
+                    else
+                        iCell = (iCell >> 1)  &  0x7FFFFFFF;
+
+                iTable[i] = iCell;
+            }
+
+            return iTable;
+        })();
+
+    function CRC_32(iRAW) {
+        iRAW = '' + iRAW;
+
+        var iValue = 0xFFFFFFFF;
+
+        for (var i = 0;  iRAW[i];  i++)
+            iValue = ((iValue >> 8) & 0x00FFFFFF)  ^  CRC_32_Table[
+                (iValue & 0xFF)  ^  iRAW.charCodeAt(i)
+            ];
+
+        return  iValue ^ 0xFFFFFFFF;
+    }
+
 /* ---------- Hash Algorithm (Crypto API Wrapper)  v0.1 ---------- */
 
 //  Thanks "emu" --- http://blog.csdn.net/emu/article/details/39618297
@@ -50,8 +113,12 @@ define(['jquery'],  function ($) {
     $.dataHash = function (iAlgorithm, iData) {
         if (arguments.length < 2) {
             iData = iAlgorithm;
-            iAlgorithm = 'SHA-512';
+            iAlgorithm = 'CRC-32';
         }
+
+        if (iAlgorithm == 'CRC-32')
+            return  Promise.resolve(CRC_32( iData ));
+
         var iCrypto = BOM.crypto || BOM.msCrypto;
 
         try {

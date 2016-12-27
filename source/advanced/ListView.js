@@ -146,7 +146,7 @@ define(['jquery', 'CommonView'],  function ($) {
             var iReturn = this.trigger('insert',  [$_Item, iValue, Index]);
 
             $_Item = iReturn.length  ?
-                $($.merge.call($, [ ], iReturn))  :  $_Item;
+                $([ ].concat.apply([ ], iReturn))  :  $_Item;
 
             if (_New_)
                 this.splice(Index, 0, $_Item);

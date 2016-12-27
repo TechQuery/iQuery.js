@@ -60,6 +60,7 @@
  - 新增 **字符串部分分割**方法 —— `$.split()`（借鉴 PHP）
  - 新增 **连字符格式转换**方法 —— `$.hyphenCase()`
  - 新增 **字符串字节长度**方法 —— `$.byteLength()`
+ - 新增 **字符串左补齐**方法 —— `$.leftPad()`
  - 新增 **函数柯里化**方法 —— `$.curry()`
  - 新增 **URL 信息提取**方法 —— `$.fileName()`、`$.filePath()`、`$.urlDomain()`
  - 新增 **URL 跨域判断**方法 —— `$.isCrossDomain()`
@@ -67,7 +68,6 @@
  - 新增 **URL 参数签名**方法 —— `$.paramSign()`
  - `$.parseJSON()` 支持 **递归解析**，会将 JSON 字符串中的内层字符串 eval 为 JS 实值/例
  - 新增 **JSON 格式化显示**方法 —— `$.formatJSON()`
- - 新增 **CRC-32 校验值**方法 —— `$.crc32()`
  - 新增 **多条件观察者**基础对象 —— `$.Observer()`
  - 更智能的 `$.get()`、`$.post()`：支持 form 元素、FormData 对象的请求数据形式，整合 XHR、XDR、JSONP、iframe **自适应 跨域请求**， **自动转换响应内容**为 HTML、XML 或 JSON 对象实例
  - 新增 `$.delete()`、`$.put()`，方便实现基于 **RESTful API** 的单页应用
@@ -163,8 +163,11 @@
  - ListView 多媒体优化版 **GalleryView 对象**生成方法 —— `$.GalleryView()`
  - 通用 **TreeView 对象**生成方法 —— `$.TreeView()`
  - **HTML 5  History API  Polyfill** —— 为 IE 10- 提供兼容支持（需 服务器端响应 `./blank.html` 或 404 页面）
+ - **大数位运算**方法 —— `$.bitOperate()`
  - Base64 文本转 **二进制对象**方法 —— `$.toBlob()`
- - 基于 **现代浏览器 Crypto API** 的哈希方法 —— `$.dataHash()`
+ - **数据哈希**方法 —— `$.dataHash()`
+   - 默认算法：**CRC-32**
+   - 还支持 **现代浏览器 Crypto API**
 
 
 ## 【参与开发】
