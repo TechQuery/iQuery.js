@@ -50,54 +50,45 @@ define(['jquery'],  function ($) {
 
     var JSONP_Map = { };
 
-    BOM.DOMHttpRequest.JSONP = { };
+    BOM.DOMHttpRequest.JSONP = function (iData) {
+        iData = $.extend({
+            responseType:    'json',
+            response:        iData,
+            responseText:    JSON.stringify( iData )
+        }, Success_State);
 
-    function Signed_URL(iURL) {
-        iURL = iURL.replace(/&?\w+=\?/, '');
+        var iDHR = JSONP_Map[
+                DOM.currentScript.src.replace(/&?\w+?=DOMHttpRequest\.JSONP/, '')
+            ];
 
-        return  iURL.split('?')[0] + '?' + $.paramSign(iURL);
-    }
+        for (var i = 0;  iDHR[i];  i++) {
+
+            $.extend(iDHR[i], iData).onload();
+
+            iDHR[i].$_Transport.remove();
+        }
+
+        iDHR.length = 0;
+    };
 
     function Script_Send() {
-        var iDHR = this,  iURL = Signed_URL( this.responseURL );
-
-        var _UUID_ = 'DHR_'  +  ($.crc32( iURL )  >>>  0),
-            iCB = this.constructor.JSONP;
-
-        JSONP_Map[_UUID_] = JSONP_Map[_UUID_]  ||  [ ];
-
-        JSONP_Map[_UUID_].push( iDHR );
-
-        iCB[_UUID_] = iCB[_UUID_]  ||  function (iData) {
-            iData = $.extend({
-                responseType:    'json',
-                response:        iData,
-                responseText:    JSON.stringify( iData )
-            }, Success_State);
-
-            for (var i = 0, _DHR_;  JSONP_Map[_UUID_][i];  i++)
-                if (Signed_URL( JSONP_Map[_UUID_][i].responseURL )  ==  iURL) {
-
-                    _DHR_ = JSONP_Map[_UUID_].splice(i, 1)[0];
-
-                    $.extend(_DHR_, iData).onload();
-
-                    _DHR_.$_Transport.remove();
-                }
-
-            if (! JSONP_Map[_UUID_][0])  delete this[_UUID_];
-        };
+        this.responseURL = $.extendURL(
+            this.responseURL.replace(/(\w+)=\?/, '$1=DOMHttpRequest.JSONP'),
+            arguments[0]
+        );
 
         this.$_Transport = $('<script />', {
             type:       'text/javascript',
             charset:    'UTF-8',
-            src:        this.responseURL = $.extendURL(
-                this.responseURL.replace(
-                    /(\w+)=\?/,  '$1=DOMHttpRequest.JSONP.' + _UUID_
-                ),
-                arguments[0]
-            )
+            src:        this.responseURL
         }).appendTo( DOM.head );
+
+        var iURL = this.$_Transport[0].src;
+
+        iURL = iURL.split('?')[0] + '?' + $.paramSign(
+            iURL.replace(/&?\w+?=DOMHttpRequest\.JSONP/, '')
+        );
+        (JSONP_Map[iURL] = JSONP_Map[iURL]  ||  [ ]).push( this );
     }
 
     $.extend(BOM.DOMHttpRequest.prototype, {
@@ -134,21 +125,29 @@ define(['jquery'],  function ($) {
     function DHR_Transport(iOption) {
         var iXHR;
 
-        return {
+        return  (iOption.dataType == 'jsonp')  &&  {
             send:     function (iHeader, iComplete) {
-                if (iOption.dataType == 'jsonp')
-                    iOption.url += (iOption.url.split('?')[1] ? '&' : '?')  +
-                        iOption.jsonp + '=?';
+                if (! $.fn.iquery) {
+                    iOption.url = iOption.url.replace(
+                        RegExp('&?' + iOption.jsonp + '=\\w+'),  ''
+                    ).trim('?');
+
+                    iOption.dataTypes.shift();
+                }
+                iOption.url += (iOption.url.split('?')[1] ? '&' : '?')  +
+                    iOption.jsonp + '=?';
 
                 iXHR = new BOM.DOMHttpRequest();
-                iXHR.open(iOption.type, iOption.url);
-                iXHR.onload = function () {
-                    var iResponse = {text:  iXHR.responseText};
-                    iResponse[ iXHR.responseType ] = iXHR.response;
 
-                    iComplete(iXHR.status, iXHR.statusText, iResponse);
+                iXHR.open(iOption.type, iOption.url);
+
+                iXHR.onload = function () {
+                    var iResponse = {text:  this.responseText};
+                    iResponse[ this.responseType ] = this.response;
+
+                    iComplete(this.status, this.statusText, iResponse);
                 };
-                iXHR.send(iOption.data);
+                iXHR.send( iOption.data );
             },
             abort:    function () {
                 iXHR.abort();
@@ -157,7 +156,7 @@ define(['jquery'],  function ($) {
     }
 
     //  JSONP for iQuery
-    $.ajaxTransport('jsonp', DHR_Transport);
+    $.ajaxTransport('+script', DHR_Transport);
 
     if ($.browser.msie < 10)
         $.ajaxTransport('+*',  function (iOption) {
