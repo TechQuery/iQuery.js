@@ -57,9 +57,7 @@ define(['jquery'],  function ($) {
             responseText:    JSON.stringify( iData )
         }, Success_State);
 
-        var iDHR = JSONP_Map[
-                DOM.currentScript.src.replace(/&?\w+?=DOMHttpRequest\.JSONP/, '')
-            ];
+        var iDHR = JSONP_Map[ DOM.currentScript.src ];
 
         for (var i = 0;  iDHR[i];  i++) {
 
@@ -85,9 +83,6 @@ define(['jquery'],  function ($) {
 
         var iURL = this.$_Transport[0].src;
 
-        iURL = iURL.split('?')[0] + '?' + $.paramSign(
-            iURL.replace(/&?\w+?=DOMHttpRequest\.JSONP/, '')
-        );
         (JSONP_Map[iURL] = JSONP_Map[iURL]  ||  [ ]).push( this );
     }
 

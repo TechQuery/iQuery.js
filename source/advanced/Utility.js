@@ -4,6 +4,18 @@ define(['jquery'],  function ($) {
 
 /* ---------- Bit Operation for Big Number  v0.1 ---------- */
 
+    function Bit_Calculate(iType, iLeft, iRight) {
+        iLeft = parseInt(iLeft, 2);
+        iRight = parseInt(iRight, 2);
+
+        switch (iType) {
+            case '&':    return  iLeft & iRight;
+            case '|':    return  iLeft | iRight;
+            case '^':    return  iLeft ^ iRight;
+            case '~':    return  ~iLeft;
+        }
+    }
+
     $.bitOperate = function (iType, iLeft, iRight) {
 
         iLeft = (typeof iLeft == 'string')  ?  iLeft  :  iLeft.toString(2);
@@ -11,22 +23,19 @@ define(['jquery'],  function ($) {
 
         var iLength = Math.max(iLeft.length, iRight.length);
 
+        if (iLength < 32)
+            return  Bit_Calculate(iType, iLeft, iRight).toString(2);
+
         iLeft = $.leftPad(iLeft, iLength, 0);
         iRight = $.leftPad(iRight, iLength, 0);
 
         var iResult = '';
 
-        for (var i = 0, _Left_, _Right_;  iLeft[i] || iRight[i];  i += 31) {
-            _Left_ = parseInt(iLeft.slice(i, i + 31),  2),
-            _Right_ = parseInt(iRight.slice(i, i + 31),  2);
+        for (var i = 0;  iLeft[i] || iRight[i];  i += 31)
+            iResult += Bit_Calculate(
+                iType,  iLeft.slice(i, i + 31),  iRight.slice(i, i + 31)
+            ).toString(2);
 
-            switch (iType) {
-                case '&':    iResult += (_Left_ & _Right_).toString(2);  break;
-                case '|':    iResult += (_Left_ | _Right_).toString(2);  break;
-                case '^':    iResult += (_Left_ ^ _Right_).toString(2);  break;
-                case '~':    iResult += (~_Left_).toString(2);
-            }
-        }
         return iResult;
     };
 
@@ -57,6 +66,24 @@ define(['jquery'],  function ($) {
         iBuilder.append( iBuffer );
 
         return  iBuilder.getBlob( iType );
+    };
+
+/* ---------- URL Parameter Signature  v0.1 ---------- */
+
+    $.paramSign = function (iData) {
+        iData = (typeof iData == 'string')  ?  this.paramJSON(iData)  :  iData;
+
+        return  $.map(Object.keys(iData).sort(),  function (iKey) {
+
+            switch (typeof iData[iKey]) {
+                case 'function':    return;
+                case 'object':      try {
+                    return  iKey + '=' + JSON.stringify(iData[iKey]);
+                } catch (iError) { }
+            }
+            return  iKey + '=' + iData[iKey];
+
+        }).join(arguments[1] || '&');
     };
 
 /* ---------- CRC-32  v0.1 ---------- */

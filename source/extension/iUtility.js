@@ -5,7 +5,7 @@ define(['jquery'],  function ($) {
     var WindowType = $.makeSet('Window', 'DOMWindow', 'Global');
 
     $.extend({
-        Type:    function (iVar) {
+        Type:             function (iVar) {
             var iType;
 
             try {
@@ -148,21 +148,6 @@ define(['jquery'],  function ($) {
             iArgs.unshift( $.paramJSON('?' + iURL[1]) );
 
             return  iURL[0]  +  '?'  +  $.param($.extend.apply($, iArgs));
-        },
-        paramSign:        function (iData) {
-            iData = (typeof iData == 'string')  ?  this.paramJSON(iData)  :  iData;
-
-            return  $.map(Object.keys(iData).sort(),  function (iKey) {
-
-                switch (typeof iData[iKey]) {
-                    case 'function':    return;
-                    case 'object':      try {
-                        return  iKey + '=' + JSON.stringify(iData[iKey]);
-                    } catch (iError) { }
-                }
-                return  iKey + '=' + iData[iKey];
-
-            }).join(arguments[1] || '&');
         },
         fileName:         function () {
             return (

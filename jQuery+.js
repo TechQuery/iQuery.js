@@ -2,7 +2,7 @@
 //              >>>  jQuery+  <<<
 //
 //
-//    [Version]    v8.7  (2016-12-27)
+//    [Version]    v8.6  (2016-12-28)
 //
 //    [Require]    jQuery  v1.9+
 //
@@ -439,7 +439,7 @@
     var WindowType = $.makeSet('Window', 'DOMWindow', 'Global');
 
     $.extend({
-        Type:    function (iVar) {
+        Type:             function (iVar) {
             var iType;
 
             try {
@@ -582,21 +582,6 @@
             iArgs.unshift( $.paramJSON('?' + iURL[1]) );
 
             return  iURL[0]  +  '?'  +  $.param($.extend.apply($, iArgs));
-        },
-        paramSign:        function (iData) {
-            iData = (typeof iData == 'string')  ?  this.paramJSON(iData)  :  iData;
-
-            return  $.map(Object.keys(iData).sort(),  function (iKey) {
-
-                switch (typeof iData[iKey]) {
-                    case 'function':    return;
-                    case 'object':      try {
-                        return  iKey + '=' + JSON.stringify(iData[iKey]);
-                    } catch (iError) { }
-                }
-                return  iKey + '=' + iData[iKey];
-
-            }).join(arguments[1] || '&');
         },
         fileName:         function () {
             return (
@@ -2546,9 +2531,7 @@
             responseText:    JSON.stringify( iData )
         }, Success_State);
 
-        var iDHR = JSONP_Map[
-                DOM.currentScript.src.replace(/&?\w+?=DOMHttpRequest\.JSONP/, '')
-            ];
+        var iDHR = JSONP_Map[ DOM.currentScript.src ];
 
         for (var i = 0;  iDHR[i];  i++) {
 
@@ -2574,9 +2557,6 @@
 
         var iURL = this.$_Transport[0].src;
 
-        iURL = iURL.split('?')[0] + '?' + $.paramSign(
-            iURL.replace(/&?\w+?=DOMHttpRequest\.JSONP/, '')
-        );
         (JSONP_Map[iURL] = JSONP_Map[iURL]  ||  [ ]).push( this );
     }
 
