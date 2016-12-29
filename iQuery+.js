@@ -372,12 +372,9 @@
                 return;
             }
 
-            _Self_.toggle( $_Item ).filter('[data-src]').one('load',  function () {
+            _Self_.toggle( $_Item ).filter('[data-src]')
+                .each( iFreeze ).one('load', iFreeze);
 
-                this.width = $(this).css('width');
-
-                this.height = $(this).css('height');
-            });
         }).$_View.add( document ).scroll($.throttle(function () {
 
             for (var i = 0;  _This_[i];  i++)
@@ -385,6 +382,21 @@
         }));
 
         return _This_;
+    }
+
+    function iFreeze() {
+        if (
+            (typeof arguments[0] != 'object')  &&
+            (this.tagName.toLowerCase() == 'img')  &&
+            (! this.complete)
+        )
+            return;
+
+        var $_This = $(this);
+
+        $_This.width( $_This.css('width') );
+
+        $_This.height( $_This.css('height') );
     }
 
     function iShow() {
@@ -635,10 +647,14 @@
 
         var iResult = '';
 
-        for (var i = 0;  iLeft[i] || iRight[i];  i += 31)
-            iResult += Bit_Calculate(
-                iType,  iLeft.slice(i, i + 31),  iRight.slice(i, i + 31)
-            ).toString(2);
+        for (var i = 0;  i < iLength;  i += 31)
+            iResult += $.leftPad(
+                Bit_Calculate(
+                    iType,  iLeft.slice(i, i + 31),  iRight.slice(i, i + 31)
+                ).toString(2),
+                Math.min(31,  iLength - i),
+                0
+            );
 
         return iResult;
     };
@@ -782,7 +798,7 @@
 //              >>>  iQuery+  <<<
 //
 //
-//    [Version]    v1.9  (2016-12-28)  Stable
+//    [Version]    v1.9  (2016-12-29)  Stable
 //
 //    [Require]    iQuery  ||  jQuery with jQuery+
 //

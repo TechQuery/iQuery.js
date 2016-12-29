@@ -23,12 +23,9 @@ define(['jquery', 'ListView'],  function ($) {
                 return;
             }
 
-            _Self_.toggle( $_Item ).filter('[data-src]').one('load',  function () {
+            _Self_.toggle( $_Item ).filter('[data-src]')
+                .each( iFreeze ).one('load', iFreeze);
 
-                this.width = $(this).css('width');
-
-                this.height = $(this).css('height');
-            });
         }).$_View.add( document ).scroll($.throttle(function () {
 
             for (var i = 0;  _This_[i];  i++)
@@ -36,6 +33,21 @@ define(['jquery', 'ListView'],  function ($) {
         }));
 
         return _This_;
+    }
+
+    function iFreeze() {
+        if (
+            (typeof arguments[0] != 'object')  &&
+            (this.tagName.toLowerCase() == 'img')  &&
+            (! this.complete)
+        )
+            return;
+
+        var $_This = $(this);
+
+        $_This.width( $_This.css('width') );
+
+        $_This.height( $_This.css('height') );
     }
 
     function iShow() {

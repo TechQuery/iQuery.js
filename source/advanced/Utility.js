@@ -31,10 +31,14 @@ define(['jquery'],  function ($) {
 
         var iResult = '';
 
-        for (var i = 0;  iLeft[i] || iRight[i];  i += 31)
-            iResult += Bit_Calculate(
-                iType,  iLeft.slice(i, i + 31),  iRight.slice(i, i + 31)
-            ).toString(2);
+        for (var i = 0;  i < iLength;  i += 31)
+            iResult += $.leftPad(
+                Bit_Calculate(
+                    iType,  iLeft.slice(i, i + 31),  iRight.slice(i, i + 31)
+                ).toString(2),
+                Math.min(31,  iLength - i),
+                0
+            );
 
         return iResult;
     };
