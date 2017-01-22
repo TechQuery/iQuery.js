@@ -41,7 +41,7 @@ define(['jquery'],  function ($) {
 
     /* ----- :list, :data ----- */
 
-    var pList = $.makeSet('UL', 'OL', 'DL', 'TBODY', 'SELECT', 'DATALIST');
+    var pList = $.makeSet('UL', 'OL', 'DL', 'TBODY', 'DATALIST');
 
     $.extend($.expr[':'], {
         list:    function () {

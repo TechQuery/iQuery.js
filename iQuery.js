@@ -2,13 +2,13 @@
 //                >>>  iQuery.js  <<<
 //
 //
-//      [Version]    v2.0  (2016-12-28)  Stable
+//      [Version]    v2.0  (2017-01-22)  Stable
 //
 //      [Usage]      A Light-weight jQuery Compatible API
 //                   with IE 8+ compatibility.
 //
 //
-//          (C)2015-2016    shiy2008@gmail.com
+//          (C)2015-2017    shiy2008@gmail.com
 //
 
 
@@ -57,6 +57,8 @@
         iTemp.prototype = iProto;
 
         var iObject = new iTemp();
+
+        iObject.__proto__ = iProto;
 
         for (var iKey in iProperty)
             if (
@@ -1489,7 +1491,7 @@
 
     /* ----- :list, :data ----- */
 
-    var pList = $.makeSet('UL', 'OL', 'DL', 'TBODY', 'SELECT', 'DATALIST');
+    var pList = $.makeSet('UL', 'OL', 'DL', 'TBODY', 'DATALIST');
 
     $.extend($.expr[':'], {
         list:    function () {
@@ -3819,6 +3821,32 @@
         ]].apply(
             this,  arguments
         );
+    };
+
+})(self,  self.document,  self.iQuery || iQuery);
+
+
+
+(function (BOM, DOM, $) {
+
+    $.fn.toggleAnimate = function (iClass, iData) {
+
+        var CSS_Rule = BOM.getMatchedCSSRules(
+                this.toggleClass( iClass ).children()[0]
+            ) || '',
+            $_This = this;
+
+        for (var i = 0;  CSS_Rule[i];  i++)
+            if (CSS_Rule[i].cssText.indexOf('transition') > 0)
+                return  new Promise(function () {
+                    $_This.one(
+                        'transitionend webkitTransitionEnd',
+                        (iData != null)  ?
+                            $.proxy(arguments[0], null, iData)  :  arguments[0]
+                    );
+                });
+
+        return  Promise.resolve( iData );
     };
 
 })(self,  self.document,  self.iQuery || iQuery);

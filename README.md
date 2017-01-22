@@ -81,7 +81,7 @@
    - 自带 **:focusable 伪类**（[jQuery UI](http://api.jqueryui.com/) 标准）
    - 自带 **:data() 伪类**（[jQuery UI](http://api.jqueryui.com/) 标准）
    - 自带 **:field 伪类**，匹配所有含 **可提交字段**的元素
-   - 新增 **:list 伪类**，等价于 `ul, ol, dl, tbody, select, datalist`
+   - 新增 **:list 伪类**，等价于 `ul, ol, dl, tbody, datalist`
    - 新增 **:media 伪类**，等价于 `:image, iframe, object, embed, audio, video`
    - 新增 **:scrollable 伪类**，匹配所有 **内容可滚动**的元素
  - 新增 **子元素插入**方法 —— `$.fn.insertTo()`
@@ -107,6 +107,7 @@
  - 新增 **用户操作空闲事件**方法 —— `$.fn.onIdleFor()`
  - 新增 **跨页面消息事件**方法 —— `$.fn.onReply()`（基于 `window.postMessage()`）
  - `$.fn.animate()` 支持类似 [jQuery UI `$.fn.effect()`](http://www.css88.com/jquery-ui-api/effect/) **动画效果名**参数（基于 **CSS Animation** 实现）
+ - 新增 **CSS 动画类切换**方法 —— `$.fn.toggleAnimate()`
 
 
 ### 未实现的 jQuery（最新版）特性

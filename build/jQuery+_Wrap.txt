@@ -2,12 +2,12 @@
 //              >>>  jQuery+  <<<
 //
 //
-//    [Version]    v8.6  (2016-12-28)
+//    [Version]    v8.7  (2017-01-22)
 //
 //    [Require]    jQuery  v1.9+
 //
 //
-//        (C)2014-2016  shiy2008@gmail.com
+//        (C)2014-2017  shiy2008@gmail.com
 //
 
 

@@ -31,6 +31,8 @@ define(function () {
 
         var iObject = new iTemp();
 
+        iObject.__proto__ = iProto;
+
         for (var iKey in iProperty)
             if (
                 this.prototype.hasOwnProperty.call(iProperty, iKey)  &&
