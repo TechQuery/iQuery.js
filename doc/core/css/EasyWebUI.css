@@ -8,7 +8,7 @@
  *    and can be used in the Web UI development of
  *    Any Platform.
  *
- *    [Version]    v1.0  (2016-09-13)
+ *    [Version]    v1.0  (2017-01-13)
  *
  *    [Require]    CSS 2.1  (Best Effect with CSS 3),
  *
@@ -17,7 +17,7 @@
  *                 EasyWebUI.js
  *
  *
- *      (C)2014-2016    test_32@fyscu.com
+ *      (C)2014-2017    test_32@fyscu.com
  *
  * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 
@@ -164,28 +164,11 @@ table.Page > tfoot .NavBar > li.active {
     background:    darkgray;
     color:         white;
 }
-table.Page > tfoot .NavBar {
-    white-space:    pre-line;
-    max-height:     3.15em;
-    overflow:       hidden;
-    position:       relative;
+table.Page > tfoot .NavBar > li:first-child {
+    border-left:    1px  solid;
 }
-table.Page > tfoot .NavBar:after {
-    content:        "...";
-    font-size:      inherit;
-    line-height:    normal;
-    height:         auto;
-    width:          auto;
-    visibility:     visible;
-    position:       absolute;
-    right:          0;
-    bottom:         1.25em;
-}
-table.Page > tfoot .NavBar:hover {
-    max-height:    none;
-}
-table.Page > tfoot .NavBar:hover:after {
-    display:    none;
+table.Page > tfoot .NavBar > li:last-child {
+    border-right:    1px  solid;
 }
 
 /* ----- Form Elements ----- */
@@ -325,38 +308,52 @@ input.Search:focus, input[type="search"]:focus {
     width:    15em;
 }
 /* --- Radio & Check --- */
-input[type="radio"], input[type="checkbox"] {
--webkit-appearance:    none;
-   -moz-appearance:    none;
-        appearance:    none;
-        width:         1.5em;
-        height:        1.5em;
-        border:        1px  solid  gray;
-        background:    white;
-        outline:       none;
-}
 input[type="radio"] {
-    border-radius:    50%;
+-webkit-appearance:       none;
+   -moz-appearance:       none;
+        appearance:       none;
+        width:            1.5em;
+        height:           1.5em;
+        border:           1px  solid  gray;
+        background:       white;
+        outline:          none;
+        border-radius:    50%;
 }
-input[type="radio"]:before,
-input[type="checkbox"]:before {
+input[type="radio"]:before {
     display:        inline-block;
     width:          100%;
     height:         100%;
     line-height:    70%;
     text-align:     center;
     opacity:        0;
+    content:        "\25CF";
+    font-size:      1.5em;
 }
-input[type="radio"]:before {
-    content:      "\25CF";
-    font-size:    1.5em;
-}
-input[type="checkbox"]:before {
-    content:    "\2714";
-}
-input[type="radio"]:checked:before,
-input[type="checkbox"]:checked:before {
+input[type="radio"]:checked:before {
 	opacity:    1;
+}
+input[type="checkbox"].Switch {
+        vertical-align:       middle;
+-webkit-appearance:           none;
+   -moz-appearance:           none;
+        appearance:           none;
+        width:                50px;
+        height:               25px;
+        border:               1px  solid  darkgray;
+        border-radius:        12.5px;
+        background:           white;
+        outline:              none;
+        background-image:     url("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABcAAAAXCAYAAADgKtSgAAACAUlEQVRIS7WVz4vTQBTHnW7QTIJtaBSaNnMogm1x08MiguddWAVFxT9G/AfEv0aLgiB48LAH8cdhm5YWihSaCTRs0+RgJtM2JjKFlN3YumuZzSm8efN533nvzRtwZcPX6XQOFUV5JYriHQhhIkmSmLoSQighBMznc9N13ZfNZvPTOgxYZxyNRu80TTsQBAFuCp7aF4sFdRznI0Loadb3DLzX693WNO24UCisVJ4HT9d93w8xxoZhGD9T2wrOwAihI1mWb14UmPULguBkOBzeTwOs4CzyNoqzATzPC4vFosTsSzjLMULo8baKs/swxi2E0DPAuqJWq7UEQfjvPG8Sw4o8GAweAYzxj0qlssdLdcrBGH8Hk8lkpqrqVd5w13UpIISEEEJuKTl10WYgSZKEt2rGi+N4cWnwZSteovIIBEFAJUm6xjs1hJAZ6xaqqip3+LJbbNv+Vi6X7/JWbtv2V9Butw8ajcZ7njc0iiLa7/cfLmeLZVktXdef8FKPMX6DEHrOfSpOp9NfqqpeX01F9mOa5q1qtfpFluUb254gCIIJxvhevV4fnoGnAXRdNxVFOfd5ywrwfZ84jrObgv+Cpxssy3pbKpUeXKTIrHjj8fgDy/E/39DTi91udz+fz7+GEO5CCIEoiju5XE6I4ziilP4OwzChlLY9z3thGMbndan8Ay43638fA48CAAAAAElFTkSuQmCC");
+        background-repeat:    no-repeat;
+   -moz-transition:           0.25s;
+     -o-transition:           0.25s;
+-webkit-transition:           0.25s;
+        transition:           0.25s;
+        background-color:     lightgray;
+}
+input[type="checkbox"].Switch:checked,  input[type="checkbox"].Switch.checked  {
+    background-position:    right;
+    background-color:       limegreen;
 }
 /* --- File Input --- */
 input[type="file"] {
@@ -370,7 +367,7 @@ input[type="range"] {
 -webkit-appearance:    none;
    -moz-appearance:    none;
         appearance:    none;
-        width:         100%;
+        width:         85%;
         height:        1.5em;
         background:    transparent;
         outline:       none;
@@ -378,39 +375,36 @@ input[type="range"] {
         position:      relative;
 }
 input[type="range"]::-webkit-slider-runnable-track {
-    width:            100%;
-    height:           1.5em;
-    background:       rgb(230, 230, 230);
-    border:           1px  solid  gray;
-    border-radius:    0.75em;
+    width:     100%;
+    height:    0;
+    border:    1px  solid  gray;
 }
 input[type="range"]::-moz-range-track {
-    width:            100%;
-    height:           1.5em;
-    background:       rgb(230, 230, 230);
-    border:           1px  solid  gray;
-    border-radius:    0.75em;
+    width:     100%;
+    height:    0;
+    border:    1px  solid  gray;
 }
 input[type="range"]::-ms-track {
-    width:            100%;
-    height:           1.5em;
-    background:       transparent;
-    border:           1px  solid  gray;
-    border-radius:    0.75em;
-    color:            transparent;
+    width:     100%;
+    height:    0;
+    border:    1px  solid  gray;
+    color:     transparent;
 }
 input[type="range"]:before,
 input[type="range"]:after   {
     position:    absolute;
 }
 input[type="range"]:before {
-    content:          " ";
-    background:       greenyellow;
-    width:            0;
-    height:           1.4em;
-    border-radius:    0.75em;
-    left:             1px;
-    top:              1px;
+        content:       "";
+        left:          0;
+        top:           45%;
+        height:        0;
+        border:        1px  solid  limegreen;
+   -moz-transition:    0.1s;
+     -o-transition:    0.1s;
+-webkit-transition:    0.1s;
+        transition:    0.1s;
+        width:         0;
 }
 input[type="range"]::-ms-fill-lower {
     background:    greenyellow;
@@ -423,12 +417,13 @@ input[type="range"]::-webkit-slider-thumb {
    -moz-appearance:       none;
         appearance:       none;
         background:       white;
-        border:           1px  solid  gray;
+        box-shadow:       0  3px  1px  0  rgba(0, 0, 0, 0.05),
+                          0  2px  2px  0  rgba(0, 0, 0, 0.10),
+                          0  3px  3px  0  rgba(0, 0, 0, 0.05);
         height:           1.5em;
-        width:            2em;
+        width:            1.5em;
         border-radius:    0.75em;
-        margin-top:       -1px;
-        margin-left:      -1px;
+        margin-top:       -0.75em;
         position:         relative;
 }
 input[type="range"]::-moz-range-thumb,
@@ -437,36 +432,13 @@ input[type="range"]::-ms-thumb {
    -moz-appearance:       none;
         appearance:       none;
         background:       white;
-        border:           1px  solid  gray;
+        box-shadow:       0  3px  1px  0  rgba(0, 0, 0, 0.05),
+                          0  2px  2px  0  rgba(0, 0, 0, 0.10),
+                          0  3px  3px  0  rgba(0, 0, 0, 0.05);
         height:           1.5em;
-        width:            2em;
+        width:            1.5em;
         border-radius:    0.75em;
-        margin-top:       -1px;
-        margin-left:      -1px;
-}
-input[type="range"].Detail:before,
-input[type="range"].Detail:after    {
-    bottom:    -1.5em;
-    color:     black;
-}
-input[type="range"].Detail:before {
-    content:    attr(min);
-    left:       0;
-}
-input[type="range"].Detail:after {
-    content:    attr(max);
-    left:       85%;
-}
-input[type="range"].Detail::-ms-fill-lower {
-    background:    lightgray;
-}
-input[type="range"].Detail:focus::-webkit-slider-runnable-track,
-input[type="range"].Detail:focus::-moz-range-track {
-    background:    deepskyblue;
-}
-input[type="range"].Detail:focus::-ms-fill-lower,
-input[type="range"].Detail:focus::-ms-fill-upper  {
-    background:    deepskyblue;
+        margin-top:       -0.75em;
 }
 datalist {
     display:    none  !important;
@@ -753,14 +725,6 @@ html.Fixed > body > .Fix-Top {
         *  Monitor :    Monitors looking within Thumbnail
 
 */
-.Web-Body {
-    background:    ivory;
-    max-width:     960px;
-    height:        100%;
-    margin:        auto;
-    padding:       0  1em;
-}
-
 /* ---------- Form Row ---------- */
 form .Row {
     margin:        16px  auto;
@@ -802,6 +766,41 @@ form .Row.Grid-Row > * {
 }
 form .Row.Grid-Row > *:first-child {
     padding:    0;
+}
+
+/* ---------- Form Dialog ---------- */
+form.Dialog {
+    position:         fixed;
+    left:             0;
+    top:              0;
+    z-index:          1;
+    font-size:        16px  !important;
+    border:           0.5em  solid  lightgray;
+    border-radius:    5px;
+    display:          none;
+    opacity:          0;
+    transition:       0.5s;
+}
+form.Dialog:before {
+    content:       "";
+    position:      fixed;
+    left:          0;
+    top:           0;
+    background:    rgba(0, 0, 0, 0.5);
+    width:         100%;
+    height:        100%;
+}
+form.Dialog > fieldset {
+    background:    white;
+    border:        none;
+    margin:        0;
+}
+form.Dialog > fieldset > legend {
+    background:       white;
+    width:            100%;
+    margin-left:      -0.75em;
+    padding:          0.5em;
+    padding-right:    1em;
 }
 
 /* ---------- Navigation Bar ---------- */

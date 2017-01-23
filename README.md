@@ -68,7 +68,8 @@
  - `$.parseJSON()` 支持 **递归解析**，会将 JSON 字符串中的内层字符串 eval 为 JS 实值/例
  - 新增 **JSON 格式化显示**方法 —— `$.formatJSON()`
  - 新增 **多条件观察者**基础对象 —— `$.Observer()`
- - 更智能的 `$.get()`、`$.post()`：支持 form 元素、FormData 对象的请求数据形式，整合 XHR、XDR、JSONP、iframe **自适应 跨域请求**， **自动转换响应内容**为 HTML、XML 或 JSON 对象实例
+ - 基于官方 `$.ajaxTransport()` 重载 **JSONP 实现**，支持基本的异常处理
+ - 更智能的 `$.ajax()`：支持 form 元素、FormData 对象的请求数据形式，整合 XHR、XDR、JSONP、iframe **自适应 跨域请求**， **自动转换响应内容**为 HTML、XML 或 JSON 对象实例
  - 新增 `$.delete()`、`$.put()`，方便实现基于 **RESTful API** 的单页应用
  - 重构 `$.fn.load()` 内部实现，与 **W3C HTML 解析规则** 保持一致，方便 DOM 片段清理、脚本调试
  - 新增基于 **HTML 5 表单字段 验证规则**的 `$.fn.validate()`

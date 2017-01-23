@@ -2,13 +2,13 @@
 //                >>>  iQuery.js  <<<
 //
 //
-//      [Version]    v2.0  (2016-12-05)  Stable
+//      [Version]    v2.0  (2017-01-23)  Stable
 //
 //      [Usage]      A Light-weight jQuery Compatible API
 //                   with IE 8+ compatibility.
 //
 //
-//          (C)2015-2016    shiy2008@gmail.com
+//          (C)2015-2017    shiy2008@gmail.com
 //
 
 
@@ -48,6 +48,28 @@
         );
     };
 
+    Object.create = Object.create  ||  function (iProto, iProperty) {
+        if (typeof iProto != 'object')
+            throw TypeError('Object prototype may only be an Object or null');
+
+        function iTemp() { }
+
+        iTemp.prototype = iProto;
+
+        var iObject = new iTemp();
+
+        iObject.__proto__ = iProto;
+
+        for (var iKey in iProperty)
+            if (
+                this.prototype.hasOwnProperty.call(iProperty, iKey)  &&
+                (iProperty[iKey].value !== undefined)
+            )
+                iObject[iKey] = iProperty[iKey].value;
+
+        return iObject;
+    };
+
     /* ----- String Extension ----- */
 
     var _Trim_ = ''.trim;
@@ -75,21 +97,6 @@
 
     String.prototype.repeat = String.prototype.repeat  ||  function (Times) {
         return  (new Array(Times + 1)).join(this);
-    };
-
-    String.prototype.toCamelCase = function () {
-        var iName = this.split(arguments[0] || '-');
-
-        for (var i = 1;  i < iName.length;  i++)
-            iName[i] = iName[i][0].toUpperCase() + iName[i].slice(1);
-
-        return iName.join('');
-    };
-
-    String.prototype.toHyphenCase = function () {
-        return  this.replace(/([a-z0-9])[\s_]?([A-Z])/g,  function () {
-            return  arguments[1] + '-' + arguments[2].toLowerCase();
-        });
     };
 
     /* ----- Array Extension ----- */
@@ -130,47 +137,6 @@
     /* ----- Date Extension ----- */
 
     Date.now = Date.now  ||  function () { return  +(new Date()); };
-
-
-    /* ----- JSON Extension  v0.4 ----- */
-
-    BOM.JSON.format = function () {
-        return  this.stringify(arguments[0], null, 4)
-            .replace(/(\s+"[^"]+":) ([^\s]+)/g, '$1    $2');
-    };
-
-    BOM.JSON.parseAll = function (iJSON) {
-        return  BOM.JSON.parse(iJSON,  function (iKey, iValue) {
-            if (iKey && (typeof iValue == 'string'))  try {
-                return  BOM.JSON.parse(iValue);
-            } catch (iError) { }
-
-            return iValue;
-        });
-    };
-
-    /* ----- Console Fix  v0.1 ----- */
-
-    if (BOM.console)  return;
-
-    function _Notice_() {
-        var iString = [ ];
-
-        for (var i = 0, j = 0;  i < arguments.length;  i++)  try {
-            iString[j++] = BOM.JSON.stringify( arguments[i].valueOf() );
-        } catch (iError) {
-            iString[j++] = arguments[i];
-        }
-
-        BOM.status = iString.join(' ');
-    }
-
-    BOM.console = { };
-
-    var Console_Method = ['log', 'info', 'warn', 'error', 'dir'];
-
-    for (var i = 0;  i < Console_Method.length;  i++)
-        BOM.console[ Console_Method[i] ] = _Notice_;
 
 })(self,  self.document);
 
@@ -457,6 +423,21 @@
         return  arguments.callee.apply(this, iArgs);
     };
 
+    $.inherit = function (iSup, iSub, iStatic, iProto) {
+
+        for (var iKey in iSup)
+            if (iSup.hasOwnProperty( iKey ))  iSub[iKey] = iSup[iKey];
+
+        for (var iKey in iStatic)  iSub[iKey] = iStatic[iKey];
+
+        iSub.prototype = Object.create( iSup.prototype );
+        iSub.prototype.constructor = iSub;
+
+        for (var iKey in iProto)  iSub.prototype[iKey] = iProto[iKey];
+
+        return iSub;
+    };
+
 })(self,  self.document,  self.iQuery || iQuery);
 
 
@@ -620,7 +601,23 @@
         trim:             function () {
             return  arguments[0].trim();
         },
-        parseJSON:        BOM.JSON.parseAll,
+        camelCase:        function () {
+            var iName = arguments[0].split(arguments[1] || '-');
+
+            for (var i = 1;  i < iName.length;  i++)
+                iName[i] = iName[i][0].toUpperCase() + iName[i].slice(1);
+
+            return iName.join('');
+        },
+        parseJSON:        function (iJSON) {
+            return  BOM.JSON.parse(iJSON,  function (iKey, iValue) {
+                if (iKey && (typeof iValue == 'string'))  try {
+                    return  BOM.JSON.parse(iValue);
+                } catch (iError) { }
+
+                return iValue;
+            });
+        },
         parseXML:         function (iString) {
             iString = iString.trim();
             if ((iString[0] != '<') || (iString[iString.length - 1] != '>'))
@@ -700,7 +697,7 @@
     var WindowType = $.makeSet('Window', 'DOMWindow', 'Global');
 
     $.extend({
-        Type:    function (iVar) {
+        Type:             function (iVar) {
             var iType;
 
             try {
@@ -762,10 +759,32 @@
             }
             return iString;
         },
+        hyphenCase:       function () {
+            return  arguments[0].replace(/([a-z0-9])[\s_]?([A-Z])/g,  function () {
+                return  arguments[1] + '-' + arguments[2].toLowerCase();
+            });
+        },
         byteLength:       function () {
             return arguments[0].replace(
                 /[^\u0021-\u007e\uff61-\uffef]/g,  'xx'
             ).length;
+        },
+        leftPad:          function (iRaw, iLength, iPad) {
+            iPad += '';
+
+            if (! iPad) {
+                if ($.isNumeric( iRaw ))
+                    iPad = '0';
+                else if (typeof iRaw == 'string')
+                    iPad = ' ';
+            }
+            iRaw += '',  iLength *= 1;
+
+            if (iRaw.length >= iLength)  return iRaw;
+
+            return iPad.repeat(
+                Math.ceil((iLength -= iRaw.length)  /  iPad.length)
+            ).slice(-iLength) + iRaw;
         },
         curry:            function curry(iOrigin) {
             return  function iProxy() {
@@ -781,6 +800,10 @@
                 return false;
             }
             return true;
+        },
+        formatJSON:       function () {
+            return  BOM.JSON.stringify(arguments[0], null, 4)
+                .replace(/(\s+"[^"]+":) ([^\s]+)/g, '$1    $2');
         },
         paramJSON:        function (Args_Str) {
             Args_Str = (
@@ -817,21 +840,6 @@
             iArgs.unshift( $.paramJSON('?' + iURL[1]) );
 
             return  iURL[0]  +  '?'  +  $.param($.extend.apply($, iArgs));
-        },
-        paramSign:        function (iData) {
-            iData = (typeof iData == 'string')  ?  this.paramJSON(iData)  :  iData;
-
-            return  $.map(Object.keys(iData).sort(),  function (iKey) {
-
-                switch (typeof iData[iKey]) {
-                    case 'function':    return;
-                    case 'object':      try {
-                        return  iKey + '=' + JSON.stringify(iData[iKey]);
-                    } catch (iError) { }
-                }
-                return  iKey + '=' + iData[iKey];
-
-            }).join(arguments[1] || '&');
         },
         fileName:         function () {
             return (
@@ -874,9 +882,9 @@
     var _Timer_ = { };
 
     $.extend({
-        _Root_:     BOM,
-        now:        Date.now,
-        every:      function (iSecond, iCallback) {
+        _Root_:      BOM,
+        now:         Date.now,
+        every:       function (iSecond, iCallback) {
             var _BOM_ = this._Root_,
                 iTimeOut = (iSecond || 0.01) * 1000,
                 iStart = this.now(),
@@ -891,19 +899,38 @@
                     _BOM_.setTimeout(arguments.callee, iTimeOut);
             }, iTimeOut);
         },
-        wait:       function (iSecond, iCallback) {
+        wait:        function (iSecond, iCallback) {
             return  this.every(iSecond, function () {
                 iCallback.apply(this, arguments);
                 return false;
             });
         },
-        start:      function (iName) {
+        start:       function (iName) {
             return  (_Timer_[iName] = this.now());
         },
-        end:        function (iName) {
+        end:         function (iName) {
             return  (this.now() - _Timer_[iName]) / 1000;
         },
-        uuid:       function () {
+        throttle:    function (iSecond, iOrigin) {
+            if (typeof iSecond != 'number') {
+                iOrigin = iSecond;
+                iSecond = 0;
+            }
+            iSecond = (iSecond || 0.25)  *  1000;
+
+            var Last_Exec = 0;
+
+            return  function () {
+                var iNow = Date.now();
+
+                if (Last_Exec + iSecond  <=  iNow) {
+                    Last_Exec = iNow;
+
+                    return  iOrigin.apply(this, arguments);
+                }
+            };
+        },
+        uuid:        function () {
             return  (arguments[0] || 'uuid')  +  '_'  +
                 (this.now() + Math.random()).toString(36)
                     .replace('.', '').toUpperCase();
@@ -1288,7 +1315,7 @@
 
             if (iName) {
                 iData = iData || { };
-                iData = iData[iName]  ||  iData[ iName.toCamelCase() ];
+                iData = iData[iName]  ||  iData[$.camelCase( iName )];
 
                 if (typeof iData == 'string')  try {
                     iData = BOM.JSON.parseAll(iData);
@@ -1437,7 +1464,7 @@
             return  (pImage[iDOM.tagName] === true)  ||
                 (pImage[iDOM.tagName].type == iDOM.type.toLowerCase());
 
-        return  ($(iDOM).css('background-image') != 'none');
+        return  (! $(iDOM).css('background-image').indexOf('url('));
     };
 
     /* ----- :button ----- */
@@ -1464,7 +1491,7 @@
 
     /* ----- :list, :data ----- */
 
-    var pList = $.makeSet('UL', 'OL', 'DL', 'TBODY', 'SELECT', 'DATALIST');
+    var pList = $.makeSet('UL', 'OL', 'DL', 'TBODY', 'DATALIST');
 
     $.extend($.expr[':'], {
         list:    function () {
@@ -1529,18 +1556,8 @@
     var pMedia = $.makeSet('IFRAME', 'OBJECT', 'EMBED', 'AUDIO', 'VIDEO');
 
     $.expr[':'].media = function (iDOM) {
-        if (iDOM.tagName in pMedia)  return true;
 
-        if (! $.expr[':'].image(iDOM))  return;
-
-        var iSize = $.map($(iDOM).css([
-                'width', 'height', 'min-width', 'min-height'
-            ]), parseFloat);
-
-        return (
-            (Math.max(iSize.width, iSize['min-width']) > 240)  ||
-            (Math.max(iSize.height, iSize['min-height']) > 160)
-        );
+        return  (iDOM.tagName in pMedia)  ||  $.expr[':'].image(iDOM);
     };
 
 })(self,  self.document,  self.iQuery || iQuery);
@@ -2769,7 +2786,7 @@
 
         for (var iName in iStyle) {
             this[iName] = (iName in PX_Attr)  &&  iStyle[
-                ('pixel-' + iName).toCamelCase()
+                $.camelCase('pixel-' + iName)
             ];
             this[iName] = (typeof this[iName] == 'number')  ?
                 (this[iName] + 'px')  :  (iStyle[iName] + '');
@@ -2789,7 +2806,7 @@
     }
 
     CSSStyleDeclaration.prototype.getPropertyValue = function () {
-        return  this[ arguments[0].toCamelCase() ];
+        return  this[$.camelCase( arguments[0] )];
     };
 
     BOM.getComputedStyle = function () {
@@ -3098,7 +3115,7 @@
         for (var i = 0, iAttr;  i < iElement.attributes.length;  i++) {
             iAttr = iElement.attributes[i];
             if (iAttr.nodeName.slice(0, 5) == 'data-')
-                this[ iAttr.nodeName.slice(5).toCamelCase() ] = iAttr.nodeValue;
+                this[$.camelCase( iAttr.nodeName.slice(5) )] = iAttr.nodeValue;
         }
     }
 
@@ -3804,6 +3821,32 @@
         ]].apply(
             this,  arguments
         );
+    };
+
+})(self,  self.document,  self.iQuery || iQuery);
+
+
+
+(function (BOM, DOM, $) {
+
+    $.fn.toggleAnimate = function (iClass, iData) {
+
+        var CSS_Rule = BOM.getMatchedCSSRules(
+                this.toggleClass( iClass ).children()[0]
+            ) || '',
+            $_This = this;
+
+        for (var i = 0;  CSS_Rule[i];  i++)
+            if (CSS_Rule[i].cssText.indexOf('transition') > 0)
+                return  new Promise(function () {
+                    $_This.one(
+                        'transitionend webkitTransitionEnd',
+                        (iData != null)  ?
+                            $.proxy(arguments[0], null, iData)  :  arguments[0]
+                    );
+                });
+
+        return  Promise.resolve( iData );
     };
 
 })(self,  self.document,  self.iQuery || iQuery);
@@ -4730,91 +4773,136 @@
         this.readyState = 0;
         this.responseType = 'text';
     };
-    BOM.DOMHttpRequest.JSONP = { };
 
     var Success_State = {
             readyState:    4,
             status:        200,
             statusText:    'OK'
+        },
+        Fail_State = {
+            readyState:    4,
+            status:        500,
+            statusText:    'Internal Server Error'
         };
 
+    function Allow_Send() {
+        return  (this.readyState == 1)  ||  (this.readyState == 4);
+    }
+
+    function iFrame_Send() {
+        var iDHR = this,
+            iTarget = this.$_Transport.submit(
+                $.proxy(Allow_Send, this)
+            ).attr('target');
+
+        if ((! iTarget)  ||  iTarget.match(/^_(top|parent|self|blank)$/i)) {
+            iTarget = $.uuid('DHR');
+            this.$_Transport.attr('target', iTarget);
+        }
+
+        $('iframe[name="' + iTarget + '"]').sandBox(function () {
+
+            var _DOM_ = this.contentWindow.document;
+
+            $.extend(iDHR, Success_State, {
+                responseHeader:    {
+                    'Set-Cookie':      _DOM_.cookie,
+                    'Content-Type':
+                        _DOM_.contentType + '; charset=' + _DOM_.charset
+                },
+                responseType:      'text',
+                response:          iDHR.responseText =
+                    $(this).contents().find('body').text()
+            });
+
+            iDHR.onload();
+
+            return false;
+
+        }).attr('name', iTarget);
+
+        this.$_Transport.submit();
+    }
+
+    var JSONP_Map = { };
+
+    BOM.DOMHttpRequest.JSONP = function (iData) {
+
+        var _This_ = DOM.currentScript;
+
+        iData = $.extend({
+            responseHeader:    {
+                'Content-Type':    _This_.type + '; charset=' + _This_.charset
+            },
+            responseType:      'json',
+            response:          iData,
+            responseText:      JSON.stringify( iData )
+        }, Success_State);
+
+        var iDHR = JSONP_Map[ _This_.src ];
+
+        for (var i = 0;  iDHR[i];  i++)  if ( iDHR[i].$_Transport ) {
+
+            $.extend(iDHR[i], iData).onload();
+
+            iDHR[i].$_Transport.remove();
+        }
+
+        iDHR.length = 0;
+    };
+
+    function Script_Send() {
+        this.responseURL = $.extendURL(
+            this.responseURL.replace(/(\w+)=\?/, '$1=DOMHttpRequest.JSONP'),
+            arguments[0]
+        );
+
+        this.$_Transport = $('<script />', {
+            type:       'text/javascript',
+            charset:    'UTF-8',
+            src:        this.responseURL
+        }).on('error',  $.proxy(this.onerror, $.extend(this, Fail_State, {
+            responseType:    'text',
+            response:        '',
+            responseText:    ''
+        }))).appendTo( DOM.head );
+
+        var iURL = this.$_Transport[0].src;
+
+        (JSONP_Map[iURL] = JSONP_Map[iURL]  ||  [ ]).push( this );
+    }
+
     $.extend(BOM.DOMHttpRequest.prototype, {
-        open:                function () {
+        open:                 function () {
             this.responseURL = arguments[1];
             this.readyState = 1;
         },
-        setRequestHeader:    function () {
-            console.warn("JSONP/iframe doesn't support Changing HTTP Headers...");
-        },
-        send:                function (iData) {
-            var iDHR = this,  _UUID_ = $.uuid('DHR');
+        send:                 function (iData) {
+            if (! Allow_Send.call(this))  return;
 
             this.$_Transport =
                 (iData instanceof BOM.FormData)  &&  $(iData.ownerNode);
 
             if (this.$_Transport && (
                 iData.ownerNode.method.toUpperCase() == 'POST'
-            )) {
-                //  <iframe />
-                var iTarget = this.$_Transport.submit(function () {
-                        if ( $(this).data('_AJAX_Submitting_') )  return false;
-                    }).attr('target');
-
-                if ((! iTarget)  ||  iTarget.match(/^_(top|parent|self|blank)$/i)) {
-                    this.$_Transport.attr('target', _UUID_);
-                    iTarget = _UUID_;
-                }
-
-                $('iframe[name="' + iTarget + '"]').sandBox(function () {
-                    iDHR.$_Transport.data('_AJAX_Submitting_', 0);
-                    try {
-                        iDHR.responseText = $(this).contents().find('body').text();
-                    } catch (iError) { }
-
-                    $.extend(iDHR, Success_State, {
-                        responseType:    'text',
-                        response:        iDHR.responseText
-                    });
-                    iDHR.onload();
-                }).attr('name', iTarget);
-
-                this.$_Transport.submit();
-            } else {
-                //  <script />, JSONP
-                var iURL = this.responseURL.match(/([^\?=&]+\?|\?)?(\w.+)?/);
-
-                if (! iURL)  throw 'Illegal JSONP URL !';
-
-                this.constructor.JSONP[_UUID_] = function (iJSON) {
-                    $.extend(iDHR, Success_State, {
-                        responseType:    'json',
-                        response:        iJSON,
-                        responseText:    JSON.stringify(iJSON)
-                    });
-                    iDHR.onload();
-
-                    delete this[_UUID_];
-                    iDHR.$_Transport.remove();
-                };
-                this.responseURL = iURL[1] + $.param(
-                    $.extend(arguments[0] || { },  $.paramJSON(
-                        '?' + iURL[2].replace(
-                            /(\w+)=\?/,  '$1=DOMHttpRequest.JSONP.' + _UUID_
-                        )
-                    ))
-                );
-                this.$_Transport = $('<script />', {
-                    type:       'text/javascript',
-                    charset:    'UTF-8',
-                    src:        this.responseURL
-                }).appendTo(DOM.head);
-            }
+            ))
+                iFrame_Send.call( this );
+            else
+                Script_Send.call(this, iData);
 
             this.readyState = 2;
         },
-        abort:               function () {
+        abort:                function () {
+            this.$_Transport.remove();
             this.$_Transport = null;
+
             this.readyState = 0;
+        },
+        setRequestHeader:     function () {
+            console.warn("JSONP/iframe doesn't support Changing HTTP Headers...");
+        },
+        getResponseHeader:    function () {
+            return  this.responseHeader[ arguments[0] ]  ||  null;
         }
     });
 
@@ -4823,21 +4911,32 @@
     function DHR_Transport(iOption) {
         var iXHR;
 
-        return {
+        return  (iOption.dataType == 'jsonp')  &&  {
             send:     function (iHeader, iComplete) {
-                if (iOption.dataType == 'jsonp')
-                    iOption.url += (iOption.url.split('?')[1] ? '&' : '?')  +
-                        iOption.jsonp + '=?';
+                if (! $.fn.iquery) {
+                    iOption.url = iOption.url.replace(
+                        RegExp('&?' + iOption.jsonp + '=\\w+'),  ''
+                    ).trim('?');
+
+                    iOption.dataTypes.shift();
+                }
+                iOption.url += (iOption.url.split('?')[1] ? '&' : '?')  +
+                    iOption.jsonp + '=?';
 
                 iXHR = new BOM.DOMHttpRequest();
-                iXHR.open(iOption.type, iOption.url);
-                iXHR.onload = function () {
-                    var iResponse = {text:  iXHR.responseText};
-                    iResponse[ iXHR.responseType ] = iXHR.response;
 
-                    iComplete(iXHR.status, iXHR.statusText, iResponse);
+                iXHR.open(iOption.type, iOption.url);
+
+                iXHR.onload = iXHR.onerror = function () {
+
+                    var iResponse = {text:  this.responseText};
+
+                    iResponse[ this.responseType ] = this.response;
+
+                    iComplete(this.status, this.statusText, iResponse);
                 };
-                iXHR.send(iOption.data);
+
+                iXHR.send( iOption.data );
             },
             abort:    function () {
                 iXHR.abort();
@@ -4846,7 +4945,7 @@
     }
 
     //  JSONP for iQuery
-    $.ajaxTransport('jsonp', DHR_Transport);
+    $.ajaxTransport('+script', DHR_Transport);
 
     if ($.browser.msie < 10)
         $.ajaxTransport('+*',  function (iOption) {
@@ -4865,6 +4964,8 @@
 
                     iXHR.open(iOption.type, iOption.url, true);
 
+                    iXHR.timeout = iOption.timeout || 0;
+
                     iXHR.onload = function () {
                         iComplete(
                             200,
@@ -4878,6 +4979,10 @@
                             text:    iXHR.responseText
                         });
                     };
+                    iXHR.ontimeout = $.proxy(
+                        iComplete,  null,  504,  'Gateway Timeout'
+                    );
+
                     iXHR.send(iOption.data);
                 },
                 abort:    function () {

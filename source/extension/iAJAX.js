@@ -14,6 +14,11 @@ define(['jquery'],  function ($) {
             readyState:    4,
             status:        200,
             statusText:    'OK'
+        },
+        Fail_State = {
+            readyState:    4,
+            status:        500,
+            statusText:    'Internal Server Error'
         };
 
     function Allow_Send() {
@@ -33,9 +38,16 @@ define(['jquery'],  function ($) {
 
         $('iframe[name="' + iTarget + '"]').sandBox(function () {
 
+            var _DOM_ = this.contentWindow.document;
+
             $.extend(iDHR, Success_State, {
-                responseType:    'text',
-                response:        iDHR.responseText =
+                responseHeader:    {
+                    'Set-Cookie':      _DOM_.cookie,
+                    'Content-Type':
+                        _DOM_.contentType + '; charset=' + _DOM_.charset
+                },
+                responseType:      'text',
+                response:          iDHR.responseText =
                     $(this).contents().find('body').text()
             });
 
@@ -51,15 +63,21 @@ define(['jquery'],  function ($) {
     var JSONP_Map = { };
 
     BOM.DOMHttpRequest.JSONP = function (iData) {
+
+        var _This_ = DOM.currentScript;
+
         iData = $.extend({
-            responseType:    'json',
-            response:        iData,
-            responseText:    JSON.stringify( iData )
+            responseHeader:    {
+                'Content-Type':    _This_.type + '; charset=' + _This_.charset
+            },
+            responseType:      'json',
+            response:          iData,
+            responseText:      JSON.stringify( iData )
         }, Success_State);
 
-        var iDHR = JSONP_Map[ DOM.currentScript.src ];
+        var iDHR = JSONP_Map[ _This_.src ];
 
-        for (var i = 0;  iDHR[i];  i++) {
+        for (var i = 0;  iDHR[i];  i++)  if ( iDHR[i].$_Transport ) {
 
             $.extend(iDHR[i], iData).onload();
 
@@ -79,7 +97,11 @@ define(['jquery'],  function ($) {
             type:       'text/javascript',
             charset:    'UTF-8',
             src:        this.responseURL
-        }).appendTo( DOM.head );
+        }).on('error',  $.proxy(this.onerror, $.extend(this, Fail_State, {
+            responseType:    'text',
+            response:        '',
+            responseText:    ''
+        }))).appendTo( DOM.head );
 
         var iURL = this.$_Transport[0].src;
 
@@ -87,14 +109,11 @@ define(['jquery'],  function ($) {
     }
 
     $.extend(BOM.DOMHttpRequest.prototype, {
-        open:                function () {
+        open:                 function () {
             this.responseURL = arguments[1];
             this.readyState = 1;
         },
-        setRequestHeader:    function () {
-            console.warn("JSONP/iframe doesn't support Changing HTTP Headers...");
-        },
-        send:                function (iData) {
+        send:                 function (iData) {
             if (! Allow_Send.call(this))  return;
 
             this.$_Transport =
@@ -109,9 +128,17 @@ define(['jquery'],  function ($) {
 
             this.readyState = 2;
         },
-        abort:               function () {
+        abort:                function () {
+            this.$_Transport.remove();
             this.$_Transport = null;
+
             this.readyState = 0;
+        },
+        setRequestHeader:     function () {
+            console.warn("JSONP/iframe doesn't support Changing HTTP Headers...");
+        },
+        getResponseHeader:    function () {
+            return  this.responseHeader[ arguments[0] ]  ||  null;
         }
     });
 
@@ -136,12 +163,15 @@ define(['jquery'],  function ($) {
 
                 iXHR.open(iOption.type, iOption.url);
 
-                iXHR.onload = function () {
+                iXHR.onload = iXHR.onerror = function () {
+
                     var iResponse = {text:  this.responseText};
+
                     iResponse[ this.responseType ] = this.response;
 
                     iComplete(this.status, this.statusText, iResponse);
                 };
+
                 iXHR.send( iOption.data );
             },
             abort:    function () {
@@ -170,6 +200,8 @@ define(['jquery'],  function ($) {
 
                     iXHR.open(iOption.type, iOption.url, true);
 
+                    iXHR.timeout = iOption.timeout || 0;
+
                     iXHR.onload = function () {
                         iComplete(
                             200,
@@ -183,6 +215,10 @@ define(['jquery'],  function ($) {
                             text:    iXHR.responseText
                         });
                     };
+                    iXHR.ontimeout = $.proxy(
+                        iComplete,  null,  504,  'Gateway Timeout'
+                    );
+
                     iXHR.send(iOption.data);
                 },
                 abort:    function () {

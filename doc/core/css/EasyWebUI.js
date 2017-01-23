@@ -139,7 +139,7 @@
 /* ---------- Input Range 补丁  v0.1 ---------- */
 
     function Pseudo_Bind() {
-        var iRule = BOM.getMatchedCSSRules(arguments[0], ':before');
+        var iRule = BOM.getMatchedCSSRules(this, ':before');
 
         $(this).change(function () {
             var iPercent = ((this.value / this.max) * 100) + '%';
@@ -439,7 +439,7 @@
 })(self,  self.document,  self.jQuery || self.Zepto);
 
 
-/* ---------- 数据表 控件  v0.2 ---------- */
+/* ---------- 数据表 控件  v0.1 ---------- */
 
 
 (function (BOM, DOM, $) {
@@ -450,77 +450,97 @@
             'SortDown':    'SortUp'
         };
 
-    function Data_Page(iSum, iUnit) {
-        if (iSum > -1)
-            return  $.map(Array(Math.ceil(iSum / iUnit)),  function () {
-                return  {index:  arguments[1] + 1};
-            });
-    }
+    $.fn.iTable = function () {
+        return  this.each(function () {
 
-    $.fn.iTable = function (DataURL) {
-        if (! this[0])  return this;
+            var iLV = $.ListView( $('tbody', this) );
 
-        var iLV = $.ListView( $('tbody', this[0]) );
+            $('thead tr', this).on('click',  'th',  function () {
+                var $_This = $(this);
 
-        $('th', this[0]).click(function () {
-            var $_This = $(this);
+                var iClass = ($_This.attr('class') || '').match(
+                        /\s?(Sort(Up|Down))\s?/
+                    );
+                iClass = iClass ? iClass[1] : '';
 
-            var iClass = ($_This.attr('class') || '').match(
-                    /\s?(Sort(Up|Down))\s?/
-                );
-            iClass = iClass ? iClass[1] : '';
+                $_This.removeClass(iClass).addClass( Sort_Class[iClass] );
 
-            $_This.removeClass(iClass).addClass( Sort_Class[iClass] );
+                var iNO = (Sort_Class[iClass] == 'SortUp')  ?  0.5  :  -0.5,
+                    Index = $_This.index();
 
-            var iNO = (Sort_Class[iClass] == 'SortUp')  ?  0.5  :  -0.5,
-                Index = $_This.index();
+                iLV.sort(function () {
+                    var A = $( arguments[2.5 - iNO][0].children[Index] ).text(),
+                        B = $( arguments[2.5 + iNO][0].children[Index] ).text();
 
-            iLV.sort(function () {
-                var A = $( arguments[2.5 - iNO][0].children[Index] ).text(),
-                    B = $( arguments[2.5 + iNO][0].children[Index] ).text();
-
-                return  isNaN(parseFloat( A ))  ?
-                    A.localeCompare( B )  :  (parseFloat(A) - parseFloat(B));
+                    return  isNaN(parseFloat( A ))  ?
+                        A.localeCompare( B )  :  (parseFloat(A) - parseFloat(B));
+                });
             });
         });
-
-        if (typeof DataURL != 'string')  return this.eq(0);
-
-        var $_tFoot = $('tfoot', this[0]);
-        $_tFoot = $_tFoot[0]  ?  $_tFoot  :  $('<tfoot />').appendTo( this[0] );
-
-        $('<tr><td><ol><li></li></ol></td></tr>').appendTo( $_tFoot )
-            .children('td').attr(
-                'colspan',  $('tbody > tr', this[0])[0].children.length
-            );
-
-        var iPage = $.ListView($('ol', $_tFoot[0])[0],  false,  function () {
-                arguments[0].text( ++arguments[2] );
-            });
-
-        iPage.$_View.on('click',  'li',  function () {
-            var Index = $(this).index() + 1;
-
-            $.getJSON(
-                DataURL.replace(/^([^\?]+\??)(.*)/,  function () {
-                    return  arguments[1] + 'page=' + Index + (
-                        arguments[2]  ?  ('&' + arguments[2])  :  ''
-                    );
-                }),
-                function (iData) {
-                    iLV.clear().render(iData.tngou);
-
-                    iPage.clear().render(
-                        Data_Page(iData.total, 10)
-                    );
-                }
-            );
-        });
-        iPage[0].click();
-
-        return this.eq(0);
     };
 
+})(self,  self.document,  self.jQuery || self.Zepto);
+
+
+
+(function (BOM, DOM, $) {
+
+/* ---------- 表单对话框  v0.1 ---------- */
+
+    var $_BOM = $(self);
+
+    function show() {
+        return this.css({
+            opacity:    1,
+            left:
+                ($_BOM.width()  -  parseFloat( this.css('width') ))  /  2,
+            top:
+                ($_BOM.height()  -  parseFloat( this.css('height') ))  /  2
+        });
+    }
+
+    function close() {
+        var $_This = this.css({
+                opacity:    0,
+                left:       0,
+                top:        0
+            });
+
+        return  new Promise(function (iResolve) {
+
+            $.wait(parseFloat( $_This.css('transition-duration') ),  function () {
+
+                iResolve(! $_This.hide());
+            });
+        });
+    }
+
+    $.fn.formDialog = function () {
+
+        var $_This = this.show();
+
+        return  new Promise(function (iResolve) {
+
+            show.call( $_This ).submit(function () {
+
+                close.call( $_This ).then(function () {
+
+                    iResolve($.paramJSON('?' + $_This.serialize()));
+                });
+            }).on('reset',  function () {
+
+                close.call( $_This ).then( iResolve );
+
+            }).on('keyup',  function (iEvent) {
+                if (
+                    (iEvent.type == 'keyup')  &&
+                    (iEvent.which == 27)  &&
+                    (! $.expr[':'].field( iEvent.target ))
+                )
+                    $(this).trigger('reset')[0].reset();
+            });
+        });
+    };
 })(self,  self.document,  self.jQuery || self.Zepto);
 
 
@@ -590,6 +610,10 @@
             if (! $_This.hasClass('active'))
                 $_This.addClass('active').siblings().removeClass('active');
 
+        }).on('change',  '[type="radio"][name^="iTab"]',  function () {
+
+            arguments[0].stopPropagation();
+
         }).each(function () {
 
             var $_Tab_Box = $(this),  iName = $.uuid('iTab'),  iType;
@@ -605,7 +629,7 @@
                 iSelector = ['input[type="radio"]',  'div, section, .Body'];
             iSelector[Label_At ? 'unshift' : 'push']('label');
 
-            $.ListView(this, iSelector, false).on('insert',  function ($_Tab_Item) {
+            $.ListView(this, iSelector).on('insert',  function ($_Tab_Item) {
                 var _UUID_ = $.uuid();
 
                 var $_Label = $_Tab_Item.filter('label').attr('for', _UUID_),
@@ -731,7 +755,7 @@
     $.fn.iReadNav = function ($_Context) {
         return  this.each(function () {
             var iMainNav = $.TreeView(
-                    $.ListView(this,  false,  function ($_Item, iValue) {
+                    $.ListView(this,  function ($_Item, iValue) {
 
                         $('a', $_Item[0]).text(iValue.text)[0].href =
                             '#' + iValue.id;
@@ -850,7 +874,7 @@
     $.fn.iTree = function (Sub_Key, onInsert) {
         return  this.each(function () {
             var iOrgTree = $.TreeView(
-                    $.ListView(this, false, onInsert),
+                    $.ListView(this, onInsert),
                     Sub_Key,
                     1,
                     function (iFork, _, iData) {
@@ -992,251 +1016,6 @@
 
 (function (BOM, DOM, $) {
 
-/* ---------- DOM 遮罩层  v0.2 ---------- */
-
-    var $_DOM = $(DOM).ready(function () {
-            $.cssRule({
-                '.ShadowCover': {
-                    position:      'absolute',
-                    top:           0,
-                    left:          0,
-                    width:         '100%',
-                    height:        '100%',
-                    background:    'rgba(0, 0, 0, 0.7)',
-                    display:       'table'
-                },
-                '.ShadowCover > *': {
-                    display:             'table-cell',
-                    'vertical-align':    'middle',
-                    'text-align':        'center'
-                }
-            });
-        }),
-        _Instance_ = [ ];
-
-    function Shade($_Container, iContent, CSS_Rule) {
-        var _This_ = this;
-
-        this.$_Cover = $('<div class="ShadowCover"><div /></div>');
-
-        if (iContent)  $(this.$_Cover[0].firstChild).append(iContent);
-
-        this.$_Cover.appendTo($_Container).zIndex('+');
-
-        if ( $.isPlainObject(CSS_Rule) )
-            this.$_Cover.cssRule(CSS_Rule,  function () {
-                _This_.$_Style = $(arguments[0].ownerNode);
-            });
-        _Instance_.push(this);
-    }
-
-    Shade.prototype.close = function () {
-        this.$_Cover.remove();
-        if (this.$_Style)  this.$_Style.remove();
-
-        _Instance_.splice(_Instance_.indexOf(this), 1);
-    };
-
-    Shade.clear = function () {
-        for (var i = _Instance_.length - 1;  i > -1;  i--)
-            _Instance_[i].close();
-    };
-
-    $.fn.shade = function () {
-        var iArgs = $.makeArray(arguments).reverse();
-
-        var More_Logic = (typeof iArgs[0] == 'function')  &&  iArgs.shift();
-        var CSS_Rule = $.isPlainObject(iArgs[0]) && iArgs.shift();
-        var iContent = iArgs[0];
-
-        for (var i = 0, iCover;  i < this.length;  i++) {
-            iCover = new Shade($(this[i]), iContent, CSS_Rule);
-
-            if (More_Logic)  More_Logic.call(this[i], iCover);
-        }
-        return this;
-    };
-
-    $.shade = Shade;
-
-
-/* ---------- DOM/BOM 模态框  v0.4 ---------- */
-
-    var $_BOM = $(BOM);
-
-    BOM.ModalWindow = function (iContent, iStyle, closeCB) {
-        arguments.callee.lastInstance = $.extend(this, {
-            opener:      BOM,
-            self:        this,
-            closed:      false,
-            onunload:    closeCB,
-            frames:      [ ],
-            document:    { },
-            locked:      ($.Type(iContent) == 'Window')
-        });
-
-        var _This_ = this;
-
-        $('body').shade(this.locked ? null : iContent,  iStyle,  function () {
-            _This_.__Shade__ = arguments[0];
-
-            _This_.document.body = arguments[0].$_Cover.click(function () {
-                if (! _This_.locked) {
-                    if (arguments[0].target.parentNode === this)
-                        _This_.close();
-                } else
-                    _This_.frames[0].focus();
-            }).height( $_BOM.height() )[0];
-        });
-        if (! this.locked)  return;
-
-        //  模态框 (BOM)
-        this.frames[0] = iContent;
-
-        $.every(0.2,  function () {
-            if (iContent.closed) {
-                _This_.close();
-                return false;
-            }
-        });
-        $_BOM.bind('unload',  function () {
-            iContent.close();
-        });
-    };
-
-    BOM.ModalWindow.prototype.close = function () {
-        if (this.closed)  return;
-
-        this.__Shade__.close();
-        this.closed = true;
-
-        if (typeof this.onunload == 'function')
-            this.onunload.call(this.document.body);
-
-        this.constructor.lastInstance = null;
-    };
-
-    $_DOM.keydown(function () {
-        var _Instance_ = BOM.ModalWindow.lastInstance;
-        if (! _Instance_)  return;
-
-        if (! _Instance_.locked) {
-            if (arguments[0].which == 27)
-                _Instance_.close();
-        } else
-            _Instance_.frames[0].focus();
-    });
-
-    /* ----- 通用新窗口 ----- */
-
-    function iOpen(iURL, Scale, iCallback) {
-        Scale = (Scale > 0)  ?  Scale  :  3;
-        var Size = {
-            height:    BOM.screen.height / Scale,
-            width:     BOM.screen.width / Scale
-        };
-        var Top = (BOM.screen.height - Size.height) / 2,
-            Left = (BOM.screen.width - Size.width) / 2;
-
-        BOM.alert("请留意本网页浏览器的“弹出窗口拦截”提示，当被禁止时请点选【允许】，然后可能需要重做之前的操作。");
-        var new_Window = BOM.open(iURL, '_blank', [
-                'top=' + Top,               'left=' + Left,
-                'height=' + Size.height,    'width=' + Size.width,
-                [
-                    'resizable',  'scrollbars',
-                    'menubar',    'toolbar',     'location',  'status'
-                ].join('=no,').slice(0, -1)
-            ].join(','));
-
-        BOM.new_Window_Fix.call(new_Window, function () {
-            $('link[rel~="shortcut"], link[rel~="icon"], link[rel~="bookmark"]')
-                .add('<base target="_self" />')
-                .appendTo(this.document.head);
-
-            $(this.document).keydown(function (iEvent) {
-                var iKeyCode = iEvent.which;
-
-                if (
-                    (iKeyCode == 122) ||                       //  F11
-                    (iKeyCode == 116) ||                       //  (Ctrl + )F5
-                    (iEvent.ctrlKey && (iKeyCode == 82)) ||    //  Ctrl + R
-                    (iEvent.ctrlKey && (iKeyCode == 78)) ||    //  Ctrl + N
-                    (iEvent.shiftKey && (iKeyCode == 121))     //  Shift + F10
-                )
-                    return false;
-            }).mousedown(function () {
-                if (arguments[0].which == 3)
-                    return false;
-            }).bind('contextmenu', false);
-        });
-
-        if (iCallback)
-            $.every(0.2, function () {
-                if (new_Window.closed) {
-                    iCallback.call(BOM, new_Window);
-                    return false;
-                }
-            });
-        return new_Window;
-    }
-
-    /* ----- showModalDialog 扩展 ----- */
-
-    var old_MD = BOM.showModalDialog;
-
-    BOM.showModalDialog = function () {
-        if (! arguments.length)
-            throw 'A URL Argument is needed unless...';
-        else if (BOM.ModalWindow.lastInstance)
-            throw 'A ModalWindow Instance is running... (Please close it first.)';
-
-        var iArgs = $.makeArray(arguments);
-
-        var iContent = iArgs.shift();
-        var iScale = (typeof iArgs[0] == 'number') && iArgs.shift();
-        var iStyle = $.isPlainObject(iArgs[0]) && iArgs.shift();
-        var CloseBack = (typeof iArgs[0] == 'function') && iArgs.shift();
-
-        if (typeof iArgs[0] == 'string')
-            return  (old_MD || BOM.open).apply(BOM, arguments);
-
-        if (typeof iContent == 'string') {
-            if (! iContent.match(/^(\w+:)?\/\/[\w\d\.:@]+/)) {
-                var iTitle = iContent;
-                iContent = 'about:blank';
-            }
-            iContent = new ModalWindow(
-                iOpen(iContent, iScale, CloseBack)
-            );
-            BOM.new_Window_Fix.call(iContent.frames[0], function () {
-                this.iTime = {
-                    _Root_:    this,
-                    now:       $.now,
-                    every:     $.every,
-                    wait:      $.wait
-                };
-
-                this.iTime.every(0.2, function () {
-                    if (! this.opener) {
-                        this.close();
-                        return false;
-                    }
-                });
-                if (iTitle)
-                    $('<title />', {text:  iTitle}).appendTo(this.document.head);
-            });
-        } else
-            iContent = new ModalWindow(iContent, iStyle, CloseBack);
-
-        return iContent;
-    };
-
-})(self,  self.document,  self.jQuery || self.Zepto);
-
-
-
-(function (BOM, DOM, $) {
-
 /* ---------- 元素禁止选中  v0.1 ---------- */
 
     $.fn.noSelect = function () {
@@ -1251,7 +1030,7 @@
 //          >>>  EasyWebUI Component Library  <<<
 //
 //
-//      [Version]     v3.3  (2016-10-07)  Stable
+//      [Version]     v2.7  (2017-01-16)  Stable
 //
 //      [Based on]    iQuery v1  or  jQuery (with jQuery+),
 //
@@ -1261,7 +1040,7 @@
 //                    isn't dependent on EasyWebUI.css
 //
 //
-//            (C)2014-2016    shiy2008@gmail.com
+//            (C)2014-2017    shiy2008@gmail.com
 //
 
 /* ---------- 首屏渲染 自动启用组件集 ---------- */
@@ -1269,36 +1048,9 @@
 
 (function (BOM, DOM, $) {
 
-    var $_DOM = $(DOM),  $_Load_Tips,  Load_Cover;
+    var $_DOM = $(DOM);
 
-    $_DOM.on('loading',  function (iEvent) {
-
-        //  $.Event 实例对象 detail 属性 Bug ——
-        //      https://www.zhihu.com/question/20174130/answer/80990463
-
-        iEvent = iEvent.originalEvent;
-
-        if ($(iEvent.target).parents().length > 1)  return;
-
-        if ($_Load_Tips  &&  (iEvent.detail < 1))
-            return  $_Load_Tips.text( iEvent.data );
-        else if (iEvent.detail >= 1) {
-            if (Load_Cover instanceof BOM.ModalWindow)  Load_Cover.close();
-            return  $_Load_Tips = Load_Cover = null;
-        }
-
-        $_Load_Tips = $('<h1 />', {
-            text:    iEvent.data,
-            css:     {color:  'white'}
-        });
-
-        try {
-            Load_Cover = BOM.showModalDialog($_Load_Tips, {
-                ' ':    {background:  'darkgray'}
-            });
-        } catch (iError) { }
-
-    }).ready(function () {
+    $_DOM.ready(function () {
 
         $('form').pwConfirm();
 

@@ -34,7 +34,7 @@
         );
     var $_MainNav = $('#Main_Nav').iReadNav( $_MainView );
 
-    var $_Body = $(DOM.body).swipe(function () {
+    var $_Body = $(DOM.body).on('swipe',  function () {
             $_MainNav[
                 (arguments[0].deltaX < 0)  ?  'show'  :  'hide'
             ]();
