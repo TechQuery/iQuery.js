@@ -165,8 +165,9 @@
  - 通用 **TreeView 对象**生成方法 —— `$.TreeView()`
  - **HTML 5  History API  Polyfill** —— 为 IE 10- 提供兼容支持（需 服务器端响应 `./blank.html` 或 404 页面）
  - **大数位运算**方法 —— `$.bitOperate()`
- - Base64 文本转 **二进制对象**方法 —— `$.toBlob()`
  - **URL 参数签名**方法 —— `$.paramSign()`
+ - Local Storage 存取方法 —— `$.storage()`
+ - Base64 文本转 **二进制对象**方法 —— `$.toBlob()`
  - **数据哈希**方法 —— `$.dataHash()`
    - 默认算法：**CRC-32**
    - 还支持 **现代浏览器 Crypto API**

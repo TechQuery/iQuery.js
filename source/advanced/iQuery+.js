@@ -2,12 +2,12 @@
 //              >>>  iQuery+  <<<
 //
 //
-//    [Version]    v1.9  (2016-12-29)  Stable
+//    [Version]    v2.0  (2017-02-13)  Stable
 //
 //    [Require]    iQuery  ||  jQuery with jQuery+
 //
 //
-//        (C)2015-2016  shiy2008@gmail.com
+//        (C)2015-2017  shiy2008@gmail.com
 //
 
 

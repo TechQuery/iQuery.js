@@ -659,6 +659,51 @@
         return iResult;
     };
 
+/* ---------- Local Storage Wrapper  v0.1 ---------- */
+
+    var LS_Key = [ ];
+
+    $.storage = function (iName, iData) {
+
+        if (! (iData != null))  return  JSON.parse(BOM.localStorage[ iName ]);
+
+        var iLast = 0,  iLength = Math.min(LS_Key.length, BOM.localStorage.length);
+
+        do  try {
+            BOM.localStorage[ iName ] = JSON.stringify( iData );
+
+            if (LS_Key.indexOf( iName )  ==  -1)  LS_Key.push( iName );
+            break;
+        } catch (iError) {
+            if (LS_Key[ iLast ]) {
+                delete  BOM.localStorage[ LS_Key[iLast] ];
+
+                LS_Key.splice(iLast, 1);
+            } else
+                iLast++ ;
+        } while (iLast < iLength);
+
+        return iData;
+    };
+
+/* ---------- URL Parameter Signature  v0.1 ---------- */
+
+    $.paramSign = function (iData) {
+        iData = (typeof iData == 'string')  ?  this.paramJSON(iData)  :  iData;
+
+        return  $.map(Object.keys(iData).sort(),  function (iKey) {
+
+            switch (typeof iData[iKey]) {
+                case 'function':    return;
+                case 'object':      try {
+                    return  iKey + '=' + JSON.stringify(iData[iKey]);
+                } catch (iError) { }
+            }
+            return  iKey + '=' + iData[iKey];
+
+        }).join(arguments[1] || '&');
+    };
+
 /* ---------- Base64 to Blob  v0.1 ---------- */
 
 //  Thanks "axes" --- http://www.cnblogs.com/axes/p/4603984.html
@@ -686,24 +731,6 @@
         iBuilder.append( iBuffer );
 
         return  iBuilder.getBlob( iType );
-    };
-
-/* ---------- URL Parameter Signature  v0.1 ---------- */
-
-    $.paramSign = function (iData) {
-        iData = (typeof iData == 'string')  ?  this.paramJSON(iData)  :  iData;
-
-        return  $.map(Object.keys(iData).sort(),  function (iKey) {
-
-            switch (typeof iData[iKey]) {
-                case 'function':    return;
-                case 'object':      try {
-                    return  iKey + '=' + JSON.stringify(iData[iKey]);
-                } catch (iError) { }
-            }
-            return  iKey + '=' + iData[iKey];
-
-        }).join(arguments[1] || '&');
     };
 
 /* ---------- CRC-32  v0.1 ---------- */
@@ -798,11 +825,11 @@
 //              >>>  iQuery+  <<<
 //
 //
-//    [Version]    v1.9  (2016-12-29)  Stable
+//    [Version]    v2.0  (2017-02-13)  Stable
 //
 //    [Require]    iQuery  ||  jQuery with jQuery+
 //
 //
-//        (C)2015-2016  shiy2008@gmail.com
+//        (C)2015-2017  shiy2008@gmail.com
 //
 });
