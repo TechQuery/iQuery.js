@@ -2,7 +2,7 @@
 //              >>>  jQuery+  <<<
 //
 //
-//    [Version]    v8.7  (2017-01-23)
+//    [Version]    v8.7  (2017-03-23)
 //
 //    [Require]    jQuery  v1.9+
 //
@@ -445,16 +445,13 @@
             var iType;
 
             try {
-                iType = $.type( iVar );
+                iType = Object.prototype.toString.call( iVar ).slice(8, -1);
 
                 var iName = iVar.constructor.name;
                 iName = (typeof iName == 'function')  ?
                     iName.call( iVar.constructor )  :  iName;
 
-                if ((iType == 'object')  &&  iName)
-                    iType = iName;
-                else
-                    iType = iType[0].toUpperCase() + iType.slice(1);
+                if ((iType == 'Object')  &&  iName)  iType = iName;
             } catch (iError) {
                 return 'Window';
             }

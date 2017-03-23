@@ -2,7 +2,7 @@
 //                >>>  iQuery.js  <<<
 //
 //
-//      [Version]    v2.0  (2017-01-23)  Stable
+//      [Version]    v2.0  (2017-03-23)  Stable
 //
 //      [Usage]      A Light-weight jQuery Compatible API
 //                   with IE 8+ compatibility.
@@ -500,8 +500,7 @@
                     (iValue && iValue.valueOf)  ?  iValue.valueOf()  :  iValue
                 );
             return  (iType != 'object')  ?  iType  :
-                Object.prototype.toString.call(iValue)
-                    .split(' ')[1].slice(0, -1).toLowerCase();
+                Object.prototype.toString.call(iValue).slice(8, -1).toLowerCase();
         },
         isNumeric:        function (iValue) {
             iValue = (iValue && iValue.valueOf)  ?  iValue.valueOf()  :  iValue;
@@ -701,16 +700,13 @@
             var iType;
 
             try {
-                iType = $.type( iVar );
+                iType = Object.prototype.toString.call( iVar ).slice(8, -1);
 
                 var iName = iVar.constructor.name;
                 iName = (typeof iName == 'function')  ?
                     iName.call( iVar.constructor )  :  iName;
 
-                if ((iType == 'object')  &&  iName)
-                    iType = iName;
-                else
-                    iType = iType[0].toUpperCase() + iType.slice(1);
+                if ((iType == 'Object')  &&  iName)  iType = iName;
             } catch (iError) {
                 return 'Window';
             }

@@ -51,10 +51,17 @@ define(['jquery', 'ListView'],  function ($) {
     }
 
     function iShow() {
-        if ( this.dataset.src )  this.src = this.dataset.src;
+        if ( this.dataset.src ) {
+            this.src = this.dataset.src;
 
-        if ( this.dataset.style )
+            this.removeAttribute('data-src');
+        }
+
+        if ( this.dataset.style ) {
             this.style.backgroundImage = this.dataset.style;
+
+            this.removeAttribute('data-style');
+        }
     }
 
     function iHide() {

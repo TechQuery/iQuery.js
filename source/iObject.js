@@ -56,8 +56,7 @@ define(['extension/iObject'],  function ($) {
                     (iValue && iValue.valueOf)  ?  iValue.valueOf()  :  iValue
                 );
             return  (iType != 'object')  ?  iType  :
-                Object.prototype.toString.call(iValue)
-                    .split(' ')[1].slice(0, -1).toLowerCase();
+                Object.prototype.toString.call(iValue).slice(8, -1).toLowerCase();
         },
         isNumeric:        function (iValue) {
             iValue = (iValue && iValue.valueOf)  ?  iValue.valueOf()  :  iValue;
