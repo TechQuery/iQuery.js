@@ -91,7 +91,7 @@ define(['jquery'],  function ($) {
                 Math.ceil((iLength -= iRaw.length)  /  iPad.length)
             ).slice(-iLength) + iRaw;
         },
-        curry:            function curry(iOrigin) {
+        curry:            function (iOrigin) {
             return  function iProxy() {
                 return  (arguments.length >= iOrigin.length)  ?
                     iOrigin.apply(this, arguments)  :
@@ -126,9 +126,9 @@ define(['jquery'],  function ($) {
 
                 if (
                     (! $.isNumeric(iValue))  ||
-                    (parseInt(iValue).toString().length < 21)
+                    (parseInt( iValue ).toString().length  <  17)
                 )  try {
-                    iValue = $.parseJSON(iValue);
+                    iValue = JSON.parse( iValue );
                 } catch (iError) { }
 
                 _Args_[ Args_Str[i][0] ] = iValue;

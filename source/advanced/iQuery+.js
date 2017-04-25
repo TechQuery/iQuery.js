@@ -2,7 +2,7 @@
 //              >>>  iQuery+  <<<
 //
 //
-//    [Version]    v2.0  (2017-02-13)  Stable
+//    [Version]    v2.0  (2017-04-20)  Stable
 //
 //    [Require]    iQuery  ||  jQuery with jQuery+
 //

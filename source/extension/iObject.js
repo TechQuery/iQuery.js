@@ -130,8 +130,9 @@ define(['jquery'],  function ($) {
 
         for (var iKey in iStatic)  iSub[iKey] = iStatic[iKey];
 
-        iSub.prototype = Object.create( iSup.prototype );
-        iSub.prototype.constructor = iSub;
+        iSub.prototype = $.extend(
+            Object.create( iSup.prototype ),  iSub.prototype
+        );
 
         for (var iKey in iProto)  iSub.prototype[iKey] = iProto[iKey];
 

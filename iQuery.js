@@ -2,7 +2,7 @@
 //                >>>  iQuery.js  <<<
 //
 //
-//      [Version]    v2.0  (2017-03-23)  Stable
+//      [Version]    v2.0  (2017-04-25)  Stable
 //
 //      [Usage]      A Light-weight jQuery Compatible API
 //                   with IE 8+ compatibility.
@@ -430,8 +430,9 @@
 
         for (var iKey in iStatic)  iSub[iKey] = iStatic[iKey];
 
-        iSub.prototype = Object.create( iSup.prototype );
-        iSub.prototype.constructor = iSub;
+        iSub.prototype = $.extend(
+            Object.create( iSup.prototype ),  iSub.prototype
+        );
 
         for (var iKey in iProto)  iSub.prototype[iKey] = iProto[iKey];
 
@@ -782,7 +783,7 @@
                 Math.ceil((iLength -= iRaw.length)  /  iPad.length)
             ).slice(-iLength) + iRaw;
         },
-        curry:            function curry(iOrigin) {
+        curry:            function (iOrigin) {
             return  function iProxy() {
                 return  (arguments.length >= iOrigin.length)  ?
                     iOrigin.apply(this, arguments)  :
@@ -817,9 +818,9 @@
 
                 if (
                     (! $.isNumeric(iValue))  ||
-                    (parseInt(iValue).toString().length < 21)
+                    (parseInt( iValue ).toString().length  <  17)
                 )  try {
-                    iValue = $.parseJSON(iValue);
+                    iValue = JSON.parse( iValue );
                 } catch (iError) { }
 
                 _Args_[ Args_Str[i][0] ] = iValue;

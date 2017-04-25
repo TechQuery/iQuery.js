@@ -72,18 +72,34 @@ define(['jquery'],  function ($) {
 
 /* ---------- URL Parameter Signature  v0.1 ---------- */
 
+    function JSON_Sign(iData) {
+
+        return  '{'  +  $.map(Object.keys( iData ).sort(),  function (iKey) {
+
+            return  '"'  +  iKey  +  '":'  +  JSON.stringify( iData[iKey] );
+
+        }).join()  +  '}';
+    }
+
     $.paramSign = function (iData) {
-        iData = (typeof iData == 'string')  ?  this.paramJSON(iData)  :  iData;
 
-        return  $.map(Object.keys(iData).sort(),  function (iKey) {
+        iData = (typeof iData == 'string')  ?  this.paramJSON( iData )  :  iData;
 
-            switch (typeof iData[iKey]) {
-                case 'function':    return;
-                case 'object':      try {
-                    return  iKey + '=' + JSON.stringify(iData[iKey]);
-                } catch (iError) { }
+        return  $.map(Object.keys( iData ).sort(),  function (iKey) {
+
+            var _Data_ = iData[iKey];
+
+            switch ( true ) {
+                case (_Data_ instanceof Function):
+                    return;
+                case $.likeArray(_Data_):
+                    _Data_ = '['  +  $.map(_Data_, JSON_Sign).join()  +  ']';
+                    break;
+                case (typeof _Data_ == 'object'):
+                    _Data_ = JSON_Sign(_Data_);
             }
-            return  iKey + '=' + iData[iKey];
+
+            return  iKey + '=' + _Data_;
 
         }).join(arguments[1] || '&');
     };
