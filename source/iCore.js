@@ -8,15 +8,18 @@ define(['extension/iTimer'],  function ($) {
     var DOM_Type = $.makeSet('Window', 'Document', 'HTMLElement');
 
     function iQuery(Element_Set, iContext) {
+
         /* ----- Global Wrapper ----- */
+
         var _Self_ = arguments.callee;
 
         if (! (this instanceof _Self_))
             return  new _Self_(Element_Set, iContext);
-        if (Element_Set instanceof _Self_)
-            return  Element_Set;
+
+        if (Element_Set instanceof _Self_)  return Element_Set;
 
         /* ----- Constructor ----- */
+
         this.length = 0;
 
         if (! Element_Set) return;
@@ -28,14 +31,19 @@ define(['extension/iTimer'],  function ($) {
 
             if (Element_Set[0] != '<') {
                 this.context = iContext || DOM;
+
                 this.selector = Element_Set;
+
                 Element_Set = $.find(Element_Set, this.context);
+
                 Element_Set = (Element_Set.length < 2)  ?
                     Element_Set  :  $.uniqueSort(Element_Set);
             } else {
                 Element_Set = $.map(_Self_.parseHTML(Element_Set),  function () {
+
                     if (arguments[0].nodeType == 1)  return arguments[0];
                 });
+
                 if ((Element_Set.length == 1)  &&  $.isPlainObject( iContext ))
                     for (var iKey in iContext) {
                         if (typeof this[iKey] == 'function')
@@ -50,11 +58,10 @@ define(['extension/iTimer'],  function ($) {
         if (! $.likeArray(Element_Set))
             return;
 
-        $.extend(this, Element_Set, {
-            length:     Element_Set.length,
-            context:    (Element_Set.length == 1)  ?
-                (Element_Set[0] || '').ownerDocument  :  this.context
-        });
+        $.merge(this, Element_Set);
+
+        if (Element_Set.length == 1)
+            this.context = (Element_Set[0] || '').ownerDocument;
     }
 
     /* ----- iQuery Static Method ----- */

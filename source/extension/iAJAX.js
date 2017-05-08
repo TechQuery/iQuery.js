@@ -142,20 +142,28 @@ define(['jquery'],  function ($) {
         }
     });
 
-/* ---------- AJAX for IE 10- ---------- */
+/* ---------- Cacheable JSONP ---------- */
 
     function DHR_Transport(iOption) {
         var iXHR;
 
-        return  (iOption.dataType == 'jsonp')  &&  {
-            send:     function (iHeader, iComplete) {
-                if (! $.fn.iquery) {
-                    iOption.url = iOption.url.replace(
-                        RegExp('&?' + iOption.jsonp + '=\\w+'),  ''
-                    ).trim('?');
+        if (iOption.dataType != 'jsonp')  return;
 
-                    iOption.dataTypes.shift();
-                }
+        iOption.cache = ('cache' in arguments[1])  ?  arguments[1].cache  :  true;
+
+        if ( iOption.cache )  iOption.url = iOption.url.replace(/&?_=\d+/, '');
+
+        if (! $.fn.iquery) {
+            iOption.url = iOption.url.replace(
+                RegExp('&?' + iOption.jsonp + '=\\w+'),  ''
+            ).trim('?');
+
+            iOption.dataTypes.shift();
+        }
+
+        return {
+            send:     function (iHeader, iComplete) {
+
                 iOption.url += (iOption.url.split('?')[1] ? '&' : '?')  +
                     iOption.jsonp + '=?';
 
@@ -182,6 +190,8 @@ define(['jquery'],  function ($) {
 
     //  JSONP for iQuery
     $.ajaxTransport('+script', DHR_Transport);
+
+/* ---------- AJAX for IE 10- ---------- */
 
     if ($.browser.msie < 10)
         $.ajaxTransport('+*',  function (iOption) {

@@ -2,7 +2,7 @@
 //              >>>  jQuery+  <<<
 //
 //
-//    [Version]    v8.7  (2017-04-25)
+//    [Version]    v8.7  (2017-05-08)
 //
 //    [Require]    jQuery  v1.9+
 //
@@ -427,6 +427,7 @@
         iSub.prototype = $.extend(
             Object.create( iSup.prototype ),  iSub.prototype
         );
+        iSub.prototype.constructor = iSub;
 
         for (var iKey in iProto)  iSub.prototype[iKey] = iProto[iKey];
 
@@ -1550,11 +1551,12 @@
 /* ---------- DOM Class List ---------- */
 
     function DOMTokenList() {
-        var iClass = (arguments[0].getAttribute('class') || '').trim().split(/\s+/);
 
-        $.extend(this, iClass);
+        this.length = 0;
 
-        this.length = iClass.length;
+        $.merge(
+            this,  (arguments[0].getAttribute('class') || '').trim().split(/\s+/)
+        );
     }
 
     DOMTokenList.prototype.contains = function (iClass) {
@@ -1711,8 +1713,10 @@
     }
 
     function CSSRuleList() {
-        $.extend(this, arguments[0]);
-        this.length = arguments[0].length;
+
+        this.length = 0;
+
+        $.merge(this, arguments[0]);
     }
 
     if (typeof BOM.getMatchedCSSRules != 'function')
@@ -2642,20 +2646,28 @@
         }
     });
 
-/* ---------- AJAX for IE 10- ---------- */
+/* ---------- Cacheable JSONP ---------- */
 
     function DHR_Transport(iOption) {
         var iXHR;
 
-        return  (iOption.dataType == 'jsonp')  &&  {
-            send:     function (iHeader, iComplete) {
-                if (! $.fn.iquery) {
-                    iOption.url = iOption.url.replace(
-                        RegExp('&?' + iOption.jsonp + '=\\w+'),  ''
-                    ).trim('?');
+        if (iOption.dataType != 'jsonp')  return;
 
-                    iOption.dataTypes.shift();
-                }
+        iOption.cache = ('cache' in arguments[1])  ?  arguments[1].cache  :  true;
+
+        if ( iOption.cache )  iOption.url = iOption.url.replace(/&?_=\d+/, '');
+
+        if (! $.fn.iquery) {
+            iOption.url = iOption.url.replace(
+                RegExp('&?' + iOption.jsonp + '=\\w+'),  ''
+            ).trim('?');
+
+            iOption.dataTypes.shift();
+        }
+
+        return {
+            send:     function (iHeader, iComplete) {
+
                 iOption.url += (iOption.url.split('?')[1] ? '&' : '?')  +
                     iOption.jsonp + '=?';
 
@@ -2682,6 +2694,8 @@
 
     //  JSONP for iQuery
     $.ajaxTransport('+script', DHR_Transport);
+
+/* ---------- AJAX for IE 10- ---------- */
 
     if ($.browser.msie < 10)
         $.ajaxTransport('+*',  function (iOption) {

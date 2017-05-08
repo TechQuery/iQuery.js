@@ -165,11 +165,12 @@ define(['jquery'],  function ($) {
 /* ---------- DOM Class List ---------- */
 
     function DOMTokenList() {
-        var iClass = (arguments[0].getAttribute('class') || '').trim().split(/\s+/);
 
-        $.extend(this, iClass);
+        this.length = 0;
 
-        this.length = iClass.length;
+        $.merge(
+            this,  (arguments[0].getAttribute('class') || '').trim().split(/\s+/)
+        );
     }
 
     DOMTokenList.prototype.contains = function (iClass) {

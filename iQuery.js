@@ -2,7 +2,7 @@
 //                >>>  iQuery.js  <<<
 //
 //
-//      [Version]    v2.0  (2017-04-25)  Stable
+//      [Version]    v2.0  (2017-05-08)  Stable
 //
 //      [Usage]      A Light-weight jQuery Compatible API
 //                   with IE 8+ compatibility.
@@ -433,6 +433,7 @@
         iSub.prototype = $.extend(
             Object.create( iSup.prototype ),  iSub.prototype
         );
+        iSub.prototype.constructor = iSub;
 
         for (var iKey in iProto)  iSub.prototype[iKey] = iProto[iKey];
 
@@ -568,8 +569,6 @@
             return  Array.prototype.indexOf.call(arguments[1], arguments[0]);
         },
         merge:            function (iSource) {
-            if (! (iSource instanceof Array))
-                iSource = this.makeArray(iSource);
 
             for (var i = 1;  i < arguments.length;  i++)
                 Array.prototype.splice.apply(iSource, Array.prototype.concat.apply(
@@ -946,15 +945,18 @@
     var DOM_Type = $.makeSet('Window', 'Document', 'HTMLElement');
 
     function iQuery(Element_Set, iContext) {
+
         /* ----- Global Wrapper ----- */
+
         var _Self_ = arguments.callee;
 
         if (! (this instanceof _Self_))
             return  new _Self_(Element_Set, iContext);
-        if (Element_Set instanceof _Self_)
-            return  Element_Set;
+
+        if (Element_Set instanceof _Self_)  return Element_Set;
 
         /* ----- Constructor ----- */
+
         this.length = 0;
 
         if (! Element_Set) return;
@@ -966,14 +968,19 @@
 
             if (Element_Set[0] != '<') {
                 this.context = iContext || DOM;
+
                 this.selector = Element_Set;
+
                 Element_Set = $.find(Element_Set, this.context);
+
                 Element_Set = (Element_Set.length < 2)  ?
                     Element_Set  :  $.uniqueSort(Element_Set);
             } else {
                 Element_Set = $.map(_Self_.parseHTML(Element_Set),  function () {
+
                     if (arguments[0].nodeType == 1)  return arguments[0];
                 });
+
                 if ((Element_Set.length == 1)  &&  $.isPlainObject( iContext ))
                     for (var iKey in iContext) {
                         if (typeof this[iKey] == 'function')
@@ -988,11 +995,10 @@
         if (! $.likeArray(Element_Set))
             return;
 
-        $.extend(this, Element_Set, {
-            length:     Element_Set.length,
-            context:    (Element_Set.length == 1)  ?
-                (Element_Set[0] || '').ownerDocument  :  this.context
-        });
+        $.merge(this, Element_Set);
+
+        if (Element_Set.length == 1)
+            this.context = (Element_Set[0] || '').ownerDocument;
     }
 
     /* ----- iQuery Static Method ----- */
@@ -3153,11 +3159,12 @@
 /* ---------- DOM Class List ---------- */
 
     function DOMTokenList() {
-        var iClass = (arguments[0].getAttribute('class') || '').trim().split(/\s+/);
 
-        $.extend(this, iClass);
+        this.length = 0;
 
-        this.length = iClass.length;
+        $.merge(
+            this,  (arguments[0].getAttribute('class') || '').trim().split(/\s+/)
+        );
     }
 
     DOMTokenList.prototype.contains = function (iClass) {
@@ -3363,8 +3370,10 @@
     }
 
     function CSSRuleList() {
-        $.extend(this, arguments[0]);
-        this.length = arguments[0].length;
+
+        this.length = 0;
+
+        $.merge(this, arguments[0]);
     }
 
     if (typeof BOM.getMatchedCSSRules != 'function')
@@ -4903,20 +4912,28 @@
         }
     });
 
-/* ---------- AJAX for IE 10- ---------- */
+/* ---------- Cacheable JSONP ---------- */
 
     function DHR_Transport(iOption) {
         var iXHR;
 
-        return  (iOption.dataType == 'jsonp')  &&  {
-            send:     function (iHeader, iComplete) {
-                if (! $.fn.iquery) {
-                    iOption.url = iOption.url.replace(
-                        RegExp('&?' + iOption.jsonp + '=\\w+'),  ''
-                    ).trim('?');
+        if (iOption.dataType != 'jsonp')  return;
 
-                    iOption.dataTypes.shift();
-                }
+        iOption.cache = ('cache' in arguments[1])  ?  arguments[1].cache  :  true;
+
+        if ( iOption.cache )  iOption.url = iOption.url.replace(/&?_=\d+/, '');
+
+        if (! $.fn.iquery) {
+            iOption.url = iOption.url.replace(
+                RegExp('&?' + iOption.jsonp + '=\\w+'),  ''
+            ).trim('?');
+
+            iOption.dataTypes.shift();
+        }
+
+        return {
+            send:     function (iHeader, iComplete) {
+
                 iOption.url += (iOption.url.split('?')[1] ? '&' : '?')  +
                     iOption.jsonp + '=?';
 
@@ -4943,6 +4960,8 @@
 
     //  JSONP for iQuery
     $.ajaxTransport('+script', DHR_Transport);
+
+/* ---------- AJAX for IE 10- ---------- */
 
     if ($.browser.msie < 10)
         $.ajaxTransport('+*',  function (iOption) {

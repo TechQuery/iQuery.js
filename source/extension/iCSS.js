@@ -82,8 +82,10 @@ define(['jquery'],  function ($) {
     }
 
     function CSSRuleList() {
-        $.extend(this, arguments[0]);
-        this.length = arguments[0].length;
+
+        this.length = 0;
+
+        $.merge(this, arguments[0]);
     }
 
     if (typeof BOM.getMatchedCSSRules != 'function')

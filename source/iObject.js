@@ -123,8 +123,6 @@ define(['extension/iObject'],  function ($) {
             return  Array.prototype.indexOf.call(arguments[1], arguments[0]);
         },
         merge:            function (iSource) {
-            if (! (iSource instanceof Array))
-                iSource = this.makeArray(iSource);
 
             for (var i = 1;  i < arguments.length;  i++)
                 Array.prototype.splice.apply(iSource, Array.prototype.concat.apply(
