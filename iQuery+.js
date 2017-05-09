@@ -285,7 +285,7 @@
         },
         clear:          function () {
             this.splice(0, this.length);
-            this.$_View.empty();
+            this.$_View.data('LV_Model', null).empty();
 
             return this;
         },

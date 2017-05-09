@@ -8,7 +8,7 @@
  *    and can be used in the Web UI development of
  *    Any Platform.
  *
- *    [Version]    v1.0  (2017-01-13)
+ *    [Version]    v1.0  (2017-04-12)
  *
  *    [Require]    CSS 2.1  (Best Effect with CSS 3),
  *
@@ -758,7 +758,8 @@ form .Row > label[for] + * {
     width:    68.5%;
 }
 form .Row > label[for] + input[type="radio"],
-form .Row > label[for] + input[type="checkbox"] {
+form .Row > label[for] + input[type="checkbox"],
+form .Row > label[for] + select {
     width:    auto;
 }
 form .Row.Grid-Row > * {
@@ -773,10 +774,13 @@ form.Dialog {
     position:         fixed;
     left:             0;
     top:              0;
-    z-index:          1;
+    z-index:          10000;
     font-size:        16px  !important;
     border:           0.5em  solid  lightgray;
     border-radius:    5px;
+    padding:          0;
+    max-width:        90%;
+    max-height:       90%;
     display:          none;
     opacity:          0;
     transition:       0.5s;
@@ -791,6 +795,7 @@ form.Dialog:before {
     height:        100%;
 }
 form.Dialog > fieldset {
+    position:      relative;
     background:    white;
     border:        none;
     margin:        0;
@@ -801,6 +806,9 @@ form.Dialog > fieldset > legend {
     margin-left:      -0.75em;
     padding:          0.5em;
     padding-right:    1em;
+}
+form.Dialog img,  form.Dialog table  {
+    max-width:    100%;
 }
 
 /* ---------- Navigation Bar ---------- */
@@ -868,12 +876,13 @@ ul.DropDown.Body {
     list-style:    none;
 }
 ul.DropDown.Body > li {
-        background:    white;
-        color:         black;
-   -moz-transition:    0.25s;
-     -o-transition:    0.25s;
--webkit-transition:    0.25s;
-        transition:    0.25s;
+        white-space:    nowrap;
+        background:     white;
+        color:          black;
+   -moz-transition:     0.25s;
+     -o-transition:     0.25s;
+-webkit-transition:     0.25s;
+        transition:     0.25s;
 }
 ul.DropDown.Body > li:hover,
 ul.DropDown.Body > li:focus  {

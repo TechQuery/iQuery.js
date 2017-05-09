@@ -2370,41 +2370,32 @@
 /* ---------- Complex Events ---------- */
 
     /* ----- DOM Ready ----- */
-    var $_DOM = $(DOM);
-    $.start('DOM_Ready');
 
-    function DOM_Ready_Event() {
-        if ((typeof arguments[2] == 'number')  &&  (
-            (DOM.readyState != 'complete')  ||  (! (DOM.body || { }).lastChild)
-        ))
-            return;
+    var DOM_Ready = (new Promise(function (iResolve) {
 
-        if (! DOM.isReady) {
-            DOM.isReady = true;
+            $.start('DOM_Ready');
 
-            $_DOM.data('Load_During', $.end('DOM_Ready'))
-                .data('Ready_Event', arguments[0]);
+            $( BOM ).one('DOMContentLoaded load', iResolve);
+
+            $.every(0.5,  function () {
+
+                if ((DOM.readyState == 'complete')  &&  (DOM.body || '').lastChild)
+                    return  Boolean( iResolve( arguments[0] ) );
+            });
+        })).then(function () {
+
+            $.data(DOM, 'Load_During', $.end('DOM_Ready'));
+
             console.info('[DOM Ready Event]');
-            console.log(this, arguments);
+            console.log( arguments[0] );
+        });
 
-            $_DOM.trigger('ready');
-        }
+    $.fn.ready = function () {
 
-        return false;
-    }
-
-    $.every(0.5, DOM_Ready_Event);
-    $_DOM.one('DOMContentLoaded', DOM_Ready_Event);
-    $(BOM).one('load', DOM_Ready_Event);
-
-    $.fn.ready = function (iCallback) {
-        if ($.Type(this[0]) != 'Document')
+        if ($.Type( this[0] )  !=  'Document')
             throw 'The Ready Method is only used for Document Object !';
 
-        if (! DOM.isReady)
-            $_DOM.one('ready', iCallback);
-        else
-            iCallback.call(this[0], $_DOM.data('Ready_Event'));
+        DOM_Ready.then( $.proxy(arguments[0], this[0], $) );
 
         return this;
     };

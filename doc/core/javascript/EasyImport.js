@@ -2,7 +2,7 @@
 //                >>>  iQuery.js  <<<
 //
 //
-//      [Version]    v2.0  (2017-01-23)  Stable
+//      [Version]    v2.0  (2017-05-09)  Stable
 //
 //      [Usage]      A Light-weight jQuery Compatible API
 //                   with IE 8+ compatibility.
@@ -144,115 +144,147 @@
 
 (function (BOM, DOM) {
 
-    if (BOM.Promise)  return BOM.Promise;
+    if (BOM.Promise instanceof Function)  return BOM.Promise;
 
-    function Promise(iMain) {
-        var _Self_ = arguments.callee,
-            _This_ = {
-                _public_:    this,
-                state:       -1,
-                value:       undefined,
-                callback:    [ ]
-            };
+/* ---------- Promise/A+ Core ---------- */
 
-        this.then = function (onResolve, onReject) {
-            return  new _Self_(function (iResolve, iReject) {
-                var _CB_ = [onResolve, onReject, iResolve, iReject];
+    function Promise() {
 
-                if (_This_.state == -1)
-                    _This_.callback.push(_CB_);
-                else
-                    _Complete_.call(_This_, _CB_);
-            });
-        };
+        this.__value__ = undefined;
 
-        BOM.setTimeout(function () {
-            iMain(function () {
-                _Complete_All_.call(_This_, 0, arguments[0]);
-            },  function () {
-                _Complete_All_.call(_This_, 1, arguments[0]);
-            });
+        this.__state__ = -1;
+
+        this.__callback__ = [ ];
+
+        var _This_ = this;
+
+        arguments[0](function () {
+
+            _This_.resolve( arguments[0] );
+
+        },  function () {
+
+            _This_.reject( arguments[0] );
         });
     }
 
-    function _Complete_(_CB_) {
-        var _Value_;
+    var __Private__ = { };
 
-        try {
-            if (typeof _CB_[this.state] == 'function') {
-                _Value_ = _CB_[this.state]( this.value );
+    Promise.prototype.reject = function () {
 
-                if (_Value_ === this._public_)
-                    throw  TypeError("Can't return the same Promise object !");
+        __Private__.endBy.call(this, 1, arguments[0]);
+    };
 
-                if (typeof (_Value_ || '').then  ==  'function')
-                    return  _Value_.then(_CB_[2], _CB_[3]);
-            } else
-                _Value_ = this.value;
+    Promise.prototype.resolve = function (_Value_) {
 
-            _CB_[2](_Value_);
+        if (_Value_ == this)
+            throw  TypeError("Can't return the same Promise object !");
 
-        } catch (iError) {
-            _CB_[3]( iError );
-        }
-    }
+        if (typeof (_Value_ || '').then != 'function')
+            return  __Private__.endBy.call(this, 0, _Value_);
 
-    function _Complete_All_(iType) {
-        if (this.state > -1)  return;
+        var _This_ = this;
 
-        this.state = iType;  this.value = arguments[1];
+        _Value_.then(function () {
 
-        while ( this.callback[0] )
-            _Complete_.call(this, this.callback.shift());
-    }
+            _This_.resolve( arguments[0] );
+
+        },  function () {
+
+            _This_.reject( arguments[0] );
+        });
+    };
+
+    __Private__.endBy = function (iState, iValue) {
+
+        if (this.__state__ > -1)  return;
+
+        var _This_ = this;
+
+        setTimeout(function () {
+
+            _This_.__value__ = iValue;
+
+            _This_.__state__ = iState;
+
+            __Private__.exec.call(_This_);
+        });
+    };
+
+    __Private__.exec = function () {
+
+        var _CB_;
+
+        if (this.__state__ > -1)
+            while (_CB_ = this.__callback__.shift())
+                if (typeof _CB_[this.__state__]  ==  'function')  try {
+
+                    _CB_[2]( _CB_[this.__state__]( this.__value__ ) );
+
+                } catch (iError) {
+
+                    _CB_[3]( iError );
+                }
+    };
+
+    Promise.prototype.then = function (iResolve, iReject) {
+
+        var _This_ = this;
+
+        return  new Promise(function () {
+
+            _This_.__callback__.push([
+                iResolve,  iReject,  arguments[0],  arguments[1]
+            ]);
+
+            __Private__.exec.call(_This_);
+        });
+    };
+
+/* ---------- ES 6  Promise Helper ---------- */
 
     Promise.resolve = function (iValue) {
-        if (iValue instanceof this)  return iValue;
 
-        if (typeof (iValue || '').then  ==  'function')
-            return  new this(function () {
-                iValue.then.apply(iValue, arguments);
-            });
+        return  (iValue instanceof this)  ?  iValue  :  new this(function () {
 
-        return  new this(function (iResolve) {
-            BOM.setTimeout(function () {
-                iResolve(iValue);
-            });
+            arguments[0]( iValue );
         });
     };
 
-    Promise.reject = function (iValue) {
-        if (typeof (iValue || '').then  ==  'function')
-            return  new this(function () {
-                iValue.then.apply(iValue, arguments);
-            });
+    Promise.reject = function (iError) {
 
-        return  new this(function (_, iReject) {
-            BOM.setTimeout(function () {
-                iReject(iValue);
-            });
+        return  new this(function () {
+
+            arguments[1]( iError );
         });
     };
 
-    Promise.all = function (pList) {
-        var _Result_ = [ ];
+    Promise.all = function (iQueue) {
 
-        for (var i = 0;  i < pList.length;  i++)
-            if ((! pList[i])  ||  (typeof pList[i].then != 'function'))
-                pList[i] = this.resolve( pList[i] );
+        var iValue = [ ],  iSum = iQueue.length;
 
-        return  i  ?  new this(function (iResolved, iReject) {
+        return  iSum  ?  (new this(function (iResolve, iReject) {
 
-            ' '.repeat( pList.length ).replace(/ /g,  function (_, Index) {
+            ' '.repeat( iSum ).replace(/ /g,  function (_, Index) {
 
-                pList[Index].then(function () {
-                    _Result_[Index] = arguments[0];
+                Promise.resolve( iQueue[Index] ).then(function () {
 
-                    if (_Result_.length == pList.length)
-                        iResolved(_Result_);
+                    iValue[ Index ] = arguments[0];
+
+                    if (! --iSum)  iResolve( iValue );
+
                 },  iReject);
             });
-        })  :  this.resolve(pList);
+        }))  :  this.resolve( iQueue );
+    };
+
+    Promise.race = function (iQueue) {
+
+        return  new Promise(function () {
+
+            for (var i = 0;  iQueue[i];  i++)
+                Promise.resolve( iQueue[i] ).then(arguments[0], arguments[1]);
+        });
     };
 
     return  BOM.Promise = Promise;
@@ -430,7 +462,9 @@
 
         for (var iKey in iStatic)  iSub[iKey] = iStatic[iKey];
 
-        iSub.prototype = Object.create( iSup.prototype );
+        iSub.prototype = $.extend(
+            Object.create( iSup.prototype ),  iSub.prototype
+        );
         iSub.prototype.constructor = iSub;
 
         for (var iKey in iProto)  iSub.prototype[iKey] = iProto[iKey];
@@ -500,8 +534,7 @@
                     (iValue && iValue.valueOf)  ?  iValue.valueOf()  :  iValue
                 );
             return  (iType != 'object')  ?  iType  :
-                Object.prototype.toString.call(iValue)
-                    .split(' ')[1].slice(0, -1).toLowerCase();
+                Object.prototype.toString.call(iValue).slice(8, -1).toLowerCase();
         },
         isNumeric:        function (iValue) {
             iValue = (iValue && iValue.valueOf)  ?  iValue.valueOf()  :  iValue;
@@ -568,8 +601,6 @@
             return  Array.prototype.indexOf.call(arguments[1], arguments[0]);
         },
         merge:            function (iSource) {
-            if (! (iSource instanceof Array))
-                iSource = this.makeArray(iSource);
 
             for (var i = 1;  i < arguments.length;  i++)
                 Array.prototype.splice.apply(iSource, Array.prototype.concat.apply(
@@ -701,16 +732,13 @@
             var iType;
 
             try {
-                iType = $.type( iVar );
+                iType = Object.prototype.toString.call( iVar ).slice(8, -1);
 
                 var iName = iVar.constructor.name;
                 iName = (typeof iName == 'function')  ?
                     iName.call( iVar.constructor )  :  iName;
 
-                if ((iType == 'object')  &&  iName)
-                    iType = iName;
-                else
-                    iType = iType[0].toUpperCase() + iType.slice(1);
+                if ((iType == 'Object')  &&  iName)  iType = iName;
             } catch (iError) {
                 return 'Window';
             }
@@ -786,7 +814,7 @@
                 Math.ceil((iLength -= iRaw.length)  /  iPad.length)
             ).slice(-iLength) + iRaw;
         },
-        curry:            function curry(iOrigin) {
+        curry:            function (iOrigin) {
             return  function iProxy() {
                 return  (arguments.length >= iOrigin.length)  ?
                     iOrigin.apply(this, arguments)  :
@@ -821,9 +849,9 @@
 
                 if (
                     (! $.isNumeric(iValue))  ||
-                    (parseInt(iValue).toString().length < 21)
+                    (parseInt( iValue ).toString().length  <  17)
                 )  try {
-                    iValue = $.parseJSON(iValue);
+                    iValue = JSON.parse( iValue );
                 } catch (iError) { }
 
                 _Args_[ Args_Str[i][0] ] = iValue;
@@ -949,15 +977,18 @@
     var DOM_Type = $.makeSet('Window', 'Document', 'HTMLElement');
 
     function iQuery(Element_Set, iContext) {
+
         /* ----- Global Wrapper ----- */
+
         var _Self_ = arguments.callee;
 
         if (! (this instanceof _Self_))
             return  new _Self_(Element_Set, iContext);
-        if (Element_Set instanceof _Self_)
-            return  Element_Set;
+
+        if (Element_Set instanceof _Self_)  return Element_Set;
 
         /* ----- Constructor ----- */
+
         this.length = 0;
 
         if (! Element_Set) return;
@@ -969,14 +1000,19 @@
 
             if (Element_Set[0] != '<') {
                 this.context = iContext || DOM;
+
                 this.selector = Element_Set;
+
                 Element_Set = $.find(Element_Set, this.context);
+
                 Element_Set = (Element_Set.length < 2)  ?
                     Element_Set  :  $.uniqueSort(Element_Set);
             } else {
                 Element_Set = $.map(_Self_.parseHTML(Element_Set),  function () {
+
                     if (arguments[0].nodeType == 1)  return arguments[0];
                 });
+
                 if ((Element_Set.length == 1)  &&  $.isPlainObject( iContext ))
                     for (var iKey in iContext) {
                         if (typeof this[iKey] == 'function')
@@ -991,11 +1027,10 @@
         if (! $.likeArray(Element_Set))
             return;
 
-        $.extend(this, Element_Set, {
-            length:     Element_Set.length,
-            context:    (Element_Set.length == 1)  ?
-                (Element_Set[0] || '').ownerDocument  :  this.context
-        });
+        $.merge(this, Element_Set);
+
+        if (Element_Set.length == 1)
+            this.context = (Element_Set[0] || '').ownerDocument;
     }
 
     /* ----- iQuery Static Method ----- */
@@ -2335,41 +2370,32 @@
 /* ---------- Complex Events ---------- */
 
     /* ----- DOM Ready ----- */
-    var $_DOM = $(DOM);
-    $.start('DOM_Ready');
 
-    function DOM_Ready_Event() {
-        if ((typeof arguments[2] == 'number')  &&  (
-            (DOM.readyState != 'complete')  ||  (! (DOM.body || { }).lastChild)
-        ))
-            return;
+    var DOM_Ready = (new Promise(function (iResolve) {
 
-        if (! DOM.isReady) {
-            DOM.isReady = true;
+            $.start('DOM_Ready');
 
-            $_DOM.data('Load_During', $.end('DOM_Ready'))
-                .data('Ready_Event', arguments[0]);
+            $( BOM ).one('DOMContentLoaded load', iResolve);
+
+            $.every(0.5,  function () {
+
+                if ((DOM.readyState == 'complete')  &&  (DOM.body || '').lastChild)
+                    return  Boolean( iResolve( arguments[0] ) );
+            });
+        })).then(function () {
+
+            $.data(DOM, 'Load_During', $.end('DOM_Ready'));
+
             console.info('[DOM Ready Event]');
-            console.log(this, arguments);
+            console.log( arguments[0] );
+        });
 
-            $_DOM.trigger('ready');
-        }
+    $.fn.ready = function () {
 
-        return false;
-    }
-
-    $.every(0.5, DOM_Ready_Event);
-    $_DOM.one('DOMContentLoaded', DOM_Ready_Event);
-    $(BOM).one('load', DOM_Ready_Event);
-
-    $.fn.ready = function (iCallback) {
-        if ($.Type(this[0]) != 'Document')
+        if ($.Type( this[0] )  !=  'Document')
             throw 'The Ready Method is only used for Document Object !';
 
-        if (! DOM.isReady)
-            $_DOM.one('ready', iCallback);
-        else
-            iCallback.call(this[0], $_DOM.data('Ready_Event'));
+        DOM_Ready.then( $.proxy(arguments[0], this[0], $) );
 
         return this;
     };
@@ -3010,7 +3036,7 @@
             for (var iCore in Stack_Prefix)
                 if ( $.browser[iCore] ) {
                     iURL = iError.stack.match(RegExp(
-                        "\\s+" + Stack_Prefix[iCore] + "(http(s)?:\\/\\/\\S+.js)"
+                        "\\s+" + Stack_Prefix[iCore] + "(http(s)?:\\/\\/[^:]+)"
                     ));
 
                     return  iURL && iURL[1];
@@ -3156,11 +3182,12 @@
 /* ---------- DOM Class List ---------- */
 
     function DOMTokenList() {
-        var iClass = (arguments[0].getAttribute('class') || '').trim().split(/\s+/);
 
-        $.extend(this, iClass);
+        this.length = 0;
 
-        this.length = iClass.length;
+        $.merge(
+            this,  (arguments[0].getAttribute('class') || '').trim().split(/\s+/)
+        );
     }
 
     DOMTokenList.prototype.contains = function (iClass) {
@@ -3366,8 +3393,10 @@
     }
 
     function CSSRuleList() {
-        $.extend(this, arguments[0]);
-        this.length = arguments[0].length;
+
+        this.length = 0;
+
+        $.merge(this, arguments[0]);
     }
 
     if (typeof BOM.getMatchedCSSRules != 'function')
@@ -4906,20 +4935,28 @@
         }
     });
 
-/* ---------- AJAX for IE 10- ---------- */
+/* ---------- Cacheable JSONP ---------- */
 
     function DHR_Transport(iOption) {
         var iXHR;
 
-        return  (iOption.dataType == 'jsonp')  &&  {
-            send:     function (iHeader, iComplete) {
-                if (! $.fn.iquery) {
-                    iOption.url = iOption.url.replace(
-                        RegExp('&?' + iOption.jsonp + '=\\w+'),  ''
-                    ).trim('?');
+        if (iOption.dataType != 'jsonp')  return;
 
-                    iOption.dataTypes.shift();
-                }
+        iOption.cache = ('cache' in arguments[1])  ?  arguments[1].cache  :  true;
+
+        if ( iOption.cache )  iOption.url = iOption.url.replace(/&?_=\d+/, '');
+
+        if (! $.fn.iquery) {
+            iOption.url = iOption.url.replace(
+                RegExp('&?' + iOption.jsonp + '=\\w+'),  ''
+            ).trim('?');
+
+            iOption.dataTypes.shift();
+        }
+
+        return {
+            send:     function (iHeader, iComplete) {
+
                 iOption.url += (iOption.url.split('?')[1] ? '&' : '?')  +
                     iOption.jsonp + '=?';
 
@@ -4946,6 +4983,8 @@
 
     //  JSONP for iQuery
     $.ajaxTransport('+script', DHR_Transport);
+
+/* ---------- AJAX for IE 10- ---------- */
 
     if ($.browser.msie < 10)
         $.ajaxTransport('+*',  function (iOption) {
