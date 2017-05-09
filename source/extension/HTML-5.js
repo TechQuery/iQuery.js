@@ -19,7 +19,7 @@ define(['jquery'],  function ($) {
             for (var iCore in Stack_Prefix)
                 if ( $.browser[iCore] ) {
                     iURL = iError.stack.match(RegExp(
-                        "\\s+" + Stack_Prefix[iCore] + "(http(s)?:\\/\\/\\S+.js)"
+                        "\\s+" + Stack_Prefix[iCore] + "(http(s)?:\\/\\/[^:]+)"
                     ));
 
                     return  iURL && iURL[1];
