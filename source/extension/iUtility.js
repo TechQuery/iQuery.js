@@ -110,29 +110,31 @@ define(['jquery'],  function ($) {
             return  BOM.JSON.stringify(arguments[0], null, 4)
                 .replace(/(\s+"[^"]+":) ([^\s]+)/g, '$1    $2');
         },
-        paramJSON:        function (Args_Str) {
-            Args_Str = (
-                Args_Str  ?  $.split(Args_Str, '?', 2)[1]  :  BOM.location.search
-            ).match(/[^\?&\s]+/g);
-
-            if (! Args_Str)  return { };
-
+        paramJSON:        function (search) {
             var _Args_ = { };
 
-            for (var i = 0, iValue;  i < Args_Str.length;  i++) {
-                Args_Str[i] = this.split(Args_Str[i], '=', 2);
+            $.map(
+                (search  ?  $.split(search, '?', 2)[1]  :  BOM.location.search)
+                    .match( /[^\?&\s]+/g ),
+                function (_This_) {
 
-                iValue = BOM.decodeURIComponent( Args_Str[i][1] );
+                    _This_ = $.split(_This_, '=', 2);
 
-                if (
-                    (! $.isNumeric(iValue))  ||
-                    (parseInt( iValue ).toString().length  <  17)
-                )  try {
-                    iValue = JSON.parse( iValue );
-                } catch (iError) { }
+                    var iValue = decodeURIComponent( _This_[1] );
 
-                _Args_[ Args_Str[i][0] ] = iValue;
-            }
+                    if (
+                        (! $.isNumeric(iValue))  ||
+                        Number.isSafeInteger( +iValue )
+                    )  try {
+                        iValue = JSON.parse( iValue );
+                    } catch (iError) { }
+
+                    if (_This_[0] in _Args_)
+                        _Args_[_This_[0]] = [ ].concat(_Args_[_This_[0]], iValue);
+                    else
+                        _Args_[_This_[0]] = iValue;
+                }
+            );
 
             return _Args_;
         },

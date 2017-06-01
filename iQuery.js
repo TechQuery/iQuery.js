@@ -2,7 +2,7 @@
 //                >>>  iQuery.js  <<<
 //
 //
-//      [Version]    v2.0  (2017-05-09)  Stable
+//      [Version]    v2.0  (2017-06-01)  Stable
 //
 //      [Usage]      A Light-weight jQuery Compatible API
 //                   with IE 8+ compatibility.
@@ -68,6 +68,25 @@
                 iObject[iKey] = iProperty[iKey].value;
 
         return iObject;
+    };
+
+    /* ----- Number Extension ----- */
+
+    Number.isInteger = Number.isInteger  ||  function (value) {
+
+        return  (typeof value === 'number')  &&  isFinite( value )  &&
+            (Math.floor(value) === value);
+    };
+
+    Number.MAX_SAFE_INTEGER = Math.pow(2, 53) - 1;
+
+    Number.MIN_SAFE_INTEGER = -Number.MAX_SAFE_INTEGER;
+
+    Number.isSafeInteger = Number.isSafeInteger  ||  function (value) {
+
+       return  this.isInteger( value )  &&  (
+           Math.abs( value )  <=  this.MAX_SAFE_INTEGER
+       );
     };
 
     /* ----- String Extension ----- */
@@ -833,29 +852,31 @@
             return  BOM.JSON.stringify(arguments[0], null, 4)
                 .replace(/(\s+"[^"]+":) ([^\s]+)/g, '$1    $2');
         },
-        paramJSON:        function (Args_Str) {
-            Args_Str = (
-                Args_Str  ?  $.split(Args_Str, '?', 2)[1]  :  BOM.location.search
-            ).match(/[^\?&\s]+/g);
-
-            if (! Args_Str)  return { };
-
+        paramJSON:        function (search) {
             var _Args_ = { };
 
-            for (var i = 0, iValue;  i < Args_Str.length;  i++) {
-                Args_Str[i] = this.split(Args_Str[i], '=', 2);
+            $.map(
+                (search  ?  $.split(search, '?', 2)[1]  :  BOM.location.search)
+                    .match( /[^\?&\s]+/g ),
+                function (_This_) {
 
-                iValue = BOM.decodeURIComponent( Args_Str[i][1] );
+                    _This_ = $.split(_This_, '=', 2);
 
-                if (
-                    (! $.isNumeric(iValue))  ||
-                    (parseInt( iValue ).toString().length  <  17)
-                )  try {
-                    iValue = JSON.parse( iValue );
-                } catch (iError) { }
+                    var iValue = decodeURIComponent( _This_[1] );
 
-                _Args_[ Args_Str[i][0] ] = iValue;
-            }
+                    if (
+                        (! $.isNumeric(iValue))  ||
+                        Number.isSafeInteger( +iValue )
+                    )  try {
+                        iValue = JSON.parse( iValue );
+                    } catch (iError) { }
+
+                    if (_This_[0] in _Args_)
+                        _Args_[_This_[0]] = [ ].concat(_Args_[_This_[0]], iValue);
+                    else
+                        _Args_[_This_[0]] = iValue;
+                }
+            );
 
             return _Args_;
         },
@@ -1443,10 +1464,11 @@
             display:    'none',
             width:      0,
             height:     0
-        };
+        },
+        Check_Type = $.makeSet('radio', 'checkbox');
 
     $.expr[':'] = $.expr.filters = {
-        visible:    function () {
+        visible:     function () {
             var iStyle = BOM.getComputedStyle( arguments[0] );
 
             for (var iKey in pVisible)
@@ -1454,13 +1476,20 @@
 
             return true;
         },
-        hidden:    function () {
+        hidden:      function () {
             return  (! this.visible(arguments[0]));
         },
         header:      function () {
             return  (arguments[0] instanceof HTMLHeadingElement);
         },
+        checked:     function (iDOM) {
+            return (
+                (iDOM.tagName.toLowerCase() == 'input')  &&
+                (iDOM.type in Check_Type)  &&  (iDOM.checked === true)
+            );
+        },
         parent:      function (iDOM) {
+
             if (iDOM.children.length)  return true;
 
             iDOM = iDOM.childNodes;
@@ -1472,9 +1501,11 @@
             return  (! this.parent(arguments[0]));
         },
         contains:    function (iDOM, Index, iMatch) {
-            return  (iDOM.textContent.indexOf(iMatch[3]) > -1);
+
+            return  (iDOM.textContent.indexOf( iMatch[3] )  >  -1);
         },
         not:         function (iDOM, Index, iMatch) {
+
             return  (! $.fn.is.call([iDOM], iMatch[3]));
         }
     };
@@ -1523,6 +1554,20 @@
     };
 
 /* ---------- iQuery Extended Pseudo ---------- */
+
+    /* ----- :indeterminate ----- */
+
+    var Check_Type = $.makeSet('radio', 'checkbox');
+
+    $.expr[':'].indeterminate = function (iDOM) {
+
+        switch ( iDOM.tagName.toLowerCase() ) {
+            case 'input':
+                if (! (iDOM.type in Check_Type))  break;
+            case 'progress':
+                return  (iDOM.indeterminate === true);
+        }
+    };
 
     /* ----- :list, :data ----- */
 

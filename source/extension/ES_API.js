@@ -43,6 +43,25 @@ define(function () {
         return iObject;
     };
 
+    /* ----- Number Extension ----- */
+
+    Number.isInteger = Number.isInteger  ||  function (value) {
+
+        return  (typeof value === 'number')  &&  isFinite( value )  &&
+            (Math.floor(value) === value);
+    };
+
+    Number.MAX_SAFE_INTEGER = Math.pow(2, 53) - 1;
+
+    Number.MIN_SAFE_INTEGER = -Number.MAX_SAFE_INTEGER;
+
+    Number.isSafeInteger = Number.isSafeInteger  ||  function (value) {
+
+       return  this.isInteger( value )  &&  (
+           Math.abs( value )  <=  this.MAX_SAFE_INTEGER
+       );
+    };
+
     /* ----- String Extension ----- */
 
     var _Trim_ = ''.trim;

@@ -39,6 +39,20 @@ define(['jquery'],  function ($) {
 
 /* ---------- iQuery Extended Pseudo ---------- */
 
+    /* ----- :indeterminate ----- */
+
+    var Check_Type = $.makeSet('radio', 'checkbox');
+
+    $.expr[':'].indeterminate = function (iDOM) {
+
+        switch ( iDOM.tagName.toLowerCase() ) {
+            case 'input':
+                if (! (iDOM.type in Check_Type))  break;
+            case 'progress':
+                return  (iDOM.indeterminate === true);
+        }
+    };
+
     /* ----- :list, :data ----- */
 
     var pList = $.makeSet('UL', 'OL', 'DL', 'TBODY', 'DATALIST');

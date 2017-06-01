@@ -5,9 +5,9 @@
 
 [**iQuery**](http://tech_query.oschina.io/iquery) 是一个 **普适**而 **轻巧**的 **DOM/JavaScript 开发库** —— **支持 IE 8+ 的 jQuery/W3C 兼容 API**，包含 最常用的 jQuery 静态/实例 属性、方法，适合替代逻辑简单的网页中体积很大的 jQuery，或作为 **Web 前端开发基础库** 嵌入各种 独立发布（不能有外部依赖、自闭合、有兼容性要求）的 JavaScript 库。
 
-若 Zepto 相当于 jQuery v2.x 的精简版，那 iQuery 就相当于 **jQuery v1.x 的精简版**；而且 iQuery 在与 Zepto 接近的 **Minimized 体积**中提供了 IE 8/9 的兼容、 **更贴近官方的 jQuery 对象实现** 以及 **更多的实用扩展**（1300+ 行，超三分之一的体量，详见下文）。
+若 Zepto 相当于 jQuery v2.x 的精简版，那 iQuery 就相当于 **jQuery v1.x 的精简版**；而且 iQuery 在与 Zepto 接近的 **Minimized 体积**中提供了 IE 8/9 的兼容、 **更贴近官方的 jQuery 对象实现** 以及 **更多的实用扩展**（2900+ 行，过半的体量，详见下文）。
 
-在 API 形态上尽力兼容 jQuery 的同时，iQuery 在内部实现上采取 **“面向未来，向前兼容”的 Polyfill 策略** —— 核心逻辑（3000+ 行）尽力基于 **W3C、ECMA 最新标准中的优秀 API**，老旧浏览器兼容代码（部分基于 jQuery API，500+ 行）尽力包装成与新 API 相同的形式（原型拓展），并独立为外部模块。这样做不但能复用 jQuery API 来高效实现，还方便开发人员自行裁剪。
+在 API 形态上尽力兼容 jQuery 的同时，iQuery 在内部实现上采取 **“面向未来，向前兼容”的 Polyfill 策略** —— 核心逻辑（4000+ 行）尽力基于 **W3C、ECMA 最新标准中的优秀 API**，老旧浏览器兼容代码（部分基于 jQuery API，1000+ 行）尽力包装成与新 API 相同的形式（原型拓展），并独立为外部模块。这样做不但能复用 jQuery API 来高效实现，还方便开发人员自行裁剪。
 
 【注】对 IE 的兼容仅限其“标准模式”，而非“兼容性视图”。
 
@@ -79,12 +79,13 @@
    - **:image** 还支持 `img, link[type="image/x-icon"], svg, canvas` 及设置了 `background-image` 的普通元素
    - **:button** 还支持 `input[type="submit"], input[type="reset"], input[type="image"]`
    - **:input** 还支持 contentEditable、designMode 属性
-   - 自带 **:focusable 伪类**（[jQuery UI](http://api.jqueryui.com/) 标准）
-   - 自带 **:data() 伪类**（[jQuery UI](http://api.jqueryui.com/) 标准）
-   - 自带 **:field 伪类**，匹配所有含 **可提交字段**的元素
-   - 新增 **:list 伪类**，等价于 `ul, ol, dl, tbody, datalist`
-   - 新增 **:media 伪类**，等价于 `:image, iframe, object, embed, audio, video`
-   - 新增 **:scrollable 伪类**，匹配所有 **内容可滚动**的元素
+   - 自带 `:indeterminate`，属 [CSS 3 标准](https://developer.mozilla.org/zh-CN/docs/Web/CSS/:indeterminate)
+   - 自带 `:focusable`，属 [jQuery UI 标准](http://www.css88.com/jquery-ui-api/focusable-selector/)
+   - 自带 `:data()`，属 [jQuery UI 标准](http://www.css88.com/jquery-ui-api/data-selector/)
+   - 自带 `:field`，匹配所有含 **可提交字段**的元素
+   - 新增 `:list`，等价于 `ul, ol, dl, tbody, datalist`
+   - 新增 `:media`，等价于 `:image, iframe, object, embed, audio, video`
+   - 新增 `:scrollable`，匹配所有 **内容可滚动**的元素
  - 新增 **子元素插入**方法 —— `$.fn.insertTo()`
  - 新增 **祖先元素交集**方法 —— `$.fn.sameParents()`
  - 新增 **有滚动条的祖先元素**方法 —— `$.fn.scrollParents()`
@@ -126,6 +127,8 @@
 
 ### ECMA、W3C 标准 API 补丁
 
+ - 自带 `Number.isInteger()` 整数判断方法
+ - 自带 `Number.isSafeInteger()` 安全整数判断方法
  - 自带 支持“非空白符”的 `String.prototype.trim()`（借鉴 PHP）
  - 自带 `String.prototype.repeat` 标准方法
  - 自带 `Array.prototype.indexOf()` 标准方法
@@ -185,7 +188,7 @@ UNIX-Shell、Windows-CMD 通用脚本 ——
 
 ```Shell
 npm install -g requirejs
-npm install -g uglify-js
+npm install -g uglify-js@2
 
 mkdir ./iQuery
 git clone https://git.oschina.net/Tech_Query/iQuery.git ./iQuery
