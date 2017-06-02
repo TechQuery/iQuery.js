@@ -6,8 +6,9 @@ define(['iObject'],  function ($) {
         trim:             function () {
             return  arguments[0].trim();
         },
-        camelCase:        function () {
-            var iName = arguments[0].split(arguments[1] || '-');
+        camelCase:        function (iName) {
+
+            iName = iName.split(arguments[1] || '-');
 
             for (var i = 1;  i < iName.length;  i++)
                 iName[i] = iName[i][0].toUpperCase() + iName[i].slice(1);
@@ -15,48 +16,55 @@ define(['iObject'],  function ($) {
             return iName.join('');
         },
         parseJSON:        function (iJSON) {
-            return  BOM.JSON.parse(iJSON,  function (iKey, iValue) {
+
+            return  JSON.parse(iJSON,  function (iKey, iValue) {
+
                 if (iKey && (typeof iValue == 'string'))  try {
-                    return  BOM.JSON.parse(iValue);
+
+                    return  JSON.parse( iValue );
+
                 } catch (iError) { }
 
                 return iValue;
             });
         },
         parseXML:         function (iString) {
+
             iString = iString.trim();
-            if ((iString[0] != '<') || (iString[iString.length - 1] != '>'))
+
+            if ((iString[0] != '<')  ||  (iString[iString.length - 1] != '>'))
                 throw 'Illegal XML Format...';
 
             var iXML = (new BOM.DOMParser()).parseFromString(iString, 'text/xml');
 
             var iError = iXML.getElementsByTagName('parsererror');
+
             if (iError.length)
                 throw  new SyntaxError(1, iError[0].childNodes[1].nodeValue);
+
             iXML.cookie;    //  for old WebKit core to throw Error
 
             return iXML;
         },
         param:            function (iObject) {
-            var iParameter = [ ],  iValue;
 
-            if ($.isPlainObject( iObject ))
-                for (var iName in iObject) {
-                    iValue = iObject[iName];
+            var iParameter = new BOM.URLSearchParams();
 
-                    if ( $.isPlainObject(iValue) )
-                        iValue = BOM.JSON.stringify(iValue);
-                    else if (! $.isData(iValue))
-                        continue;
+            if ($.likeArray( iObject ))
+                for (var i = 0;  iObject[i];  i++)
+                    iParameter.append(iObject[i].name, iObject[i].value);
+            else
+                $.each(iObject, function (iName) {
 
-                    iParameter.push(iName + '=' + BOM.encodeURIComponent(iValue));
-                }
-            else if ($.likeArray( iObject ))
-                for (var i = 0, j = 0;  i < iObject.length;  i++)
-                    iParameter[j++] = iObject[i].name + '=' +
-                        BOM.encodeURIComponent( iObject[i].value );
+                    var iValue = (this == BOM)  ?  ''  :  this;
 
-            return iParameter.join('&');
+                    iValue = $.isPlainObject( iValue )  ?
+                        JSON.stringify( iValue )  :  iValue;
+
+                    iParameter.append(iName, iValue);
+                });
+
+            return  iParameter + '';
         },
         contains:         function (iParent, iChild) {
             if (! iChild)  return false;

@@ -2,7 +2,7 @@
 //              >>>  jQuery+  <<<
 //
 //
-//    [Version]    v8.8  (2017-06-01)
+//    [Version]    v9.0  (2017-06-02)
 //
 //    [Require]    jQuery  v1.9+
 //
@@ -37,12 +37,14 @@
         };
 
     Object.getPrototypeOf = Object.getPrototypeOf  ||  function (iObject) {
+
         return  (iObject != null)  &&  (
             iObject.constructor.prototype || iObject.__proto__
         );
     };
 
     Object.create = Object.create  ||  function (iProto, iProperty) {
+
         if (typeof iProto != 'object')
             throw TypeError('Object prototype may only be an Object or null');
 
@@ -109,12 +111,39 @@
     };
 
     String.prototype.repeat = String.prototype.repeat  ||  function (Times) {
+
         return  (new Array(Times + 1)).join(this);
     };
 
     /* ----- Array Extension ----- */
 
+    Array.from = Array.from  ||  function (iterator) {
+
+        var array = [ ],  _This_;
+
+        if (Number.isInteger( iterator.length )) {
+
+            if (DOM.documentMode > 8)
+                return  Array.apply(null, iterator);
+            else {
+                for (var i = 0;  i < iterator.length;  i++)
+                    array[i] = iterator[i];
+
+                return array;
+            }
+        } else if (iterator.next instanceof Function) {
+
+            while ((_This_ = iterator.next()).done  ===  false)
+                array.push( _This_.value );
+
+            return array;
+        }
+
+        throw  TypeError('Cannot convert undefined or null to object');
+    };
+
     Array.prototype.indexOf = Array.prototype.indexOf  ||  function () {
+
         for (var i = 0;  i < this.length;  i++)
             if (arguments[0] === this[i])
                 return i;
@@ -122,17 +151,18 @@
         return -1;
     };
 
-    Array.prototype.reduce = Array.prototype.reduce  ||  function () {
-        var iResult = arguments[1];
+    Array.prototype.reduce = Array.prototype.reduce ||
+        function (callback, value) {
 
-        for (var i = 1;  i < this.length;  i++) {
-            if (i == 1)  iResult = this[0];
+            for (var i = 1;  i < this.length;  i++) {
 
-            iResult = arguments[0](iResult, this[i], i, this);
-        }
+                if (i == 1)  value = this[0];
 
-        return iResult;
-    };
+                value = callback(value, this[i], i, this);
+            }
+
+            return value;
+        };
 
     /* ----- Function Extension ----- */
 
@@ -141,6 +171,7 @@
     }
 
     if (! ('name' in Function.prototype)) {
+
         if (DOM.documentMode > 8)
             Object.defineProperty(Function.prototype,  'name',  {get: FuncName});
         else
@@ -346,6 +377,7 @@
 (function (BOM, DOM, $) {
 
     $.likeArray = function (iObject) {
+
         if ((! iObject)  ||  (typeof iObject != 'object'))
             return false;
 
@@ -360,6 +392,7 @@
     };
 
     $.makeSet = function () {
+
         var iArgs = arguments,  iValue = true,  iSet = { };
 
         if (this.likeArray( iArgs[1] )) {
@@ -377,9 +410,24 @@
         return iSet;
     };
 
+    $.makeIterator = function (array) {
+
+        var nextIndex = 0;
+
+        return {
+            next:    function () {
+
+                return  (nextIndex >= array.length)  ?
+                    {done: true}  :
+                    {done: false,  value: array[nextIndex++]};
+            }
+        };
+    };
+
     var DataType = $.makeSet('string', 'number', 'boolean');
 
     $.isData = function (iValue) {
+
         var iType = typeof iValue;
 
         return  Boolean(iValue)  ||  (iType in DataType)  ||  (
@@ -389,6 +437,7 @@
     };
 
     $.isEqual = function (iLeft, iRight, iDepth) {
+
         iDepth = iDepth || 1;
 
         if (!  (iLeft && iRight))
@@ -423,9 +472,12 @@
     };
 
     $.trace = function (iObject, iName, iCount, iCallback) {
-        if (typeof iCount == 'function')  iCallback = iCount;
-        iCount = parseInt(iCount);
-        iCount = isNaN(iCount) ? Infinity : iCount;
+
+        if (iCount instanceof Function)  iCallback = iCount;
+
+        iCount = parseInt( iCount );
+
+        iCount = isNaN( iCount )  ?  Infinity  :  iCount;
 
         var iResult = [ ];
 
@@ -449,9 +501,11 @@
 
 
     $.intersect = function () {
+
         if (arguments.length < 2)  return arguments[0];
 
-        var iArgs = this.makeArray( arguments );
+        var iArgs = Array.from( arguments );
+
         var iArray = this.likeArray( iArgs[0] );
 
         iArgs[0] = this.map(iArgs.shift(),  function (iValue, iKey) {
@@ -602,26 +656,26 @@
         paramJSON:        function (search) {
             var _Args_ = { };
 
-            $.map(
-                (search  ?  $.split(search, '?', 2)[1]  :  BOM.location.search)
-                    .match( /[^\?&\s]+/g ),
-                function (_This_) {
-
-                    _This_ = $.split(_This_, '=', 2);
-
-                    var iValue = decodeURIComponent( _This_[1] );
+            $.each(
+                Array.from(
+                    (new BOM.URLSearchParams(
+                        (search || BOM.location.search).split('?')[1]
+                    )).entries()
+                ),
+                function () {
+                    this[1] = decodeURIComponent( this[1] );
 
                     if (
-                        (! $.isNumeric(iValue))  ||
-                        Number.isSafeInteger( +iValue )
+                        (! $.isNumeric(this[1]))  ||
+                        Number.isSafeInteger( +this[1] )
                     )  try {
-                        iValue = JSON.parse( iValue );
+                        this[1] = JSON.parse( this[1] );
                     } catch (iError) { }
 
-                    if (_This_[0] in _Args_)
-                        _Args_[_This_[0]] = [ ].concat(_Args_[_This_[0]], iValue);
+                    if (this[0] in _Args_)
+                        _Args_[this[0]] = [ ].concat(_Args_[this[0]], this[1]);
                     else
-                        _Args_[_This_[0]] = iValue;
+                        _Args_[this[0]] = this[1];
                 }
             );
 
@@ -1541,6 +1595,67 @@
                     DOM.body  :  DOM.documentElement;
             }
         });
+
+/* ---------- URL Search Parameter ---------- */
+
+    function URLSearchParams() {
+
+        this.length = 0;
+
+        var _This_ = this;
+
+        arguments[0].replace(/(\w+)=([^&]+)/g,  function (_, key, value) {
+
+            _This_.append(key, value);
+        });
+    }
+
+    $.extend(URLSearchParams.prototype, {
+        push:        Array.prototype.push,
+        splice:      Array.prototype.splice,
+        append:      function (key, value) {
+
+            this.push([key,  value + '']);
+        },
+        get:         function (key) {
+
+            for (var i = 0;  this[i];  i++)
+                if (this[i][0] === key)  return this[i][1];
+        },
+        getAll:      function (key) {
+
+            return  $.map(this,  function (_This_) {
+
+                if (_This_[0] === key)  return _This_[1];
+            });
+        },
+        delete:      function (key) {
+
+            for (var i = 0;  this[i];  i++)
+                if (this[i][0] === key)  this.splice(i, 1);
+        },
+        set:         function (key, value) {
+
+            if (this.get( key )  != null)  this.delete( key );
+
+            this.append(key, value);
+        },
+        toString:    function () {
+
+            return  encodeURIComponent($.map(this,  function (_This_) {
+
+                return  _This_[0] + '=' + _This_[1];
+
+            }).join('&'));
+        },
+        entries:     function () {
+
+            return  $.makeIterator( this );
+        }
+    });
+
+    BOM.URLSearchParams = BOM.URLSearchParams || URLSearchParams;
+
 
 /* ---------- Selected Options ---------- */
 

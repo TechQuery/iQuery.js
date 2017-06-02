@@ -16,12 +16,14 @@ define(function () {
         };
 
     Object.getPrototypeOf = Object.getPrototypeOf  ||  function (iObject) {
+
         return  (iObject != null)  &&  (
             iObject.constructor.prototype || iObject.__proto__
         );
     };
 
     Object.create = Object.create  ||  function (iProto, iProperty) {
+
         if (typeof iProto != 'object')
             throw TypeError('Object prototype may only be an Object or null');
 
@@ -88,12 +90,39 @@ define(function () {
     };
 
     String.prototype.repeat = String.prototype.repeat  ||  function (Times) {
+
         return  (new Array(Times + 1)).join(this);
     };
 
     /* ----- Array Extension ----- */
 
+    Array.from = Array.from  ||  function (iterator) {
+
+        var array = [ ],  _This_;
+
+        if (Number.isInteger( iterator.length )) {
+
+            if (DOM.documentMode > 8)
+                return  Array.apply(null, iterator);
+            else {
+                for (var i = 0;  i < iterator.length;  i++)
+                    array[i] = iterator[i];
+
+                return array;
+            }
+        } else if (iterator.next instanceof Function) {
+
+            while ((_This_ = iterator.next()).done  ===  false)
+                array.push( _This_.value );
+
+            return array;
+        }
+
+        throw  TypeError('Cannot convert undefined or null to object');
+    };
+
     Array.prototype.indexOf = Array.prototype.indexOf  ||  function () {
+
         for (var i = 0;  i < this.length;  i++)
             if (arguments[0] === this[i])
                 return i;
@@ -101,17 +130,18 @@ define(function () {
         return -1;
     };
 
-    Array.prototype.reduce = Array.prototype.reduce  ||  function () {
-        var iResult = arguments[1];
+    Array.prototype.reduce = Array.prototype.reduce ||
+        function (callback, value) {
 
-        for (var i = 1;  i < this.length;  i++) {
-            if (i == 1)  iResult = this[0];
+            for (var i = 1;  i < this.length;  i++) {
 
-            iResult = arguments[0](iResult, this[i], i, this);
-        }
+                if (i == 1)  value = this[0];
 
-        return iResult;
-    };
+                value = callback(value, this[i], i, this);
+            }
+
+            return value;
+        };
 
     /* ----- Function Extension ----- */
 
@@ -120,6 +150,7 @@ define(function () {
     }
 
     if (! ('name' in Function.prototype)) {
+
         if (DOM.documentMode > 8)
             Object.defineProperty(Function.prototype,  'name',  {get: FuncName});
         else

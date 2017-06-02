@@ -1,6 +1,7 @@
 define(['jquery'],  function ($) {
 
     $.likeArray = function (iObject) {
+
         if ((! iObject)  ||  (typeof iObject != 'object'))
             return false;
 
@@ -15,6 +16,7 @@ define(['jquery'],  function ($) {
     };
 
     $.makeSet = function () {
+
         var iArgs = arguments,  iValue = true,  iSet = { };
 
         if (this.likeArray( iArgs[1] )) {
@@ -32,9 +34,24 @@ define(['jquery'],  function ($) {
         return iSet;
     };
 
+    $.makeIterator = function (array) {
+
+        var nextIndex = 0;
+
+        return {
+            next:    function () {
+
+                return  (nextIndex >= array.length)  ?
+                    {done: true}  :
+                    {done: false,  value: array[nextIndex++]};
+            }
+        };
+    };
+
     var DataType = $.makeSet('string', 'number', 'boolean');
 
     $.isData = function (iValue) {
+
         var iType = typeof iValue;
 
         return  Boolean(iValue)  ||  (iType in DataType)  ||  (
@@ -44,6 +61,7 @@ define(['jquery'],  function ($) {
     };
 
     $.isEqual = function (iLeft, iRight, iDepth) {
+
         iDepth = iDepth || 1;
 
         if (!  (iLeft && iRight))
@@ -78,9 +96,12 @@ define(['jquery'],  function ($) {
     };
 
     $.trace = function (iObject, iName, iCount, iCallback) {
-        if (typeof iCount == 'function')  iCallback = iCount;
-        iCount = parseInt(iCount);
-        iCount = isNaN(iCount) ? Infinity : iCount;
+
+        if (iCount instanceof Function)  iCallback = iCount;
+
+        iCount = parseInt( iCount );
+
+        iCount = isNaN( iCount )  ?  Infinity  :  iCount;
 
         var iResult = [ ];
 
@@ -104,9 +125,11 @@ define(['jquery'],  function ($) {
 
 
     $.intersect = function () {
+
         if (arguments.length < 2)  return arguments[0];
 
-        var iArgs = this.makeArray( arguments );
+        var iArgs = Array.from( arguments );
+
         var iArray = this.likeArray( iArgs[0] );
 
         iArgs[0] = this.map(iArgs.shift(),  function (iValue, iKey) {

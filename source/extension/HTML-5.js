@@ -89,6 +89,67 @@ define(['jquery'],  function ($) {
             }
         });
 
+/* ---------- URL Search Parameter ---------- */
+
+    function URLSearchParams() {
+
+        this.length = 0;
+
+        var _This_ = this;
+
+        arguments[0].replace(/(\w+)=([^&]+)/g,  function (_, key, value) {
+
+            _This_.append(key, value);
+        });
+    }
+
+    $.extend(URLSearchParams.prototype, {
+        push:        Array.prototype.push,
+        splice:      Array.prototype.splice,
+        append:      function (key, value) {
+
+            this.push([key,  value + '']);
+        },
+        get:         function (key) {
+
+            for (var i = 0;  this[i];  i++)
+                if (this[i][0] === key)  return this[i][1];
+        },
+        getAll:      function (key) {
+
+            return  $.map(this,  function (_This_) {
+
+                if (_This_[0] === key)  return _This_[1];
+            });
+        },
+        delete:      function (key) {
+
+            for (var i = 0;  this[i];  i++)
+                if (this[i][0] === key)  this.splice(i, 1);
+        },
+        set:         function (key, value) {
+
+            if (this.get( key )  != null)  this.delete( key );
+
+            this.append(key, value);
+        },
+        toString:    function () {
+
+            return  encodeURIComponent($.map(this,  function (_This_) {
+
+                return  _This_[0] + '=' + _This_[1];
+
+            }).join('&'));
+        },
+        entries:     function () {
+
+            return  $.makeIterator( this );
+        }
+    });
+
+    BOM.URLSearchParams = BOM.URLSearchParams || URLSearchParams;
+
+
 /* ---------- Selected Options ---------- */
 
     if ($.browser.msie < 12)

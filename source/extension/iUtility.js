@@ -113,26 +113,26 @@ define(['jquery'],  function ($) {
         paramJSON:        function (search) {
             var _Args_ = { };
 
-            $.map(
-                (search  ?  $.split(search, '?', 2)[1]  :  BOM.location.search)
-                    .match( /[^\?&\s]+/g ),
-                function (_This_) {
-
-                    _This_ = $.split(_This_, '=', 2);
-
-                    var iValue = decodeURIComponent( _This_[1] );
+            $.each(
+                Array.from(
+                    (new BOM.URLSearchParams(
+                        (search || BOM.location.search).split('?')[1]
+                    )).entries()
+                ),
+                function () {
+                    this[1] = decodeURIComponent( this[1] );
 
                     if (
-                        (! $.isNumeric(iValue))  ||
-                        Number.isSafeInteger( +iValue )
+                        (! $.isNumeric(this[1]))  ||
+                        Number.isSafeInteger( +this[1] )
                     )  try {
-                        iValue = JSON.parse( iValue );
+                        this[1] = JSON.parse( this[1] );
                     } catch (iError) { }
 
-                    if (_This_[0] in _Args_)
-                        _Args_[_This_[0]] = [ ].concat(_Args_[_This_[0]], iValue);
+                    if (this[0] in _Args_)
+                        _Args_[this[0]] = [ ].concat(_Args_[this[0]], this[1]);
                     else
-                        _Args_[_This_[0]] = iValue;
+                        _Args_[this[0]] = this[1];
                 }
             );
 

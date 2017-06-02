@@ -1,12 +1,19 @@
 define(['extension/iObject'],  function ($) {
 
     $.isPlainObject = function (iValue) {
+
         return  iValue  &&  (typeof iValue == 'object')  &&  (
             Object.getPrototypeOf(iValue) === Object.prototype
         );
     };
 
+    $.makeArray = function () {
+
+        return  Array.from( arguments[0] );
+    };
+
     function _Extend_(iTarget, iSource, iDeep) {
+
         iTarget = ((! iTarget)  &&  (iSource instanceof Array))  ?
             [ ]  :  Object(iTarget);
 
@@ -27,15 +34,8 @@ define(['extension/iObject'],  function ($) {
         return iTarget;
     }
 
-    $.makeArray = $.browser.modern ?
-        function () {
-            return  Array.apply(null, arguments[0]);
-        } :
-        function () {
-            return  _Extend_([ ], arguments[0]);
-        };
-
     $.fn.extend = $.extend = function () {
+
         var iArgs = $.makeArray( arguments );
 
         var iDeep = (iArgs[0] === true)  &&  iArgs.shift();
@@ -50,6 +50,7 @@ define(['extension/iObject'],  function ($) {
 
     $.extend({
         type:             function (iValue) {
+
             if (iValue === null)  return 'null';
 
             var iType = typeof (
@@ -59,6 +60,7 @@ define(['extension/iObject'],  function ($) {
                 Object.prototype.toString.call(iValue).slice(8, -1).toLowerCase();
         },
         isNumeric:        function (iValue) {
+
             iValue = (iValue && iValue.valueOf)  ?  iValue.valueOf()  :  iValue;
 
             if ((iValue === '')  ||  (iValue === Infinity)  ||  isNaN(iValue))
@@ -73,11 +75,13 @@ define(['extension/iObject'],  function ($) {
             return  (typeof +iValue == 'number');
         },
         isEmptyObject:    function () {
-            for (var iKey in arguments[0])
-                return false;
+
+            for (var iKey in arguments[0])  return false;
+
             return true;
         },
         each:             function (Arr_Obj, iEvery) {
+
             if (this.likeArray( Arr_Obj ))
                 for (var i = 0;  i < Arr_Obj.length;  i++)  try {
                     if (false  ===  iEvery.call(Arr_Obj[i], i, Arr_Obj[i]))
@@ -94,6 +98,7 @@ define(['extension/iObject'],  function ($) {
                 } catch (iError) {
                     console.dir( iError.valueOf() );
                 }
+
             return Arr_Obj;
         },
         map:              function (iSource, iCallback) {

@@ -2,7 +2,7 @@
 //                >>>  iQuery.js  <<<
 //
 //
-//      [Version]    v2.0  (2017-05-09)  Stable
+//      [Version]    v2.0  (2017-06-02)  Stable
 //
 //      [Usage]      A Light-weight jQuery Compatible API
 //                   with IE 8+ compatibility.
@@ -43,12 +43,14 @@
         };
 
     Object.getPrototypeOf = Object.getPrototypeOf  ||  function (iObject) {
+
         return  (iObject != null)  &&  (
             iObject.constructor.prototype || iObject.__proto__
         );
     };
 
     Object.create = Object.create  ||  function (iProto, iProperty) {
+
         if (typeof iProto != 'object')
             throw TypeError('Object prototype may only be an Object or null');
 
@@ -68,6 +70,25 @@
                 iObject[iKey] = iProperty[iKey].value;
 
         return iObject;
+    };
+
+    /* ----- Number Extension ----- */
+
+    Number.isInteger = Number.isInteger  ||  function (value) {
+
+        return  (typeof value === 'number')  &&  isFinite( value )  &&
+            (Math.floor(value) === value);
+    };
+
+    Number.MAX_SAFE_INTEGER = Math.pow(2, 53) - 1;
+
+    Number.MIN_SAFE_INTEGER = -Number.MAX_SAFE_INTEGER;
+
+    Number.isSafeInteger = Number.isSafeInteger  ||  function (value) {
+
+       return  this.isInteger( value )  &&  (
+           Math.abs( value )  <=  this.MAX_SAFE_INTEGER
+       );
     };
 
     /* ----- String Extension ----- */
@@ -96,12 +117,39 @@
     };
 
     String.prototype.repeat = String.prototype.repeat  ||  function (Times) {
+
         return  (new Array(Times + 1)).join(this);
     };
 
     /* ----- Array Extension ----- */
 
+    Array.from = Array.from  ||  function (iterator) {
+
+        var array = [ ],  _This_;
+
+        if (Number.isInteger( iterator.length )) {
+
+            if (DOM.documentMode > 8)
+                return  Array.apply(null, iterator);
+            else {
+                for (var i = 0;  i < iterator.length;  i++)
+                    array[i] = iterator[i];
+
+                return array;
+            }
+        } else if (iterator.next instanceof Function) {
+
+            while ((_This_ = iterator.next()).done  ===  false)
+                array.push( _This_.value );
+
+            return array;
+        }
+
+        throw  TypeError('Cannot convert undefined or null to object');
+    };
+
     Array.prototype.indexOf = Array.prototype.indexOf  ||  function () {
+
         for (var i = 0;  i < this.length;  i++)
             if (arguments[0] === this[i])
                 return i;
@@ -109,17 +157,18 @@
         return -1;
     };
 
-    Array.prototype.reduce = Array.prototype.reduce  ||  function () {
-        var iResult = arguments[1];
+    Array.prototype.reduce = Array.prototype.reduce ||
+        function (callback, value) {
 
-        for (var i = 1;  i < this.length;  i++) {
-            if (i == 1)  iResult = this[0];
+            for (var i = 1;  i < this.length;  i++) {
 
-            iResult = arguments[0](iResult, this[i], i, this);
-        }
+                if (i == 1)  value = this[0];
 
-        return iResult;
-    };
+                value = callback(value, this[i], i, this);
+            }
+
+            return value;
+        };
 
     /* ----- Function Extension ----- */
 
@@ -128,6 +177,7 @@
     }
 
     if (! ('name' in Function.prototype)) {
+
         if (DOM.documentMode > 8)
             Object.defineProperty(Function.prototype,  'name',  {get: FuncName});
         else
@@ -364,6 +414,20 @@
         return iSet;
     };
 
+    $.makeIterator = function (array) {
+
+        var nextIndex = 0;
+
+        return {
+            next:    function () {
+
+                return  (nextIndex >= array.length)  ?
+                    {done: true}  :
+                    {done: false,  value: array[nextIndex++]};
+            }
+        };
+    };
+
     var DataType = $.makeSet('string', 'number', 'boolean');
 
     $.isData = function (iValue) {
@@ -479,12 +543,19 @@
 (function (BOM, DOM, $) {
 
     $.isPlainObject = function (iValue) {
+
         return  iValue  &&  (typeof iValue == 'object')  &&  (
             Object.getPrototypeOf(iValue) === Object.prototype
         );
     };
 
+    $.makeArray = function () {
+
+        return  Array.from( arguments[0] );
+    };
+
     function _Extend_(iTarget, iSource, iDeep) {
+
         iTarget = ((! iTarget)  &&  (iSource instanceof Array))  ?
             [ ]  :  Object(iTarget);
 
@@ -505,15 +576,8 @@
         return iTarget;
     }
 
-    $.makeArray = $.browser.modern ?
-        function () {
-            return  Array.apply(null, arguments[0]);
-        } :
-        function () {
-            return  _Extend_([ ], arguments[0]);
-        };
-
     $.fn.extend = $.extend = function () {
+
         var iArgs = $.makeArray( arguments );
 
         var iDeep = (iArgs[0] === true)  &&  iArgs.shift();
@@ -528,6 +592,7 @@
 
     $.extend({
         type:             function (iValue) {
+
             if (iValue === null)  return 'null';
 
             var iType = typeof (
@@ -537,6 +602,7 @@
                 Object.prototype.toString.call(iValue).slice(8, -1).toLowerCase();
         },
         isNumeric:        function (iValue) {
+
             iValue = (iValue && iValue.valueOf)  ?  iValue.valueOf()  :  iValue;
 
             if ((iValue === '')  ||  (iValue === Infinity)  ||  isNaN(iValue))
@@ -551,11 +617,13 @@
             return  (typeof +iValue == 'number');
         },
         isEmptyObject:    function () {
-            for (var iKey in arguments[0])
-                return false;
+
+            for (var iKey in arguments[0])  return false;
+
             return true;
         },
         each:             function (Arr_Obj, iEvery) {
+
             if (this.likeArray( Arr_Obj ))
                 for (var i = 0;  i < Arr_Obj.length;  i++)  try {
                     if (false  ===  iEvery.call(Arr_Obj[i], i, Arr_Obj[i]))
@@ -572,6 +640,7 @@
                 } catch (iError) {
                     console.dir( iError.valueOf() );
                 }
+
             return Arr_Obj;
         },
         map:              function (iSource, iCallback) {
@@ -632,8 +701,9 @@
         trim:             function () {
             return  arguments[0].trim();
         },
-        camelCase:        function () {
-            var iName = arguments[0].split(arguments[1] || '-');
+        camelCase:        function (iName) {
+
+            iName = iName.split(arguments[1] || '-');
 
             for (var i = 1;  i < iName.length;  i++)
                 iName[i] = iName[i][0].toUpperCase() + iName[i].slice(1);
@@ -641,48 +711,55 @@
             return iName.join('');
         },
         parseJSON:        function (iJSON) {
-            return  BOM.JSON.parse(iJSON,  function (iKey, iValue) {
+
+            return  JSON.parse(iJSON,  function (iKey, iValue) {
+
                 if (iKey && (typeof iValue == 'string'))  try {
-                    return  BOM.JSON.parse(iValue);
+
+                    return  JSON.parse( iValue );
+
                 } catch (iError) { }
 
                 return iValue;
             });
         },
         parseXML:         function (iString) {
+
             iString = iString.trim();
-            if ((iString[0] != '<') || (iString[iString.length - 1] != '>'))
+
+            if ((iString[0] != '<')  ||  (iString[iString.length - 1] != '>'))
                 throw 'Illegal XML Format...';
 
             var iXML = (new BOM.DOMParser()).parseFromString(iString, 'text/xml');
 
             var iError = iXML.getElementsByTagName('parsererror');
+
             if (iError.length)
                 throw  new SyntaxError(1, iError[0].childNodes[1].nodeValue);
+
             iXML.cookie;    //  for old WebKit core to throw Error
 
             return iXML;
         },
         param:            function (iObject) {
-            var iParameter = [ ],  iValue;
 
-            if ($.isPlainObject( iObject ))
-                for (var iName in iObject) {
-                    iValue = iObject[iName];
+            var iParameter = new BOM.URLSearchParams();
 
-                    if ( $.isPlainObject(iValue) )
-                        iValue = BOM.JSON.stringify(iValue);
-                    else if (! $.isData(iValue))
-                        continue;
+            if ($.likeArray( iObject ))
+                for (var i = 0;  iObject[i];  i++)
+                    iParameter.append(iObject[i].name, iObject[i].value);
+            else
+                $.each(iObject, function (iName) {
 
-                    iParameter.push(iName + '=' + BOM.encodeURIComponent(iValue));
-                }
-            else if ($.likeArray( iObject ))
-                for (var i = 0, j = 0;  i < iObject.length;  i++)
-                    iParameter[j++] = iObject[i].name + '=' +
-                        BOM.encodeURIComponent( iObject[i].value );
+                    var iValue = (this == BOM)  ?  ''  :  this;
 
-            return iParameter.join('&');
+                    iValue = $.isPlainObject( iValue )  ?
+                        JSON.stringify( iValue )  :  iValue;
+
+                    iParameter.append(iName, iValue);
+                });
+
+            return  iParameter + '';
         },
         contains:         function (iParent, iChild) {
             if (! iChild)  return false;
@@ -833,29 +910,31 @@
             return  BOM.JSON.stringify(arguments[0], null, 4)
                 .replace(/(\s+"[^"]+":) ([^\s]+)/g, '$1    $2');
         },
-        paramJSON:        function (Args_Str) {
-            Args_Str = (
-                Args_Str  ?  $.split(Args_Str, '?', 2)[1]  :  BOM.location.search
-            ).match(/[^\?&\s]+/g);
-
-            if (! Args_Str)  return { };
-
+        paramJSON:        function (search) {
             var _Args_ = { };
 
-            for (var i = 0, iValue;  i < Args_Str.length;  i++) {
-                Args_Str[i] = this.split(Args_Str[i], '=', 2);
+            $.each(
+                Array.from(
+                    (new BOM.URLSearchParams(
+                        (search || BOM.location.search).split('?')[1]
+                    )).entries()
+                ),
+                function () {
+                    this[1] = decodeURIComponent( this[1] );
 
-                iValue = BOM.decodeURIComponent( Args_Str[i][1] );
+                    if (
+                        (! $.isNumeric(this[1]))  ||
+                        Number.isSafeInteger( +this[1] )
+                    )  try {
+                        this[1] = JSON.parse( this[1] );
+                    } catch (iError) { }
 
-                if (
-                    (! $.isNumeric(iValue))  ||
-                    (parseInt( iValue ).toString().length  <  17)
-                )  try {
-                    iValue = JSON.parse( iValue );
-                } catch (iError) { }
-
-                _Args_[ Args_Str[i][0] ] = iValue;
-            }
+                    if (this[0] in _Args_)
+                        _Args_[this[0]] = [ ].concat(_Args_[this[0]], this[1]);
+                    else
+                        _Args_[this[0]] = this[1];
+                }
+            );
 
             return _Args_;
         },
@@ -1443,10 +1522,11 @@
             display:    'none',
             width:      0,
             height:     0
-        };
+        },
+        Check_Type = $.makeSet('radio', 'checkbox');
 
     $.expr[':'] = $.expr.filters = {
-        visible:    function () {
+        visible:     function () {
             var iStyle = BOM.getComputedStyle( arguments[0] );
 
             for (var iKey in pVisible)
@@ -1454,13 +1534,20 @@
 
             return true;
         },
-        hidden:    function () {
+        hidden:      function () {
             return  (! this.visible(arguments[0]));
         },
         header:      function () {
             return  (arguments[0] instanceof HTMLHeadingElement);
         },
+        checked:     function (iDOM) {
+            return (
+                (iDOM.tagName.toLowerCase() == 'input')  &&
+                (iDOM.type in Check_Type)  &&  (iDOM.checked === true)
+            );
+        },
         parent:      function (iDOM) {
+
             if (iDOM.children.length)  return true;
 
             iDOM = iDOM.childNodes;
@@ -1472,9 +1559,11 @@
             return  (! this.parent(arguments[0]));
         },
         contains:    function (iDOM, Index, iMatch) {
-            return  (iDOM.textContent.indexOf(iMatch[3]) > -1);
+
+            return  (iDOM.textContent.indexOf( iMatch[3] )  >  -1);
         },
         not:         function (iDOM, Index, iMatch) {
+
             return  (! $.fn.is.call([iDOM], iMatch[3]));
         }
     };
@@ -1523,6 +1612,20 @@
     };
 
 /* ---------- iQuery Extended Pseudo ---------- */
+
+    /* ----- :indeterminate ----- */
+
+    var Check_Type = $.makeSet('radio', 'checkbox');
+
+    $.expr[':'].indeterminate = function (iDOM) {
+
+        switch ( iDOM.tagName.toLowerCase() ) {
+            case 'input':
+                if (! (iDOM.type in Check_Type))  break;
+            case 'progress':
+                return  (iDOM.indeterminate === true);
+        }
+    };
 
     /* ----- :list, :data ----- */
 
@@ -3105,6 +3208,67 @@
                     DOM.body  :  DOM.documentElement;
             }
         });
+
+/* ---------- URL Search Parameter ---------- */
+
+    function URLSearchParams() {
+
+        this.length = 0;
+
+        var _This_ = this;
+
+        arguments[0].replace(/(\w+)=([^&]+)/g,  function (_, key, value) {
+
+            _This_.append(key, value);
+        });
+    }
+
+    $.extend(URLSearchParams.prototype, {
+        push:        Array.prototype.push,
+        splice:      Array.prototype.splice,
+        append:      function (key, value) {
+
+            this.push([key,  value + '']);
+        },
+        get:         function (key) {
+
+            for (var i = 0;  this[i];  i++)
+                if (this[i][0] === key)  return this[i][1];
+        },
+        getAll:      function (key) {
+
+            return  $.map(this,  function (_This_) {
+
+                if (_This_[0] === key)  return _This_[1];
+            });
+        },
+        delete:      function (key) {
+
+            for (var i = 0;  this[i];  i++)
+                if (this[i][0] === key)  this.splice(i, 1);
+        },
+        set:         function (key, value) {
+
+            if (this.get( key )  != null)  this.delete( key );
+
+            this.append(key, value);
+        },
+        toString:    function () {
+
+            return  encodeURIComponent($.map(this,  function (_This_) {
+
+                return  _This_[0] + '=' + _This_[1];
+
+            }).join('&'));
+        },
+        entries:     function () {
+
+            return  $.makeIterator( this );
+        }
+    });
+
+    BOM.URLSearchParams = BOM.URLSearchParams || URLSearchParams;
+
 
 /* ---------- Selected Options ---------- */
 
