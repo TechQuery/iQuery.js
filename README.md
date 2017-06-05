@@ -5,9 +5,9 @@
 
 [**iQuery**](http://tech_query.oschina.io/iquery) 是一个 **普适**而 **轻巧**的 **DOM/JavaScript 开发库** —— **支持 IE 8+ 的 jQuery/W3C 兼容 API**，包含 最常用的 jQuery 静态/实例 属性、方法，适合替代逻辑简单的网页中体积很大的 jQuery，或作为 **Web 前端开发基础库** 嵌入各种 独立发布（不能有外部依赖、自闭合、有兼容性要求）的 JavaScript 库。
 
-若 Zepto 相当于 jQuery v2.x 的精简版，那 iQuery 就相当于 **jQuery v1.x 的精简版**；而且 iQuery 在与 Zepto 接近的 **Minimized 体积**中提供了 IE 8/9 的兼容、 **更贴近官方的 jQuery 对象实现** 以及 **更多的实用扩展**（3000+ 行，过半的体量，详见下文）。
+若 Zepto 相当于 jQuery v2.x 的精简版，那 iQuery 就相当于 **jQuery v1.x 的精简版**；而且 iQuery 在与 Zepto 接近的 **Minimized 体积**中提供了 IE 8/9 的兼容、 **更贴近官方的 jQuery 对象实现** 以及 **更多的实用扩展**（3200+ 行，近六成的体量，详见下文）。
 
-在 API 形态上尽力兼容 jQuery 的同时，iQuery 在内部实现上采取 **“面向未来，向前兼容”的 Polyfill 策略** —— 核心逻辑（4000+ 行）尽力基于 **W3C、ECMA 最新标准中的优秀 API**，老旧浏览器兼容代码（部分基于 jQuery API，1000+ 行）尽力包装成与新 API 相同的形式（原型拓展），并独立为外部模块。这样做不但能复用 jQuery API 来高效实现，还方便开发人员自行裁剪。
+在 API 形态上尽力兼容 jQuery 的同时，iQuery 在内部实现上采取 **“面向未来，向前兼容”的 Polyfill 策略** —— 核心逻辑（4300+ 行）尽力基于 **W3C、ECMA 最新标准中的优秀 API**，老旧浏览器兼容代码（部分基于 jQuery API，1200+ 行）尽力包装成与新 API 相同的形式（原型拓展），并独立为外部模块。这样做不但能复用 jQuery API 来高效实现，还方便开发人员自行裁剪。
 
 【注】对 IE 的兼容仅限其“标准模式”，而非“兼容性视图”。
 
@@ -43,7 +43,7 @@
 
 ### 对 jQuery（最新版）的增强
 
-以下扩展已收录在本项目的 [**jQuery+.js**](/master/jQuery+.js) 中，方便配合其它 jQuery API 实现 ——
+以下扩展已收录在本项目的 [**jQueryKit.js**](/master/jQueryKit.js) 中，方便配合其它 jQuery API 实现 ——
  - 内置一个改进且向下兼容的 **$.browser 对象**，能通过 **直接比较版本号**来区分浏览器
  - 新增 **计时相关方法（秒基准）**—— `$.every()`、`$.wait()`、`$.start()`、`$.end()`
  - 新增 **函数执行节流器** —— `$.throttle()`
@@ -65,7 +65,8 @@
  - 新增 **函数柯里化**方法 —— `$.curry()`
  - 新增 **URL 信息提取**方法 —— `$.fileName()`、`$.filePath()`、`$.urlDomain()`
  - 新增 **URL 跨域判断**方法 —— `$.isCrossDomain()`
- - 新增 **URL 参数对象化**方法（$.param() 的逆方法）—— `$.paramJSON()`，其返回值自带的 .toString() 有 **JSON 格式化（美化）输出**能力
+ - 新增 **URL 参数对象化**方法（$.param() 的逆方法）—— `$.paramJSON()`
+ - 新增 **URL 参数签名**方法 —— `$.paramSign()`
  - `$.parseJSON()` 支持 **递归解析**，会将 JSON 字符串中的内层字符串 eval 为 JS 实值/例
  - 新增 **JSON 格式化显示**方法 —— `$.formatJSON()`
  - 新增 **多条件观察者**基础对象 —— `$.Observer()`
@@ -111,6 +112,12 @@
  - 新增 **跨页面消息事件**方法 —— `$.fn.onReply()`（基于 `window.postMessage()`）
  - `$.fn.animate()` 支持类似 [jQuery UI `$.fn.effect()`](http://www.css88.com/jquery-ui-api/effect/) **动画效果名**参数（基于 **CSS Animation** 实现）
  - 新增 **CSS 动画类切换**方法 —— `$.fn.toggleAnimate()`
+ - 新增 **大数位运算**方法 —— `$.bitOperate()`
+ - 新增 **Local Storage 存取**方法 —— `$.storage()`
+ - 新增 Base64 文本转 **二进制对象**方法 —— `$.toBlob()`
+ - 新增 **数据哈希**方法 —— `$.dataHash()`
+   - 默认算法：**CRC-32**
+   - 还支持 **现代浏览器 Crypto API**
 
 
 ### 未实现的 jQuery（最新版）特性
@@ -163,20 +170,15 @@
  - 自带 `URLSearchParams()` 标准对象构造函数
 
 
-## 【iQuery+ 插件库】
+## ~~【iQuery+ 插件库】~~（废弃）
+
+> 【特别提醒】以下特性已在 [EWA v4](http://git.oschina.net/Tech_Query/EasyWebApp/tree/MVVM/) 中基于 MVVM 完全重写，不再在本项目中维护！
 
  - 通用 **CommonView 对象**生成方法 —— `$.CommonView()`
  - 通用 **ListView 对象**生成方法 —— `$.ListView()`
  - ListView 多媒体优化版 **GalleryView 对象**生成方法 —— `$.GalleryView()`
  - 通用 **TreeView 对象**生成方法 —— `$.TreeView()`
  - **HTML 5  History API  Polyfill** —— 为 IE 10- 提供兼容支持（需 服务器端响应 `./blank.html` 或 404 页面）
- - **大数位运算**方法 —— `$.bitOperate()`
- - **URL 参数签名**方法 —— `$.paramSign()`
- - Local Storage 存取方法 —— `$.storage()`
- - Base64 文本转 **二进制对象**方法 —— `$.toBlob()`
- - **数据哈希**方法 —— `$.dataHash()`
-   - 默认算法：**CRC-32**
-   - 还支持 **现代浏览器 Crypto API**
 
 
 ## 【参与开发】

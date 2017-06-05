@@ -4,7 +4,7 @@
     paths:           {
         jquery:    'http://cdn.bootcss.com/jquery/1.12.4/jquery'
     },
-    out:             '../jQuery+.js',
+    out:             '../jQueryKit.js',
     onBuildWrite:    function (iName) {
         var fParameter = 'BOM, DOM',  aParameter = 'self, self.document';
 
@@ -21,7 +21,7 @@
             .replace(/\}\);\s*$/,  '})(' + aParameter + ");\n\n");
     },
     wrap:            {
-        startFile:    'jQuery+_Wrap.txt',
+        startFile:    'jQueryKit_Wrap.txt',
         end:          '});'
     },
     optimize:        'none'
