@@ -97,7 +97,7 @@ define(['jquery'],  function ($) {
 
         var _This_ = this;
 
-        arguments[0].replace(/(\w+)=([^&]+)/g,  function (_, key, value) {
+        arguments[0].replace(/([^&=]+)=([^&]+)/g,  function (_, key, value) {
 
             _This_.append(key, value);
         });
@@ -149,6 +149,14 @@ define(['jquery'],  function ($) {
 
     BOM.URLSearchParams = BOM.URLSearchParams || URLSearchParams;
 
+    BOM.URLSearchParams.prototype.sort =
+        BOM.URLSearchParams.prototype.sort  ||  function () {
+
+            Array.prototype.sort.call(this,  function (A, B) {
+
+                return  A[0].localeCompare( B[0] );
+            });
+        };
 
 /* ---------- Selected Options ---------- */
 

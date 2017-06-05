@@ -190,12 +190,9 @@
 UNIX-Shell、Windows-CMD 通用脚本 ——
 
 ```Shell
-npm install -g requirejs
-npm install -g uglify-js@2
+git clone https://git.oschina.net/Tech_Query/iQuery.git
 
-mkdir ./iQuery
-git clone https://git.oschina.net/Tech_Query/iQuery.git ./iQuery
+npm install
 
-node r.js -o build/source.js
-uglifyjs iQuery.js -c -m -o iQuery.min.js --source-map=iQuery.min.map
+npm run build
 ```

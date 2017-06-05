@@ -27,7 +27,7 @@ define(['jquery', 'extension/Promise_A+'],  function ($) {
         modern:           !  (IE_Ver < 9),
         mobile:           !! is_Mobile,
         pad:              !! is_Pad,
-        phone:            !! is_Phone,
+        phone:            (!! is_Phone)  ||  (is_Mobile  &&  (! is_Pad)),
         ios:              is_iOS  ?  parseFloat( is_iOS[2].replace('_', '.') )  :  NaN,
         android:          is_Android ? parseFloat(is_Android[2]) : NaN,
         versionNumber:    IE_Ver || FF_Ver || WK_Ver

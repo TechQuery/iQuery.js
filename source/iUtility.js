@@ -54,14 +54,19 @@ define(['iObject'],  function ($) {
                 for (var i = 0;  iObject[i];  i++)
                     iParameter.append(iObject[i].name, iObject[i].value);
             else
-                $.each(iObject, function (iName) {
+                $.each(iObject,  function (iName) {
 
                     var iValue = (this == BOM)  ?  ''  :  this;
 
                     iValue = $.isPlainObject( iValue )  ?
                         JSON.stringify( iValue )  :  iValue;
 
-                    iParameter.append(iName, iValue);
+                    if ($.likeArray( iValue ))
+                        $.map(
+                            iValue,  $.proxy(iParameter.append, iParameter, iName)
+                        );
+                    else
+                        iParameter.append(iName, iValue);
                 });
 
             return  iParameter + '';

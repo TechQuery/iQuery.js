@@ -180,4 +180,47 @@ define(['jquery'],  function ($) {
         ].join('|'))
     });
 
+/* ---------- URL Parameter Signature  v0.1 ---------- */
+
+    function JSON_Sign(iData) {
+
+        return  '{'  +  $.map(Object.keys( iData ).sort(),  function (iKey) {
+
+            return  '"'  +  iKey  +  '":'  +  JSON.stringify( iData[iKey] );
+
+        }).join()  +  '}';
+    }
+
+    $.paramSign = function (iData) {
+
+        iData = iData.valueOf();
+
+        if (typeof iData === 'string')  iData = this.paramJSON( iData );
+
+        var _Data_ = new BOM.URLSearchParams();
+
+        $.each(iData,  function (name, value) {
+
+            switch ( true ) {
+                case  (this === BOM):
+                    value = '';
+                    break;
+                case  (typeof value === 'object'):
+                    value = JSON_Sign( this );
+                    break;
+                case  $.likeArray( this ):
+                    value = '['  +  $.map(this, JSON_Sign).join()  +  ']';
+                    break;
+                case (this instanceof Function):
+                    return;
+            }
+
+            _Data_.append(name, value);
+        });
+
+        _Data_.sort();
+
+        return  _Data_ + '';
+    };
+
 });

@@ -1,0 +1,35 @@
+{
+  "name": "iquery-js",
+  "version": "2.0.0",
+  "description": "A jQuery compatible API based on built-in ECMA / W3C polyfill",
+  "main": "iQuery.js",
+  "directories": {
+    "doc": "doc"
+  },
+  "engines": {
+    "node": "^5.0.0"
+  },
+  "devDependencies": {
+    "requirejs": "^2.3.3",
+    "uglify-js": "^2.8.28"
+  },
+  "scripts": {
+    "bundle": "r_js -o build/source.js  &&  r_js -o build/extension.js",
+    "compress": "uglifyjs iQuery.js -c -m -o iQuery.min.js --source-map=iQuery.min.map",
+    "build": "npm run bundle  &&  npm run compress",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://git.oschina.net/Tech_Query/iQuery.git"
+  },
+  "keywords": [
+    "jquery",
+    "w3c-api",
+    "dom",
+    "ecma",
+    "polyfill"
+  ],
+  "author": "shiy007@qq.com",
+  "license": "GPL-2.0"
+}

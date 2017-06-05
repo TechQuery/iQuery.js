@@ -2,7 +2,7 @@
 //              >>>  jQuery+  <<<
 //
 //
-//    [Version]    v9.0  (2017-06-02)
+//    [Version]    v9.1  (2017-06-06)
 //
 //    [Require]    jQuery  v1.9+
 //
@@ -364,7 +364,7 @@
         modern:           !  (IE_Ver < 9),
         mobile:           !! is_Mobile,
         pad:              !! is_Pad,
-        phone:            !! is_Phone,
+        phone:            (!! is_Phone)  ||  (is_Mobile  &&  (! is_Pad)),
         ios:              is_iOS  ?  parseFloat( is_iOS[2].replace('_', '.') )  :  NaN,
         android:          is_Android ? parseFloat(is_Android[2]) : NaN,
         versionNumber:    IE_Ver || FF_Ver || WK_Ver
@@ -722,6 +722,49 @@
             'top', 'right', 'bottom',  'left'
         ].join('|'))
     });
+
+/* ---------- URL Parameter Signature  v0.1 ---------- */
+
+    function JSON_Sign(iData) {
+
+        return  '{'  +  $.map(Object.keys( iData ).sort(),  function (iKey) {
+
+            return  '"'  +  iKey  +  '":'  +  JSON.stringify( iData[iKey] );
+
+        }).join()  +  '}';
+    }
+
+    $.paramSign = function (iData) {
+
+        iData = iData.valueOf();
+
+        if (typeof iData === 'string')  iData = this.paramJSON( iData );
+
+        var _Data_ = new BOM.URLSearchParams();
+
+        $.each(iData,  function (name, value) {
+
+            switch ( true ) {
+                case  (this === BOM):
+                    value = '';
+                    break;
+                case  (typeof value === 'object'):
+                    value = JSON_Sign( this );
+                    break;
+                case  $.likeArray( this ):
+                    value = '['  +  $.map(this, JSON_Sign).join()  +  ']';
+                    break;
+                case (this instanceof Function):
+                    return;
+            }
+
+            _Data_.append(name, value);
+        });
+
+        _Data_.sort();
+
+        return  _Data_ + '';
+    };
 
 })(self, self.document, self.jQuery);
 
@@ -1604,7 +1647,7 @@
 
         var _This_ = this;
 
-        arguments[0].replace(/(\w+)=([^&]+)/g,  function (_, key, value) {
+        arguments[0].replace(/([^&=]+)=([^&]+)/g,  function (_, key, value) {
 
             _This_.append(key, value);
         });
@@ -1656,6 +1699,14 @@
 
     BOM.URLSearchParams = BOM.URLSearchParams || URLSearchParams;
 
+    BOM.URLSearchParams.prototype.sort =
+        BOM.URLSearchParams.prototype.sort  ||  function () {
+
+            Array.prototype.sort.call(this,  function (A, B) {
+
+                return  A[0].localeCompare( B[0] );
+            });
+        };
 
 /* ---------- Selected Options ---------- */
 
