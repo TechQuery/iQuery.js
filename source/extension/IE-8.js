@@ -152,22 +152,22 @@ define(['jquery'],  function ($) {
 /* ---------- Set Style ---------- */
 
     function toHexInt(iDec, iLength) {
-        var iHex = parseInt( Number(iDec).toFixed(0) ).toString(16);
 
-        if (iLength && (iLength > iHex.length))
-            iHex = '0'.repeat(iLength - iHex.length) + iHex;
-
-        return iHex;
+        return $.leftPad(
+            parseInt( Number(iDec).toFixed(0) ).toString(16),  iLength || 2
+        );
     }
 
     function RGB_Hex(iRed, iGreen, iBlue) {
-        var iArgs = $.makeArray(arguments);
 
-        if ((iArgs.length == 1) && (typeof iArgs[0] == 'string'))
-            iArgs = iArgs[0].replace(/rgb\(([^\)]+)\)/i, '$1').replace(/,\s*/g, ',').split(',');
+        var iArgs = $.makeArray( arguments );
 
-        for (var i = 0;  i < 3;  i++)
-            iArgs[i] = toHexInt(iArgs[i], 2);
+        if ((iArgs.length < 2)  &&  (typeof iArgs[0] == 'string'))
+            iArgs = iArgs[0].replace(/rgb\(([^\)]+)\)/i, '$1')
+                .replace(/,\s*/g, ',').split(',');
+
+        for (var i = 0;  i < 3;  i++)  iArgs[i] = toHexInt( iArgs[i] );
+
         return iArgs.join('');
     }
 
@@ -195,7 +195,7 @@ define(['jquery'],  function ($) {
                 iWrapper = 'progid:' + DX_Filter +
                     'Gradient(startColorStr=#{n},endColorStr=#{n})';
                 iConvert = function (iAlpha, iRGB) {
-                    return  toHexInt(parseFloat(iAlpha) * 256, 2) + RGB_Hex(iRGB);
+                    return  toHexInt(parseFloat(iAlpha) * 256) + RGB_Hex(iRGB);
                 };
             }
             if (iWrapper)

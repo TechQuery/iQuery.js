@@ -2,7 +2,7 @@
 //                >>>  iQuery.js  <<<
 //
 //
-//      [Version]    v2.0  (2017-06-06)  Stable
+//      [Version]    v2.0  (2017-06-07)  Stable
 //
 //      [Usage]      A Light-weight jQuery Compatible API
 //                   with IE 8+ compatibility.
@@ -72,7 +72,7 @@
         return iObject;
     };
 
-    /* ----- Number Extension ----- */
+    /* ----- Number Patch ----- */
 
     Number.isInteger = Number.isInteger  ||  function (value) {
 
@@ -121,26 +121,39 @@
         return  (new Array(Times + 1)).join(this);
     };
 
-    /* ----- Array Extension ----- */
+    /* ----- Array Patch ----- */
+
+    function Array_push(value, mapCall, mapContext) {
+
+        return Array.prototype.push.call(
+            this,
+            (mapCall instanceof Function)  ?
+                mapCall.call(mapContext, value, this.length, this)  :  value
+        );
+    }
 
     Array.from = Array.from  ||  function (iterator) {
 
-        var array = [ ],  _This_;
+        var array, _This_;
+
+        try {
+            array = new this();
+        } catch (error) {
+            array = Object.create( this.prototype );
+        }
 
         if (Number.isInteger( iterator.length )) {
 
-            if (DOM.documentMode > 8)
-                return  Array.apply(null, iterator);
-            else {
-                for (var i = 0;  i < iterator.length;  i++)
-                    array[i] = iterator[i];
+            for (var i = 0;  i < iterator.length;  i++)
+                Array_push.call(array, iterator[i], arguments[1], arguments[2]);
 
-                return array;
-            }
-        } else if (iterator.next instanceof Function) {
+            return array;
+        }
+
+        if (iterator.next instanceof Function) {
 
             while ((_This_ = iterator.next()).done  ===  false)
-                array.push( _This_.value );
+                Array_push.call(array, _This_.value, arguments[1], arguments[2]);
 
             return array;
         }
@@ -170,7 +183,7 @@
             return value;
         };
 
-    /* ----- Function Extension ----- */
+    /* ----- Function Patch ----- */
 
     function FuncName() {
         return  (this.toString().trim().match(/^function\s+([^\(\s]*)/) || '')[1];
@@ -184,7 +197,7 @@
             Function.prototype.name = FuncName;
     }
 
-    /* ----- Date Extension ----- */
+    /* ----- Date Patch ----- */
 
     Date.now = Date.now  ||  function () { return  +(new Date()); };
 
@@ -558,9 +571,20 @@
         );
     };
 
-    $.makeArray = function () {
+//  Thanks "ecalf" for
+//
+//      http://www.cnblogs.com/ecalf/archive/2012/12/06/2805546.html
 
-        return  Array.from( arguments[0] );
+    $.makeArray = function (object) {
+        try {
+            return  Array.prototype.concat.apply([ ], object);
+        } catch (error) {
+            try {
+                return  Array.prototype.slice.call(object, 0);
+            } catch (error) {
+                return  [ object ];
+            }
+        }
     };
 
     function _Extend_(iTarget, iSource, iDeep) {
@@ -1248,17 +1272,15 @@
                     .slice(-1)[0];
             }
 
-            return $.map(
-                $.makeArray(iNew.childNodes),
-                function (iDOM) {
-                    return iDOM.parentNode.removeChild(iDOM);
-                }
-            );
+            return  Array.from(iNew.childNodes,  function (iDOM) {
+
+                return  iDOM.parentNode.removeChild( iDOM );
+            });
         },
-        find:          function (iSelector, iRoot) {
-            var _Self_ = arguments.callee;
+        find:          function find(iSelector, iRoot) {
 
             return  $.map(iSelector.split(/\s*,\s*/),  function (_Selector_) {
+
                 var iPseudo = [ ],  _Before_,  _After_ = _Selector_;
 
                 while (! (iPseudo[1] in $.expr[':'])) {
@@ -1278,10 +1300,10 @@
                 iPseudo.splice(2, 1);
 
                 return $.map(
-                    QuerySelector.call(iRoot, _Before_),
-                    function (iDOM, Index) {
+                    QuerySelector.call(iRoot, _Before_),  function (iDOM, Index) {
+
                         if ($.expr[':'][iPseudo[1]](iDOM, Index, iPseudo))
-                            return  _Self_(_After_, iDOM);
+                            return  find(_After_, iDOM);
                     }
                 );
             });
@@ -1781,6 +1803,7 @@
         var _Not_ = iArgs.shift(),  _Reverse_ = iArgs[0];
 
         return  function ($_Filter) {
+
             var $_Result = this;
 
             if (CoreBack)  $_Result = $.map($_Result, CoreBack);
@@ -1817,7 +1840,9 @@
                     return true;
 
                 if (iPath && iMatch)  try {
+
                     if (this[i].matches( $_Match ))  return true;
+
                 } catch (iError) { }
 
                 if ((this[i].nodeType < 9)  &&  (! this[i].parentElement))
@@ -1840,33 +1865,45 @@
         filter:          DOM_Map(),
         not:             DOM_Map(true),
         parent:          DOM_Map(function (iDOM) {
+
             return iDOM.parentElement;
         }),
         parents:         DOM_Map('',  true,  function (iDOM) {
+
             return  $.trace(iDOM, 'parentElement').slice(0, -1);
         }),
         parentsUntil:    function () {
+
             return  Array_Reverse.call(
-                this.parents().not( $(arguments[0]).parents().addBack() )
+                this.parents().not( $( arguments[0] ).parents().addBack() )
             );
         },
         children:        DOM_Map(function (iDOM) {
+
             return  $.makeArray( iDOM.children );
         }),
         contents:        DOM_Map(function (iDOM) {
-            return (iDOM.tagName != 'IFRAME')  ?
-                $.makeArray( iDOM.childNodes )  :  iDOM.contentWindow.document;
+
+            switch ( iDOM.tagName.toLowerCase() ) {
+                case 'iframe':      return iDOM.contentWindow.document;
+                case 'template':    iDOM = iDOM.content || iDOM;
+                default:            return $.makeArray( iDOM.childNodes );
+            }
         }),
         prev:            DOM_Map(function (iDOM) {
+
             return iDOM.previousElementSibling;
         }),
         prevAll:         DOM_Map('',  true,  function (iDOM) {
+
             return  $.trace(iDOM, 'previousElementSibling');
         }),
         next:               DOM_Map(function (iDOM) {
+
             return iDOM.nextElementSibling;
         }),
         nextAll:         DOM_Map(function (iDOM) {
+
             return  $.trace(iDOM, 'nextElementSibling');
         }),
         siblings:        function () {
@@ -1877,6 +1914,7 @@
             );
         },
         offsetParent:    DOM_Map(function (iDOM) {
+
             return iDOM.offsetParent;
         }),
         find:               function () {
@@ -1888,13 +1926,17 @@
             return  this.pushStack( $_Result );
         },
         has:                function ($_Filter) {
+
             if (typeof $_Filter != 'string') {
                 var _UUID_ = $.uuid('Has');
-                $($_Filter).addClass(_UUID_);
+
+                $( $_Filter ).addClass(_UUID_);
+
                 $_Filter = '.' + _UUID_;
             }
 
             return  this.pushStack($.map(this,  function () {
+
                 if ( $($_Filter, arguments[0]).removeClass(_UUID_).length )
                     return arguments[0];
             }));
@@ -2262,7 +2304,7 @@
         var $_Target = $(iEvent.target);
         var iHandler = iCallback ?
                 [iCallback] :
-                ($(this).data('_event_') || { })[iEvent.type],
+                ($.data(this, '_event_') || { })[iEvent.type],
             iArgs = [iEvent].concat( $_Target.data('_trigger_') ),
             iThis = this;
 
@@ -2290,9 +2332,9 @@
                     $_Path = $(iTarget).parents().addBack();
                     $_Path = iFilter ?
                         Array.prototype.reverse.call( $_Path.filter(iFilter) )  :
-                        $($.makeArray($_Path).reverse().concat([
+                        $($.makeArray($_Path).reverse().concat(
                             iTarget.ownerDocument, iTarget.ownerDocument.defaultView
-                        ]));
+                        ));
                     break;
                 }
                 case 'Document':       iTarget = [iTarget, iTarget.defaultView];
@@ -2464,7 +2506,8 @@
             return this;
         },
         triggerHandler:    function () {
-            var iHandler = $(this[0]).data('_event_'),  iReturn;
+
+            var iHandler = $.data(this[0], '_event_'),  iReturn;
 
             iHandler = iHandler && iHandler[arguments[0]];
             if (! iHandler)  return;
@@ -2477,32 +2520,35 @@
             return iReturn;
         },
         clone:             function (iDeep) {
-            return  $($.map(this,  function () {
-                var $_Old = $(arguments[0]);
-                var $_New = $( $_Old[0].cloneNode(iDeep) );
 
-                if (iDeep) {
+            return  Array.from.call($,  this,  function ($_Old) {
+
+                var $_New = $( $_Old.cloneNode( iDeep ) );    $_Old = $( $_Old );
+
+                if ( iDeep ) {
                     $_Old = $_Old.find('*').addBack();
                     $_New = $_New.find('*').addBack();
                 }
-                for (var i = 0, iData;  i < $_Old.length;  i++) {
+
+                $_Old.each(function (i) {
+
                     $_New[i].dataIndex = null;
 
-                    iData = $($_Old[i]).data();
-                    if ($.isEmptyObject( iData ))  continue;
+                    var iData = $.data( this );
 
-                    $($_New[i]).data(iData);
+                    if ($.isEmptyObject( iData ))  return;
 
-                    for (var iType in iData._event_) {
-                        if ($.browser.modern) {
+                    $( $_New[i] ).data( iData );
+
+                    for (var iType in iData._event_)
+                        if ( $.browser.modern )
                             $_New[i].addEventListener(iType, Proxy_Handler, false);
-                            continue;
-                        }
-                        IE_Event.bind.call($_New[i], '+', iType, Proxy_Handler);
-                    }
-                }
+                        else
+                            IE_Event.bind.call($_New[i], '+', iType, Proxy_Handler);
+                });
+
                 return $_New[0];
-            }));
+            });
         }
     });
 
@@ -3011,22 +3057,22 @@
 /* ---------- Set Style ---------- */
 
     function toHexInt(iDec, iLength) {
-        var iHex = parseInt( Number(iDec).toFixed(0) ).toString(16);
 
-        if (iLength && (iLength > iHex.length))
-            iHex = '0'.repeat(iLength - iHex.length) + iHex;
-
-        return iHex;
+        return $.leftPad(
+            parseInt( Number(iDec).toFixed(0) ).toString(16),  iLength || 2
+        );
     }
 
     function RGB_Hex(iRed, iGreen, iBlue) {
-        var iArgs = $.makeArray(arguments);
 
-        if ((iArgs.length == 1) && (typeof iArgs[0] == 'string'))
-            iArgs = iArgs[0].replace(/rgb\(([^\)]+)\)/i, '$1').replace(/,\s*/g, ',').split(',');
+        var iArgs = $.makeArray( arguments );
 
-        for (var i = 0;  i < 3;  i++)
-            iArgs[i] = toHexInt(iArgs[i], 2);
+        if ((iArgs.length < 2)  &&  (typeof iArgs[0] == 'string'))
+            iArgs = iArgs[0].replace(/rgb\(([^\)]+)\)/i, '$1')
+                .replace(/,\s*/g, ',').split(',');
+
+        for (var i = 0;  i < 3;  i++)  iArgs[i] = toHexInt( iArgs[i] );
+
         return iArgs.join('');
     }
 
@@ -3054,7 +3100,7 @@
                 iWrapper = 'progid:' + DX_Filter +
                     'Gradient(startColorStr=#{n},endColorStr=#{n})';
                 iConvert = function (iAlpha, iRGB) {
-                    return  toHexInt(parseFloat(iAlpha) * 256, 2) + RGB_Hex(iRGB);
+                    return  toHexInt(parseFloat(iAlpha) * 256) + RGB_Hex(iRGB);
                 };
             }
             if (iWrapper)
@@ -3321,7 +3367,7 @@
         },
         toString:    function () {
 
-            return  encodeURIComponent($.map(this,  function (_This_) {
+            return  encodeURIComponent(Array.from(this,  function (_This_) {
 
                 return  _This_[0] + '=' + _This_[1];
 
@@ -3340,7 +3386,7 @@
 
             Array.prototype.sort.call(this,  function (A, B) {
 
-                return  A[0].localeCompare( B[0] );
+                return  A[0].localeCompare( B[0] )  ||  A[1].localeCompare( B[1] );
             });
         };
 
@@ -3351,6 +3397,7 @@
             get:    function () {
                 return  new HTMLCollection(
                     $.map(this.options,  function (iOption) {
+
                         return  iOption.selected ? iOption : null;
                     })
                 );
@@ -5514,6 +5561,34 @@
 
 //  Thanks "emu" --- http://blog.csdn.net/emu/article/details/39618297
 
+    if ( BOM.msCrypto ) {
+
+        BOM.crypto = BOM.msCrypto;
+
+        $.each(BOM.crypto.subtle,  function (key, _This_) {
+
+            if (! (_This_ instanceof Function))  return;
+
+            BOM.crypto.subtle[ key ] = function () {
+
+                var iObserver = _This_.apply(this, arguments);
+
+                return  new Promise(function (iResolve) {
+
+                    iObserver.oncomplete = function () {
+
+                        iResolve( arguments[0].target.result );
+                    };
+
+                    iObserver.onabort = iObserver.onerror = arguments[1];
+                });
+            };
+        });
+    }
+
+    BOM.crypto.subtle = BOM.crypto.subtle || BOM.crypto.webkitSubtle;
+
+
     function BufferToString(iBuffer){
         var iDataView = new DataView(iBuffer),  iResult = '';
 
@@ -5527,39 +5602,23 @@
     }
 
     $.dataHash = function (iAlgorithm, iData) {
+
         if (arguments.length < 2) {
-            iData = iAlgorithm;
-            iAlgorithm = 'CRC-32';
+
+            iData = iAlgorithm;  iAlgorithm = 'CRC-32';
         }
 
-        if (iAlgorithm == 'CRC-32')
-            return  Promise.resolve(CRC_32( iData ));
+        return  (iAlgorithm === 'CRC-32')  ?
+            Promise.resolve( CRC_32( iData ) )  :
+            BOM.crypto.subtle.digest(
+                {name:  iAlgorithm},
+                new Uint8Array(Array.from(iData,  function () {
 
-        var iCrypto = BOM.crypto || BOM.msCrypto;
-
-        try {
-            var iPromise = (iCrypto.subtle || iCrypto.webkitSubtle).digest(
-                    {name:  iAlgorithm},
-                    new Uint8Array(
-                        Array.prototype.map.call(String( iData ),  function () {
-
-                            return arguments[0].charCodeAt(0);
-                        })
-                    )
-                );
-            return  ((typeof iPromise.then == 'function')  ?
-                iPromise  :  new Promise(function (iResolve) {
-
-                    iPromise.oncomplete = function () {
-                        iResolve( arguments[0].target.result );
-                    };
-                })
+                    return arguments[0].charCodeAt(0);
+                }))
             ).then( BufferToString );
-
-        } catch (iError) {
-            return  Promise.reject( iError );
-        }
     };
+
 })(self,  self.document,  self.iQuery || iQuery);
 
 

@@ -135,7 +135,7 @@ define(['jquery'],  function ($) {
         },
         toString:    function () {
 
-            return  encodeURIComponent($.map(this,  function (_This_) {
+            return  encodeURIComponent(Array.from(this,  function (_This_) {
 
                 return  _This_[0] + '=' + _This_[1];
 
@@ -154,7 +154,7 @@ define(['jquery'],  function ($) {
 
             Array.prototype.sort.call(this,  function (A, B) {
 
-                return  A[0].localeCompare( B[0] );
+                return  A[0].localeCompare( B[0] )  ||  A[1].localeCompare( B[1] );
             });
         };
 
@@ -165,6 +165,7 @@ define(['jquery'],  function ($) {
             get:    function () {
                 return  new HTMLCollection(
                     $.map(this.options,  function (iOption) {
+
                         return  iOption.selected ? iOption : null;
                     })
                 );

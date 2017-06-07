@@ -131,7 +131,7 @@ define(['iDOM'],  function ($) {
         var $_Target = $(iEvent.target);
         var iHandler = iCallback ?
                 [iCallback] :
-                ($(this).data('_event_') || { })[iEvent.type],
+                ($.data(this, '_event_') || { })[iEvent.type],
             iArgs = [iEvent].concat( $_Target.data('_trigger_') ),
             iThis = this;
 
@@ -159,9 +159,9 @@ define(['iDOM'],  function ($) {
                     $_Path = $(iTarget).parents().addBack();
                     $_Path = iFilter ?
                         Array.prototype.reverse.call( $_Path.filter(iFilter) )  :
-                        $($.makeArray($_Path).reverse().concat([
+                        $($.makeArray($_Path).reverse().concat(
                             iTarget.ownerDocument, iTarget.ownerDocument.defaultView
-                        ]));
+                        ));
                     break;
                 }
                 case 'Document':       iTarget = [iTarget, iTarget.defaultView];
@@ -333,7 +333,8 @@ define(['iDOM'],  function ($) {
             return this;
         },
         triggerHandler:    function () {
-            var iHandler = $(this[0]).data('_event_'),  iReturn;
+
+            var iHandler = $.data(this[0], '_event_'),  iReturn;
 
             iHandler = iHandler && iHandler[arguments[0]];
             if (! iHandler)  return;
@@ -346,32 +347,35 @@ define(['iDOM'],  function ($) {
             return iReturn;
         },
         clone:             function (iDeep) {
-            return  $($.map(this,  function () {
-                var $_Old = $(arguments[0]);
-                var $_New = $( $_Old[0].cloneNode(iDeep) );
 
-                if (iDeep) {
+            return  Array.from.call($,  this,  function ($_Old) {
+
+                var $_New = $( $_Old.cloneNode( iDeep ) );    $_Old = $( $_Old );
+
+                if ( iDeep ) {
                     $_Old = $_Old.find('*').addBack();
                     $_New = $_New.find('*').addBack();
                 }
-                for (var i = 0, iData;  i < $_Old.length;  i++) {
+
+                $_Old.each(function (i) {
+
                     $_New[i].dataIndex = null;
 
-                    iData = $($_Old[i]).data();
-                    if ($.isEmptyObject( iData ))  continue;
+                    var iData = $.data( this );
 
-                    $($_New[i]).data(iData);
+                    if ($.isEmptyObject( iData ))  return;
 
-                    for (var iType in iData._event_) {
-                        if ($.browser.modern) {
+                    $( $_New[i] ).data( iData );
+
+                    for (var iType in iData._event_)
+                        if ( $.browser.modern )
                             $_New[i].addEventListener(iType, Proxy_Handler, false);
-                            continue;
-                        }
-                        IE_Event.bind.call($_New[i], '+', iType, Proxy_Handler);
-                    }
-                }
+                        else
+                            IE_Event.bind.call($_New[i], '+', iType, Proxy_Handler);
+                });
+
                 return $_New[0];
-            }));
+            });
         }
     });
 

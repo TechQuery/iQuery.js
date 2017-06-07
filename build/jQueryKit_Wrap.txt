@@ -2,7 +2,7 @@
 //              >>>  jQueryKit  <<<
 //
 //
-//    [Version]    v9.6  (2017-06-06)
+//    [Version]    v9.6  (2017-06-07)
 //
 //    [Require]    jQuery  v1.9+
 //

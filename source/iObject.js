@@ -7,9 +7,20 @@ define(['extension/iObject'],  function ($) {
         );
     };
 
-    $.makeArray = function () {
+//  Thanks "ecalf" for
+//
+//      http://www.cnblogs.com/ecalf/archive/2012/12/06/2805546.html
 
-        return  Array.from( arguments[0] );
+    $.makeArray = function (object) {
+        try {
+            return  Array.prototype.concat.apply([ ], object);
+        } catch (error) {
+            try {
+                return  Array.prototype.slice.call(object, 0);
+            } catch (error) {
+                return  [ object ];
+            }
+        }
     };
 
     function _Extend_(iTarget, iSource, iDeep) {

@@ -2,7 +2,7 @@
 //              >>>  jQueryKit  <<<
 //
 //
-//    [Version]    v9.6  (2017-06-06)
+//    [Version]    v9.6  (2017-06-07)
 //
 //    [Require]    jQuery  v1.9+
 //
@@ -66,7 +66,7 @@
         return iObject;
     };
 
-    /* ----- Number Extension ----- */
+    /* ----- Number Patch ----- */
 
     Number.isInteger = Number.isInteger  ||  function (value) {
 
@@ -115,26 +115,39 @@
         return  (new Array(Times + 1)).join(this);
     };
 
-    /* ----- Array Extension ----- */
+    /* ----- Array Patch ----- */
+
+    function Array_push(value, mapCall, mapContext) {
+
+        return Array.prototype.push.call(
+            this,
+            (mapCall instanceof Function)  ?
+                mapCall.call(mapContext, value, this.length, this)  :  value
+        );
+    }
 
     Array.from = Array.from  ||  function (iterator) {
 
-        var array = [ ],  _This_;
+        var array, _This_;
+
+        try {
+            array = new this();
+        } catch (error) {
+            array = Object.create( this.prototype );
+        }
 
         if (Number.isInteger( iterator.length )) {
 
-            if (DOM.documentMode > 8)
-                return  Array.apply(null, iterator);
-            else {
-                for (var i = 0;  i < iterator.length;  i++)
-                    array[i] = iterator[i];
+            for (var i = 0;  i < iterator.length;  i++)
+                Array_push.call(array, iterator[i], arguments[1], arguments[2]);
 
-                return array;
-            }
-        } else if (iterator.next instanceof Function) {
+            return array;
+        }
+
+        if (iterator.next instanceof Function) {
 
             while ((_This_ = iterator.next()).done  ===  false)
-                array.push( _This_.value );
+                Array_push.call(array, _This_.value, arguments[1], arguments[2]);
 
             return array;
         }
@@ -164,7 +177,7 @@
             return value;
         };
 
-    /* ----- Function Extension ----- */
+    /* ----- Function Patch ----- */
 
     function FuncName() {
         return  (this.toString().trim().match(/^function\s+([^\(\s]*)/) || '')[1];
@@ -178,7 +191,7 @@
             Function.prototype.name = FuncName;
     }
 
-    /* ----- Date Extension ----- */
+    /* ----- Date Patch ----- */
 
     Date.now = Date.now  ||  function () { return  +(new Date()); };
 
@@ -1384,22 +1397,22 @@
 /* ---------- Set Style ---------- */
 
     function toHexInt(iDec, iLength) {
-        var iHex = parseInt( Number(iDec).toFixed(0) ).toString(16);
 
-        if (iLength && (iLength > iHex.length))
-            iHex = '0'.repeat(iLength - iHex.length) + iHex;
-
-        return iHex;
+        return $.leftPad(
+            parseInt( Number(iDec).toFixed(0) ).toString(16),  iLength || 2
+        );
     }
 
     function RGB_Hex(iRed, iGreen, iBlue) {
-        var iArgs = $.makeArray(arguments);
 
-        if ((iArgs.length == 1) && (typeof iArgs[0] == 'string'))
-            iArgs = iArgs[0].replace(/rgb\(([^\)]+)\)/i, '$1').replace(/,\s*/g, ',').split(',');
+        var iArgs = $.makeArray( arguments );
 
-        for (var i = 0;  i < 3;  i++)
-            iArgs[i] = toHexInt(iArgs[i], 2);
+        if ((iArgs.length < 2)  &&  (typeof iArgs[0] == 'string'))
+            iArgs = iArgs[0].replace(/rgb\(([^\)]+)\)/i, '$1')
+                .replace(/,\s*/g, ',').split(',');
+
+        for (var i = 0;  i < 3;  i++)  iArgs[i] = toHexInt( iArgs[i] );
+
         return iArgs.join('');
     }
 
@@ -1427,7 +1440,7 @@
                 iWrapper = 'progid:' + DX_Filter +
                     'Gradient(startColorStr=#{n},endColorStr=#{n})';
                 iConvert = function (iAlpha, iRGB) {
-                    return  toHexInt(parseFloat(iAlpha) * 256, 2) + RGB_Hex(iRGB);
+                    return  toHexInt(parseFloat(iAlpha) * 256) + RGB_Hex(iRGB);
                 };
             }
             if (iWrapper)
@@ -1694,7 +1707,7 @@
         },
         toString:    function () {
 
-            return  encodeURIComponent($.map(this,  function (_This_) {
+            return  encodeURIComponent(Array.from(this,  function (_This_) {
 
                 return  _This_[0] + '=' + _This_[1];
 
@@ -1713,7 +1726,7 @@
 
             Array.prototype.sort.call(this,  function (A, B) {
 
-                return  A[0].localeCompare( B[0] );
+                return  A[0].localeCompare( B[0] )  ||  A[1].localeCompare( B[1] );
             });
         };
 
@@ -1724,6 +1737,7 @@
             get:    function () {
                 return  new HTMLCollection(
                     $.map(this.options,  function (iOption) {
+
                         return  iOption.selected ? iOption : null;
                     })
                 );
@@ -3229,6 +3243,34 @@
 
 //  Thanks "emu" --- http://blog.csdn.net/emu/article/details/39618297
 
+    if ( BOM.msCrypto ) {
+
+        BOM.crypto = BOM.msCrypto;
+
+        $.each(BOM.crypto.subtle,  function (key, _This_) {
+
+            if (! (_This_ instanceof Function))  return;
+
+            BOM.crypto.subtle[ key ] = function () {
+
+                var iObserver = _This_.apply(this, arguments);
+
+                return  new Promise(function (iResolve) {
+
+                    iObserver.oncomplete = function () {
+
+                        iResolve( arguments[0].target.result );
+                    };
+
+                    iObserver.onabort = iObserver.onerror = arguments[1];
+                });
+            };
+        });
+    }
+
+    BOM.crypto.subtle = BOM.crypto.subtle || BOM.crypto.webkitSubtle;
+
+
     function BufferToString(iBuffer){
         var iDataView = new DataView(iBuffer),  iResult = '';
 
@@ -3242,39 +3284,23 @@
     }
 
     $.dataHash = function (iAlgorithm, iData) {
+
         if (arguments.length < 2) {
-            iData = iAlgorithm;
-            iAlgorithm = 'CRC-32';
+
+            iData = iAlgorithm;  iAlgorithm = 'CRC-32';
         }
 
-        if (iAlgorithm == 'CRC-32')
-            return  Promise.resolve(CRC_32( iData ));
+        return  (iAlgorithm === 'CRC-32')  ?
+            Promise.resolve( CRC_32( iData ) )  :
+            BOM.crypto.subtle.digest(
+                {name:  iAlgorithm},
+                new Uint8Array(Array.from(iData,  function () {
 
-        var iCrypto = BOM.crypto || BOM.msCrypto;
-
-        try {
-            var iPromise = (iCrypto.subtle || iCrypto.webkitSubtle).digest(
-                    {name:  iAlgorithm},
-                    new Uint8Array(
-                        Array.prototype.map.call(String( iData ),  function () {
-
-                            return arguments[0].charCodeAt(0);
-                        })
-                    )
-                );
-            return  ((typeof iPromise.then == 'function')  ?
-                iPromise  :  new Promise(function (iResolve) {
-
-                    iPromise.oncomplete = function () {
-                        iResolve( arguments[0].target.result );
-                    };
-                })
+                    return arguments[0].charCodeAt(0);
+                }))
             ).then( BufferToString );
-
-        } catch (iError) {
-            return  Promise.reject( iError );
-        }
     };
+
 })(self, self.document, self.jQuery);
 
 

@@ -45,7 +45,7 @@ define(function () {
         return iObject;
     };
 
-    /* ----- Number Extension ----- */
+    /* ----- Number Patch ----- */
 
     Number.isInteger = Number.isInteger  ||  function (value) {
 
@@ -94,26 +94,39 @@ define(function () {
         return  (new Array(Times + 1)).join(this);
     };
 
-    /* ----- Array Extension ----- */
+    /* ----- Array Patch ----- */
+
+    function Array_push(value, mapCall, mapContext) {
+
+        return Array.prototype.push.call(
+            this,
+            (mapCall instanceof Function)  ?
+                mapCall.call(mapContext, value, this.length, this)  :  value
+        );
+    }
 
     Array.from = Array.from  ||  function (iterator) {
 
-        var array = [ ],  _This_;
+        var array, _This_;
+
+        try {
+            array = new this();
+        } catch (error) {
+            array = Object.create( this.prototype );
+        }
 
         if (Number.isInteger( iterator.length )) {
 
-            if (DOM.documentMode > 8)
-                return  Array.apply(null, iterator);
-            else {
-                for (var i = 0;  i < iterator.length;  i++)
-                    array[i] = iterator[i];
+            for (var i = 0;  i < iterator.length;  i++)
+                Array_push.call(array, iterator[i], arguments[1], arguments[2]);
 
-                return array;
-            }
-        } else if (iterator.next instanceof Function) {
+            return array;
+        }
+
+        if (iterator.next instanceof Function) {
 
             while ((_This_ = iterator.next()).done  ===  false)
-                array.push( _This_.value );
+                Array_push.call(array, _This_.value, arguments[1], arguments[2]);
 
             return array;
         }
@@ -143,7 +156,7 @@ define(function () {
             return value;
         };
 
-    /* ----- Function Extension ----- */
+    /* ----- Function Patch ----- */
 
     function FuncName() {
         return  (this.toString().trim().match(/^function\s+([^\(\s]*)/) || '')[1];
@@ -157,7 +170,7 @@ define(function () {
             Function.prototype.name = FuncName;
     }
 
-    /* ----- Date Extension ----- */
+    /* ----- Date Patch ----- */
 
     Date.now = Date.now  ||  function () { return  +(new Date()); };
 

@@ -134,17 +134,15 @@ define(['extension/iTimer'],  function ($) {
                     .slice(-1)[0];
             }
 
-            return $.map(
-                $.makeArray(iNew.childNodes),
-                function (iDOM) {
-                    return iDOM.parentNode.removeChild(iDOM);
-                }
-            );
+            return  Array.from(iNew.childNodes,  function (iDOM) {
+
+                return  iDOM.parentNode.removeChild( iDOM );
+            });
         },
-        find:          function (iSelector, iRoot) {
-            var _Self_ = arguments.callee;
+        find:          function find(iSelector, iRoot) {
 
             return  $.map(iSelector.split(/\s*,\s*/),  function (_Selector_) {
+
                 var iPseudo = [ ],  _Before_,  _After_ = _Selector_;
 
                 while (! (iPseudo[1] in $.expr[':'])) {
@@ -164,10 +162,10 @@ define(['extension/iTimer'],  function ($) {
                 iPseudo.splice(2, 1);
 
                 return $.map(
-                    QuerySelector.call(iRoot, _Before_),
-                    function (iDOM, Index) {
+                    QuerySelector.call(iRoot, _Before_),  function (iDOM, Index) {
+
                         if ($.expr[':'][iPseudo[1]](iDOM, Index, iPseudo))
-                            return  _Self_(_After_, iDOM);
+                            return  find(_After_, iDOM);
                     }
                 );
             });

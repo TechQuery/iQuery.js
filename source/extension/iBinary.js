@@ -138,6 +138,34 @@ define(['jquery'],  function ($) {
 
 //  Thanks "emu" --- http://blog.csdn.net/emu/article/details/39618297
 
+    if ( BOM.msCrypto ) {
+
+        BOM.crypto = BOM.msCrypto;
+
+        $.each(BOM.crypto.subtle,  function (key, _This_) {
+
+            if (! (_This_ instanceof Function))  return;
+
+            BOM.crypto.subtle[ key ] = function () {
+
+                var iObserver = _This_.apply(this, arguments);
+
+                return  new Promise(function (iResolve) {
+
+                    iObserver.oncomplete = function () {
+
+                        iResolve( arguments[0].target.result );
+                    };
+
+                    iObserver.onabort = iObserver.onerror = arguments[1];
+                });
+            };
+        });
+    }
+
+    BOM.crypto.subtle = BOM.crypto.subtle || BOM.crypto.webkitSubtle;
+
+
     function BufferToString(iBuffer){
         var iDataView = new DataView(iBuffer),  iResult = '';
 
@@ -151,37 +179,21 @@ define(['jquery'],  function ($) {
     }
 
     $.dataHash = function (iAlgorithm, iData) {
+
         if (arguments.length < 2) {
-            iData = iAlgorithm;
-            iAlgorithm = 'CRC-32';
+
+            iData = iAlgorithm;  iAlgorithm = 'CRC-32';
         }
 
-        if (iAlgorithm == 'CRC-32')
-            return  Promise.resolve(CRC_32( iData ));
+        return  (iAlgorithm === 'CRC-32')  ?
+            Promise.resolve( CRC_32( iData ) )  :
+            BOM.crypto.subtle.digest(
+                {name:  iAlgorithm},
+                new Uint8Array(Array.from(iData,  function () {
 
-        var iCrypto = BOM.crypto || BOM.msCrypto;
-
-        try {
-            var iPromise = (iCrypto.subtle || iCrypto.webkitSubtle).digest(
-                    {name:  iAlgorithm},
-                    new Uint8Array(
-                        Array.prototype.map.call(String( iData ),  function () {
-
-                            return arguments[0].charCodeAt(0);
-                        })
-                    )
-                );
-            return  ((typeof iPromise.then == 'function')  ?
-                iPromise  :  new Promise(function (iResolve) {
-
-                    iPromise.oncomplete = function () {
-                        iResolve( arguments[0].target.result );
-                    };
-                })
+                    return arguments[0].charCodeAt(0);
+                }))
             ).then( BufferToString );
-
-        } catch (iError) {
-            return  Promise.reject( iError );
-        }
     };
+
 });

@@ -11,6 +11,7 @@ define(['extension/iPseudo'],  function ($) {
         var _Not_ = iArgs.shift(),  _Reverse_ = iArgs[0];
 
         return  function ($_Filter) {
+
             var $_Result = this;
 
             if (CoreBack)  $_Result = $.map($_Result, CoreBack);
@@ -47,7 +48,9 @@ define(['extension/iPseudo'],  function ($) {
                     return true;
 
                 if (iPath && iMatch)  try {
+
                     if (this[i].matches( $_Match ))  return true;
+
                 } catch (iError) { }
 
                 if ((this[i].nodeType < 9)  &&  (! this[i].parentElement))
@@ -70,33 +73,45 @@ define(['extension/iPseudo'],  function ($) {
         filter:          DOM_Map(),
         not:             DOM_Map(true),
         parent:          DOM_Map(function (iDOM) {
+
             return iDOM.parentElement;
         }),
         parents:         DOM_Map('',  true,  function (iDOM) {
+
             return  $.trace(iDOM, 'parentElement').slice(0, -1);
         }),
         parentsUntil:    function () {
+
             return  Array_Reverse.call(
-                this.parents().not( $(arguments[0]).parents().addBack() )
+                this.parents().not( $( arguments[0] ).parents().addBack() )
             );
         },
         children:        DOM_Map(function (iDOM) {
+
             return  $.makeArray( iDOM.children );
         }),
         contents:        DOM_Map(function (iDOM) {
-            return (iDOM.tagName != 'IFRAME')  ?
-                $.makeArray( iDOM.childNodes )  :  iDOM.contentWindow.document;
+
+            switch ( iDOM.tagName.toLowerCase() ) {
+                case 'iframe':      return iDOM.contentWindow.document;
+                case 'template':    iDOM = iDOM.content || iDOM;
+                default:            return $.makeArray( iDOM.childNodes );
+            }
         }),
         prev:            DOM_Map(function (iDOM) {
+
             return iDOM.previousElementSibling;
         }),
         prevAll:         DOM_Map('',  true,  function (iDOM) {
+
             return  $.trace(iDOM, 'previousElementSibling');
         }),
         next:               DOM_Map(function (iDOM) {
+
             return iDOM.nextElementSibling;
         }),
         nextAll:         DOM_Map(function (iDOM) {
+
             return  $.trace(iDOM, 'nextElementSibling');
         }),
         siblings:        function () {
@@ -107,6 +122,7 @@ define(['extension/iPseudo'],  function ($) {
             );
         },
         offsetParent:    DOM_Map(function (iDOM) {
+
             return iDOM.offsetParent;
         }),
         find:               function () {
@@ -118,13 +134,17 @@ define(['extension/iPseudo'],  function ($) {
             return  this.pushStack( $_Result );
         },
         has:                function ($_Filter) {
+
             if (typeof $_Filter != 'string') {
                 var _UUID_ = $.uuid('Has');
-                $($_Filter).addClass(_UUID_);
+
+                $( $_Filter ).addClass(_UUID_);
+
                 $_Filter = '.' + _UUID_;
             }
 
             return  this.pushStack($.map(this,  function () {
+
                 if ( $($_Filter, arguments[0]).removeClass(_UUID_).length )
                     return arguments[0];
             }));
