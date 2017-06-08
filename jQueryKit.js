@@ -2,7 +2,7 @@
 //              >>>  jQueryKit  <<<
 //
 //
-//    [Version]    v9.6  (2017-06-07)
+//    [Version]    v9.6  (2017-06-08)
 //
 //    [Require]    jQuery  v1.9+
 //
@@ -1675,12 +1675,12 @@
         });
     }
 
+    var ArrayProto = Array.prototype;
+
     $.extend(URLSearchParams.prototype, {
-        push:        Array.prototype.push,
-        splice:      Array.prototype.splice,
         append:      function (key, value) {
 
-            this.push([key,  value + '']);
+            ArrayProto.push.call(this,  [key,  value + '']);
         },
         get:         function (key) {
 
@@ -1697,7 +1697,7 @@
         delete:      function (key) {
 
             for (var i = 0;  this[i];  i++)
-                if (this[i][0] === key)  this.splice(i, 1);
+                if (this[i][0] === key)  ArrayProto.splice.call(this, i, 1);
         },
         set:         function (key, value) {
 
@@ -1724,7 +1724,7 @@
     BOM.URLSearchParams.prototype.sort =
         BOM.URLSearchParams.prototype.sort  ||  function () {
 
-            Array.prototype.sort.call(this,  function (A, B) {
+            ArrayProto.sort.call(this,  function (A, B) {
 
                 return  A[0].localeCompare( B[0] )  ||  A[1].localeCompare( B[1] );
             });
@@ -1756,6 +1756,101 @@
                 this,  this.parentNode.querySelectorAll( arguments[0] )
             ) > -1);
         };
+
+/* ---------- DOM Token List ---------- */
+
+    function DOMTokenList(iDOM, iName) {
+
+        this.length = 0;
+
+        this.__Node__ = iDOM.attributes.getNamedItem( iName );
+
+        this.value = (this.__Node__.nodeValue  ||  '').trim();
+
+        $.merge(this, this.value.split(/\s+/));
+    }
+
+    $.each({
+        contains:    function () {
+
+            return  ($.inArray(arguments[0], this)  >  -1);
+        },
+        add:         function (token) {
+
+            if (this.contains( token ))  return;
+
+            ArrayProto.push.call(this, token);
+
+            updateToken.call( this );
+        },
+        remove:      function (token) {
+
+            var index = $.inArray(token, this);
+
+            if (index > -1)  ArrayProto.splice.call(this, index, 1);
+        },
+        toggle:      function (token, force) {
+
+            var has = (typeof force === 'boolean')  ?
+                    (! force)  :  this.contains( token );
+
+            this[has ? 'remove' : 'add']( token );
+
+            return  (! has);
+        }
+    },  function (key, method) {
+
+        DOMTokenList.prototype[ key ]  =  function (token) {
+
+            if ( token.match(/\s+/) )
+                throw  (self.DOMException || Error)(
+                    [
+                        "Failed to execute '" + key + "' on 'DOMTokenList':",
+                        "The token provided ('" + token + "') contains",
+                        "HTML space characters, which are not valid in tokens."
+                    ].join(" "),
+                    'InvalidCharacterError'
+                );
+
+            token = method.call(this, token);
+
+            if ( method.length )
+                this.__Node__.nodeValue = this.value =
+                    ArrayProto.join.call(this, ' ');
+
+            return token;
+        };
+    });
+
+    DOMTokenList.prototype.values = function () {
+
+        return  $.makeIterator( this );
+    };
+
+    $.each(['', 'SVG', 'Link', 'Anchor', 'Area'],  function (key, proto) {
+
+        proto += 'Element';
+
+        if (key < 2)
+            key = 'class';
+        else {
+            key = 'rel';    proto = 'HTML' + proto;
+        }
+
+        proto = (BOM[ proto ]  ||  '').prototype;
+
+        if ((! proto)  ||  ((key + 'List')  in  proto))
+            return;
+
+        Object.defineProperty(proto,  key + 'List',  {
+            get:    function () {
+                return  new DOMTokenList(this, key);
+            }
+        });
+    });
+
+    if (BOM.DOMTokenList  &&  ($.browser.msie < 12))
+        BOM.DOMTokenList.prototype.toggle = DOMTokenList.prototype.toggle;
 
 
     if (! ($.browser.msie < 11))  return;
@@ -1803,34 +1898,6 @@
             helpURL:    'https://msdn.microsoft.com/en-us/library/1dk3k160(VS.85).aspx'
         });
     };
-
-/* ---------- DOM Class List ---------- */
-
-    function DOMTokenList() {
-
-        this.length = 0;
-
-        $.merge(
-            this,  (arguments[0].getAttribute('class') || '').trim().split(/\s+/)
-        );
-    }
-
-    DOMTokenList.prototype.contains = function (iClass) {
-        if (iClass.match(/\s+/))
-            throw  new DOMException([
-                "Failed to execute 'contains' on 'DOMTokenList': The token provided (",
-                iClass,
-                ") contains HTML space characters, which are not valid in tokens."
-            ].join("'"));
-
-        return  (Array.prototype.indexOf.call(this, iClass) > -1);
-    };
-
-    Object.defineProperty(DOM_Proto, 'classList', {
-        get:    function () {
-            return  new DOMTokenList(this);
-        }
-    });
 
 /* ---------- DOM InnerHTML ---------- */
 

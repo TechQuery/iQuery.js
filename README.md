@@ -157,7 +157,7 @@
  - 自带 **HTMLCollection 对象**，修复 IE 10- `Element.prototype.children` 属性在其元素有 name 属性时的“数字键值缺失”Bug
  - 自带 Element 对象的 `firstElementChild`、`lastElementChild`、`previousElementSibling`、`nextElementSibling` 属性
  - 自带 `Element.prototype.matches` 标准草案方法
- - 自带 **DOMTokenList 对象**，为 IE 10- 提供 **classList** 支持
+ - 自带 **DOMTokenList 对象**，为 IE 10- 提供 **classList**、**relList** 支持
  - 自带 **DOMStringMap 对象**，为 IE 11- 提供 **dataset** 支持
  - 自带 `HTMLSelectElement.prototype.selectedOptions` 属性的 IE 补丁
  - 自带 `location.origin`、`HTMLAnchorElement.prototype.origin` 只读属性 IE 11- 补丁

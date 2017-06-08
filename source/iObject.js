@@ -13,7 +13,12 @@ define(['extension/iObject'],  function ($) {
 
     $.makeArray = function (object) {
         try {
-            return  Array.prototype.concat.apply([ ], object);
+            var array = [ ];
+
+            Array.prototype.push.apply(array, object);
+
+            return array;
+
         } catch (error) {
             try {
                 return  Array.prototype.slice.call(object, 0);

@@ -2,212 +2,229 @@ define(['iCore'],  function ($) {
 
     var BOM = self,  DOM = self.document;
 
-/* ---------- DOM Info Operator - Get first, Set all. ---------- */
+/* ---------- DOM Info Operator ---------- */
 
-    var _DOM_ = {
-            TypeMap:          {
-                Get_Name:    $.makeSet('string', 'array', 'undefined'),
-                root:        $.makeSet('Document', 'Window')
-            },
-            operate:          function (iType, iElement, iName, iValue) {
-                if (iValue === null) {
-                    if (this[iType].clear)
-                        for (var i = 0;  i < iElement.length;  i++)
-                            this[iType].clear(iElement[i], iName);
-                    return iElement;
-                }
-                if (
-                    (iValue === undefined)  &&
-                    ($.type(iName) in this.TypeMap.Get_Name)
-                ) {
-                    if (! iElement.length)  return;
-
-                    if (iName instanceof Array) {
-                        var iData = { };
-                        for (var i = 0;  i < iName.length;  i++)
-                            iData[iName[i]] = this[iType].get(iElement[0], iName[i]);
-                        return iData;
-                    }
-                    return  this[iType].get(iElement[0], iName);
-                }
-
-                if (typeof iName == 'string') {
-                    if (typeof iValue == 'function') {
-                        for (var i = 0;  i < iElement.length;  i++)
-                            this[iType].set(iElement[i], iName, iValue.call(
-                                iElement[i],  i,  this[iType].get(iElement[i], iName)
-                            ));
-                        return iElement;
-                    } else {
-                        var _Value_ = { };
-                        _Value_[iName] = iValue;
-                        iName = _Value_;
-                    }
-                }
-                for (var i = 0;  i < iElement.length;  i++)
-                    for (var iKey in iName)
-                        this[iType].set(iElement[i], iKey, iName[iKey]);
-
-                return iElement;
-            }
-        };
-
-    /* ----- DOM Attribute ----- */
-    _DOM_.Attribute = {
-        get:      function (iElement, iName) {
-            if ($.Type(iElement) in _DOM_.TypeMap.root)  return;
-
-            if (! iName)  return iElement.attributes;
-
-            var iValue = iElement.getAttribute(iName);
-            if (iValue !== null)  return iValue;
-        },
-        set:      function (iElement, iName, iValue) {
-            if (
-                (! ($.Type(iElement) in _DOM_.TypeMap.root))  &&
-                (iValue !== undefined)
-            )
-                iElement.setAttribute(iName, iValue);
-        },
-        clear:    function (iElement, iName) {
-            iElement.removeAttribute(iName);
-        }
-    };
-
-    /* ----- DOM Property ----- */
-    _DOM_.Property = {
-        get:    function (iElement, iName) {
-            return  iName ? iElement[iName] : iElement;
-        },
-        set:    function (iElement, iName, iValue) {
-            iElement[iName] = iValue;
-        }
-    };
-
-    /* ----- DOM Style ----- */
-    _DOM_.Style = {
-        get:    function (iElement, iName) {
-            if ((! iElement)  ||  ($.Type(iElement) in _DOM_.TypeMap.root))
-                return;
-
-            var iStyle = DOM.defaultView.getComputedStyle(iElement, null);
-
-            if (iName && iStyle) {
-                iStyle = iStyle.getPropertyValue(iName);
-
-                if (! iStyle) {
-                    if (iName.match( $.cssPX ))
-                        iStyle = 0;
-                } else if (iStyle.indexOf(' ') == -1) {
-                    var iNumber = parseFloat(iStyle);
-                    iStyle = isNaN(iNumber) ? iStyle : iNumber;
-                }
-            }
-            return  $.isData(iStyle) ? iStyle : '';
-        },
-        set:    function (iElement, iName, iValue) {
-            if ($.Type(iElement) in _DOM_.TypeMap.root)  return false;
-
-            if ($.isNumeric(iValue) && iName.match($.cssPX))
-                iValue += 'px';
-
-            iElement.style.setProperty(iName, String(iValue), 'important');
-        }
-    };
+    var _DOM_ = { },  _Data_ = [ ],  Root_Type = $.makeSet('Document', 'Window');
 
     /* ----- DOM Data ----- */
-    _DOM_.Data = {
-        _Data_:    [ ],
-        set:       function (iElement, iName, iValue) {
-            if (typeof iElement.dataIndex != 'number')
-                iElement.dataIndex = this._Data_.push({ }) - 1;
 
-            this._Data_[iElement.dataIndex][iName] = iValue;
+    _DOM_.data = {
+        set:       function (iName, iValue) {
+
+            if (typeof this.dataIndex != 'number')
+                this.dataIndex = _Data_.push({ }) - 1;
+
+            _Data_[ this.dataIndex ][ iName ] = iValue;
         },
-        get:       function (iElement, iName) {
-            var iData = this._Data_[iElement.dataIndex] || iElement.dataset;
+        get:       function (iName) {
+
+            var iData = _Data_[this.dataIndex] || this.dataset;
 
             if (iName) {
                 iData = iData || { };
                 iData = iData[iName]  ||  iData[$.camelCase( iName )];
 
                 if (typeof iData == 'string')  try {
-                    iData = BOM.JSON.parseAll(iData);
+
+                    iData = $.parseJSON( iData );
+
                 } catch (iError) { }
             }
 
             return  ((iData instanceof Array)  ||  $.isPlainObject(iData))  ?
                     $.extend(true, null, iData)  :  iData;
         },
-        clear:     function (iElement, iName) {
-            if (typeof iElement.dataIndex != 'number')  return;
+        clear:     function (iName) {
 
-            if (iName)
-                delete this._Data_[iElement.dataIndex][iName];
-            else {
-                delete this._Data_[iElement.dataIndex];
-                delete iElement.dataIndex;
-            }
+            if (Number.isInteger( this.dataIndex ))
+                if (iName)
+                    delete _Data_[this.dataIndex][iName];
+                else {
+                    delete _Data_[this.dataIndex];
+                    delete this.dataIndex;
+                }
         }
     };
 
+    /* ----- DOM Attribute ----- */
+
+    _DOM_.attr = {
+        get:      function (iName) {
+
+            if ($.Type(this) in Root_Type)  return;
+
+            if (! iName)  return this.attributes;
+
+            var iValue = this.getAttribute( iName );
+
+            if (iValue !== null)  return iValue;
+        },
+        set:      function (iName, iValue) {
+            if (
+                (! ($.Type(this) in Root_Type))  &&
+                (iValue !== undefined)
+            )
+                this.setAttribute(iName, iValue);
+        },
+        clear:    function (iName) {
+
+            this.removeAttribute( iName );
+        }
+    };
+
+    /* ----- DOM Property ----- */
+
+    _DOM_.prop = {
+        get:    function (iName) {
+
+            return  iName ? this[iName] : this;
+        },
+        set:    function (iName, iValue) {
+
+            this[iName] = iValue;
+        }
+    };
+
+    /* ----- DOM Style ----- */
+
+    _DOM_.css = {
+        get:    function (iName) {
+
+            if ($.Type(this) in Root_Type)  return;
+
+            var iStyle = BOM.getComputedStyle(this, null);
+
+            if (iName && iStyle) {
+                iStyle = iStyle.getPropertyValue( iName );
+
+                if (! iStyle) {
+                    if (iName.match( $.cssPX ))
+                        iStyle = 0;
+                } else if (iStyle.indexOf(' ') == -1) {
+
+                    var iNumber = parseFloat( iStyle );
+
+                    iStyle = isNaN(iNumber) ? iStyle : iNumber;
+                }
+            }
+
+            return  $.isData(iStyle) ? iStyle : '';
+        },
+        set:    function (iName, iValue) {
+
+            if ($.Type(this) in Root_Type)  return;
+
+            if ($.isNumeric( iValue )  &&  iName.match( $.cssPX ))
+                iValue += 'px';
+
+            this.style.setProperty(iName, String(iValue), 'important');
+        }
+    };
+
+    /* ----- Operator Wrapper ----- */
+
+    $.each(_DOM_,  function (key, method) {
+
+        $.fn[key] = function (name, value) {
+
+            var object,  first = this[0];
+
+        //  Set all
+
+            if (arguments.length > 1) {
+
+                object = { };  object[name] = value;
+
+            } else if ($.isPlainObject( name ))
+                object = name;
+
+            if ( object )
+                return  this.each(function (index) {
+
+                    for (var name in object)
+                        if (object[name] === null) {
+                            if (typeof method.clear === 'function')
+                                method.clear.call(this, name);
+                        } else
+                            method.set.apply(this, [
+                                name,
+                                (typeof object[name] != 'function')  ?
+                                    object[ name ]  :
+                                    object[ name ].apply(this, [
+                                        index,  method.get.call(this, name)
+                                    ])
+                            ]);
+                });
+
+        //  Get first
+
+            if (! (name instanceof Array))
+                return  method.get.call(first, name);
+
+            object = { };
+
+            $.each(name,  function () {
+
+                object[this] = method.get.call(first, this);
+            });
+
+            return object;
+        };
+    });
+
     $.extend({
         data:         function (iElement, iName, iValue) {
-            return  _DOM_.operate('Data', [iElement], iName, iValue);
+
+            if (arguments.length < 3)
+                return  _DOM_.data.get.call(iElement, iName);
+
+            _DOM_.data.set.call(iElement, iName, iValue);
+
+            var _Value_ = { };  _Value_[iName] = iValue;
+
+            return _Value_;
         }
     });
 
-    $.fn.extend({
-        attr:           function () {
-            return  _DOM_.operate('Attribute', this, arguments[0], arguments[1]);
-        },
-        prop:           function () {
-            return  _DOM_.operate('Property', this, arguments[0], arguments[1]);
-        },
-        data:           function () {
-            return  _DOM_.operate('Data', this, arguments[0], arguments[1]);
-        },
-        css:            function () {
-            return  _DOM_.operate('Style', this, arguments[0], arguments[1]);
-        },
-        addClass:       function (new_Class) {
-            if (typeof new_Class != 'string')  return this;
+/* ---------- DOM CSS Class ---------- */
 
-            new_Class = new_Class.trim().split(/\s+/);
+    $.fn.hasClass = function (iName) {
 
-            return  this.attr('class',  function (_Index_, old_Class) {
-                old_Class = (old_Class || '').trim().split(/\s+/);
+        return  Boolean($.map(this,  function () {
 
-                for (var i = 0, j = old_Class.length;  i < new_Class.length;  i++)
-                    if ($.inArray(new_Class[i], old_Class) == -1)
-                        old_Class[j++] = new_Class[i];
+            if (arguments[0].classList.contains( iName ))  return 1;
+        })[0]);
+    };
 
-                return  old_Class.join(' ').trim();
+    $.each(['add', 'remove', 'toggle'],  function (_, key) {
+
+        $.fn[key + 'Class'] = function (CSS_Class, toggle) {
+
+            CSS_Class = CSS_Class && CSS_Class.valueOf();
+
+            switch (typeof CSS_Class) {
+                case 'string':      CSS_Class = CSS_Class.trim().split(/\s+/);
+                case 'function':    break;
+                case 'boolean':     toggle = CSS_Class;    break;
+                default:
+                    if (key === 'remove')
+                        CSS_Class = '';
+                    else
+                        return this;
+            }
+
+            return  this.each(function (index) {
+
+                var list = this.classList;
+
+                CSS_Class = CSS_Class || list.value;
+
+                if (CSS_Class instanceof Function)
+                    list[ key ](CSS_Class.call(this, index, list.value),  toggle);
+                else
+                    for (var i = 0;  CSS_Class[i];  i++)
+                        list[ key ](CSS_Class[i], toggle);
             });
-        },
-        removeClass:    function (iClass) {
-            if (typeof iClass != 'string')  return this;
-
-            iClass = iClass.trim().split(/\s+/);
-
-            return  this.attr('class',  function (_Index_, old_Class) {
-                old_Class = (old_Class || '').trim().split(/\s+/);
-                if (! old_Class[0])  return;
-
-                var new_Class = [ ];
-
-                for (var i = 0, j = 0;  i < old_Class.length;  i++)
-                    if ($.inArray(old_Class[i], iClass) == -1)
-                        new_Class[j++] = old_Class[i];
-
-                return  new_Class.join(' ');
-            });
-        },
-        hasClass:       function (iName) {
-            return  (!!  $.map(this,  function () {
-                return arguments[0].classList.contains(iName);
-            })[0]);
-        }
+        };
     });
-
 });

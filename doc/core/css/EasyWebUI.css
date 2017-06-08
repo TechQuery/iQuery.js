@@ -8,7 +8,7 @@
  *    and can be used in the Web UI development of
  *    Any Platform.
  *
- *    [Version]    v1.0  (2017-04-12)
+ *    [Version]    v1.0  (2017-05-26)
  *
  *    [Require]    CSS 2.1  (Best Effect with CSS 3),
  *
@@ -205,6 +205,7 @@ input[type="submit"],  input[type="reset"]  {
         font-size:          1em;
         word-wrap:          break-word;
         word-break:         break-all;
+        line-height:        normal;
         padding:            0.5em  1em;
         background:         white;
         color:              black;
@@ -547,10 +548,11 @@ html.Fixed > body > .Fix-Top {
 
 /* ----- Grid Column ----- */
 .Grid-Row {
-    display:    table  !important;
-    width:      100%;
-    margin:     0  auto  !important;
-    padding:    0  !important;
+    display:            table  !important;
+    width:              100%;
+    margin:             0  auto  !important;
+    padding:            0  !important;
+    border-collapse:    collapse;
 }
 .Grid-Row > * {
     display:           table-cell;
@@ -821,17 +823,15 @@ ul.NavBar > li {
     display:           inline-block;
     text-align:        center;
     vertical-align:    middle;
-    cursor:            pointer;
 }
 ul.NavBar > li.Separator:before {
     content:    "|";
 }
-ul.NavBar > li * {
-    cursor:    auto;
-}
 ul.NavBar > li > a {
     display:    block;
     width:      100%;
+    color:      inherit;
+    cursor:     pointer;
     outline:    none;
 }
 ul.NavBar > li:empty,  ul.NavBar > li > a  {
@@ -842,7 +842,6 @@ ul.NavBar.visible > li:nth-child(n+2) > a {
 }
 ul.NavBar > li > a:active,
 ul.NavBar > li > a:hover {
-    color:              black;
     text-decoration:    none;
 }
 ul.NavBar > li:active {
@@ -920,10 +919,13 @@ ul.DropDown.Body > li > a {
         white-space:    normal;
     }
     .DropDown.Head:hover > ul.NavBar {
-        display:       block;
         background:    white;
         color:         black;
         min-width:     7em;
+    }
+    .DropDown.Head:not([tabindex]):hover > ul.NavBar,
+    .DropDown.Head[tabindex]:focus > ul.NavBar {
+        display:    block;
     }
     ul.NavBar > li.Separator {
         border-top:    1px  solid  gray;
@@ -1357,6 +1359,7 @@ img.UserLogo {
     background-color:       transparent;
     min-height:             10em;
     min-width:              15em;
+    color:                  white;
     word-break:             break-all;
 }
 
