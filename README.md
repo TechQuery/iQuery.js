@@ -167,6 +167,7 @@
  - 自带 **HTML 5 Form Placeholder** 补丁，为 IE 10-、iOS WebKit 提供兼容支持
  - 自带 `FormData()` 标准对象构造函数，为 IE 10- 提供 表单数据封装
  - 自带 `DOMParser()` 标准对象构造函数，为 IE 8 提供 **XML 文档解析**支持
+ - 自带 `URL()` 标准对象构造函数
  - 自带 `URLSearchParams()` 标准对象构造函数
 
 

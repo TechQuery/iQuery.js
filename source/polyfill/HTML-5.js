@@ -79,84 +79,13 @@ define(['jquery'],  function ($) {
 
 /* ---------- Scrolling Element ---------- */
 
-    var DocProto = DOM.constructor.prototype;
-
-    if (! Object.getOwnPropertyDescriptor(DocProto, 'scrollingElement'))
-        Object.defineProperty(DocProto, 'scrollingElement', {
+    if (! ('scrollingElement' in DOM))
+        Object.defineProperty(DOM, 'scrollingElement', {
             get:    function () {
                 return  ($.browser.webkit || (DOM.compatMode == 'BackCompat'))  ?
                     DOM.body  :  DOM.documentElement;
             }
         });
-
-/* ---------- URL Search Parameter ---------- */
-
-    function URLSearchParams() {
-
-        this.length = 0;
-
-        var _This_ = this;
-
-        arguments[0].replace(/([^&=]+)=([^&]+)/g,  function (_, key, value) {
-
-            _This_.append(key, value);
-        });
-    }
-
-    var ArrayProto = Array.prototype;
-
-    $.extend(URLSearchParams.prototype, {
-        append:      function (key, value) {
-
-            ArrayProto.push.call(this,  [key,  value + '']);
-        },
-        get:         function (key) {
-
-            for (var i = 0;  this[i];  i++)
-                if (this[i][0] === key)  return this[i][1];
-        },
-        getAll:      function (key) {
-
-            return  $.map(this,  function (_This_) {
-
-                if (_This_[0] === key)  return _This_[1];
-            });
-        },
-        delete:      function (key) {
-
-            for (var i = 0;  this[i];  i++)
-                if (this[i][0] === key)  ArrayProto.splice.call(this, i, 1);
-        },
-        set:         function (key, value) {
-
-            if (this.get( key )  != null)  this.delete( key );
-
-            this.append(key, value);
-        },
-        toString:    function () {
-
-            return  encodeURIComponent(Array.from(this,  function (_This_) {
-
-                return  _This_[0] + '=' + _This_[1];
-
-            }).join('&'));
-        },
-        entries:     function () {
-
-            return  $.makeIterator( this );
-        }
-    });
-
-    BOM.URLSearchParams = BOM.URLSearchParams || URLSearchParams;
-
-    BOM.URLSearchParams.prototype.sort =
-        BOM.URLSearchParams.prototype.sort  ||  function () {
-
-            ArrayProto.sort.call(this,  function (A, B) {
-
-                return  A[0].localeCompare( B[0] )  ||  A[1].localeCompare( B[1] );
-            });
-        };
 
 /* ---------- Selected Options ---------- */
 
@@ -197,6 +126,8 @@ define(['jquery'],  function ($) {
 
         $.merge(this, this.value.split(/\s+/));
     }
+
+    var ArrayProto = Array.prototype;
 
     $.each({
         contains:    function () {
@@ -285,12 +216,15 @@ define(['jquery'],  function ($) {
 
 /* ---------- Element Data Set ---------- */
 
-    function DOMStringMap(iElement) {
-        for (var i = 0, iAttr;  i < iElement.attributes.length;  i++) {
-            iAttr = iElement.attributes[i];
-            if (iAttr.nodeName.slice(0, 5) == 'data-')
-                this[$.camelCase( iAttr.nodeName.slice(5) )] = iAttr.nodeValue;
-        }
+    function DOMStringMap() {
+
+        var iMap = this;
+
+        $.each(arguments[0].attributes,  function () {
+
+            if (! this.nodeName.indexOf('data-'))
+                iMap[$.camelCase( this.nodeName.slice(5) )] = this.nodeValue;
+        });
     }
 
     Object.defineProperty(DOM_Proto, 'dataset', {
@@ -298,19 +232,6 @@ define(['jquery'],  function ($) {
             return  new DOMStringMap(this);
         }
     });
-
-/* ---------- URL Origin ---------- */
-
-    var Origin_Define = {
-            get:    function () {
-                return  $.urlDomain( this.href )  ||  '';
-            }
-        };
-    Object.defineProperty(
-        BOM.location.constructor.prototype,  'origin',  Origin_Define
-    );
-    Object.defineProperty(HTMLAnchorElement.prototype, 'origin', Origin_Define);
-
 
     if (! ($.browser.msie < 10))  return;
 
@@ -321,6 +242,7 @@ define(['jquery'],  function ($) {
     //      http://www.imkevinyang.com/2010/01/%E8%A7%A3%E6%9E%90ie%E4%B8%AD%E7%9A%84javascript-error%E5%AF%B9%E8%B1%A1.html
 
     Error.prototype.valueOf = function () {
+
         return  $.extend(this, {
             code:       this.number & 0x0FFFF,
             helpURL:    'https://msdn.microsoft.com/en-us/library/1dk3k160(VS.85).aspx'
@@ -333,7 +255,8 @@ define(['jquery'],  function ($) {
 
     Object.defineProperty(DOM_Proto, 'innerHTML', {
         set:    function (iHTML) {
-            if (! String(iHTML).match(
+
+            if (! (iHTML + '').match(
                 /^[^<]*<\s*(head|meta|title|link|style|script|noscript|(!--[^>]*--))[^>]*>/i
             ))
                 return  InnerHTML.set.call(this, iHTML);
@@ -341,6 +264,7 @@ define(['jquery'],  function ($) {
             InnerHTML.set.call(this,  'IE_Scope' + iHTML);
 
             var iChild = this.childNodes;
+
             iChild[0].nodeValue = iChild[0].nodeValue.slice(8);
 
             if (! iChild[0].nodeValue[0])  this.removeChild( iChild[0] );

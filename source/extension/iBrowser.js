@@ -1,4 +1,4 @@
-define(['jquery', 'extension/Promise_A+'],  function ($) {
+define(['jquery', 'polyfill/Promise_A+'],  function ($) {
 
     var BOM = self;
 

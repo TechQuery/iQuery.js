@@ -2,7 +2,7 @@
 //              >>>  jQueryKit  <<<
 //
 //
-//    [Version]    v9.6  (2017-06-08)
+//    [Version]    v9.7  (2017-06-09)
 //
 //    [Require]    jQuery  v1.9+
 //
@@ -678,6 +678,160 @@
 
 (function (BOM, DOM, $) {
 
+/* ---------- URL Search Parameter ---------- */
+
+    function URLSearchParams() {
+
+        this.length = 0;
+
+        if (arguments[0] instanceof Array) {
+
+            for (var i = 0;  arguments[i];  i++)
+                this.append.apply(this, arguments[i]);
+
+            return;
+        }
+
+        var _This_ = this;
+
+        arguments[0].replace(/([^\?&=]+)=([^&]+)/g,  function (_, key, value) {
+
+            _This_.append(key, value);
+        });
+    }
+
+    var ArrayProto = Array.prototype;
+
+    $.extend(URLSearchParams.prototype, {
+        append:      function (key, value) {
+
+            ArrayProto.push.call(this,  [key,  value + '']);
+        },
+        get:         function (key) {
+
+            for (var i = 0;  this[i];  i++)
+                if (this[i][0] === key)  return this[i][1];
+        },
+        getAll:      function (key) {
+
+            return  $.map(this,  function (_This_) {
+
+                if (_This_[0] === key)  return _This_[1];
+            });
+        },
+        delete:      function (key) {
+
+            for (var i = 0;  this[i];  i++)
+                if (this[i][0] === key)  ArrayProto.splice.call(this, i, 1);
+        },
+        set:         function (key, value) {
+
+            if (this.get( key )  != null)  this.delete( key );
+
+            this.append(key, value);
+        },
+        toString:    function () {
+
+            return  encodeURIComponent(Array.from(this,  function (_This_) {
+
+                return  _This_[0] + '=' + _This_[1];
+
+            }).join('&'));
+        },
+        entries:     function () {
+
+            return  $.makeIterator( this );
+        }
+    });
+
+    BOM.URLSearchParams = BOM.URLSearchParams || URLSearchParams;
+
+    BOM.URLSearchParams.prototype.sort =
+        BOM.URLSearchParams.prototype.sort  ||  function () {
+
+            ArrayProto.sort.call(this,  function (A, B) {
+
+                return  A[0].localeCompare( B[0] )  ||  A[1].localeCompare( B[1] );
+            });
+        };
+
+/* ---------- URL Constructor ---------- */
+
+    BOM.URL = BOM.URL || BOM.webkitURL;
+
+    if (typeof BOM.URL != 'function')  return;
+
+
+    function URL(path, base) {
+
+        var absolute = arguments.length - 1;
+
+        if (! arguments[ absolute ].match( /^\w+:\/\/.{2,}/ ))
+            throw  new TypeError(
+                "Failed to construct 'URL': Invalid " +
+                (absolute ? 'base' : '')  +  ' URL'
+            );
+
+        var link = this.__data__ = DOM.createElement('a');
+
+        link.href = base;
+
+        link.href = link.origin + (
+            (path[0] === '/')  ?  path  :  link.pathname.replace(/[^\/]+$/, path)
+        );
+
+        return  $.browser.modern ? this : link;
+    }
+
+    URL.prototype.toString = function () {  return this.href;  };
+
+    $.each([
+        BOM.location.constructor, BOM.HTMLAnchorElement, BOM.HTMLAreaElement
+    ],  function () {
+
+        Object.defineProperties(this.prototype, {
+            origin:          function () {
+
+                return  this.protocol + '//' + this.host;
+            },
+            searchParams:    function () {
+
+                return  new URLSearchParams( this.search );
+            }
+        });
+    });
+
+    if ( $.browser.modern )
+        $.each(BOM.location,  function (key) {
+
+            if (typeof this != 'function')
+                Object.defineProperty(URL.prototype, key, {
+                    get:    function () {
+
+                        return  this.__data__[key];
+                    },
+                    set:    function () {
+
+                        this.__data__[key] = arguments[0];
+                    }
+                });
+        });
+
+    if ( BOM.URL ) {
+
+        URL.createObjectURL = BOM.URL.createObjectURL;
+
+        URL.revokeObjectURL = BOM.URL.revokeObjectURL;
+    }
+
+    BOM.URL = URL;
+
+})(self, self.document, self.jQuery);
+
+
+
+(function (BOM, DOM, $) {
+
     $.extend({
         paramJSON:        function (search) {
             var _Args_ = { };
@@ -707,15 +861,23 @@
 
             return _Args_;
         },
-        extendURL:        function () {
-            var iArgs = $.makeArray( arguments );
-            var iURL = $.split(iArgs.shift(), '?', 2);
+        extendURL:        function (iURL) {
 
-            if (! iArgs[0])  return arguments[0];
+            if (! arguments[1])  return iURL;
 
-            iArgs.unshift( $.paramJSON('?' + iURL[1]) );
+            var iURL = $.split(iURL, '?', 2);
 
-            return  iURL[0]  +  '?'  +  $.param($.extend.apply($, iArgs));
+            var iPath = iURL[0];    arguments[0] = iURL[1];
+
+            return  iPath  +  '?'  +  $.param($.extend.apply($,  Array.from(
+                arguments,  function (_This_) {
+
+                    _This_ = _This_.valueOf();
+
+                    return  (typeof _This_ != 'string')  ?
+                        _This_  :  $.paramJSON('?' + _This_);
+                }
+            )));
         },
         fileName:         function () {
             return (
@@ -727,20 +889,15 @@
                 arguments[0] || BOM.location.href
             ).match(/([^\?\#]+)(\?|\#)?/)[1].split('/').slice(0, -1).join('/');
         },
-        urlDomain:        function () {
-            return ((
-                arguments[0] || BOM.location.href
-            ).match(/^(\w+:)?\/\/[^\/]+/) || '')[0];
+        urlDomain:        function (iURL) {
+
+            return  (! iURL)  ?  BOM.location.origin  :
+                (iURL.match( /^(\w+:)?\/\/[^\/]+/ )  ||  '')[0];
         },
         isCrossDomain:    function () {
-            var iDomain = this.urlDomain( arguments[0] );
-
-            return  iDomain && (
-                iDomain != [
-                    BOM.location.protocol, '//', DOM.domain, (
-                        BOM.location.port  ?  (':' + BOM.location.port)  :  ''
-                    )
-                ].join('')
+            return (
+                BOM.location.origin ===
+                (new BOM.URL(arguments[0],  this.filePath() + '/')).origin
             );
         }
     });
@@ -1651,84 +1808,13 @@
 
 /* ---------- Scrolling Element ---------- */
 
-    var DocProto = DOM.constructor.prototype;
-
-    if (! Object.getOwnPropertyDescriptor(DocProto, 'scrollingElement'))
-        Object.defineProperty(DocProto, 'scrollingElement', {
+    if (! ('scrollingElement' in DOM))
+        Object.defineProperty(DOM, 'scrollingElement', {
             get:    function () {
                 return  ($.browser.webkit || (DOM.compatMode == 'BackCompat'))  ?
                     DOM.body  :  DOM.documentElement;
             }
         });
-
-/* ---------- URL Search Parameter ---------- */
-
-    function URLSearchParams() {
-
-        this.length = 0;
-
-        var _This_ = this;
-
-        arguments[0].replace(/([^&=]+)=([^&]+)/g,  function (_, key, value) {
-
-            _This_.append(key, value);
-        });
-    }
-
-    var ArrayProto = Array.prototype;
-
-    $.extend(URLSearchParams.prototype, {
-        append:      function (key, value) {
-
-            ArrayProto.push.call(this,  [key,  value + '']);
-        },
-        get:         function (key) {
-
-            for (var i = 0;  this[i];  i++)
-                if (this[i][0] === key)  return this[i][1];
-        },
-        getAll:      function (key) {
-
-            return  $.map(this,  function (_This_) {
-
-                if (_This_[0] === key)  return _This_[1];
-            });
-        },
-        delete:      function (key) {
-
-            for (var i = 0;  this[i];  i++)
-                if (this[i][0] === key)  ArrayProto.splice.call(this, i, 1);
-        },
-        set:         function (key, value) {
-
-            if (this.get( key )  != null)  this.delete( key );
-
-            this.append(key, value);
-        },
-        toString:    function () {
-
-            return  encodeURIComponent(Array.from(this,  function (_This_) {
-
-                return  _This_[0] + '=' + _This_[1];
-
-            }).join('&'));
-        },
-        entries:     function () {
-
-            return  $.makeIterator( this );
-        }
-    });
-
-    BOM.URLSearchParams = BOM.URLSearchParams || URLSearchParams;
-
-    BOM.URLSearchParams.prototype.sort =
-        BOM.URLSearchParams.prototype.sort  ||  function () {
-
-            ArrayProto.sort.call(this,  function (A, B) {
-
-                return  A[0].localeCompare( B[0] )  ||  A[1].localeCompare( B[1] );
-            });
-        };
 
 /* ---------- Selected Options ---------- */
 
@@ -1769,6 +1855,8 @@
 
         $.merge(this, this.value.split(/\s+/));
     }
+
+    var ArrayProto = Array.prototype;
 
     $.each({
         contains:    function () {
@@ -1857,12 +1945,15 @@
 
 /* ---------- Element Data Set ---------- */
 
-    function DOMStringMap(iElement) {
-        for (var i = 0, iAttr;  i < iElement.attributes.length;  i++) {
-            iAttr = iElement.attributes[i];
-            if (iAttr.nodeName.slice(0, 5) == 'data-')
-                this[$.camelCase( iAttr.nodeName.slice(5) )] = iAttr.nodeValue;
-        }
+    function DOMStringMap() {
+
+        var iMap = this;
+
+        $.each(arguments[0].attributes,  function () {
+
+            if (! this.nodeName.indexOf('data-'))
+                iMap[$.camelCase( this.nodeName.slice(5) )] = this.nodeValue;
+        });
     }
 
     Object.defineProperty(DOM_Proto, 'dataset', {
@@ -1870,19 +1961,6 @@
             return  new DOMStringMap(this);
         }
     });
-
-/* ---------- URL Origin ---------- */
-
-    var Origin_Define = {
-            get:    function () {
-                return  $.urlDomain( this.href )  ||  '';
-            }
-        };
-    Object.defineProperty(
-        BOM.location.constructor.prototype,  'origin',  Origin_Define
-    );
-    Object.defineProperty(HTMLAnchorElement.prototype, 'origin', Origin_Define);
-
 
     if (! ($.browser.msie < 10))  return;
 
@@ -1893,6 +1971,7 @@
     //      http://www.imkevinyang.com/2010/01/%E8%A7%A3%E6%9E%90ie%E4%B8%AD%E7%9A%84javascript-error%E5%AF%B9%E8%B1%A1.html
 
     Error.prototype.valueOf = function () {
+
         return  $.extend(this, {
             code:       this.number & 0x0FFFF,
             helpURL:    'https://msdn.microsoft.com/en-us/library/1dk3k160(VS.85).aspx'
@@ -1905,7 +1984,8 @@
 
     Object.defineProperty(DOM_Proto, 'innerHTML', {
         set:    function (iHTML) {
-            if (! String(iHTML).match(
+
+            if (! (iHTML + '').match(
                 /^[^<]*<\s*(head|meta|title|link|style|script|noscript|(!--[^>]*--))[^>]*>/i
             ))
                 return  InnerHTML.set.call(this, iHTML);
@@ -1913,6 +1993,7 @@
             InnerHTML.set.call(this,  'IE_Scope' + iHTML);
 
             var iChild = this.childNodes;
+
             iChild[0].nodeValue = iChild[0].nodeValue.slice(8);
 
             if (! iChild[0].nodeValue[0])  this.removeChild( iChild[0] );

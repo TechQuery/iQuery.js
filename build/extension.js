@@ -13,7 +13,7 @@
             aParameter += ', self.jQuery';
         }
 
-        if (iName.indexOf('extension') == -1)  return '';
+        if (iName.indexOf('/') === -1)  return '';
 
         return arguments[2]
             .replace(/^define[\s\S]+?(function \()[^\)]*/m,  "\n($1" + fParameter)
