@@ -1,39 +1,42 @@
-define(['jquery'],  function ($) {
+define(['../../core/ObjectKit'],  function ($) {
 
     var _Timer_ = { };
 
-    $.extend({
-        _Root_:      BOM,
-        now:         Date.now,
-        every:       function (iSecond, iCallback) {
-            var _BOM_ = this._Root_,
-                iTimeOut = (iSecond || 0.01) * 1000,
-                iStart = this.now(),
+    return {
+        every:       function every(iSecond, iCallback) {
+
+            var iTimeOut = (iSecond || 0.01)  *  1000,
+                iStart = Date.now(),
                 Index = 0;
 
-            return  _BOM_.setTimeout(function () {
-                var iDuring = (Date.now() - iStart) / 1000;
+            return  setTimeout(function () {
 
-                var iReturn = iCallback.call(_BOM_, ++Index, iDuring);
-
-                if ((typeof iReturn == 'undefined')  ||  iReturn)
-                    _BOM_.setTimeout(arguments.callee, iTimeOut);
+                if (false === iCallback(
+                    ++Index,  (Date.now() - iStart)  /  1000
+                ))
+                    setTimeout(every, iTimeOut);
             }, iTimeOut);
         },
         wait:        function (iSecond, iCallback) {
-            return  this.every(iSecond, function () {
+
+            return  this.every(iSecond,  function () {
+
                 iCallback.apply(this, arguments);
+
                 return false;
             });
         },
         start:       function (iName) {
-            return  (_Timer_[iName] = this.now());
+
+            return  (_Timer_[iName] = Date.now());
         },
         end:         function (iName) {
-            return  (this.now() - _Timer_[iName]) / 1000;
+
+            return  (Date.now() - _Timer_[iName])  /  1000;
         },
         throttle:    function (iSecond, iOrigin) {
-            if (typeof iSecond != 'number') {
+
+            if (! $.isNumeric( iSecond )) {
                 iOrigin = iSecond;
                 iSecond = 0;
             }
@@ -42,6 +45,7 @@ define(['jquery'],  function ($) {
             var Last_Exec = 0;
 
             return  function () {
+
                 var iNow = Date.now();
 
                 if (Last_Exec + iSecond  <=  iNow) {
@@ -52,10 +56,10 @@ define(['jquery'],  function ($) {
             };
         },
         uuid:        function () {
+
             return  (arguments[0] || 'uuid')  +  '_'  +
-                (this.now() + Math.random()).toString(36)
+                (Date.now() + Math.random()).toString(36)
                     .replace('.', '').toUpperCase();
         }
-    });
-
+    };
 });
