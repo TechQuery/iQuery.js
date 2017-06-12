@@ -1,6 +1,6 @@
-define(['jquery'],  function ($) {
+define(['../../utility/ext/string'],  function ($) {
 
-    var BOM = self,  DOM = self.document;
+    var BOM = self;
 
     $.extend({
         paramJSON:        function (search) {

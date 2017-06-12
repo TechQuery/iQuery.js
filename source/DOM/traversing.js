@@ -1,4 +1,4 @@
-define(['extension/iPseudo'],  function ($) {
+define(['../iCore'],  function ($) {
 
     var Array_Reverse = Array.prototype.reverse;
 
@@ -128,7 +128,7 @@ define(['extension/iPseudo'],  function ($) {
         find:               function () {
             var $_Result = [ ];
 
-            for (var i = 0;  i < this.length;  i++)
+            for (var i = 0;  this[i];  i++)
                 $_Result = $.merge($_Result,  $.find(arguments[0], this[i]));
 
             return  this.pushStack( $_Result );
@@ -136,6 +136,7 @@ define(['extension/iPseudo'],  function ($) {
         has:                function ($_Filter) {
 
             if (typeof $_Filter != 'string') {
+
                 var _UUID_ = $.uuid('Has');
 
                 $( $_Filter ).addClass(_UUID_);

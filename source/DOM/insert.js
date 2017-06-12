@@ -1,24 +1,30 @@
-define(['extension/Insert'],  function ($) {
+define(['../iCore', './ext/insert'],  function ($) {
 
     $.fn.extend({
         appendTo:        function () {
+
             return  this.insertTo(arguments[0], Infinity);
         },
         prependTo:       function () {
+
             return  this.insertTo( arguments[0] );
         },
         insertBefore:    function ($_Target) {
+
             var $_This = this;
 
-            return  this.pushStack($.map($($_Target),  function (iDOM) {
-                return  $_This.insertTo(iDOM.parentNode, $(iDOM).index());
+            return  this.pushStack($.map($( $_Target ),  function (iDOM) {
+
+                return  $_This.insertTo(iDOM.parentNode,  $( iDOM ).index());
             }));
         },
         insertAfter:     function ($_Target) {
+
             var $_This = this;
 
-            return  this.pushStack($.map($($_Target),  function (iDOM) {
-                return  $_This.insertTo(iDOM.parentNode,  $(iDOM).index() + 1);
+            return  this.pushStack($.map($( $_Target ),  function (iDOM) {
+
+                return  $_This.insertTo(iDOM.parentNode,  $( iDOM ).index() + 1);
             }));
         }
     });
@@ -31,8 +37,10 @@ define(['extension/Insert'],  function ($) {
             insertAfter:     'after'
         },
         function (iMethod) {
-            $.fn[arguments[1]] = function () {
-                $( arguments[0] )[iMethod](this);
+
+            $.fn[ arguments[1] ] = function () {
+
+                $( arguments[0] )[ iMethod ]( this );
 
                 return this;
             };
@@ -40,6 +48,7 @@ define(['extension/Insert'],  function ($) {
     );
 
     $.globalEval = function () {
+
         $('<script />').prop('text', arguments[0]).appendTo('head');
     };
 

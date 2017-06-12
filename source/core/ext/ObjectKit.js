@@ -1,20 +1,48 @@
 define(['../../polyfill/ES_API'],  function () {
 
+    function likeArray(iObject) {
+
+        if ((! iObject)  ||  (typeof iObject != 'object'))
+            return false;
+
+        iObject = (typeof iObject.valueOf == 'function')  ?
+            iObject.valueOf() : iObject;
+
+        return Boolean(
+            iObject  &&
+            (typeof iObject.length == 'number')  &&
+            (typeof iObject != 'string')
+        );
+    }
+
+    function makeSet() {
+
+        var iArgs = arguments,  iValue = true,  iSet = { };
+
+        if (likeArray( iArgs[1] )) {
+
+            iValue = iArgs[0];
+
+            iArgs = iArgs[1];
+
+        } else if (likeArray( iArgs[0] )) {
+
+            iValue = iArgs[1];
+
+            iArgs = iArgs[0];
+        }
+
+        for (var i = 0;  i < iArgs.length;  i++)
+            iSet[ iArgs[i] ] = (typeof iValue != 'function')  ?
+                iValue  :  iValue( iArgs[i] );
+
+        return iSet;
+    }
+
+    var WindowType = makeSet('Window', 'DOMWindow', 'Global');
+
     return {
-        likeArray:       function (iObject) {
-
-            if ((! iObject)  ||  (typeof iObject != 'object'))
-                return false;
-
-            iObject = (typeof iObject.valueOf == 'function')  ?
-                iObject.valueOf() : iObject;
-
-            return Boolean(
-                iObject  &&
-                (typeof iObject.length == 'number')  &&
-                (typeof iObject != 'string')
-            );
-        },
+        likeArray:       likeArray,
         Type:            function (iVar) {
             var iType;
 
@@ -129,29 +157,7 @@ define(['../../polyfill/ES_API'],  function () {
 
             return iResult;
         },
-        makeSet:         function () {
-
-            var iArgs = arguments,  iValue = true,  iSet = { };
-
-            if (this.likeArray( iArgs[1] )) {
-
-                iValue = iArgs[0];
-
-                iArgs = iArgs[1];
-
-            } else if (this.likeArray( iArgs[0] )) {
-
-                iValue = iArgs[1];
-
-                iArgs = iArgs[0];
-            }
-
-            for (var i = 0;  i < iArgs.length;  i++)
-                iSet[ iArgs[i] ] = (typeof iValue != 'function')  ?
-                    iValue  :  iValue( iArgs[i] );
-
-            return iSet;
-        },
+        makeSet:         makeSet,
         makeIterator:    function (array) {
 
             var nextIndex = 0;

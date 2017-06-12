@@ -1,12 +1,12 @@
-define(['jquery'],  function ($) {
+define(['./string', '../../polyfill/Promise_A+'],  function ($) {
 
     var BOM = self;
 
 /* ---------- Bit Operation for Big Number  v0.1 ---------- */
 
     function Bit_Calculate(iType, iLeft, iRight) {
-        iLeft = parseInt(iLeft, 2);
-        iRight = parseInt(iRight, 2);
+
+        iLeft = parseInt(iLeft, 2);    iRight = parseInt(iRight, 2);
 
         switch (iType) {
             case '&':    return  iLeft & iRight;
@@ -19,6 +19,7 @@ define(['jquery'],  function ($) {
     $.bitOperate = function (iType, iLeft, iRight) {
 
         iLeft = (typeof iLeft == 'string')  ?  iLeft  :  iLeft.toString(2);
+
         iRight = (typeof iRight == 'string')  ?  iRight  :  iRight.toString(2);
 
         var iLength = Math.max(iLeft.length, iRight.length);
@@ -27,6 +28,7 @@ define(['jquery'],  function ($) {
             return  Bit_Calculate(iType, iLeft, iRight).toString(2);
 
         iLeft = $.leftPad(iLeft, iLength, 0);
+
         iRight = $.leftPad(iRight, iLength, 0);
 
         var iResult = '';
@@ -75,14 +77,18 @@ define(['jquery'],  function ($) {
 //  Thanks "axes" --- http://www.cnblogs.com/axes/p/4603984.html
 
     $.toBlob = function (iType, iString) {
+
         if (arguments.length == 1) {
+
             iString = iType.match(/^data:([^;]+);base64,(.+)/);
-            iType = iString[1];
-            iString = iString[2];
+
+            iType = iString[1];    iString = iString[2];
         }
+
         iString = BOM.atob( iString );
 
         var iBuffer = new ArrayBuffer( iString.length );
+
         var uBuffer = new Uint8Array( iBuffer );
 
         for (var i = 0;  iString[i];  i++)
@@ -93,8 +99,7 @@ define(['jquery'],  function ($) {
         if (! BlobBuilder)
             return  new BOM.Blob([iBuffer],  {type: iType});
 
-        var iBuilder = new BlobBuilder();
-        iBuilder.append( iBuffer );
+        var iBuilder = new BlobBuilder();    iBuilder.append( iBuffer );
 
         return  iBuilder.getBlob( iType );
     };
@@ -104,6 +109,7 @@ define(['jquery'],  function ($) {
 //  Thanks "Bakasen" for http://blog.csdn.net/bakasen/article/details/6043797
 
     var CRC_32_Table = (function () {
+
             var iTable = new Array(256);
 
             for (var i = 0, iCell;  i < 256;  i++) {
@@ -122,6 +128,7 @@ define(['jquery'],  function ($) {
         })();
 
     function CRC_32(iRAW) {
+
         iRAW = '' + iRAW;
 
         var iValue = 0xFFFFFFFF;
@@ -167,9 +174,11 @@ define(['jquery'],  function ($) {
 
 
     function BufferToString(iBuffer){
+
         var iDataView = new DataView(iBuffer),  iResult = '';
 
         for (var i = 0, iTemp;  i < iBuffer.byteLength;  i += 4) {
+
             iTemp = iDataView.getUint32(i).toString(16);
 
             iResult += ((iTemp.length == 8) ? '' : 0)  +  iTemp;

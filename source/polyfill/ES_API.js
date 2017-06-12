@@ -96,9 +96,11 @@ define(function () {
 
     /* ----- Array Patch ----- */
 
+    var ArrayProto = Array.prototype;
+
     function Array_push(value, mapCall, mapContext) {
 
-        return Array.prototype.push.call(
+        return  ArrayProto.push.call(
             this,
             (mapCall instanceof Function)  ?
                 mapCall.call(mapContext, value, this.length, this)  :  value
@@ -134,7 +136,7 @@ define(function () {
         throw  TypeError('Cannot convert undefined or null to object');
     };
 
-    Array.prototype.indexOf = Array.prototype.indexOf  ||  function () {
+    ArrayProto.indexOf = ArrayProto.indexOf  ||  function () {
 
         for (var i = 0;  i < this.length;  i++)
             if (arguments[0] === this[i])
@@ -143,18 +145,17 @@ define(function () {
         return -1;
     };
 
-    Array.prototype.reduce = Array.prototype.reduce ||
-        function (callback, value) {
+    ArrayProto.reduce = ArrayProto.reduce  ||  function (callback, value) {
 
-            for (var i = 1;  i < this.length;  i++) {
+        for (var i = 1;  i < this.length;  i++) {
 
-                if (i == 1)  value = this[0];
+            if (i == 1)  value = this[0];
 
-                value = callback(value, this[i], i, this);
-            }
+            value = callback(value, this[i], i, this);
+        }
 
-            return value;
-        };
+        return value;
+    };
 
     /* ----- Function Patch ----- */
 
@@ -169,6 +170,18 @@ define(function () {
         else
             Function.prototype.name = FuncName;
     }
+
+    Function.prototype.bind = Function.prototype.bind  ||  function () {
+
+        var _This_ = this,  iArgs = Array.from( arguments );
+
+        return  function () {
+
+            ArrayProto.push.apply(iArgs, arguments);
+
+            return  _This_.apply(iArgs.shift() || this,  iArgs);
+        };
+    };
 
     /* ----- Date Patch ----- */
 

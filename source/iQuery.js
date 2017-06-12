@@ -1,8 +1,7 @@
 define([
-    './iCore', './utility/ext/ObjectKit'
-],  function ($, ObjectKit) {
-
-    $.extend( ObjectKit );
+    './iCore', './utility/ext/object', './DOM/utility', './AJAX/index',
+    './utility/ext/binary'
+],  function ($) {
 
     if (typeof self.jQuery === 'function')  $.patch(self.jQuery, $);
 

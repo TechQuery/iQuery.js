@@ -69,7 +69,6 @@
  - 新增 **URL 参数签名**方法 —— `$.paramSign()`
  - `$.parseJSON()` 支持 **递归解析**，会将 JSON 字符串中的内层字符串 eval 为 JS 实值/例
  - 新增 **JSON 格式化显示**方法 —— `$.formatJSON()`
- - 新增 **多条件观察者**基础对象 —— `$.Observer()`
  - 基于官方 `$.ajaxTransport()` 重载 **JSONP 实现**，支持基本的异常处理
  - 更智能的 `$.ajax()`：支持 form 元素、FormData 对象的请求数据形式，整合 XHR、XDR、JSONP、iframe **自适应 跨域请求**， **自动转换响应内容**为 HTML、XML 或 JSON 对象实例
  - 新增 `$.delete()`、`$.put()`，方便实现基于 **RESTful API** 的单页应用
@@ -143,6 +142,7 @@
  - 自带 `Array.prototype.indexOf()` 标准方法
  - 自带 `Array.prototype.reduce()` 标准方法
  - 自带 `Function.prototype.name` 属性补丁
+ - 自带 `Function.prototype.bind()` 标准方法
  - 自带 `Object.keys()` 标准方法
  - 自带 `Object.getPrototypeOf()` 标准方法
  - 自带 `Object.create()` 标准方法
@@ -196,6 +196,8 @@ UNIX-Shell、Windows-CMD 通用脚本 ——
 git clone https://git.oschina.net/Tech_Query/iQuery.git
 
 npm install
+
+npm test
 
 npm run build
 ```

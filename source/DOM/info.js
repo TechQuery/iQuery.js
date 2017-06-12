@@ -1,6 +1,4 @@
-define(['iCore'],  function ($) {
-
-    var BOM = self,  DOM = self.document;
+define(['../utility/index'],  function ($) {
 
 /* ---------- DOM Info Operator ---------- */
 
@@ -82,23 +80,32 @@ define(['iCore'],  function ($) {
         set:    function (iName, iValue) {
 
             this[iName] = iValue;
+        },
+        clear:    function (iName) {
+
+            delete  this[ iName ];
         }
     };
 
     /* ----- DOM Style ----- */
+
+    $.cssPX = $.makeSet(
+        'width', 'height', 'padding', 'border-radius', 'margin',
+        'top', 'right', 'bottom',  'left'
+    );
 
     _DOM_.css = {
         get:    function (iName) {
 
             if ($.Type(this) in Root_Type)  return;
 
-            var iStyle = BOM.getComputedStyle(this, null);
+            var iStyle = self.getComputedStyle(this, null);
 
             if (iName && iStyle) {
                 iStyle = iStyle.getPropertyValue( iName );
 
                 if (! iStyle) {
-                    if (iName.match( $.cssPX ))
+                    if (iName in $.cssPX)
                         iStyle = 0;
                 } else if (iStyle.indexOf(' ') == -1) {
 
@@ -108,13 +115,13 @@ define(['iCore'],  function ($) {
                 }
             }
 
-            return  $.isData(iStyle) ? iStyle : '';
+            return  (iStyle != null)  ?  iStyle  :  '';
         },
         set:    function (iName, iValue) {
 
             if ($.Type(this) in Root_Type)  return;
 
-            if ($.isNumeric( iValue )  &&  iName.match( $.cssPX ))
+            if ($.isNumeric( iValue )  &&  (iName in $.cssPX))
                 iValue += 'px';
 
             this.style.setProperty(iName, String(iValue), 'important');
@@ -142,18 +149,14 @@ define(['iCore'],  function ($) {
                 return  this.each(function (index) {
 
                     for (var name in object)
-                        if (object[name] === null) {
-                            if (typeof method.clear === 'function')
-                                method.clear.call(this, name);
-                        } else
-                            method.set.apply(this, [
-                                name,
-                                (typeof object[name] != 'function')  ?
-                                    object[ name ]  :
-                                    object[ name ].apply(this, [
-                                        index,  method.get.call(this, name)
-                                    ])
-                            ]);
+                        method.set.apply(this, [
+                            name,
+                            (typeof object[name] != 'function')  ?
+                                object[ name ]  :
+                                object[ name ].apply(this, [
+                                    index,  method.get.call(this, name)
+                                ])
+                        ]);
                 });
 
         //  Get first
@@ -170,6 +173,20 @@ define(['iCore'],  function ($) {
 
             return object;
         };
+
+        if ( method.clear )
+            $.fn[$.camelCase('remove-' + key)] = function (name) {
+
+                name = (name || '').valueOf();
+
+                name = (typeof name === 'string')  ?  name.split(/\s+/)  :  name;
+
+                return  this.each(function () {
+
+                    for (var i = 0;  name[i];  i++)
+                        method.clear.call(this, name[i]);
+                });
+            };
     });
 
     $.extend({

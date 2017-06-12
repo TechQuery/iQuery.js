@@ -1,10 +1,9 @@
-define(['iObject'],  function ($) {
+define(['../iCore'],  function ($) {
 
-    var BOM = self;
-
-    $.extend({
+    return $.extend({
+        now:              Date.now,
         trim:             function () {
-            return  arguments[0].trim();
+            return arguments[0].trim();
         },
         camelCase:        function (iName) {
 
@@ -35,7 +34,7 @@ define(['iObject'],  function ($) {
             if ((iString[0] != '<')  ||  (iString[iString.length - 1] != '>'))
                 throw 'Illegal XML Format...';
 
-            var iXML = (new BOM.DOMParser()).parseFromString(iString, 'text/xml');
+            var iXML = (new self.DOMParser()).parseFromString(iString, 'text/xml');
 
             var iError = iXML.getElementsByTagName('parsererror');
 
@@ -48,7 +47,7 @@ define(['iObject'],  function ($) {
         },
         param:            function (iObject) {
 
-            var iParameter = new BOM.URLSearchParams();
+            var iParameter = new self.URLSearchParams();
 
             if ($.likeArray( iObject ))
                 for (var i = 0;  iObject[i];  i++)
@@ -56,15 +55,14 @@ define(['iObject'],  function ($) {
             else
                 $.each(iObject,  function (iName) {
 
-                    var iValue = (this == BOM)  ?  ''  :  this;
+                    var iValue = (this === self)  ?  ''  :  this;
 
                     iValue = $.isPlainObject( iValue )  ?
                         JSON.stringify( iValue )  :  iValue;
 
                     if ($.likeArray( iValue ))
-                        $.map(
-                            iValue,  $.proxy(iParameter.append, iParameter, iName)
-                        );
+                        for (var i = 0;  i < iValue.length;  i++)
+                            iParameter.append(iName, iValue[i]);
                     else
                         iParameter.append(iName, iValue);
                 });
@@ -72,38 +70,12 @@ define(['iObject'],  function ($) {
             return  iParameter + '';
         },
         contains:         function (iParent, iChild) {
+
             if (! iChild)  return false;
 
-            if ($.browser.modern)
-                return  !!(iParent.compareDocumentPosition(iChild) & 16);
-            else
-                return  (iParent !== iChild) && iParent.contains(iChild);
+            return  (typeof iParent.contains != 'function')  ?
+                !!(iParent.compareDocumentPosition( iChild )  &  16)  :
+                ((iParent !== iChild)  &&  iParent.contains( iChild ));
         }
     });
-
-/* ---------- Function Wrapper ---------- */
-
-    var ProxyCache = {
-            origin:     [ ],
-            wrapper:    [ ]
-        };
-
-    $.proxy = function (iFunction, iContext) {
-        var iArgs = $.makeArray(arguments);
-
-        for (var i = 0;  i < ProxyCache.origin.length;  i++)
-            if ($.isEqual(ProxyCache.origin[i], iArgs))
-                return ProxyCache.wrapper[i];
-
-        var Index = ProxyCache.origin.push( iArgs ) - 1;
-
-        iArgs = iArgs.slice(2);
-
-        return  ProxyCache.wrapper[Index] = function () {
-            return  iFunction.apply(
-                iContext || this,  $.merge([ ], iArgs, arguments)
-            );
-        };
-    };
-
 });

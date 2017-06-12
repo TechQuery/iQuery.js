@@ -42,12 +42,11 @@ define([
     var $ = iQuery;    $.fn = $.prototype;
 
     ObjectKit.extend($, ObjectKit, selector, {
-        jquery:        '3.2.1',
         uniqueSort:    uniqueSort,
         parseHTML:     parseHTML
     });
 
-    $.fn.extend = $.extend;
+    $.fn.extend = $.extend;    $.fn.jquery = '3.2.1';
 
 
     $.fn.init = function (Element_Set, iContext) {
@@ -118,6 +117,10 @@ define([
             }
 
             return  (iType in DOM_Type)  ?  $.inArray(iTarget, this)  :  -1;
+        },
+        each:              function () {
+
+            return  $.each(this, arguments[0]);
         }
     });
 

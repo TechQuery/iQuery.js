@@ -1,8 +1,8 @@
-define(['../../core/ObjectKit'],  function ($) {
+define(['../../iCore'],  function ($) {
 
     var DataType = $.makeSet('string', 'number', 'boolean');
 
-    return {
+    return $.extend({
         isData:       function (iValue) {
 
             var iType = typeof iValue;
@@ -11,6 +11,20 @@ define(['../../core/ObjectKit'],  function ($) {
                 (iValue !== null)  &&  (iType == 'object')  &&
                 (typeof iValue.valueOf() in DataType)
             );
+        },
+        formatJSON:    function () {
+
+            return  JSON.stringify(arguments[0], null, 4)
+                .replace(/(\s+"[^"]+":) ([^\s]+)/g, '$1    $2');
+        },
+        curry:         function (iOrigin) {
+
+            return  function iProxy() {
+
+                return  (arguments.length >= iOrigin.length)  ?
+                    iOrigin.apply(this, arguments)  :
+                    iProxy.bind.apply(iProxy,  $.merge([this], arguments));
+            };
         },
         intersect:    function intersect() {
 
@@ -67,5 +81,5 @@ define(['../../core/ObjectKit'],  function ($) {
 
             return iSub;
         }
-    };
+    });
 });
