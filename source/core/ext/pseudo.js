@@ -1,20 +1,27 @@
-define(['jquery'],  function ($) {
+define([
+    '../../iCore', '../../DOM/info', '../../polyfill/HTML-5', '../../DOM/traversing'
+],  function ($) {
 
 /* ---------- Enhance jQuery Pseudo ---------- */
 
     /* ----- :image ----- */
 
-    var pImage = $.extend($.makeSet('IMG', 'SVG', 'CANVAS'), {
-            INPUT:    {type:  'image'},
-            LINK:     {type:  'image/x-icon'}
+    var pImage = $.extend($.makeSet('img', 'svg', 'canvas'), {
+            input:    {type:  'image'},
+            link:     {type:  'image/x-icon'}
         });
 
     $.expr[':'].image = function (iDOM) {
-        if (iDOM.tagName in pImage)
-            return  (pImage[iDOM.tagName] === true)  ||
-                (pImage[iDOM.tagName].type == iDOM.type.toLowerCase());
 
-        return  (! $(iDOM).css('background-image').indexOf('url('));
+        var iName = iDOM.tagName.toLowerCase();
+
+        return  (iName in pImage)  ?
+            (
+                (pImage[ iName ]  ===  true)  ||
+                (pImage[ iName ].type  ===  iDOM.type.toLowerCase())
+            )  :  !(
+                $( iDOM ).css('background-image').indexOf('url(')
+            );
     };
 
     /* ----- :button ----- */
@@ -22,18 +29,22 @@ define(['jquery'],  function ($) {
     var pButton = $.makeSet('button', 'image', 'submit', 'reset');
 
     $.expr[':'].button = function (iDOM) {
-        return  (iDOM.tagName == 'BUTTON')  ||  (
-            (iDOM.tagName == 'INPUT')  &&  (iDOM.type.toLowerCase() in pButton)
+
+        var iName = iDOM.tagName.toLowerCase();
+
+        return  (iName == 'button')  ||  (
+            (iName == 'input')  &&  (iDOM.type.toLowerCase() in pButton)
         );
     };
 
     /* ----- :input ----- */
 
-    var pInput = $.makeSet('INPUT', 'TEXTAREA', 'BUTTON', 'SELECT');
+    var pInput = $.makeSet('input', 'textarea', 'button', 'select');
 
     $.expr[':'].input = function (iDOM) {
-        return  (iDOM.tagName in pInput)  ||
-            (typeof iDOM.getAttribute('contentEditable') == 'string')  ||
+
+        return  (iDOM.tagName.toLowerCase() in pInput)  ||
+            (typeof iDOM.getAttribute('contentEditable') === 'string')  ||
             iDOM.designMode;
     };
 
@@ -55,13 +66,15 @@ define(['jquery'],  function ($) {
 
     /* ----- :list, :data ----- */
 
-    var pList = $.makeSet('UL', 'OL', 'DL', 'TBODY', 'DATALIST');
+    var pList = $.makeSet('ul', 'ol', 'dl', 'tbody', 'datalist');
 
     $.extend($.expr[':'], {
         list:    function () {
-            return  (arguments[0].tagName in pList);
+
+            return  (arguments[0].tagName.toLowerCase() in pList);
         },
         data:    function (iDOM, Index, iMatch) {
+
             return  Boolean($.data(iDOM, iMatch[3]));
         }
     });
@@ -75,18 +88,19 @@ define(['jquery'],  function ($) {
         ].join(', ');
 
     $.expr[':'].focusable = function () {
-        return arguments[0].matches(pFocusable);
+
+        return  arguments[0].matches( pFocusable );
     };
 
     /* ----- :field ----- */
 
     $.expr[':'].field = function (iDOM) {
         return (
-            iDOM.getAttribute('name')  &&  $.expr[':'].input(iDOM)
+            iDOM.getAttribute('name')  &&  $.expr[':'].input( iDOM )
         )  &&  !(
             iDOM.disabled  ||
-            $.expr[':'].button(iDOM)  ||
-            $(iDOM).parents('fieldset[disabled]')[0]
+            $.expr[':'].button( iDOM )  ||
+            $( iDOM ).parents('fieldset[disabled]')[0]
         )
     };
 
@@ -95,9 +109,10 @@ define(['jquery'],  function ($) {
     var Rolling_Style = $.makeSet('auto', 'scroll');
 
     $.expr[':'].scrollable = function (iDOM) {
+
         if (iDOM === iDOM.ownerDocument.scrollingElement)  return true;
 
-        var iCSS = $(iDOM).css([
+        var iCSS = $( iDOM ).css([
                 'width',       'height',
                 'max-width',   'max-height',
                 'overflow-x',  'overflow-y'
@@ -105,11 +120,11 @@ define(['jquery'],  function ($) {
 
         return (
             (
-                (parseFloat(iCSS.width) || parseFloat(iCSS['max-width']))  &&
+                (parseFloat( iCSS.width )  ||  parseFloat( iCSS['max-width'] ))  &&
                 (iCSS['overflow-x'] in Rolling_Style)
             )  ||
             (
-                (parseFloat(iCSS.height) || parseFloat(iCSS['max-height']))  &&
+                (parseFloat( iCSS.height )  ||  parseFloat( iCSS['max-height'] ))  &&
                 (iCSS['overflow-y'] in Rolling_Style)
             )
         );
@@ -117,11 +132,11 @@ define(['jquery'],  function ($) {
 
     /* ----- :media ----- */
 
-    var pMedia = $.makeSet('IFRAME', 'OBJECT', 'EMBED', 'AUDIO', 'VIDEO');
+    var pMedia = $.makeSet('iframe', 'object', 'embed', 'audio', 'video');
 
     $.expr[':'].media = function (iDOM) {
 
-        return  (iDOM.tagName in pMedia)  ||  $.expr[':'].image(iDOM);
+        return  (iDOM.tagName in pMedia)  ||  $.expr[':'].image( iDOM );
     };
 
 });

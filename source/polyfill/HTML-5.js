@@ -1,4 +1,4 @@
-define(['jquery'],  function ($) {
+define(['../utility/index', '../utility/ext/browser'],  function ($) {
 
     var BOM = self,  DOM = self.document;
 
@@ -11,15 +11,17 @@ define(['jquery'],  function ($) {
         };
 
     function Script_URL() {
-        try {
-            throw  new Error('AMD_Loader');
-        } catch (iError) {
+
+        try {  throw  new Error('AMD_Loader');  } catch (iError) {
+
             var iURL;
 
             for (var iCore in Stack_Prefix)
-                if ( $.browser[iCore] ) {
+                if ($.browser[ iCore ]) {
+
                     iURL = iError.stack.match(RegExp(
-                        "\\s+" + Stack_Prefix[iCore] + "(http(s)?:\\/\\/[^:]+)"
+                        "\\s+"  +  Stack_Prefix[ iCore ]  +
+                            "(http(s)?:\\/\\/[^:]+)"
                     ));
 
                     return  iURL && iURL[1];
@@ -28,8 +30,9 @@ define(['jquery'],  function ($) {
     }
 
     if (! ('currentScript' in DOM))
-        Object.defineProperty(Object.getPrototypeOf(DOM), 'currentScript', {
+        Object.defineProperty(Object.getPrototypeOf( DOM ),  'currentScript',  {
             get:    function () {
+
                 var iURL = ($.browser.msie < 10)  ||  Script_URL();
 
                 for (var i = 0;  DOM.scripts[i];  i++)
@@ -46,10 +49,11 @@ define(['jquery'],  function ($) {
     function HTMLCollection(DOM_Array) {
 
         for (var i = 0, j = 0;  DOM_Array[i];  i++)
-            if (DOM_Array[i].nodeType == 1){
+            if (DOM_Array[i].nodeType === 1) {
+
                 this[j] = DOM_Array[i];
 
-                if (this[j++].name)  this[this[j - 1].name] = this[j - 1];
+                if ( this[j++].name )  this[this[j - 1].name] = this[j - 1];
             }
 
         this.length = j;
@@ -270,5 +274,4 @@ define(['jquery'],  function ($) {
             if (! iChild[0].nodeValue[0])  this.removeChild( iChild[0] );
         }
     });
-
 });

@@ -1,4 +1,4 @@
-define(['../iCore', './ext/insert'],  function ($) {
+define(['../iCore', './ext/base'],  function ($) {
 
     $.fn.extend({
         appendTo:        function () {

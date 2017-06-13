@@ -1,4 +1,4 @@
-define(['../iCore', './info', './traversing'],  function ($) {
+define(['../iCore', '../core/ext/pseudo'],  function ($) {
 
     function DOM_Size(iName) {
         iName = {

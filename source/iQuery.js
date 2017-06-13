@@ -1,5 +1,5 @@
 define([
-    './iCore', './utility/ext/object', './DOM/utility', './AJAX/index',
+    './iCore', './utility/ext/object', './DOM/insert', './AJAX/wrapper',
     './utility/ext/binary'
 ],  function ($) {
 

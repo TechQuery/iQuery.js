@@ -72,7 +72,7 @@
  - 基于官方 `$.ajaxTransport()` 重载 **JSONP 实现**，支持基本的异常处理
  - 更智能的 `$.ajax()`：支持 form 元素、FormData 对象的请求数据形式，整合 XHR、XDR、JSONP、iframe **自适应 跨域请求**， **自动转换响应内容**为 HTML、XML 或 JSON 对象实例
  - 新增 `$.delete()`、`$.put()`，方便实现基于 **RESTful API** 的单页应用
- - 重构 `$.fn.load()` 内部实现，与 **W3C HTML 解析规则** 保持一致，方便 DOM 片段清理、脚本调试
+ - 新增 `$.fn.htmlExec()` **W3C HTML 解析器**方法，并基于此重构 `$.fn.load()` 内部实现，方便 DOM 片段清理、脚本调试
  - 新增基于 **HTML 5 表单字段 验证规则**的 `$.fn.validate()`
  - 封装了 **表单元素无刷新提交**，并可直接绑定响应回调 —— `$.fn.ajaxSubmit()`（基于前述的几个 **AJAX 增强方法** 构建）
  - 新增 **选择符合法性判断**方法 —— `$.isSelector()`
@@ -88,6 +88,7 @@
    - 新增 `:media`，等价于 `:image, iframe, object, embed, audio, video`
    - 新增 `:scrollable`，匹配所有 **内容可滚动**的元素
  - 新增 **子元素插入**方法 —— `$.fn.insertTo()`
+ - 新增 **DOM 树遍历器**生成方法 —— `$.fn.treeWalker()`（遵循 [ECMAScript 6 迭代器协议](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Iteration_protocols#The_iterator_protocol)）
  - 新增 **祖先元素交集**方法 —— `$.fn.sameParents()`
  - 新增 **有滚动条的祖先元素**方法 —— `$.fn.scrollParents()`
  - 新增 **元素可视口检测**方法 —— `$.fn.inViewport()`
