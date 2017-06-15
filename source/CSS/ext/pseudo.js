@@ -1,5 +1,6 @@
 define([
-    '../../iCore', '../../DOM/info', '../../polyfill/HTML-5', '../../DOM/traversing'
+    '../../iQuery', '../../DOM/info', '../../polyfill/HTML-5',
+    '../../DOM/traversing'
 ],  function ($) {
 
 /* ---------- Enhance jQuery Pseudo ---------- */

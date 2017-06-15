@@ -1,17 +1,6 @@
-define(['../../iCore'],  function ($) {
-
-    var DataType = $.makeSet('string', 'number', 'boolean');
+define(['../../iQuery'],  function ($) {
 
     return $.extend({
-        isData:       function (iValue) {
-
-            var iType = typeof iValue;
-
-            return  Boolean(iValue)  ||  (iType in DataType)  ||  (
-                (iValue !== null)  &&  (iType == 'object')  &&
-                (typeof iValue.valueOf() in DataType)
-            );
-        },
         formatJSON:    function () {
 
             return  JSON.stringify(arguments[0], null, 4)

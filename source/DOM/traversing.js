@@ -1,4 +1,4 @@
-define(['../iCore'],  function ($) {
+define(['../iQuery'],  function ($) {
 
     var Array_Reverse = Array.prototype.reverse;
 

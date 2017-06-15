@@ -1,4 +1,4 @@
-define(['../iCore'],  function ($) {
+define(['../iQuery'],  function ($) {
 
 /* ---------- Hook API ---------- */
 

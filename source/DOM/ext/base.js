@@ -1,4 +1,4 @@
-define(['../../iCore', '../utility'],  function ($) {
+define(['../../iQuery', '../utility'],  function ($) {
 
     var BOM = self,  DOM = self.document;
 
@@ -36,7 +36,10 @@ define(['../../iCore', '../utility'],  function ($) {
 
     $.fn.treeWalker = function (nodeType, filter) {
 
-        if (nodeType instanceof Function)  filter = nodeType,  nodeType = 0;
+        if (nodeType instanceof Function)
+            filter = nodeType,  nodeType = 0;
+        else
+            filter = (typeof filter === 'function')  ?  filter  :  '';
 
         var element = (nodeType === 1)  ?  'Element'  :  '',  _This_,  _Root_;
 
@@ -45,27 +48,39 @@ define(['../../iCore', '../utility'],  function ($) {
         _This_ = _Root_ = this[0];
 
         return {
-            next:    function () {
+            forward:    function (noChild) {
+
+                if ((! noChild)  &&  _This_[ FC ])
+                    return  _This_ = _This_[ FC ];
+
+                _This_ = (_This_ != _Root_)  &&  _This_;
+
+                while (_This_) {
+
+                    if (_This_[ NS ])  return  _This_ = _This_[ NS ];
+
+                    _This_ = (_This_.parentNode != _Root_)  &&  _This_.parentNode;
+                }
+            },
+            next:       function () {
+
+                if (! _This_)  return  {done: true};
+
+                var iNew = filter  &&  filter.call(_Root_, _This_);
+
+                if (iNew  &&  (iNew != _This_)  &&  _This_.parentNode) {
+
+                    _This_.parentNode.replaceChild(iNew, _This_);
+
+                    _This_ = iNew;
+
+                } else if (iNew === false)  this.forward();
 
                 if (! _This_)  return  {done: true};
 
                 var item = {value: _This_,  done: false};
 
-                _This_ = _This_[ FC ]  ||  (
-                    (_This_ != _Root_)  &&  (
-                        _This_[ NS ]  ||  (_This_.parentNode || '')[ NS ]
-                    )
-                );
-                var iNew = filter  &&  filter.call(_Root_, _This_);
-
-                if (
-                    (iNew != null)  &&  iNew  &&
-                    (iNew != _This_)  &&  _This_.parentNode
-                ) {
-                    _This_.parentNode.replaceChild(iNew, _This_);
-
-                    _This_ = iNew;
-                }
+                this.forward(iNew === null);
 
                 return item;
             }

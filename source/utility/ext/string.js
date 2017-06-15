@@ -1,4 +1,4 @@
-define(['../../iCore'],  function ($) {
+define(['../../iQuery'],  function ($) {
 
     return $.extend({
         split:         function (iString, iSplit, iLimit, iJoin) {

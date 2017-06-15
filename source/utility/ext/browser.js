@@ -1,4 +1,4 @@
-define(['../../iCore'],  function ($) {
+define(['../../iQuery'],  function ($) {
 
     var UA = self.navigator.userAgent;
 

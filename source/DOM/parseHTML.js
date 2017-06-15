@@ -1,4 +1,4 @@
-define(['./ObjectKit'],  function ($) {
+define(['../object/index'],  function ($) {
 
     var TagWrapper = $.extend(
             {

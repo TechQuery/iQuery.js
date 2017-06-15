@@ -1,4 +1,4 @@
-define(['../../core/ObjectKit'],  function ($) {
+define(['../../object/index'],  function ($) {
 
     var _Timer_ = { };
 

@@ -1,4 +1,4 @@
-define(['../iCore', '../core/ext/pseudo'],  function ($) {
+define(['../iQuery', '../CSS/ext/pseudo'],  function ($) {
 
     function DOM_Size(iName) {
         iName = {

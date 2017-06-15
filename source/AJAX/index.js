@@ -1,5 +1,5 @@
 define([
-    '../iCore', './hook', '../utility/ext/string', '../DOM/ext/base',
+    '../iQuery', './hook', '../utility/ext/string', '../DOM/ext/base',
     './ext/URL', '../polyfill/Promise_A+'
 ],  function ($) {
 

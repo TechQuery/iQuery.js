@@ -1,4 +1,4 @@
-define(['./checkType', './ext/ObjectKit'],  function (checker, $) {
+define(['./checkType', './ext/base'],  function (checker, $) {
 
     function _Extend_(iTarget, iSource, iDeep) {
 
