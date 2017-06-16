@@ -1,6 +1,6 @@
 define(['../../iQuery', './base', '../../DOM/info'],  function ($) {
 
-/* ---------- CSS Rule (Global) ---------- */
+/* ----------  JSON to <style />  ---------- */
 
     var Code_Indent = $.browser.modern ? '' : ' '.repeat(4);
 
@@ -36,27 +36,37 @@ define(['../../iQuery', './base', '../../DOM/info'],  function ($) {
 
     $.cssRule = function (At_Wrapper, iRule) {
 
-        if (typeof At_Wrapper != 'string') {
-
-            iRule = At_Wrapper;  At_Wrapper = null;
-        }
+        if (typeof At_Wrapper.valueOf() != 'string')
+            iRule = At_Wrapper,  At_Wrapper = null;
 
         var CSS_Text = CSS_Rule2Text( iRule );
 
-        var $_Style = $('<style />', {
-                type:       'text/css',
-                'class':    'iQuery_CSS-Rule',
-                text:       (! At_Wrapper) ? CSS_Text : [
-                    At_Wrapper + ' {',
-                    CSS_Text.replace(/\n/m,  "\n" + Code_Indent),
-                    '}'
-                ].join("\n")
-            }).appendTo( DOM.head );
-
-        return  ($_Style[0].sheet || $_Style[0].styleSheet);
+        return  $('<style />', {
+            type:       'text/css',
+            'class':    'iQuery_CSS-Rule',
+            text:       (! At_Wrapper)  ?  CSS_Text  :  [
+                At_Wrapper + ' {',
+                CSS_Text.replace(/\n/m,  "\n" + Code_Indent),
+                '}'
+            ].join("\n")
+        })[0];
     };
 
 /* ---------- CSS Rule (Scoped) ---------- */
+
+    function Scope_Selector(_ID_) {
+
+        return  $.map(arguments[1].split( /\s*,\s*/ ),  function (_This_) {
+
+            return  /[\s>\+~]?#/.test(_This_)  ?
+                _This_ :
+                '#' + _ID_ +  (/^\w/.test(_This_) ? ' ' : '')  +  _This_;
+
+        }).join(',  ');
+    }
+
+    var Global_Style = $.makeSet('#document', 'html', 'body');
+
 
     $.fn.cssRule = function (iRule, iCallback) {
 
@@ -78,18 +88,23 @@ define(['../../iQuery', './base', '../../DOM/info'],  function ($) {
             });
         }
 
-        return  this.each(function () {
+        this.not([self, document.head]).uniqueId().each(function () {
 
-            var _Rule_ = { },  _ID_ = this.getAttribute('id');
-
-            if (! _ID_)  this.setAttribute('id',  _ID_ = $.uuid());
+            var _Rule_ = { };
 
             for (var iSelector in iRule)
-                _Rule_['#' + _ID_ + iSelector] = iRule[ iSelector ];
+                _Rule_[Scope_Selector( this.id )] = iRule[ iSelector ];
 
-            var iSheet = $.cssRule(_Rule_);
+            _Rule_ = (
+                (this.nodeName.toLowerCase() in Global_Style)  ?
+                    document.head  :  this
+            ).appendChild( $.cssRule(_Rule_) );
 
-            if (typeof iCallback === 'function')  iCallback.call(this, iSheet);
+            if (typeof iCallback === 'function')
+                iCallback.call(this,  _Rule_.sheet || _Rule_.styleSheet);
         });
+
+        return this;
     };
+
 });

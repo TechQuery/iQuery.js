@@ -1,8 +1,8 @@
-define(['jquery', 'iQuery'],  function ($, iQuery) {
+define(['jquery', 'index'],  function ($, iQuery) {
 
     if ($ != iQuery) {
 
-        iQuery.patch($, iQuery);
+        iQuery.patch($, iQuery).ajaxPatch();
 
 
         console.groupCollapsed('[Diff with jQuery]');

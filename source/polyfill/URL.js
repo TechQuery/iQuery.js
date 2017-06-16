@@ -88,21 +88,21 @@ define(['jquery'],  function ($) {
 
     function URL(path, base) {
 
-        var absolute = arguments.length - 1;
-
-        if (! arguments[ absolute ].match( /^\w+:\/\/.{2,}/ ))
+        if (! /^\w+:\/\/.{2,}/.test(base || path))
             throw  new TypeError(
                 "Failed to construct 'URL': Invalid " +
-                (absolute ? 'base' : '')  +  ' URL'
+                (base ? 'base' : '')  +  ' URL'
             );
 
         var link = this.__data__ = DOM.createElement('a');
 
-        link.href = base;
+        link.href = base || path;
 
-        link.href = link.origin + (
-            (path[0] === '/')  ?  path  :  link.pathname.replace(/[^\/]+$/, path)
-        );
+        if ( base )
+            link.href = link.origin + (
+                (path[0] === '/')  ?
+                    path  :  link.pathname.replace(/[^\/]+$/, path)
+            );
 
         return  $.browser.modern ? this : link;
     }

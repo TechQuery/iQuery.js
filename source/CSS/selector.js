@@ -1,19 +1,25 @@
 define(['../object/index', '../utility/ext/timer'],  function ($, timer) {
 
-    function QuerySelector(iPath) {
+    function uniqueId() {
 
-        if ((this.nodeType == 9)  ||  (! this.parentNode))
+        return  $.each(this,  function () {
+
+            if (! this.id)  this.id = timer.uuid('iQuery');
+        });
+    }
+
+    function QuerySelector(iPath) {
+        if (
+            /[\s>\+~]?#/.test( iPath )  ||
+            (this.nodeType === 9)  ||  (! this.parentNode)
+        )
             return  this.querySelectorAll( iPath );
 
-        var _ID_ = this.getAttribute('id');
+        uniqueId.call([ this ]);
 
-        if (! _ID_)  this.setAttribute('id',  _ID_ = timer.uuid('iQS'));
+        iPath = this.parentNode.querySelectorAll('#' + this.id + ' ' + iPath);
 
-        iPath = '#' + _ID_ + ' ' + iPath;
-
-        iPath = this.parentNode.querySelectorAll( iPath );
-
-        if (_ID_.slice(0, 3)  ==  'iQS')  this.removeAttribute('id');
+        if ( /^iQuery_[\w\d]+$/.test( this.id ) )  this.removeAttribute('id');
 
         return iPath;
     }
@@ -54,6 +60,7 @@ define(['../object/index', '../utility/ext/timer'],  function ($, timer) {
     }
 
     return {
+        fn:      {uniqueId:  uniqueId},
         find:    find,
         expr:    {':': _Pseudo_,  filter: _Pseudo_}
     };

@@ -1,9 +1,12 @@
 define([
-    './iQuery', './DOM/insert', './CSS/ext/rule', './CSS/ext/utility',
-    './AJAX/wrapper', './utility/ext/binary'
+    './iQuery',
+    './DOM/insert', './DOM/ext/selection',
+    './CSS/ext/rule', './CSS/ext/utility',
+    './AJAX/wrapper', './AJAX/ext/form',
+    './utility/ext/binary'
 ],  function ($) {
 
-    if (typeof self.jQuery === 'function')  $.patch(self.jQuery, $);
+    if (typeof self.jQuery === 'function')  $.patch(self.jQuery, $).ajaxPatch();
 
     return $;
 

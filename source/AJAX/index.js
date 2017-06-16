@@ -1,6 +1,5 @@
 define([
-    '../iQuery', './hook', '../utility/ext/string', '../DOM/ext/base',
-    './ext/URL', '../polyfill/Promise_A+'
+    './ext/URL', '../DOM/ext/base', '../polyfill/Promise_A+', './ext/transport'
 ],  function ($) {
 
 /* ---------- Response Data ---------- */
@@ -173,5 +172,7 @@ define([
 
         return iResult;
     };
+
+    return $.ajaxPatch();
 
 });

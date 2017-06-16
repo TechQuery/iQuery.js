@@ -1,4 +1,4 @@
-define(['../iQuery', './index', '../DOM/ext/base'],  function ($) {
+define(['./index', '../DOM/ext/base'],  function ($) {
 
 /* ---------- RESTful API ---------- */
 

@@ -49,14 +49,15 @@
  - 新增 **函数执行节流器** —— `$.throttle()`
  - 新增 **唯一串号生成器** —— `$.uuid()`
  - 新增 **类数组对象**判断方法 —— `$.likeArray()`
+ - 新增 **对象构造函数名**获取方法 —— `$.Type()`
  - `$.unique()` 方法不局限于 DOM 元素数组
  - 新增 **对象值相等**判断方法 —— `$.isEqual()`
  - 新增 **集合对象**（可用于 in 操作符）生成方法 —— `$.makeSet()`
  - 新增 **迭代器**生成方法 —— `$.makeIterator()`
  - 新增 **对象链回溯**方法 —— `$.trace()`
  - 新增 **数组/对象交集**方法 —— `$.intersect()`
+ - 新增 **对象补丁**方法 —— `$.patch()`
  - 新增 **对象原型继承**快捷方法 —— `$.inherit()`
- - 新增 **对象构造函数名**获取方法 —— `$.Type()`
  - 新增 **字符串部分分割**方法 —— `$.split()`（借鉴 PHP）
  - 新增 **连字符格式转换**方法 —— `$.hyphenCase()`
  - 新增 **字符串字节长度**方法 —— `$.byteLength()`
@@ -69,7 +70,8 @@
  - `$.parseJSON()` 支持 **递归解析**，会将 JSON 字符串中的内层字符串 eval 为 JS 实值/例
  - 新增 **JSON 格式化显示**方法 —— `$.formatJSON()`
  - 基于官方 `$.ajaxTransport()` 重载 **JSONP 实现**，支持基本的异常处理
- - 更智能的 `$.ajax()`：支持 form 元素、FormData 对象的请求数据形式，整合 XHR、XDR、JSONP、iframe **自适应 跨域请求**， **自动转换响应内容**为 HTML、XML 或 JSON 对象实例
+ - 新增 `$.ajaxPatch()`，让 `$.ajax()` 支持 form 元素、FormData 对象的请求数据形式，整合 XHR、XDR、JSONP、iframe **自适应 跨域请求**
+ - `$.ajax()` **自动转换响应内容**为 HTML、XML 或 JSON 对象实例
  - 新增 `$.delete()`、`$.put()`，方便实现基于 **RESTful API** 的单页应用
  - 新增 `$.fn.htmlExec()` **W3C HTML 解析器**方法，并基于此重构 `$.fn.load()` 内部实现，方便 DOM 片段清理、脚本调试
  - 新增基于 **HTML 5 表单字段 验证规则**的 `$.fn.validate()`
@@ -103,6 +105,7 @@
  - 新增 **CSS 厂商命名获取**方法 —— `$.cssName()`
  - 新增 **CSS 集合对象搜索**方法 —— `$.searchCSS()`
  - 新增 **CSS 规则全局设置**方法 —— `$.cssRule()`
+ - 自带 **DOM 唯一 ID 设置**方法 —— `$.fn.uniqueId()`（[jQuery UI 标准](http://www.css88.com/jquery-ui-api/uniqueId/)）
  - 新增 **DOM 元素 CSS 规则读写**方法 —— `$.fn.cssRule()`
  - 新增 **DOM 选中内容读写**方法 —— `$.fn.selection()`
  - `$.fn.focus()` 会让所有可见元素获得焦点

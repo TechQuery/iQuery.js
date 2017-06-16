@@ -34,7 +34,7 @@ define(['../../polyfill/ES_API'],  function () {
 
         for (var i = 0;  i < iArgs.length;  i++)
             iSet[ iArgs[i] ] = (typeof iValue != 'function')  ?
-                iValue  :  iValue( iArgs[i] );
+                iValue  :  iValue(iArgs[i], i, iArgs);
 
         return iSet;
     }
