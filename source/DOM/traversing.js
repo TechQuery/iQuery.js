@@ -1,4 +1,4 @@
-define(['../iQuery'],  function ($) {
+define(['../iQuery', '../CSS/class'],  function ($) {
 
     var Array_Reverse = Array.prototype.reverse;
 
@@ -78,7 +78,7 @@ define(['../iQuery'],  function ($) {
         }),
         parents:         DOM_Map('',  true,  function (iDOM) {
 
-            return  $.trace(iDOM, 'parentElement').slice(0, -1);
+            return  $.trace(iDOM, 'parentElement');
         }),
         parentsUntil:    function () {
 

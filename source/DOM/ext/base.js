@@ -20,13 +20,11 @@ define(['../../iQuery', '../utility'],  function ($) {
 
         $( $_Target ).each(function () {
 
-            var iAfter = $( this.children ).eq(Index || 0)[0];
-
             DOM_Set = arguments[0]  ?  DOM_Set.cloneNode( true )  :  DOM_Set;
 
             $.merge($_This, DOM_Set.children);
 
-            this[iAfter ? 'insertBefore' : 'appendChild'](DOM_Set, iAfter);
+            this.insertBefore(DOM_Set,  this.children[Index || 0]);
         });
 
         return  this.pushStack( $_This );

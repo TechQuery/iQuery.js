@@ -23,16 +23,18 @@ define([
 
         Element_Set = Element_Set.valueOf();
 
-        if (typeof Element_Set === 'string') {
-
-            Element_Set = this.init(Element_Set, iContext);
-
-        } else if (! $.likeArray( Element_Set )) {
-
-            Element_Set = [ Element_Set ];
+        switch ($.Type( Element_Set )) {
+            case 'String':
+                Element_Set = this.init(Element_Set, iContext);    break;
+            case 'Window':         ;
+            case 'Document':       ;
+            case 'HTMLElement':
+                Element_Set = [ Element_Set ];
         }
 
-        $.merge(this, Element_Set);
+        $.merge(
+            this,  $.likeArray( Element_Set )  ?  Element_Set  :  [ Element_Set ]
+        );
 
         if (this.length < 2)  this.context = (this[0] || '').ownerDocument;
     }
@@ -41,7 +43,7 @@ define([
 
     var $ = iQuery;    $.fn = $.prototype;
 
-    ObjectKit.extend($, ObjectKit, selector, {
+    ObjectKit.extend(true, $, ObjectKit, selector, {
         uniqueSort:    uniqueSort,
         parseHTML:     parseHTML
     });

@@ -1,6 +1,6 @@
-define(['jquery'],  function ($) {
+define(['../iQuery', '../utility/ext/browser'],  function ($) {
 
-    var BOM = self,  DOM = self.document;
+    var BOM = self;
 
 /* ---------- URL Search Parameter ---------- */
 
@@ -94,7 +94,7 @@ define(['jquery'],  function ($) {
                 (base ? 'base' : '')  +  ' URL'
             );
 
-        var link = this.__data__ = DOM.createElement('a');
+        var link = this.__data__ = document.createElement('a');
 
         link.href = base || path;
 

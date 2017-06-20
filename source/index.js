@@ -1,3 +1,17 @@
+//
+//                >>>  iQuery.js  <<<
+//
+//
+//      [Version]    v3.0  (2017-06-20)  Stable
+//
+//      [Usage]      A Light-weight jQuery Compatible API
+//                   with IE 8+ compatibility.
+//
+//
+//          (C)2015-2017    shiy2008@gmail.com
+//
+
+
 define([
     './iQuery',
     './DOM/insert', './DOM/ext/selection',
@@ -8,6 +22,6 @@ define([
 
     if (typeof self.jQuery === 'function')  $.patch(self.jQuery, $).ajaxPatch();
 
-    return $;
+    return  self.iQuery = $;
 
 });

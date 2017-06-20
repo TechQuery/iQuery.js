@@ -39,7 +39,7 @@ define(['../../polyfill/ES_API'],  function () {
         return iSet;
     }
 
-    var WindowType = makeSet('Window', 'DOMWindow', 'Global');
+    var WindowType = makeSet('Window', 'DOMWindow', 'global');
 
     return {
         likeArray:       likeArray,

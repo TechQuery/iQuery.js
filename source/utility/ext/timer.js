@@ -3,18 +3,18 @@ define(['../../object/index'],  function ($) {
     var _Timer_ = { };
 
     return {
-        every:       function every(iSecond, iCallback) {
+        every:       function (iSecond, iCallback) {
 
             var iTimeOut = (iSecond || 0.01)  *  1000,
                 iStart = Date.now(),
                 Index = 0;
 
-            return  setTimeout(function () {
+            return  setTimeout(function loop() {
 
                 if (false === iCallback(
                     ++Index,  (Date.now() - iStart)  /  1000
                 ))
-                    setTimeout(every, iTimeOut);
+                    setTimeout(loop, iTimeOut);
             }, iTimeOut);
         },
         wait:        function (iSecond, iCallback) {

@@ -3,9 +3,9 @@ define(['./checkType', './ext/base'],  function (checker, $) {
     function _Extend_(iTarget, iSource, iDeep) {
 
         iTarget = ((! iTarget)  &&  (iSource instanceof Array))  ?
-            [ ]  :  Object(iTarget);
+            [ ]  :  Object( iTarget );
 
-        iSource = Object(iSource);
+        iSource = Object( iSource );
 
         for (var iKey in iSource)
             if (
@@ -28,13 +28,16 @@ define(['./checkType', './ext/base'],  function (checker, $) {
 
     var ArrayProto = Array.prototype;
 
+    function merge(target, source) {
+
+        ArrayProto.push.apply(target, source);
+
+        return target;
+    }
+
     function makeArray(object) {
         try {
-            var array = [ ];
-
-            ArrayProto.push.apply(array, object);
-
-            return array;
+            return  merge([ ], object);
 
         } catch (error) {
             try {
@@ -60,36 +63,21 @@ define(['./checkType', './ext/base'],  function (checker, $) {
     }
 
     return extend({
+        merge:            merge,
         makeArray:        makeArray,
         extend:           extend,
-        merge:            function (iSource) {
-
-            for (var i = 1;  i < arguments.length;  i++)
-                ArrayProto.splice.apply(iSource, ArrayProto.concat.apply(
-                    [iSource.length, 0],
-                    this.makeArray( arguments[i] )
-                ));
-
-            return iSource;
-        },
         each:             function (Arr_Obj, iEvery) {
 
             if ($.likeArray( Arr_Obj ))
-                for (var i = 0;  i < Arr_Obj.length;  i++)  try {
+                for (var i = 0;  i < Arr_Obj.length;  i++)
                     if (false  ===  iEvery.call(Arr_Obj[i], i, Arr_Obj[i]))
                         break;
-                } catch (iError) {
-                    console.dir( iError.valueOf() );
-                }
             else
-                for (var iKey in Arr_Obj)  try {
+                for (var iKey in Arr_Obj)
                     if (false === iEvery.call(
                         Arr_Obj[iKey],  iKey,  Arr_Obj[iKey]
                     ))
                         break;
-                } catch (iError) {
-                    console.dir( iError.valueOf() );
-                }
 
             return Arr_Obj;
         },
@@ -128,6 +116,17 @@ define(['./checkType', './ext/base'],  function (checker, $) {
                     iResult[j++] = iArray[i];
 
             return iResult.reverse();
+        },
+        proxy:            function (func, context) {
+
+            var iArgs = Array.from( arguments ).slice(2);
+
+            return  function () {
+
+                return func.apply(
+                    (context != null) ? context : this,  merge(iArgs, arguments)
+                );
+            };
         }
     }, checker, $);
 

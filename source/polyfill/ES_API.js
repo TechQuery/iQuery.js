@@ -171,18 +171,6 @@ define(function () {
             Function.prototype.name = FuncName;
     }
 
-    Function.prototype.bind = Function.prototype.bind  ||  function () {
-
-        var _This_ = this,  iArgs = Array.from( arguments );
-
-        return  function () {
-
-            ArrayProto.push.apply(iArgs, arguments);
-
-            return  _This_.apply(iArgs.shift() || this,  iArgs);
-        };
-    };
-
     /* ----- Date Patch ----- */
 
     Date.now = Date.now  ||  function () { return  +(new Date()); };

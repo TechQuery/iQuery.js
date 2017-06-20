@@ -45,11 +45,9 @@ define(['../../iQuery'],  function ($) {
         },
         isSelector:    function () {
             try {
-                document.querySelector( arguments[0] );
+                return  (!! $( arguments[0] ));
 
             } catch (iError) {  return false;  }
-
-            return true;
         }
     });
 });

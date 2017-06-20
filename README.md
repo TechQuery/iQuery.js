@@ -96,7 +96,6 @@
  - 新增 **元素平滑滚动**方法 —— `$.fn.scrollTo()`
  - 所有类型的 **DOM 信息读写器**（`.attr()`、`.prop()`、`.css()`、`.data()`）均支持“不传键名时返回 **信息全集**”特性
  - 新增 **DOM 数据归并**方法 —— `$.fn.reduce()`
- - 新增 **DOM 可见内容读写**方法 —— `$.fn.value()`，智能存取多种类型的值
  - .css() 取值时，会把 纯数字值、像素值 直接返回为 Number 类型
  - .css() 赋值一律默认 important 优先级，确保赋值的有效性
  - `$.fn.show()` 兼容 **元素非固有 display 属性值**，避免破坏 复杂布局
@@ -147,7 +146,6 @@
  - 自带 `Array.prototype.indexOf()` 标准方法
  - 自带 `Array.prototype.reduce()` 标准方法
  - 自带 `Function.prototype.name` 属性补丁
- - 自带 `Function.prototype.bind()` 标准方法
  - 自带 `Object.keys()` 标准方法
  - 自带 `Object.getPrototypeOf()` 标准方法
  - 自带 `Object.create()` 标准方法
@@ -162,7 +160,7 @@
  - 自带 **HTMLCollection 对象**，修复 IE 10- `Element.prototype.children` 属性在其元素有 name 属性时的“数字键值缺失”Bug
  - 自带 Element 对象的 `firstElementChild`、`lastElementChild`、`previousElementSibling`、`nextElementSibling` 属性
  - 自带 `Element.prototype.matches` 标准草案方法
- - 自带 **DOMTokenList 对象**，为 IE 10- 提供 **classList**、**relList** 支持
+ - 自带 **DOMTokenList 对象**，为各种浏览器的 `<a />`、`<area />`、`<link />`、`<svg />` 等元素提供 **classList**、**relList** 属性支持
  - 自带 **DOMStringMap 对象**，为 IE 11- 提供 **dataset** 支持
  - 自带 `HTMLSelectElement.prototype.selectedOptions` 属性的 IE 补丁
  - 自带 `location.origin`、`HTMLAnchorElement.prototype.origin` 只读属性 IE 11- 补丁

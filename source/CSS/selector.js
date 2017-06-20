@@ -59,9 +59,9 @@ define(['../object/index', '../utility/ext/timer'],  function ($, timer) {
         });
     }
 
-    return {
+    return $.extend({
         fn:      {uniqueId:  uniqueId},
         find:    find,
         expr:    {':': _Pseudo_,  filter: _Pseudo_}
-    };
+    }, timer);
 });

@@ -1,10 +1,8 @@
 define(['../utility/index'],  function ($) {
 
-/* ---------- DOM Info Operator ---------- */
+/* ---------- DOM Data ---------- */
 
     var _DOM_ = { },  _Data_ = [ ],  Root_Type = $.makeSet('Document', 'Window');
-
-    /* ----- DOM Data ----- */
 
     _DOM_.data = {
         set:       function (iName, iValue) {
@@ -12,7 +10,12 @@ define(['../utility/index'],  function ($) {
             if (typeof this.dataIndex != 'number')
                 this.dataIndex = _Data_.push({ }) - 1;
 
-            _Data_[ this.dataIndex ][ iName ] = iValue;
+            if (typeof iName === 'string')
+                return  _Data_[ this.dataIndex ][ iName ] = iValue;
+
+            $.extend(true,  _Data_[ this.dataIndex ],  iName);
+
+            return iName;
         },
         get:       function (iName) {
 
@@ -43,8 +46,7 @@ define(['../utility/index'],  function ($) {
                 }
         }
     };
-
-    /* ----- DOM Attribute ----- */
+/* ---------- DOM Attribute ---------- */
 
     _DOM_.attr = {
         get:      function (iName) {
@@ -70,7 +72,7 @@ define(['../utility/index'],  function ($) {
         }
     };
 
-    /* ----- DOM Property ----- */
+/* ---------- DOM Property ---------- */
 
     _DOM_.prop = {
         get:    function (iName) {
@@ -87,7 +89,7 @@ define(['../utility/index'],  function ($) {
         }
     };
 
-    /* ----- DOM Style ----- */
+/* ---------- DOM Style ---------- */
 
     $.cssPX = $.makeSet(
         'width', 'height', 'padding', 'border-radius', 'margin',
@@ -128,7 +130,14 @@ define(['../utility/index'],  function ($) {
         }
     };
 
-    /* ----- Operator Wrapper ----- */
+/* ---------- Operator Wrapper ---------- */
+
+    $.data = function (iElement, iName, iValue) {
+
+        return  _DOM_.data[(arguments.length < 3) ? 'get' : 'set'].call(
+            iElement,  iName,  iValue
+        );
+    };
 
     $.each(_DOM_,  function (key, method) {
 
@@ -147,6 +156,8 @@ define(['../utility/index'],  function ($) {
 
             if ( object )
                 return  this.each(function (index) {
+
+                    if (key === 'data')  return  method.set.call(this, object);
 
                     for (var name in object)
                         method.set.apply(this, [
@@ -187,61 +198,5 @@ define(['../utility/index'],  function ($) {
                         method.clear.call(this, name[i]);
                 });
             };
-    });
-
-    $.extend({
-        data:         function (iElement, iName, iValue) {
-
-            if (arguments.length < 3)
-                return  _DOM_.data.get.call(iElement, iName);
-
-            _DOM_.data.set.call(iElement, iName, iValue);
-
-            var _Value_ = { };  _Value_[iName] = iValue;
-
-            return _Value_;
-        }
-    });
-
-/* ---------- DOM CSS Class ---------- */
-
-    $.fn.hasClass = function (iName) {
-
-        return  Boolean($.map(this,  function () {
-
-            if (arguments[0].classList.contains( iName ))  return 1;
-        })[0]);
-    };
-
-    $.each(['add', 'remove', 'toggle'],  function (_, key) {
-
-        $.fn[key + 'Class'] = function (CSS_Class, toggle) {
-
-            CSS_Class = CSS_Class && CSS_Class.valueOf();
-
-            switch (typeof CSS_Class) {
-                case 'string':      CSS_Class = CSS_Class.trim().split(/\s+/);
-                case 'function':    break;
-                case 'boolean':     toggle = CSS_Class;    break;
-                default:
-                    if (key === 'remove')
-                        CSS_Class = '';
-                    else
-                        return this;
-            }
-
-            return  this.each(function (index) {
-
-                var list = this.classList;
-
-                CSS_Class = CSS_Class || list.value;
-
-                if (CSS_Class instanceof Function)
-                    list[ key ](CSS_Class.call(this, index, list.value),  toggle);
-                else
-                    for (var i = 0;  CSS_Class[i];  i++)
-                        list[ key ](CSS_Class[i], toggle);
-            });
-        };
     });
 });

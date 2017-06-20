@@ -95,10 +95,11 @@ define(['../../iQuery', './base', '../../DOM/info'],  function ($) {
             for (var iSelector in iRule)
                 _Rule_[Scope_Selector( this.id )] = iRule[ iSelector ];
 
-            _Rule_ = (
+            _Rule_ = $(
+                'style, link[rel="stylesheet"]',
                 (this.nodeName.toLowerCase() in Global_Style)  ?
                     document.head  :  this
-            ).appendChild( $.cssRule(_Rule_) );
+            ).after( $.cssRule(_Rule_) );
 
             if (typeof iCallback === 'function')
                 iCallback.call(this,  _Rule_.sheet || _Rule_.styleSheet);
