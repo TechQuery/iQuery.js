@@ -72,6 +72,16 @@ define([
         },
         $_DOM = $( self.document );
 
+    function hasFetched(iURL) {
+
+        var File_Name = $.fileName( iURL );
+
+        return  $('link[rel="next"], link[rel="prefetch"]').map(function () {
+
+            if ($.fileName( this.href )  ==  File_Name)  return this;
+        })[0];
+    }
+
     function Complete_Event(iStatus, iOption) {
 
         $_DOM.trigger('ajaxComplete',  [this, iOption]);
@@ -106,15 +116,7 @@ define([
 
         if (_Option_.type == 'GET') {
 
-            var File_Name = $.fileName( iURL );
-
-            if (!  (_Option_.jsonp || $.map(
-                $('link[rel="next"], link[rel="prefetch"]'),
-                function () {
-                    if ($.fileName( arguments[0].href )  ==  File_Name)
-                        return iURL;
-                }
-            ).length))
+            if (!  (_Option_.jsonp  ||  hasFetched( iURL )))
                 _Option_.data._ = $.now();
 
             _Option_.data = $.extend($.paramJSON( iURL ),  _Option_.data);

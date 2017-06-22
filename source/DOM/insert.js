@@ -13,18 +13,18 @@ define(['../iQuery', './ext/base'],  function ($) {
 
             var $_This = this;
 
-            return  this.pushStack($.map($( $_Target ),  function (iDOM) {
+            return  this.pushStack($( $_Target ).map(function () {
 
-                return  $_This.insertTo(iDOM.parentNode,  $( iDOM ).index());
+                return  $_This.insertTo(this.parentNode,  $( this ).index());
             }));
         },
         insertAfter:     function ($_Target) {
 
             var $_This = this;
 
-            return  this.pushStack($.map($( $_Target ),  function (iDOM) {
+            return  this.pushStack($( $_Target ).map(function () {
 
-                return  $_This.insertTo(iDOM.parentNode,  $( iDOM ).index() + 1);
+                return  $_This.insertTo(this.parentNode,  $( this ).index() + 1);
             }));
         }
     });

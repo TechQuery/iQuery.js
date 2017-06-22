@@ -2,9 +2,6 @@ define([
     './object/index', './CSS/pseudo', './DOM/uniqueSort', './DOM/parseHTML'
 ],  function (ObjectKit, selector, uniqueSort, parseHTML) {
 
-    var BOM = self,  DOM = self.document;
-
-
 /* ---------- jQuery Object Core ---------- */
 
     function iQuery(Element_Set, iContext) {
@@ -59,7 +56,7 @@ define([
 
         if (Element_Set[0] != '<') {
 
-            this.context = iContext || DOM;
+            this.context = iContext || document;
 
             this.selector = Element_Set;
 
@@ -92,8 +89,8 @@ define([
     var DOM_Type = $.makeSet('Window', 'Document', 'HTMLElement');
 
     $.fn.extend({
-        splice:         Array.prototype.splice,
-        pushStack:      function ($_New) {
+        splice:       Array.prototype.splice,
+        pushStack:    function ($_New) {
 
             $_New = $($.uniqueSort(
                 ($_New instanceof Array)  ?  $_New  :  $.makeArray( $_New )
@@ -102,7 +99,7 @@ define([
 
             return $_New;
         },
-        index:          function (iTarget) {
+        index:        function (iTarget) {
             if (! iTarget)
                 return  $.trace(this[0], 'previousElementSibling').length;
 
@@ -120,9 +117,16 @@ define([
 
             return  (iType in DOM_Type)  ?  $.inArray(iTarget, this)  :  -1;
         },
-        each:              function () {
+        each:         function () {
 
             return  $.each(this, arguments[0]);
+        },
+        map:          function (filter) {
+
+            return  this.pushStack($.map(this,  function (DOM, index) {
+
+                return  filter.call(DOM, index, DOM);
+            }));
         }
     });
 

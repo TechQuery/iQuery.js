@@ -1,4 +1,4 @@
-define(['../../object/ext/advanced', '../../utility/ext/browser'],  function ($) {
+define(['../../object/ext/advanced', '../../event/wrapper'],  function ($) {
 
     var BOM = self;
 
@@ -56,6 +56,48 @@ define(['../../object/ext/advanced', '../../utility/ext/browser'],  function ($)
 
         return  BOM[ Test_Type ]  ?  iName  :  ('-' + CSS_Prefix + '-' + iName);
     });
+
+/* ---------- CSS Rule (Default) ---------- */
+
+    function CSS_Rule_Sort(A, B) {
+
+        var pA = $.selectorPriority( A.selectorText ),
+            pB = $.selectorPriority( B.selectorText );
+
+        for (var i = 0;  i < pA.length;  i++)
+            if (pA[i] != pB[i])
+                return  (pA[i] > pB[i])  ?  -1  :  1;
+
+        return 0;
+    }
+
+    var Tag_Style = { },  _BOM_;
+
+    $( document ).ready(function () {
+
+        _BOM_ = $('<iframe />', {
+            id:     '_CSS_SandBox_',
+            src:    'about:blank',
+            css:    {display:  'none'}
+        }).appendTo( this.body )[0].contentWindow;
+    });
+
+    if (typeof BOM.getDefaultComputedStyle != 'function')
+        BOM.getDefaultComputedStyle = function (iTagName, pseudo) {
+
+            if (! Tag_Style[ iTagName ]) {
+
+                var $_Default = $('<' + iTagName + ' />').appendTo(
+                        _BOM_.document.body
+                    );
+                Tag_Style[ iTagName ] = $.extend(
+                    { },  self.getComputedStyle($_Default[0], pseudo)
+                );
+                $_Default.remove();
+            }
+
+            return  Tag_Style[ iTagName ];
+        };
 
 /* ---------- CSS Rule (Matched) ---------- */
 

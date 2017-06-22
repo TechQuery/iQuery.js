@@ -2,9 +2,9 @@ define(['../iQuery', '../polyfill/HTML-5'],  function ($) {
 
     $.fn.hasClass = function (iName) {
 
-        return  Boolean($.map(this,  function () {
+        return  Boolean(this.map(function () {
 
-            if (arguments[0].classList.contains( iName ))  return 1;
+            if (this.classList.contains( iName ))  return 1;
         })[0]);
     };
 

@@ -14,22 +14,20 @@ define(['../iQuery', '../CSS/class'],  function ($) {
 
             var $_Result = this;
 
-            if (CoreBack)  $_Result = $.map($_Result, CoreBack);
+            if (CoreBack)  $_Result = this.map( CoreBack );
 
             if ($.isNumeric( $_Filter ))
-                $_Result = $.map($_Result,  function (iDOM) {
+                $_Result = $_Result.map(function () {
 
-                    return  (iDOM.nodeType == $_Filter)  ?  iDOM  :  null;
+                    return  (this.nodeType == $_Filter)  ?  this  :  null;
                 });
             else if ($_Filter)
-                $_Result = $.map($_Result,  function (iDOM) {
+                $_Result = $_Result.map(function () {
 
-                    var _Is_ = $( iDOM ).is( $_Filter );
+                    var _Is_ = $( this ).is( $_Filter );
 
-                    return  (_Not_  ?  (! _Is_)  :  _Is_)  ?  iDOM  :  null;
+                    return  (_Not_  ?  (! _Is_)  :  _Is_)  ?  this  :  null;
                 });
-
-            $_Result = this.pushStack( $_Result );
 
             return  _Reverse_  ?  Array_Reverse.call( $_Result )  :  $_Result;
         };
@@ -37,6 +35,7 @@ define(['../iQuery', '../CSS/class'],  function ($) {
 
     $.fn.extend({
         is:              function ($_Match) {
+
             var iPath = (typeof $_Match == 'string'),
                 iCallback = (typeof $_Match == 'function'),
                 iMatch = (typeof Element.prototype.matches == 'function');
@@ -67,18 +66,21 @@ define(['../iQuery', '../CSS/class'],  function ($) {
         add:                function () {
             return  this.pushStack( $.merge(this,  $.apply(BOM, arguments)) );
         },
-        addBack:         function () {
-            return  this.pushStack( $.merge(this, this.prevObject) );
-        },
         filter:          DOM_Map(),
         not:             DOM_Map(true),
-        parent:          DOM_Map(function (iDOM) {
+        addBack:         function (not) {
 
-            return iDOM.parentElement;
+            var $_This = $.merge(this, this.prevObject);
+
+            return  this.pushStack(not  ?  $_This.not( not )  :  $_This);
+        },
+        parent:          DOM_Map(function () {
+
+            return this.parentElement;
         }),
-        parents:         DOM_Map('',  true,  function (iDOM) {
+        parents:         DOM_Map('',  true,  function () {
 
-            return  $.trace(iDOM, 'parentElement');
+            return  $.trace(this, 'parentElement');
         }),
         parentsUntil:    function () {
 
@@ -86,45 +88,46 @@ define(['../iQuery', '../CSS/class'],  function ($) {
                 this.parents().not( $( arguments[0] ).parents().addBack() )
             );
         },
-        children:        DOM_Map(function (iDOM) {
+        children:        DOM_Map(function () {
 
-            return  $.makeArray( iDOM.children );
+            return  $.makeArray( this.children );
         }),
-        contents:        DOM_Map(function (iDOM) {
+        contents:        DOM_Map(function () {
 
-            switch ( iDOM.tagName.toLowerCase() ) {
-                case 'iframe':      return iDOM.contentWindow.document;
-                case 'template':    iDOM = iDOM.content || iDOM;
-                default:            return $.makeArray( iDOM.childNodes );
+            switch ( this.tagName.toLowerCase() ) {
+                case 'iframe':
+                    return this.contentWindow.document;
+                case 'template':
+                    var iDOM = this.content || this;
+                default:
+                    return  $.makeArray( (iDOM || this).childNodes );
             }
         }),
-        prev:            DOM_Map(function (iDOM) {
+        prev:            DOM_Map(function () {
 
-            return iDOM.previousElementSibling;
+            return this.previousElementSibling;
         }),
-        prevAll:         DOM_Map('',  true,  function (iDOM) {
+        prevAll:         DOM_Map('',  true,  function () {
 
-            return  $.trace(iDOM, 'previousElementSibling');
+            return  $.trace(this, 'previousElementSibling');
         }),
-        next:               DOM_Map(function (iDOM) {
+        next:               DOM_Map(function () {
 
-            return iDOM.nextElementSibling;
+            return this.nextElementSibling;
         }),
-        nextAll:         DOM_Map(function (iDOM) {
+        nextAll:         DOM_Map(function () {
 
-            return  $.trace(iDOM, 'nextElementSibling');
+            return  $.trace(this, 'nextElementSibling');
         }),
         siblings:        function () {
+
             var $_Result = this.prevAll().add( this.nextAll() );
 
             return this.pushStack(
-                arguments[0]  ?  $_Result.filter(arguments[0])  :  $_Result
+                arguments[0]  ?  $_Result.filter( arguments[0] )  :  $_Result
             );
         },
-        offsetParent:    DOM_Map(function (iDOM) {
-
-            return iDOM.offsetParent;
-        }),
+        offsetParent:    DOM_Map(function () {  return this.offsetParent;  }),
         find:               function () {
             var $_Result = [ ];
 
@@ -144,11 +147,11 @@ define(['../iQuery', '../CSS/class'],  function ($) {
                 $_Filter = '.' + _UUID_;
             }
 
-            return  this.pushStack($.map(this,  function () {
+            return  this.map(function () {
 
-                if ( $($_Filter, arguments[0]).removeClass(_UUID_).length )
-                    return arguments[0];
-            }));
+                if ( $($_Filter, this).removeClass(_UUID_).length )
+                    return this;
+            });
         }
     });
 });

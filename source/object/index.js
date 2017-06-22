@@ -68,11 +68,11 @@ define(['./checkType', './ext/base'],  function (checker, $) {
         extend:           extend,
         each:             function (Arr_Obj, iEvery) {
 
-            if ($.likeArray( Arr_Obj ))
+            if ($.likeArray( Arr_Obj )) {
                 for (var i = 0;  i < Arr_Obj.length;  i++)
                     if (false  ===  iEvery.call(Arr_Obj[i], i, Arr_Obj[i]))
                         break;
-            else
+            } else
                 for (var iKey in Arr_Obj)
                     if (false === iEvery.call(
                         Arr_Obj[iKey],  iKey,  Arr_Obj[iKey]

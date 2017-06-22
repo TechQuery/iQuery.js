@@ -166,7 +166,8 @@
  - 自带 `location.origin`、`HTMLAnchorElement.prototype.origin` 只读属性 IE 11- 补丁
  - 修正 IE 8 DOM Attribute 系列方法对 JavaScript 关键字的特殊处理
  - 自带 **CSSStyleDeclaration 对象**，为 IE 8 提供 **getComputedStyle** 支持，并封装了 M$ DirectX 滤镜属性转换
- - 自带 Google Chrome **元素 CSS 规则对象 获取**方法 `Window.getMatchedCSSRules()`
+ - 自带 Mozilla Firefox **元素 CSS 默认规则对象 获取**方法 `Window.getMatchedCSSRules()`
+ - 自带 Google Chrome **元素 CSS 匹配规则对象 获取**方法 `Window.getMatchedCSSRules()`
  - 自带 **HTML 5 Form Placeholder** 补丁，为 IE 10-、iOS WebKit 提供兼容支持
  - 自带 `FormData()` 标准对象构造函数，为 IE 10- 提供 表单数据封装
  - 自带 `DOMParser()` 标准对象构造函数，为 IE 8 提供 **XML 文档解析**支持

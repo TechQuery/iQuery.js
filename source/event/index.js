@@ -1,10 +1,35 @@
 define([
-    '../iQuery', '../DOM/traversing', '../polyfill/HTML-5', '../DOM/info'
-],  function ($) {
+    '../iQuery', './Event',
+    '../DOM/traversing', '../polyfill/HTML-5', '../DOM/info'
+],  function ($, Event) {
 
 /* ---------- Event Toolkit ---------- */
 
-    var Reverse = Array.prototype.reverse;
+    var DOM_Listener = {
+            add:       function (type, handler, cache) {
+
+                if (typeof this.addEventListener === 'function')
+                    this.addEventListener(type, handler);
+                else {
+                    cache.proxyDispatch = $.proxy(handler, this);
+
+                    this.attachEvent('on' + type,  cache.proxyDispatch);
+                }
+            },
+            remove:    function (type, handler, cache) {
+
+                if (typeof this.removeEventListener === 'function')
+                    this.removeEventListener(type, handler);
+                else {
+                    this.detachEvent('on' + type,  cache.proxyDispatch);
+
+                    delete cache.proxyDispatch;
+                }
+
+                return cache;
+            }
+        },
+        Reverse = Array.prototype.reverse;
 
     $.event = {
         add:         function (DOM, type, handler) {
@@ -17,7 +42,7 @@ define([
 
                 (event[ type ] = [ ]).proxyCount = 0;
 
-                DOM.addEventListener(type, this.dispatch);
+                DOM_Listener.add.call(DOM, type, this.dispatch, event);
             }
 
             if ( handler.selector )
@@ -48,71 +73,114 @@ define([
 
                 delete  event[ type ];
 
-                DOM.removeEventListener(type, this.dispatch);
+                if ($.isEmptyObject(
+                    DOM_Listener.remove.call(DOM, type, this.dispatch, event)
+                ))
+                    $( DOM ).removeData('__event__');
             }
 
             return handler;
         },
-        trigger:     function (DOM, type, handler) {
+        trigger:     function (DOM, event, namespace, data, onlyHandler) {
 
-            var event = $.data(DOM, '__event__')  ||  '';
+            event = Event(event, {
+                target:       DOM,
+                isTrusted:    false
+            });
 
-            var _event_ = event[ type ]  ||  '',  dispatch = this.dispatch;
+            var handler = $.data(DOM, '__event__')  ||  '',
+                dispatch = this.dispatch;
 
-            if (! _event_[0])  return;
+            if (! (handler[ event.type ]  ||  '')[0])  return;
 
-            event = $.Event( type );
+            if ( onlyHandler )
+                return  dispatch.call(DOM, event, namespace, data);
 
             Reverse.call(
                 $( DOM ).parents().add([DOM, document, self])
             ).each(function () {
 
-                dispatch.call(this, event);
+                dispatch.call(this, event, namespace, data);
 
                 if (
                     (! event.defaultPrevented)  &&
-                    (typeof  this[ type ]  ===  'function')
+                    (typeof  this[ event.type ]  ===  'function')
                 )
-                    this[ type ]();
+                    this[ event.type ]();
             });
         },
-        dispatch:    function (event) {
+        dispatch:    function (event, namespace, data) {
 
-            var queue = $.event.handlers.call(
-                    this,  event,  $.data( this ).__event__
-                );
+            var result;    event = Event(event,  {currentTarget: this});
 
-            for (var i = 0;  queue[i];  i++)
-                if (false  ===  (queue[i].handler && queue[i].handler.apply(
-                    queue[i].context,  [ event ]
-                )))
-                    event.preventDefault(),  event.stopPropagation();
+            $.each(
+                $.event.handlers.call(
+                    this,  event,  $.data(this, '__event__'),  namespace
+                ),
+                function () {
+
+                    for (var i = 0;  this.handler[i];  i++) {
+
+                        if (! this.handler[i].callback)
+                            result = false;
+                        else {
+                            event.data = this.handler[i].data;
+
+                            result = this.handler[i].callback.apply(
+                                this.context,
+                                [ event ].concat(event.isTrusted  ?  [ ]  :  data)
+                            );
+                            delete event.data;
+                        }
+
+                        if (! event.eventPhase)  return false;
+
+                        if (result === false)
+                            event.preventDefault(),  event.stopPropagation();
+                    }
+
+                    return event.bubbles;
+                }
+            );
+
+            return result;
         },
-        handlers:    function (event, handler) {
+        handlers:    function (event, handler, namespace) {
 
             var proxy = handler.slice(0, handler.proxyCount),  root = this;
 
-            if ( proxy[0] )
+            if (proxy[0]  &&  $.contains(this, event.target))
                 proxy = $.map(
                     Reverse.call(
-                        $( target ).parentsUntil( this ).add( target )
+                        $( event.target ).parentsUntil( this ).addBack()
                     ),
                     function (_This_) {
 
                         return {
                             context:    _This_,
                             handler:    $.map(proxy,  function (event) {
+                                if (
+                                    (! _This_.matches( event.selector ))  ||  (
+                                        namespace[0] &&
+                                        (! $.intersect(event.namespace, namespace)[0])
+                                    )
+                                )  return;
 
-                                if (! _This_.matches( event.selector ))  return;
+                                return {
+                                    data:        event.data,
+                                    callback:    --event.times ?
+                                        event.callback  :  function () {
 
-                                return  --event.times ?
-                                    event.callback  :  function () {
+                                            $.event.remove(
+                                                root,  event.type,  event
+                                            );
 
-                                        $.event.remove(root, event.type, event);
-
-                                        return  event.callback &&
-                                            event.callback.apply(this, arguments);
-                                    };
+                                            return  event.callback &&
+                                                event.callback.apply(
+                                                    this,  arguments
+                                                );
+                                        }
+                                };
                             })
                         };
                     }
@@ -132,35 +200,30 @@ define([
 /* ---------- Event API ---------- */
 
     $.each({
-        on:         'add',
-        one:        'add',
-        off:        'remove',
-        trigger:    'trigger'
+        on:     'add',
+        one:    'add',
+        off:    'remove'
     },  function (key, method) {
 
         $.fn[key] = function (event, selector, data, callback) {
+
+            switch ( arguments.length ) {
+                case 3:    {
+                    callback = data,  data = null;
+
+                    if (! $.isSelector( selector ))
+                        data = selector,  selector = null;
+
+                    break;
+                }
+                case 2:    callback = selector,  selector = null;
+            }
 
             if (typeof event.valueOf() === 'string')
                 event = $.makeSet(event.trim().split(/\s+/),  function () {
 
                     return callback;
                 });
-
-            if (method != 'trigger')
-                switch ( arguments.length ) {
-                    case 3:    {
-                        callback = data,  data = null;
-
-                        if (! $.isSelector( selector ))
-                            data = selector,  selector = null;
-
-                        break;
-                    }
-                    case 2:    callback = selector,  selector = null;
-                }
-            else
-                data = $.likeArray( selector )  ?  selector  :  [ selector ],
-                selector = null;
 
             var handler = { };
 
@@ -185,4 +248,63 @@ define([
             });
         };
     });
+
+    $.map(['trigger', 'triggerHandler'],  function (key) {
+
+        $.fn[key] = function (event, data) {
+
+            if (typeof event.valueOf() === 'string') {
+
+                event = event.split('.');
+
+                var namespace = event.slice(1);    event = event[0];
+            }
+
+            data = $.likeArray( data )  ?  data  :  [ data ];
+
+            if (key === 'trigger')
+                return  this.each(function () {
+
+                    $.event.trigger(this, event, namespace, data);
+                });
+            else if ( this[0] )
+                return  $.event.trigger(this[0], event, namespace, data, true);
+        };
+    });
+
+    function cloneData(iNew) {
+
+        var data = $.data( this );
+
+        if ($.isEmptyObject( data ))  return;
+
+        $( iNew ).data( data );
+
+        data = data.__event__;
+
+        for (var type in data)
+            DOM_Listener.add.call(iNew, type, $.event.dispatch, data);
+    }
+
+    $.fn.clone = function (data, deep) {
+
+        deep = deep || data;
+
+        return  this.map(function () {
+
+            var iNew = this.cloneNode( true );
+
+            if ( data )  cloneData.call(this, iNew);
+
+            if ( deep )
+                for (
+                    var i = 0,  $_Old = $('*', this),  $_New = $('*', iNew);
+                    $_Old[i];
+                    i++
+                )
+                    cloneData.call($_Old[i], $_New[i]);
+
+            return iNew;
+        });
+    };
 });
