@@ -1,34 +1,9 @@
 define([
-    '../iQuery', './Event',
+    './ext/base', './Event',
     '../DOM/traversing', '../polyfill/HTML-5', '../DOM/info'
 ],  function ($, Event) {
 
 /* ---------- Event Core ---------- */
-
-    $.extend({
-        addEvent:       function (type, handler, cache) {
-
-            if (typeof this.addEventListener === 'function')
-                this.addEventListener(type, handler);
-            else {
-                cache.proxyDispatch = $.proxy(handler, this);
-
-                this.attachEvent('on' + type,  cache.proxyDispatch);
-            }
-        },
-        removeEvent:    function (type, handler, cache) {
-
-            if (typeof this.removeEventListener === 'function')
-                this.removeEventListener(type, handler);
-            else {
-                this.detachEvent('on' + type,  cache.proxyDispatch);
-
-                delete cache.proxyDispatch;
-            }
-
-            return cache;
-        }
-    });
 
     var Reverse = Array.prototype.reverse;
 
