@@ -16,8 +16,10 @@
     "uglify-js": "^3.0.19"
   },
   "scripts": {
-    "bundle": "r_js -o build/source.js  |  node ./build/clean.js iQuery",
-    "compress": "uglifyjs iQuery.js -c -m --keep-fnames -o iQuery.min.js --source-map --verbose",
+    "clean": "node ./build/clean.js iQuery",
+    "wrap": "node ./build/wrapAMD.js iQuery",
+    "bundle": "r_js -o build/source.js  |  npm run wrap",
+    "compress": "uglifyjs iQuery.js -o iQuery.min.js --config-file build/compress.json",
     "build": "npm run bundle  &&  npm run compress",
     "test": "opn ./test/unit.html"
   },

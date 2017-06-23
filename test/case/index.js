@@ -1,4 +1,4 @@
-define(['jquery', 'index'],  function ($, iQuery) {
+define(['jquery', 'iQuery'],  function ($, iQuery) {
 
     if ($ != iQuery) {
 

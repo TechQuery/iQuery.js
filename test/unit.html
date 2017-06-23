@@ -9,13 +9,14 @@
         require.config({
             baseUrl:    '../source',
             paths:      {
-                jquery:    'http://cdn.bootcss.com/jquery/3.2.1/jquery.min'
+                jquery:    'http://cdn.bootcss.com/jquery/1.12.4/jquery.min',
+                iQuery:    '../iQuery.min'
             }
         });
 
         console.groupCollapsed = console.groupCollapsed || console.group;
 
-        require(['index', '../test/case/index'],  function ($) {
+        require(['iQuery', '../test/case/index'],  function ($) {
 
             console.info('iQuery() and iQuery.prototype are shown below:');
 

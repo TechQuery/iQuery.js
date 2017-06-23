@@ -1,0 +1,10 @@
+{
+    "mangle":       {
+        "keep_fnames":    true
+    },
+    "sourceMap":    {
+        "url":    "iQuery.min.js.map"
+    },
+    "ie8":          true,
+    "warnings":     "verbose"
+}

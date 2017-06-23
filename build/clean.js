@@ -33,7 +33,10 @@ process.stdin.on('readable',  function () {
                     newline:    '\n\n'
                 }
             },
-            wrap:         {start: UMD,  end: '});'}
+            wrap:         {
+                start:    UMD,
+                end:      `return  ${name} || index;\n});`
+            }
         })
     );
 });
