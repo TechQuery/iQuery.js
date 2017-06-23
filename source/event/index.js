@@ -3,33 +3,34 @@ define([
     '../DOM/traversing', '../polyfill/HTML-5', '../DOM/info'
 ],  function ($, Event) {
 
-/* ---------- Event Toolkit ---------- */
+/* ---------- Event Core ---------- */
 
-    var DOM_Listener = {
-            add:       function (type, handler, cache) {
+    $.extend({
+        addEvent:       function (type, handler, cache) {
 
-                if (typeof this.addEventListener === 'function')
-                    this.addEventListener(type, handler);
-                else {
-                    cache.proxyDispatch = $.proxy(handler, this);
+            if (typeof this.addEventListener === 'function')
+                this.addEventListener(type, handler);
+            else {
+                cache.proxyDispatch = $.proxy(handler, this);
 
-                    this.attachEvent('on' + type,  cache.proxyDispatch);
-                }
-            },
-            remove:    function (type, handler, cache) {
-
-                if (typeof this.removeEventListener === 'function')
-                    this.removeEventListener(type, handler);
-                else {
-                    this.detachEvent('on' + type,  cache.proxyDispatch);
-
-                    delete cache.proxyDispatch;
-                }
-
-                return cache;
+                this.attachEvent('on' + type,  cache.proxyDispatch);
             }
         },
-        Reverse = Array.prototype.reverse;
+        removeEvent:    function (type, handler, cache) {
+
+            if (typeof this.removeEventListener === 'function')
+                this.removeEventListener(type, handler);
+            else {
+                this.detachEvent('on' + type,  cache.proxyDispatch);
+
+                delete cache.proxyDispatch;
+            }
+
+            return cache;
+        }
+    });
+
+    var Reverse = Array.prototype.reverse;
 
     $.event = {
         add:         function (DOM, type, handler) {
@@ -42,7 +43,7 @@ define([
 
                 (event[ type ] = [ ]).proxyCount = 0;
 
-                DOM_Listener.add.call(DOM, type, this.dispatch, event);
+                $.addEvent.call(DOM, type, this.dispatch, event);
             }
 
             if ( handler.selector )
@@ -74,7 +75,7 @@ define([
                 delete  event[ type ];
 
                 if ($.isEmptyObject(
-                    DOM_Listener.remove.call(DOM, type, this.dispatch, event)
+                    $.removeEvent.call(DOM, type, this.dispatch, event)
                 ))
                     $( DOM ).removeData('__event__');
             }
@@ -283,7 +284,7 @@ define([
         data = data.__event__;
 
         for (var type in data)
-            DOM_Listener.add.call(iNew, type, $.event.dispatch, data);
+            $.addEvent.call(iNew, type, $.event.dispatch, data);
     }
 
     $.fn.clone = function (data, deep) {

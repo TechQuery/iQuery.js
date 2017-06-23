@@ -1,11 +1,8 @@
 define(['../../iQuery', '../utility'],  function ($) {
 
-    var BOM = self,  DOM = self.document;
-
-
     $.buildFragment = $.buildFragment  ||  function (iNode) {
 
-        var iFragment = (arguments[1] || DOM).createDocumentFragment();
+        var iFragment = (arguments[1] || document).createDocumentFragment();
 
         for (var i = 0;  iNode[i];  i++)  iFragment.appendChild( iNode[i] );
 
@@ -16,7 +13,7 @@ define(['../../iQuery', '../utility'],  function ($) {
 
     $.fn.insertTo = function ($_Target, Index) {
 
-        var DOM_Set = $.buildFragment(this, DOM),  $_This = [ ];
+        var DOM_Set = $.buildFragment(this, document),  $_This = [ ];
 
         $( $_Target ).each(function () {
 

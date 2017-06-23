@@ -59,18 +59,6 @@ define(['../../object/ext/advanced', '../../event/wrapper'],  function ($) {
 
 /* ---------- CSS Rule (Default) ---------- */
 
-    function CSS_Rule_Sort(A, B) {
-
-        var pA = $.selectorPriority( A.selectorText ),
-            pB = $.selectorPriority( B.selectorText );
-
-        for (var i = 0;  i < pA.length;  i++)
-            if (pA[i] != pB[i])
-                return  (pA[i] > pB[i])  ?  -1  :  1;
-
-        return 0;
-    }
-
     var Tag_Style = { },  _BOM_;
 
     $( document ).ready(function () {

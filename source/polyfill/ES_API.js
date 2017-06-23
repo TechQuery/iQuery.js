@@ -1,7 +1,5 @@
 define(function () {
 
-    var BOM = self,  DOM = self.document;
-
     /* ----- Object Patch ----- */
 
     if (! Object.keys)
@@ -165,7 +163,7 @@ define(function () {
 
     if (! ('name' in Function.prototype)) {
 
-        if (DOM.documentMode > 8)
+        if (document.documentMode > 8)
             Object.defineProperty(Function.prototype,  'name',  {get: FuncName});
         else
             Function.prototype.name = FuncName;

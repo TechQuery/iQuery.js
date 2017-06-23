@@ -73,10 +73,16 @@ define(['../iQuery', '../utility/ext/browser'],  function ($) {
     BOM.URLSearchParams.prototype.sort =
         BOM.URLSearchParams.prototype.sort  ||  function () {
 
-            ArrayProto.sort.call(this,  function (A, B) {
+            var entry = Array.from( this.entries() ).sort(function (A, B) {
 
-                return  A[0].localeCompare( B[0] )  ||  A[1].localeCompare( B[1] );
-            });
+                    return  A[0].localeCompare( B[0] )  ||
+                        A[1].localeCompare( B[1] );
+                });
+
+            for (var i = 0;  entry[i];  i++)  this.delete( entry[i][0] );
+
+            for (var i = 0;  entry[i];  i++)
+                this.append(entry[i][0], entry[i][1]);
         };
 
 /* ---------- URL Constructor ---------- */

@@ -2,36 +2,35 @@ define(['../iQuery'],  function ($) {
 
 /* ---------- Hook API ---------- */
 
-    var AJAX_Hook = $.each(
-            {
-                Prefilter:  { },    Transport:  { }
-            },
-            function (hook, queue) {
+    $.each(
+        {
+            Prefilter:  { },    Transport:  { }
+        },
+        function (hook, queue) {
 
-                $['ajax' + hook] = function (type, callback) {
+            $['ajax' + hook] = function (type, callback) {
 
-                    if (callback instanceof Array) {
+                if (callback instanceof Array) {
 
-                        queue = queue[type || '*'][0];
+                    queue = queue[type || '*'][0];
 
-                        return  queue  &&  queue.apply(null, callback);
-                    }
+                    return  queue  &&  queue.apply(null, callback);
+                }
 
-                    callback = callback || type;
+                callback = callback || type;
 
-                    type = (callback === type)  ?  '*'  :  (type || '');
+                type = (callback === type)  ?  '*'  :  (type || '');
 
-                    if (typeof callback != 'function')  return;
+                if (typeof callback != 'function')  return;
 
-                    var method = 'push';
+                var method = 'push';
 
-                    if (type[0] === '+')
-                        method = 'unshift',  type = type.slice(1);
+                if (type[0] === '+')  method = 'unshift',  type = type.slice(1);
 
-                    (queue[type] = queue[type] || [ ])[method]( callback );
-                };
-            }
-        );
+                (queue[type] = queue[type] || [ ])[method]( callback );
+            };
+        }
+    );
 /* ---------- Original XHR ---------- */
 
     $.ajaxTransport(function (iOption) {

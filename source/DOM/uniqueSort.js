@@ -1,50 +1,46 @@
 define(function () {
 
-    function IE_Sort(iSet) {
+    return  ('sourceIndex' in Element.prototype)  ?
+        function (iSet) {
 
-        var $_Temp = [ ],  $_Result = [ ];
+            var $_Temp = [ ],  $_Result = [ ];
 
-        for (var i = 0;  iSet[i];  i++) {
+            for (var i = 0;  iSet[i];  i++) {
 
-            $_Temp[i] = new String(iSet[i].sourceIndex + 1e8);
+                $_Temp[i] = new String(iSet[i].sourceIndex + 1e8);
 
-            $_Temp[i].DOM = iSet[i];
-        }
+                $_Temp[i].DOM = iSet[i];
+            }
 
-        $_Temp.sort();
+            $_Temp.sort();
 
-        for (var i = 0, j = 0;  $_Temp[i];  i++)
-            if ((! i)  ||  (
-                $_Temp[i].valueOf() != $_Temp[i - 1].valueOf()
-            ) || (
-                $_Temp[i].DOM.outerHTML  !=  $_Temp[i - 1].DOM.outerHTML
-            ))
-                $_Result[j++] = $_Temp[i].DOM;
+            for (var i = 0, j = 0;  $_Temp[i];  i++)
+                if ((! i)  ||  (
+                    $_Temp[i].valueOf() != $_Temp[i - 1].valueOf()
+                ) || (
+                    $_Temp[i].DOM.outerHTML  !=  $_Temp[i - 1].DOM.outerHTML
+                ))
+                    $_Result[j++] = $_Temp[i].DOM;
 
-        return $_Result;
-    }
+            return $_Result;
+        }  :
+        function (iSet) {
 
+            iSet.sort(function (A, B) {
 
-    function W3C_Sort(iSet) {
+                return  (A.compareDocumentPosition( B )  &  2)  -  1;
+            });
 
-        iSet.sort(function (A, B) {
+            var $_Result = [ ];
 
-            return  (A.compareDocumentPosition( B )  &  2)  -  1;
-        });
+            for (var i = 0, j = 0;  iSet[i];  i++) {
 
-        var $_Result = [ ];
+                if (i  &&  (iSet[i] === iSet[i - 1]))  continue;
 
-        for (var i = 0, j = 0;  iSet[i];  i++) {
+                $_Result[j++] = iSet[i];
+            }
 
-            if (i  &&  (iSet[i] === iSet[i - 1]))  continue;
-
-            $_Result[j++] = iSet[i];
-        }
-
-        return $_Result;
-    }
-
-
-    return  ('sourceIndex' in Element.prototype)  ?  IE_Sort  :  W3C_Sort;
+            return $_Result;
+        };
 
 });
