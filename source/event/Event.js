@@ -1,4 +1,4 @@
-define(['../iQuery', '../utility/ext/browser'],  function ($) {
+define(['../iQuery', '../polyfill/IE-8'],  function ($) {
 
     function Event(type, property) {
 
@@ -13,8 +13,12 @@ define(['../iQuery', '../utility/ext/browser'],  function ($) {
 
             type = type.type;    $.extend(this, type);
 
-        } else if (typeof type.type === 'string')
-            this.originalEvent = type;
+        } else if (type instanceof self.Event) {
+
+            this.originalEvent = type;    type = this.originalEvent.type;
+
+            property = $.extend(property, this.originalEvent.valueOf());
+        }
 
         $.extend(this, {
             bubbles:       true,
@@ -33,19 +37,13 @@ define(['../iQuery', '../utility/ext/browser'],  function ($) {
 
             this.defaultPrevented = true;
 
-            if ( $.browser.modern )
-                this.originalEvent.preventDefault();
-            else
-                this.returnValue = false;
+            this.originalEvent.preventDefault();
         },
         stopPropagation:             function () {
 
             this.bubbles = false;
 
-            if ( $.browser.modern )
-                this.originalEvent.stopPropagation();
-            else
-                this.cancelBubble = true;
+            this.originalEvent.stopPropagation();
         },
         stopImmediatePropagation:    function () {
 

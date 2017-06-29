@@ -10,16 +10,13 @@
     "node": "^5.0.0"
   },
   "devDependencies": {
-    "amdclean": "^2.7.0",
+    "amd-bundle": "^0.3.1",
     "opn-cli": "^3.1.0",
-    "requirejs": "^2.3.3",
-    "uglify-js": "^3.0.19"
+    "uglify-js": "^3.0.21"
   },
   "scripts": {
-    "clean": "node ./build/clean.js iQuery",
-    "wrap": "node ./build/wrapAMD.js iQuery",
-    "bundle": "r_js -o build/source.js  |  npm run wrap",
-    "compress": "uglifyjs iQuery.js -o iQuery.min.js --config-file build/compress.json",
+    "bundle": "cd source  &&  amd-bundle ../iQuery.js",
+    "compress": "uglifyjs iQuery.js -o build/iQuery.min.js --config-file build/compress.json",
     "build": "npm run bundle  &&  npm run compress",
     "test": "opn ./test/unit.html"
   },

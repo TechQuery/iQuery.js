@@ -4,19 +4,21 @@ define(['../../iQuery', './Observer'],  function ($, Observer) {
 
     $.customEvent = function (type, factory) {
 
-        if (typeof factory === 'function')
-            return (
-                Event_Map[ type ] = Event_Map[ type ]  ||  [ ]
-            ).push( factory );
+        if (typeof factory === 'function') {
 
+            $.each(type.split(/\s+/),  function () {
+                (
+                    Event_Map[ this ] = Event_Map[ this ]  ||  [ ]
+                ).unshift( factory );
+            });
+        } else if (Event_Map[ type ])
+            for (var i = 0, observer;  Event_Map[ type ][i];  i++) {
 
-        for (var i = 0, observer;  Event_Map[ type ][i];  i++) {
+                observer = Event_Map[ type ][i](factory, type);
 
-            observer = Event_Map[ type ][i]( factory );
-
-            if ((observer != null)  &&  (observer instanceof Observer))
-                return observer;
-        }
+                if ((observer != null)  &&  (observer instanceof Observer))
+                    return observer;
+            }
     };
 
     return $.extend({
@@ -24,12 +26,14 @@ define(['../../iQuery', './Observer'],  function ($, Observer) {
 
             var observer = cache.observer  ||  $.customEvent(type, this);
 
-            if ( observer )
+            if (typeof observer != 'string')
                 return (
                     cache.observer = observer
                 ).listen(
                     cache.proxyDispatch = $.proxy(handler, this)
                 );
+            else
+                type = observer;
 
             if (typeof this.addEventListener === 'function')
                 this.addEventListener(type, handler);

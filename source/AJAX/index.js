@@ -146,7 +146,7 @@ define([
                         $_DOM.trigger('ajaxError',  [iXHR, _Option_, iError]);
                     });
 
-                iXHR.send({ },  AJAX_Complete.bind(iXHR, iResolve, iReject));
+                iXHR.send({ },  $.proxy(AJAX_Complete, iXHR, iResolve, iReject));
 
                 $_DOM.trigger('ajaxSend',  [iXHR, _Option_]);
             });

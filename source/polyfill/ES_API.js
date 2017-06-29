@@ -101,7 +101,7 @@ define(function () {
         return  ArrayProto.push.call(
             this,
             (mapCall instanceof Function)  ?
-                mapCall.call(mapContext, value, this.length, this)  :  value
+                mapCall.call(mapContext, value, this.length)  :  value
         );
     }
 

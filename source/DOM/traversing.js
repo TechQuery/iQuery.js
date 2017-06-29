@@ -8,7 +8,7 @@ define(['../iQuery', '../CSS/class'],  function ($) {
 
         var CoreBack = (typeof iArgs.slice(-1)[0] == 'function')  &&  iArgs.pop();
 
-        var _Not_ = iArgs.shift(),  _Reverse_ = iArgs[0];
+        var _Not_ = iArgs[0],  _Reverse_ = iArgs[1];
 
         return  function ($_Filter) {
 

@@ -1,6 +1,6 @@
 define([
     './URL', '../../event/wrapper', '../../DOM/ext/utility',
-    '../../event/wrapper', '../../polyfill/HTML-5_Form'
+    '../../polyfill/HTML-5_Form'
 ],  function ($) {
 
     function HTMLHttpRequest() {
