@@ -110,7 +110,6 @@
  - `$.fn.focus()` 会让所有可见元素获得焦点
  - 新增 **被动观察者**对象 —— `$.Observer()`
  - 新增 `$.customEvent()` **事件扩展接口**，并基于此实现 `input` 标准事件的补丁
- - 统一 **mousewheel 事件**，并新增其快捷方法
  - 封装了 **触屏单指手势事件**（tap、press、swipe），并为桌面端、移动端提供一致的操作体验
  - 新增 **用户操作空闲事件**方法 —— `$.fn.onIdleFor()`
  - 新增 **跨页面消息事件**方法 —— `$.fn.onReply()`（基于 `window.postMessage()`）

@@ -234,13 +234,28 @@ define(['../utility/ext/string'],  function ($) {
 
 /* ---------- DOM Event ---------- */
 
+    var KeyMap = {X: 'Left',  Y: 'Top'};
+
+    function pageCoord(key) {
+
+        key = key.slice( -1 );
+
+        var name = 'scroll'  +  KeyMap[ key ];
+
+        return  this['client' + key]  +  Math.max(
+            document.documentElement[ name ],  document.body[ name ]
+        );
+    }
+
     var Event_Property = {
             target:    'srcElement',
             which:     function () {
 
                 return  (this.type.slice(0, 3) === 'key')  ?
                     this.keyCode  :  [0, 1, 3, 0, 2, 0, 0, 0][ this.button ];
-            }
+            },
+            pageX:     pageCoord,
+            pageY:     pageCoord
         };
 
     $.extend(Event.prototype, {
@@ -266,7 +281,7 @@ define(['../utility/ext/string'],  function ($) {
                 }
 
                 event[ type ] = (Event_Property[ key ]  instanceof  Function)  ?
-                    Event_Property[ key ].call( this )  :
+                    Event_Property[ key ].call(this, key)  :
                     this[ Event_Property[ key ] ];
             }
 

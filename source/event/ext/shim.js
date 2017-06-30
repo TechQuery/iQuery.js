@@ -1,5 +1,77 @@
 define(['./base'],  function ($) {
 
+/* ---------- Single Finger Touch ---------- */
+
+    function get_Touch(iEvent) {
+
+        var iTouch = iEvent;
+
+        if ($.browser.mobile)  try {
+
+            iTouch = iEvent.changedTouches[0];
+
+        } catch (iError) {
+
+            iTouch = iEvent.touches[0];
+        }
+
+        iTouch.timeStamp = iEvent.timeStamp || $.now();
+
+        return iTouch;
+    }
+
+    var sType = $.browser.mobile ? 'touchstart MSPointerDown' : 'mousedown',
+        eType = $.browser.mobile ? 'touchend touchcancel MSPointerUp' : 'mouseup';
+
+    $.customEvent('tap press swipe',  function (DOM, type) {
+
+        var iStart;
+
+        return  $.Observer(function (next) {
+
+            function sTouch() {
+
+                iStart = get_Touch( arguments[0].originalEvent );
+            }
+
+            function eTouch(iEvent) {
+
+                var iEnd = get_Touch( iEvent.originalEvent );
+
+                iEvent = {
+                    target:    iEvent.target,
+                    detail:    iEnd.timeStamp - iStart.timeStamp,
+                    deltaX:    iStart.pageX - iEnd.pageX,
+                    deltaY:    iStart.pageY - iEnd.pageY
+                };
+
+                var iShift = Math.sqrt(
+                        Math.pow(iEvent.deltaX, 2)  +  Math.pow(iEvent.deltaY, 2)
+                    );
+
+                if (iEvent.detail > 300)
+                    iEvent.type = 'press';
+                else if (iShift < 22)
+                    iEvent.type = 'tap';
+                else
+                    iEvent.type = 'swipe',  iEvent.detail = iShift;
+
+                if (iEvent.type === type)  next( iEvent );
+            }
+
+            $( DOM ).on(sType, sTouch).on(eType, eTouch);
+
+            return  function () {
+
+                $( DOM ).off(sType, sTouch).off(eType, eTouch);
+            };
+        });
+    });
+
+/* ---------- Text Input Event ---------- */
+
+    if ( $.browser.modern )  return;
+
     function from_Input() {
 
         switch ( self.event.srcElement.tagName.toLowerCase() ) {
@@ -18,15 +90,15 @@ define(['./base'],  function ($) {
                     propertychange:    function () {
 
                         if (self.event.propertyName === 'value')
-                            next( DOM.value );
+                            next( arguments[0] );
                     },
                     paste:             function () {
-                        if (! from_Input())
-                            next( self.clipboardData.getData('text') );
-                    },
-                    keyup:             function () {
 
-                        var iEvent = self.event;    var iKey = iEvent.keyCode;
+                        if (! from_Input())  next( arguments[0] );
+                    },
+                    keyup:             function (iEvent) {
+
+                        var iKey = iEvent.keyCode;
 
                         if (
                             from_Input()  ||
@@ -36,7 +108,7 @@ define(['./base'],  function ($) {
                         )
                             return;
 
-                        next( DOM.innerText );
+                        next( iEvent );
                     }
                 };
 

@@ -5,7 +5,7 @@ define(['../iQuery', './index', '../polyfill/Promise_A+'],  function ($) {
     $.map([
         'abort', 'error',
         'keydown', 'keypress', 'keyup',
-        'mousedown', 'mouseup', 'mousemove', 'mousewheel',
+        'mousedown', 'mouseup', 'mousemove',
         'mouseover', 'mouseout', 'mouseenter', 'mouseleave',
         'click', 'dblclick', 'scroll', 'resize', 'contextmenu',
         'select', 'focus', 'blur', 'change', 'submit', 'reset',
@@ -86,6 +86,8 @@ define(['../iQuery', './index', '../polyfill/Promise_A+'],  function ($) {
 
 /* ---------- Event Shim ---------- */
 
+    //  Focus / Blur  bubble
+
     $.customEvent('focus blur',  function (DOM, type) {
 
         return  ($.browser.mozilla < 52)  ?
@@ -103,12 +105,40 @@ define(['../iQuery', './index', '../polyfill/Promise_A+'],  function ($) {
 
     if ( $.browser.modern )  return;
 
+    //  Change of checked
+
     $( document ).on(
         'click',  'input[type="radio"], input[type="checkbox"]',  function () {
 
             this.blur();    this.focus();
         }
     );
+
+    //  Load of resource
+
+    $.customEvent('load',  function (DOM) {
+
+        return  (DOM instanceof Element)  &&  $.Observer(function (next) {
+
+            function onLoad() {
+
+                if (DOM.readyState === (
+                    (DOM.tagName.toLowerCase() === 'script')  ?
+                        'loaded'  :  'complete'
+                ))
+                    next( arguments[0] );
+            }
+
+            DOM.attachEvent('onreadystatechange', onLoad);
+
+            return  function () {
+
+                DOM.detachEvent('onreadystatechange', onLoad);
+            };
+        });
+    });
+
+    //  Submit / Reset  bubble
 
     $.customEvent('submit reset',  function (DOM, type) {
 

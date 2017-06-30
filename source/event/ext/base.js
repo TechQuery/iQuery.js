@@ -1,4 +1,27 @@
-define(['../../iQuery', './Observer'],  function ($, Observer) {
+define([
+    '../../iQuery', '../Event', './Observer', '../../DOM/utility'
+],  function ($, Event, Observer) {
+
+/* ---------- Event from Pseudo ---------- */
+
+    Event.prototype.isPseudo = function () {
+
+        var $_This = $( this.currentTarget );
+
+        var iOffset = $_This.offset();
+
+        return Boolean(
+            (this.pageX  &&  (
+                (this.pageX < iOffset.left)  ||
+                (this.pageX  >  (iOffset.left + parseFloat($_This.css('width'))))
+            ))  ||
+            (this.pageY  &&  (
+                (this.pageY < iOffset.top)  ||
+                (this.pageY  >  (iOffset.top + parseFloat($_This.css('height'))))
+            ))
+        );
+    };
+/* ---------- Event extension API ---------- */
 
     var Event_Map = { };
 
@@ -21,19 +44,45 @@ define(['../../iQuery', './Observer'],  function ($, Observer) {
             }
     };
 
+/* ---------- Original supported Event ---------- */
+
+    var Mutation_Event = $.makeSet(
+            'DOMContentLoaded',
+            'DOMAttrModified', 'DOMAttributeNameChanged',
+            'DOMCharacterDataModified',
+            'DOMElementNameChanged',
+            'DOMNodeInserted', 'DOMNodeInsertedIntoDocument',
+            'DOMNodeRemoved',  'DOMNodeRemovedFromDocument',
+            'DOMSubtreeModified'
+        );
+
+    function originOf(type) {
+        return (
+            ('on' + type)  in
+            Object.getPrototypeOf(this || document.documentElement)
+        ) || (
+            $.browser.modern  &&  (type in Mutation_Event)
+        );
+    }
+
     return $.extend({
         addEvent:       function (type, handler, cache) {
 
             var observer = cache.observer  ||  $.customEvent(type, this);
 
-            if (typeof observer != 'string')
-                return (
-                    cache.observer = observer
-                ).listen(
-                    cache.proxyDispatch = $.proxy(handler, this)
-                );
-            else
-                type = observer;
+            if ( observer ) {
+
+                if (typeof observer != 'string')
+                    return (
+                        cache.observer = observer
+                    ).listen(
+                        cache.proxyDispatch = $.proxy(handler, this)
+                    );
+                else
+                    type = observer;
+            }
+
+            if (! originOf.call(this, type))  return;
 
             if (typeof this.addEventListener === 'function')
                 this.addEventListener(type, handler);
@@ -51,12 +100,15 @@ define(['../../iQuery', './Observer'],  function ($, Observer) {
 
                 delete cache.observer;    delete cache.proxyDispatch;
 
-            } else if (typeof this.removeEventListener === 'function')
-                this.removeEventListener(type, handler);
-            else {
-                this.detachEvent('on' + type,  cache.proxyDispatch);
+            } else if (originOf.call(this, type)) {
 
-                delete cache.proxyDispatch;
+                if (typeof this.removeEventListener === 'function')
+                    this.removeEventListener(type, handler);
+                else {
+                    this.detachEvent('on' + type,  cache.proxyDispatch);
+
+                    delete cache.proxyDispatch;
+                }
             }
 
             return cache;
