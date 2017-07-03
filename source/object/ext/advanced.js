@@ -44,9 +44,10 @@ define(['../../iQuery'],  function ($) {
 
                 if ($.likeArray( source[key] ))
                     target[key] = $.merge(target[key] || [ ],  source[key]);
+                else if (typeof source[key] === 'object')
+                    target[key] = patch(target[key] || { },  source[key]);
                 else if (! (target[key] != null))
-                    target[key] = (typeof source[key] != 'object')  ?
-                        source[key]  :  patch(target[key] || { },  source[key]);
+                    target[key] = source[key];
             }
 
             if (typeof target === 'function')

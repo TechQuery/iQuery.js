@@ -2,7 +2,7 @@
 //                >>>  iQuery.js  <<<
 //
 //
-//      [Version]    v3.0  (2017-06-30)  Beta
+//      [Version]    v3.0  (2017-07-03)  Beta
 //
 //      [Usage]      A Light-weight jQuery Compatible API
 //                   with IE 8+ compatibility.
@@ -18,7 +18,7 @@ define([
     './CSS/ext/rule', './CSS/ext/utility',
     './event/ext/shim', './event/ext/wrapper',
     './AJAX/wrapper', './AJAX/ext/form',
-    './utility/ext/binary'
+    './animate/effect', './utility/ext/binary'
 ],  function ($) {
 
     if (typeof self.jQuery === 'function')  $.patch(self.jQuery, $).ajaxPatch();

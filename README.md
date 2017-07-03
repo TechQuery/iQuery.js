@@ -22,6 +22,8 @@
 <!DocType HTML>
 <html><head>
     <meta http-equiv="X-UA-Compatible" content="IE=Edge, Chrome=1" />
+    <!-- 若之前加载了其它 jQuery API 实现库，其将被自动增强 -->
+    <script src="path/to/jQuery.js"></script>
     <script src="path/to/iQuery.js"></script>
 </head><body>
     ...
@@ -43,7 +45,6 @@
 
 ### 对 jQuery（最新版）的增强
 
-以下扩展已收录在本项目的 [**jQueryKit.js**](/master/jQueryKit.js) 中，方便配合其它 jQuery API 实现 ——
  - 内置一个改进且向下兼容的 **$.browser 对象**，能通过 **直接比较版本号**来区分浏览器
  - 新增 **计时相关方法（秒基准）**—— `$.every()`、`$.wait()`、`$.start()`、`$.end()`
  - 新增 **函数执行节流器** —— `$.throttle()`
