@@ -11,7 +11,7 @@ define(['../../utility/ext/string', '../traversing', '../insert'],  function ($)
 
     function Array_Reverse() {
 
-        return  !(this instanceof $)  ?
+        return  ($.Type( this )  !=  'iQuery')  ?
             this  :  Array.prototype.reverse.call( this );
     }
 

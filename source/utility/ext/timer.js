@@ -2,7 +2,7 @@ define(['../../object/index'],  function ($) {
 
     var _Timer_ = { };
 
-    return {
+    return $.extend({
         every:       function (iSecond, iCallback) {
 
             var iTimeOut = (iSecond || 0.01)  *  1000,
@@ -61,5 +61,5 @@ define(['../../object/index'],  function ($) {
                 (Date.now() + Math.random()).toString(36)
                     .replace('.', '').toUpperCase();
         }
-    };
+    });
 });

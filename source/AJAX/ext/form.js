@@ -1,4 +1,4 @@
-define(['../index'],  function ($) {
+define(['../../iQuery', '../index'],  function ($) {
 
 /* ---------- Form Field Validation ---------- */
 

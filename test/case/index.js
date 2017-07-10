@@ -2,9 +2,6 @@ define(['jquery', 'iQuery'],  function ($, iQuery) {
 
     if ($ != iQuery) {
 
-        iQuery.patch($, iQuery).ajaxPatch();
-
-
         console.groupCollapsed('[Diff with jQuery]');
 
         for (var key in $)

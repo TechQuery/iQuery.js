@@ -14,7 +14,7 @@ define([
 
         if ( iOption.cache )  iOption.url = iOption.url.replace(/&?_=\d+/, '');
 
-        if (this != $) {    //  only for non-iQuery
+        if ($.Type( this )  !=  'iQuery') {
 
             iOption.url = iOption.url.replace(
                 RegExp('&?' + iOption.jsonp + '=\\w+'),  ''
@@ -54,7 +54,12 @@ define([
     }
 /* ---------- Cross Domain XHR (IE 10-) ---------- */
 
-    function XDR_Transport(iOption) {
+    $.ajaxTransport('+script',  $.proxy(HHR_Transport, $));
+
+    if (! (BOM.XDomainRequest instanceof Function))  return;
+
+
+    $.ajaxTransport('+*',  function (iOption) {
 
         var iXHR,  iForm = (iOption.data || '').ownerNode;
 
@@ -63,7 +68,7 @@ define([
             $( iForm ).is('form')  &&
             $('input[type="file"]', iForm)[0]
         )
-            return  HHR_Transport.call(this, iOption);
+            return  HHR_Transport.call($, iOption);
 
         return  iOption.crossDomain && {
             send:     function (iHeader, iComplete) {
@@ -100,16 +105,5 @@ define([
                 iXHR.abort();    iXHR = null;
             }
         };
-    }
-
-    $.ajaxPatch = function () {
-
-        this.ajaxTransport('+script',  $.proxy(HHR_Transport, this));
-
-        if (BOM.XDomainRequest instanceof Function)
-            this.ajaxTransport('+*',  $.proxy(XDR_Transport, this));
-
-        return this;
-    };
-
+    });
 });

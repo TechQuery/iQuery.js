@@ -175,6 +175,4 @@ define([
         return iResult;
     };
 
-    return $.ajaxPatch();
-
 });

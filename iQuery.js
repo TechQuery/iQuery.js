@@ -191,9 +191,11 @@ var polyfill_ES_API = (function () {
 })();
 
 
-var object_ext_base = (function () {
+var object_ext_base = (function ($) {
 
-    function likeArray(iObject) {
+    $ = $ || { };
+
+    $.likeArray = function (iObject) {
 
         if ((! iObject)  ||  (typeof iObject != 'object'))
             return false;
@@ -206,19 +208,19 @@ var object_ext_base = (function () {
             (typeof iObject.length == 'number')  &&
             (typeof iObject != 'string')
         );
-    }
+    };
 
-    function makeSet() {
+    $.makeSet = function () {
 
         var iArgs = arguments,  iValue = true,  iSet = { };
 
-        if (likeArray( iArgs[1] )) {
+        if (this.likeArray( iArgs[1] )) {
 
             iValue = iArgs[0];
 
             iArgs = iArgs[1];
 
-        } else if (likeArray( iArgs[0] )) {
+        } else if (this.likeArray( iArgs[0] )) {
 
             iValue = iArgs[1];
 
@@ -230,140 +232,140 @@ var object_ext_base = (function () {
                 iValue  :  iValue(iArgs[i], i, iArgs);
 
         return iSet;
-    }
-
-    var WindowType = makeSet('Window', 'DOMWindow', 'global');
-
-    return {
-        likeArray:       likeArray,
-        Type:            function (iVar) {
-            var iType;
-
-            try {
-                iType = Object.prototype.toString.call( iVar ).slice(8, -1);
-
-                var iName = iVar.constructor.name;
-
-                iName = (typeof iName == 'function')  ?
-                    iName.call( iVar.constructor )  :  iName;
-
-                if ((iType == 'Object')  &&  iName)  iType = iName;
-            } catch (iError) {
-                return 'Window';
-            }
-
-            if (! iVar)
-                return  (isNaN(iVar)  &&  (iVar !== iVar))  ?  'NaN'  :  iType;
-
-            if (WindowType[iType] || (
-                (iVar == iVar.document) && (iVar.document != iVar)    //  IE 9- Hack
-            ))
-                return 'Window';
-
-            if (iVar.location  &&  (iVar.location === (
-                iVar.defaultView || iVar.parentWindow || { }
-            ).location))
-                return 'Document';
-
-            if (
-                iType.match(/HTML\w+?Element$/) ||
-                (typeof iVar.tagName == 'string')
-            )
-                return 'HTMLElement';
-
-            if (this.likeArray( iVar )) {
-                iType = 'Array';
-                try {
-                    iVar.item();
-                    try {
-                        iVar.namedItem();
-
-                        return 'HTMLCollection';
-
-                    } catch (iError) {
-
-                        return 'NodeList';
-                    }
-                } catch (iError) { }
-            }
-
-            return iType;
-        },
-        isEqual:         function isEqual(iLeft, iRight, iDepth) {
-
-            iDepth = iDepth || 1;
-
-            if (!  (iLeft && iRight))
-                return  (iLeft === iRight);
-
-            iLeft = iLeft.valueOf();  iRight = iRight.valueOf();
-
-            if ((typeof iLeft != 'object')  ||  (typeof iRight != 'object'))
-                return  (iLeft === iRight);
-
-            var Left_Key = Object.keys( iLeft ),
-                Right_Key = Object.keys( iRight );
-
-            if (Left_Key.length != Right_Key.length)  return false;
-
-            Left_Key.sort();  Right_Key.sort();  --iDepth;
-
-            for (var i = 0, _Key_;  i < Left_Key.length;  i++) {
-
-                _Key_ = Left_Key[i];
-
-                if (_Key_ != Right_Key[i])  return false;
-
-                if (! iDepth) {
-                    if (iLeft[_Key_] !== iRight[_Key_])  return false;
-                } else {
-                    if (! isEqual.call(
-                        this, iLeft[_Key_], iRight[_Key_], iDepth
-                    ))
-                        return false;
-                }
-            }
-            return true;
-        },
-        trace:           function (iObject, iName, iCount, iCallback) {
-
-            if (iCount instanceof Function)  iCallback = iCount;
-
-            iCount = parseInt( iCount );
-
-            iCount = isNaN( iCount )  ?  Infinity  :  iCount;
-
-            var iResult = [ ];
-
-            for (
-                var _Next_,  i = 0,  j = 0;
-                iObject[iName]  &&  (j < iCount);
-                iObject = _Next_,  i++
-            ) {
-                _Next_ = iObject[iName];
-                if (
-                    (typeof iCallback != 'function')  ||
-                    (iCallback.call(_Next_, i, _Next_)  !==  false)
-                )
-                    iResult[j++] = _Next_;
-            }
-
-            return iResult;
-        },
-        makeSet:         makeSet,
-        makeIterator:    function (array) {
-
-            var nextIndex = 0;
-
-            return {
-                next:    function () {
-
-                    return  (nextIndex >= array.length)  ?
-                        {done: true}  :  {done: false,  value: array[nextIndex++]};
-                }
-            };
-        }
     };
+
+    var WindowType = $.makeSet('Window', 'DOMWindow', 'global');
+
+    $.Type = function (iVar) {
+        try {
+            var iType = Object.prototype.toString.call( iVar ).slice(8, -1);
+
+            var iName = iVar.constructor.name;
+
+            iName = (typeof iName == 'function')  ?
+                iName.call( iVar.constructor )  :  iName;
+
+            if ((iType == 'Object')  &&  iName)  iType = iName;
+        } catch (iError) {
+            return 'Window';
+        }
+
+        if (! iVar)
+            return  (isNaN(iVar)  &&  (iVar !== iVar))  ?  'NaN'  :  iType;
+
+        if (WindowType[iType] || (
+            (iVar == iVar.document) && (iVar.document != iVar)    //  IE 9- Hack
+        ))
+            return 'Window';
+
+        if (iVar.location  &&  (iVar.location === (
+            iVar.defaultView || iVar.parentWindow || { }
+        ).location))
+            return 'Document';
+
+        if (
+            iType.match(/HTML\w+?Element$/) ||
+            (typeof iVar.tagName == 'string')
+        )
+            return 'HTMLElement';
+
+        if (this.likeArray( iVar )) {
+            iType = 'Array';
+            try {
+                iVar.item();
+                try {
+                    iVar.namedItem();
+
+                    return 'HTMLCollection';
+
+                } catch (iError) {
+
+                    return 'NodeList';
+                }
+            } catch (iError) { }
+        }
+
+        return iType;
+    };
+
+    $.isEqual = function isEqual(iLeft, iRight, iDepth) {
+
+        iDepth = iDepth || 1;
+
+        if (!  (iLeft && iRight))
+            return  (iLeft === iRight);
+
+        iLeft = iLeft.valueOf();  iRight = iRight.valueOf();
+
+        if ((typeof iLeft != 'object')  ||  (typeof iRight != 'object'))
+            return  (iLeft === iRight);
+
+        var Left_Key = Object.keys( iLeft ),
+            Right_Key = Object.keys( iRight );
+
+        if (Left_Key.length != Right_Key.length)  return false;
+
+        Left_Key.sort();  Right_Key.sort();  --iDepth;
+
+        for (var i = 0, _Key_;  i < Left_Key.length;  i++) {
+
+            _Key_ = Left_Key[i];
+
+            if (_Key_ != Right_Key[i])  return false;
+
+            if (! iDepth) {
+                if (iLeft[_Key_] !== iRight[_Key_])  return false;
+            } else {
+                if (! isEqual.call(
+                    this, iLeft[_Key_], iRight[_Key_], iDepth
+                ))
+                    return false;
+            }
+        }
+        return true;
+    };
+
+    $.trace = function (iObject, iName, iCount, iCallback) {
+
+        if (iCount instanceof Function)  iCallback = iCount;
+
+        iCount = parseInt( iCount );
+
+        iCount = isNaN( iCount )  ?  Infinity  :  iCount;
+
+        var iResult = [ ];
+
+        for (
+            var _Next_,  i = 0,  j = 0;
+            iObject[iName]  &&  (j < iCount);
+            iObject = _Next_,  i++
+        ) {
+            _Next_ = iObject[iName];
+            if (
+                (typeof iCallback != 'function')  ||
+                (iCallback.call(_Next_, i, _Next_)  !==  false)
+            )
+                iResult[j++] = _Next_;
+        }
+
+        return iResult;
+    };
+
+    $.makeIterator = function (array) {
+
+        var nextIndex = 0;
+
+        return {
+            next:    function () {
+
+                return  (nextIndex >= array.length)  ?
+                    {done: true}  :  {done: false,  value: array[nextIndex++]};
+            }
+        };
+    };
+
+    return $;
+
 })(polyfill_ES_API);
 
 
@@ -546,11 +548,11 @@ var object_index = (function (checker, $) {
 })(object_checkType, object_ext_base);
 
 
-var utility_ext_timer = (function ($) {
+(function ($) {
 
     var _Timer_ = { };
 
-    return {
+    return $.extend({
         every:       function (iSecond, iCallback) {
 
             var iTimeOut = (iSecond || 0.01)  *  1000,
@@ -609,17 +611,17 @@ var utility_ext_timer = (function ($) {
                 (Date.now() + Math.random()).toString(36)
                     .replace('.', '').toUpperCase();
         }
-    };
+    });
 })(object_index);
 
 
-var CSS_selector = (function ($, timer) {
+var CSS_selector = (function ($) {
 
     function uniqueId() {
 
         return  $.each(this,  function () {
 
-            if (! this.id)  this.id = timer.uuid('iQuery');
+            if (! this.id)  this.id = $.uuid('iQuery');
         });
     }
 
@@ -677,9 +679,9 @@ var CSS_selector = (function ($, timer) {
     return $.extend({
         fn:      {uniqueId:  uniqueId},
         find:    find,
-        expr:    {':': _Pseudo_,  filter: _Pseudo_}
-    }, timer);
-})(object_index, utility_ext_timer);
+        expr:    {':': _Pseudo_,  pseudos: _Pseudo_}
+    });
+})(object_index);
 
 
 var DOM_uniqueSort = (function () {
@@ -2968,11 +2970,11 @@ var event_ext_Observer = (function ($) {
 })(iQuery);
 
 
-var event_ext_base = (function ($, Event, Observer) {
+var event_ext_base = (function ($, Observer) {
 
 /* ---------- Event from Pseudo ---------- */
 
-    Event.prototype.isPseudo = function () {
+    $.Event.prototype.isPseudo = function () {
 
         var $_This = $( this.currentTarget );
 
@@ -3082,7 +3084,7 @@ var event_ext_base = (function ($, Event, Observer) {
             return cache;
         }
     });
-})(iQuery, event_Event, event_ext_Observer);
+})(iQuery, event_ext_Observer);
 
 
 (function ($) {
@@ -3849,7 +3851,7 @@ var AJAX_ext_URL = (function ($) {
 
     function Array_Reverse() {
 
-        return  !(this instanceof $)  ?
+        return  ($.Type( this )  !=  'iQuery')  ?
             this  :  Array.prototype.reverse.call( this );
     }
 
@@ -4611,7 +4613,7 @@ var AJAX_ext_HTML_Request = (function ($) {
 
         if ( iOption.cache )  iOption.url = iOption.url.replace(/&?_=\d+/, '');
 
-        if (this != $) {    //  only for non-iQuery
+        if ($.Type( this )  !=  'iQuery') {
 
             iOption.url = iOption.url.replace(
                 RegExp('&?' + iOption.jsonp + '=\\w+'),  ''
@@ -4651,7 +4653,12 @@ var AJAX_ext_HTML_Request = (function ($) {
     }
 /* ---------- Cross Domain XHR (IE 10-) ---------- */
 
-    function XDR_Transport(iOption) {
+    $.ajaxTransport('+script',  $.proxy(HHR_Transport, $));
+
+    if (! (BOM.XDomainRequest instanceof Function))  return;
+
+
+    $.ajaxTransport('+*',  function (iOption) {
 
         var iXHR,  iForm = (iOption.data || '').ownerNode;
 
@@ -4660,7 +4667,7 @@ var AJAX_ext_HTML_Request = (function ($) {
             $( iForm ).is('form')  &&
             $('input[type="file"]', iForm)[0]
         )
-            return  HHR_Transport.call(this, iOption);
+            return  HHR_Transport.call($, iOption);
 
         return  iOption.crossDomain && {
             send:     function (iHeader, iComplete) {
@@ -4697,18 +4704,7 @@ var AJAX_ext_HTML_Request = (function ($) {
                 iXHR.abort();    iXHR = null;
             }
         };
-    }
-
-    $.ajaxPatch = function () {
-
-        this.ajaxTransport('+script',  $.proxy(HHR_Transport, this));
-
-        if (BOM.XDomainRequest instanceof Function)
-            this.ajaxTransport('+*',  $.proxy(XDR_Transport, this));
-
-        return this;
-    };
-
+    });
 })(iQuery, AJAX_ext_HTML_Request);
 
 
@@ -4825,7 +4821,7 @@ var AJAX_ext_HTML_Request = (function ($) {
 })(iQuery);
 
 
-var AJAX_index = (function ($) {
+(function ($) {
 
 /* ---------- Response Data ---------- */
 
@@ -4999,8 +4995,6 @@ var AJAX_index = (function ($) {
 
         return iResult;
     };
-
-    return $.ajaxPatch();
 
 })(AJAX_ext_URL);
 
@@ -5473,7 +5467,7 @@ var AJAX_index = (function ($) {
         return this;
     };
 
-})(AJAX_index);
+})(iQuery);
 
 
 (function ($) {
@@ -5842,7 +5836,7 @@ var AJAX_index = (function ($) {
         return this;
     };
 
-})(AJAX_index);
+})(iQuery);
 
 
 (function ($) {
@@ -6111,7 +6105,7 @@ var AJAX_index = (function ($) {
 //                >>>  iQuery.js  <<<
 //
 //
-//      [Version]    v3.0  (2017-07-03)  Beta
+//      [Version]    v3.0  (2017-07-10)  Beta
 //
 //      [Usage]      A Light-weight jQuery Compatible API
 //                   with IE 8+ compatibility.
@@ -6123,9 +6117,7 @@ var AJAX_index = (function ($) {
 
 return  (function ($) {
 
-    if (typeof self.jQuery === 'function')  $.patch(self.jQuery, $).ajaxPatch();
-
-    return $;
+    return  self.iQuery = $;
 
 })(iQuery);
 });

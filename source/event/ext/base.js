@@ -1,10 +1,10 @@
 define([
-    '../../iQuery', '../Event', './Observer', '../../DOM/utility'
-],  function ($, Event, Observer) {
+    '../../iQuery', './Observer', '../Event', '../../DOM/utility'
+],  function ($, Observer) {
 
 /* ---------- Event from Pseudo ---------- */
 
-    Event.prototype.isPseudo = function () {
+    $.Event.prototype.isPseudo = function () {
 
         var $_This = $( this.currentTarget );
 

@@ -22,8 +22,6 @@
 <!DocType HTML>
 <html><head>
     <meta http-equiv="X-UA-Compatible" content="IE=Edge, Chrome=1" />
-    <!-- 若之前加载了其它 jQuery API 实现库，其将被自动增强 -->
-    <script src="path/to/jQuery.js"></script>
     <script src="path/to/iQuery.js"></script>
 </head><body>
     ...
@@ -45,6 +43,7 @@
 
 ### 对 jQuery（最新版）的增强
 
+以下扩展已收录在本项目的 [**jQueryKit.js**](/master/jQueryKit.js) 中，方便配合其它 jQuery API 实现 ——
  - 内置一个改进且向下兼容的 **$.browser 对象**，能通过 **直接比较版本号**来区分浏览器
  - 新增 **计时相关方法（秒基准）**—— `$.every()`、`$.wait()`、`$.start()`、`$.end()`
  - 新增 **函数执行节流器** —— `$.throttle()`
@@ -71,7 +70,7 @@
  - `$.parseJSON()` 支持 **递归解析**，会将 JSON 字符串中的内层字符串 eval 为 JS 实值/例
  - 新增 **JSON 格式化显示**方法 —— `$.formatJSON()`
  - 基于官方 `$.ajaxTransport()` 重载 **JSONP 实现**，支持基本的异常处理
- - 新增 `$.ajaxPatch()`，让 `$.ajax()` 支持 form 元素、FormData 对象的请求数据形式，整合 XHR、XDR、JSONP、iframe **自适应 跨域请求**
+ - `$.ajax()` 支持 form 元素、FormData 对象的请求数据形式，整合 XHR、XDR、JSONP、iframe **自适应 跨域请求**
  - `$.ajax()` **自动转换响应内容**为 HTML、XML 或 JSON 对象实例
  - 新增 `$.delete()`、`$.put()`，方便实现基于 **RESTful API** 的单页应用
  - 新增 `$.fn.htmlExec()` **W3C HTML 解析器**方法，并基于此重构 `$.fn.load()` 内部实现，方便 DOM 片段清理、脚本调试

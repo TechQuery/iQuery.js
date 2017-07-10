@@ -1,10 +1,10 @@
-define(['../object/index', '../utility/ext/timer'],  function ($, timer) {
+define(['../object/index', '../utility/ext/timer'],  function ($) {
 
     function uniqueId() {
 
         return  $.each(this,  function () {
 
-            if (! this.id)  this.id = timer.uuid('iQuery');
+            if (! this.id)  this.id = $.uuid('iQuery');
         });
     }
 
@@ -62,6 +62,6 @@ define(['../object/index', '../utility/ext/timer'],  function ($, timer) {
     return $.extend({
         fn:      {uniqueId:  uniqueId},
         find:    find,
-        expr:    {':': _Pseudo_,  filter: _Pseudo_}
-    }, timer);
+        expr:    {':': _Pseudo_,  pseudos: _Pseudo_}
+    });
 });
