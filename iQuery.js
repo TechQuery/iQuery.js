@@ -561,7 +561,7 @@ var object_index = (function (checker, $) {
 
             return  setTimeout(function loop() {
 
-                if (false === iCallback(
+                if (false !== iCallback(
                     ++Index,  (Date.now() - iStart)  /  1000
                 ))
                     setTimeout(loop, iTimeOut);
@@ -1088,34 +1088,38 @@ var utility_ext_string = (function ($) {
 
 /* ---------- DOM ShortCut ---------- */
 
-    var iGetter = {
-            firstElementChild:         function () {
-                return this.children[0];
-            },
-            lastElementChild:          function () {
+    var DOM_Proto = Element.prototype,
+        Text_Proto = Object.getPrototypeOf( DOM.createTextNode('') );
 
-                return  this.children[this.children.length - 1];
-            },
-            previousElementSibling:    function () {
-
-                return  $.trace(this,  'previousSibling',  1,  function () {
-
-                    return  (this.nodeType == 1);
-                })[0];
-            },
-            nextElementSibling:        function () {
-
-                return  $.trace(this,  'nextSibling',  function () {
-
-                    return  (this.nodeType == 1);
-                })[0];
-            }
+    $.each({
+        firstElementChild:         function () {
+            return this.children[0];
         },
-        DOM_Proto = Element.prototype;
+        lastElementChild:          function () {
 
-    for (var iName in iGetter)
-        Object.defineProperty(DOM_Proto,  iName,  {get: iGetter[iName]});
+            return  this.children[this.children.length - 1];
+        },
+        previousElementSibling:    function () {
 
+            return  $.trace(this,  'previousSibling',  1,  function () {
+
+                return  (this.nodeType == 1);
+            })[0];
+        },
+        nextElementSibling:        function () {
+
+            return  $.trace(this,  'nextSibling',  function () {
+
+                return  (this.nodeType == 1);
+            })[0];
+        }
+    },  function (key) {
+
+        Object.defineProperty(DOM_Proto,  key,  {get: this});
+
+        if (key.indexOf('Sibling') > 0)
+            Object.defineProperty(Text_Proto,  key,  {get: this});
+    });
 
 /* ---------- DOM Text Content ---------- */
 
@@ -1429,6 +1433,8 @@ var utility_ext_string = (function ($) {
         var _This_ = this;
 
         arguments[0].replace(/([^\?&=]+)=([^&]+)/g,  function (_, key, value) {
+
+            try {  value = decodeURIComponent( value );  } catch (error) { }
 
             _This_.append(key, value);
         });
@@ -2413,7 +2419,7 @@ var utility_index = (function ($) {
         },
         data:    function (iDOM, Index, iMatch) {
 
-            return  Boolean($.data(iDOM, iMatch[3]));
+            return  Boolean($( iDOM ).data( iMatch[3] ));
         }
     });
 
@@ -3062,7 +3068,7 @@ var event_ext_base = (function ($, Observer) {
                 this.attachEvent('on' + type,  cache.proxyDispatch);
             }
         },
-        removeEvent:    function (type, handler, cache) {
+        removeEvent:    $.removeEvent  ||  function (type, handler, cache) {
 
             if ( cache.observer ) {
 
@@ -3675,8 +3681,6 @@ var AJAX_ext_URL = (function ($) {
                 )).entries()
             ),
             function () {
-                this[1] = decodeURIComponent( this[1] );
-
                 if (
                     (! $.isNumeric(this[1]))  ||
                     Number.isSafeInteger( +this[1] )
@@ -5420,27 +5424,29 @@ var AJAX_ext_HTML_Request = (function ($) {
 
     $.map(['get', 'post', 'put', 'delete'],  function (method) {
 
-        $[ method ] = function (iURL, iData, iCallback, DataType) {
+        $[ method ] = $[ method ]  ||  function (URL, data, callback, DataType) {
 
-            if (typeof iData == 'function')
-                DataType = iCallback,  iCallback = iData,  iData = null;
+            if (typeof data === 'function')
+                DataType = callback,  callback = data,  data = null;
 
-            return  $.ajax({
-                type:           method,
-                url:            iURL,
-                crossDomain:    true,
-                data:           iData,
-                dataType:       DataType,
-                success:        iCallback
-            });
+            return $.ajax($.extend(
+                {
+                    type:           method,
+                    url:            URL,
+                    crossDomain:    true,
+                    data:           data,
+                    dataType:       DataType,
+                    success:        callback
+                },
+                $.isPlainObject( URL )  ?  URL  :  { }
+            ));
         };
     });
 
-    $.getJSON = $.get;
+    $.getJSON = $.getJSON || $.get;
 
 
 /* ---------- Smart Load ---------- */
-
 
     $.fn.load = function (iURL, iData, iCallback) {
 
@@ -6105,7 +6111,7 @@ var AJAX_ext_HTML_Request = (function ($) {
 //                >>>  iQuery.js  <<<
 //
 //
-//      [Version]    v3.0  (2017-07-10)  Beta
+//      [Version]    v3.0  (2017-07-20)  Beta
 //
 //      [Usage]      A Light-weight jQuery Compatible API
 //                   with IE 8+ compatibility.

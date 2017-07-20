@@ -11,7 +11,7 @@ define(['../../object/index'],  function ($) {
 
             return  setTimeout(function loop() {
 
-                if (false === iCallback(
+                if (false !== iCallback(
                     ++Index,  (Date.now() - iStart)  /  1000
                 ))
                     setTimeout(loop, iTimeOut);

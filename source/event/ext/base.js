@@ -92,7 +92,7 @@ define([
                 this.attachEvent('on' + type,  cache.proxyDispatch);
             }
         },
-        removeEvent:    function (type, handler, cache) {
+        removeEvent:    $.removeEvent  ||  function (type, handler, cache) {
 
             if ( cache.observer ) {
 

@@ -20,6 +20,8 @@ define(['../iQuery', '../utility/ext/browser'],  function ($) {
 
         arguments[0].replace(/([^\?&=]+)=([^&]+)/g,  function (_, key, value) {
 
+            try {  value = decodeURIComponent( value );  } catch (error) { }
+
             _This_.append(key, value);
         });
     }

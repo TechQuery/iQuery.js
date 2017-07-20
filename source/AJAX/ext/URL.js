@@ -13,8 +13,6 @@ define(['../../utility/ext/string'],  function ($) {
                 )).entries()
             ),
             function () {
-                this[1] = decodeURIComponent( this[1] );
-
                 if (
                     (! $.isNumeric(this[1]))  ||
                     Number.isSafeInteger( +this[1] )

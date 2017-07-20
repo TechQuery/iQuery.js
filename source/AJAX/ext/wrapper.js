@@ -1,30 +1,32 @@
-define(['../iQuery', './index', '../DOM/ext/base'],  function ($) {
+define(['../../iQuery', '../index', '../../DOM/ext/base'],  function ($) {
 
 /* ---------- RESTful API ---------- */
 
     $.map(['get', 'post', 'put', 'delete'],  function (method) {
 
-        $[ method ] = function (iURL, iData, iCallback, DataType) {
+        $[ method ] = $[ method ]  ||  function (URL, data, callback, DataType) {
 
-            if (typeof iData == 'function')
-                DataType = iCallback,  iCallback = iData,  iData = null;
+            if (typeof data === 'function')
+                DataType = callback,  callback = data,  data = null;
 
-            return  $.ajax({
-                type:           method,
-                url:            iURL,
-                crossDomain:    true,
-                data:           iData,
-                dataType:       DataType,
-                success:        iCallback
-            });
+            return $.ajax($.extend(
+                {
+                    type:           method,
+                    url:            URL,
+                    crossDomain:    true,
+                    data:           data,
+                    dataType:       DataType,
+                    success:        callback
+                },
+                $.isPlainObject( URL )  ?  URL  :  { }
+            ));
         };
     });
 
-    $.getJSON = $.get;
+    $.getJSON = $.getJSON || $.get;
 
 
 /* ---------- Smart Load ---------- */
-
 
     $.fn.load = function (iURL, iData, iCallback) {
 

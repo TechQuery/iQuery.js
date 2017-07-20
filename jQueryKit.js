@@ -382,7 +382,7 @@ var object_ext_base = (function ($) {
 
             return  setTimeout(function loop() {
 
-                if (false === iCallback(
+                if (false !== iCallback(
                     ++Index,  (Date.now() - iStart)  /  1000
                 ))
                     setTimeout(loop, iTimeOut);
@@ -552,34 +552,38 @@ var utility_ext_string = (function ($) {
 
 /* ---------- DOM ShortCut ---------- */
 
-    var iGetter = {
-            firstElementChild:         function () {
-                return this.children[0];
-            },
-            lastElementChild:          function () {
+    var DOM_Proto = Element.prototype,
+        Text_Proto = Object.getPrototypeOf( DOM.createTextNode('') );
 
-                return  this.children[this.children.length - 1];
-            },
-            previousElementSibling:    function () {
-
-                return  $.trace(this,  'previousSibling',  1,  function () {
-
-                    return  (this.nodeType == 1);
-                })[0];
-            },
-            nextElementSibling:        function () {
-
-                return  $.trace(this,  'nextSibling',  function () {
-
-                    return  (this.nodeType == 1);
-                })[0];
-            }
+    $.each({
+        firstElementChild:         function () {
+            return this.children[0];
         },
-        DOM_Proto = Element.prototype;
+        lastElementChild:          function () {
 
-    for (var iName in iGetter)
-        Object.defineProperty(DOM_Proto,  iName,  {get: iGetter[iName]});
+            return  this.children[this.children.length - 1];
+        },
+        previousElementSibling:    function () {
 
+            return  $.trace(this,  'previousSibling',  1,  function () {
+
+                return  (this.nodeType == 1);
+            })[0];
+        },
+        nextElementSibling:        function () {
+
+            return  $.trace(this,  'nextSibling',  function () {
+
+                return  (this.nodeType == 1);
+            })[0];
+        }
+    },  function (key) {
+
+        Object.defineProperty(DOM_Proto,  key,  {get: this});
+
+        if (key.indexOf('Sibling') > 0)
+            Object.defineProperty(Text_Proto,  key,  {get: this});
+    });
 
 /* ---------- DOM Text Content ---------- */
 
@@ -893,6 +897,8 @@ var utility_ext_string = (function ($) {
         var _This_ = this;
 
         arguments[0].replace(/([^\?&=]+)=([^&]+)/g,  function (_, key, value) {
+
+            try {  value = decodeURIComponent( value );  } catch (error) { }
 
             _This_.append(key, value);
         });
@@ -1387,7 +1393,7 @@ var utility_ext_string = (function ($) {
         },
         data:    function (iDOM, Index, iMatch) {
 
-            return  Boolean($.data(iDOM, iMatch[3]));
+            return  Boolean($( iDOM ).data( iMatch[3] ));
         }
     });
 
@@ -1753,7 +1759,7 @@ var event_ext_base = (function ($, Observer) {
                 this.attachEvent('on' + type,  cache.proxyDispatch);
             }
         },
-        removeEvent:    function (type, handler, cache) {
+        removeEvent:    $.removeEvent  ||  function (type, handler, cache) {
 
             if ( cache.observer ) {
 
@@ -1915,8 +1921,6 @@ var AJAX_ext_URL = (function ($) {
                 )).entries()
             ),
             function () {
-                this[1] = decodeURIComponent( this[1] );
-
                 if (
                     (! $.isNumeric(this[1]))  ||
                     Number.isSafeInteger( +this[1] )
@@ -3117,6 +3121,64 @@ var AJAX_ext_HTML_Request = (function ($) {
             ($.browser.msie < 10)  ?  JSON.stringify( iData )  :  iData,  '*'
         );
     };
+})(jquery);
+
+
+(function ($) {
+
+/* ---------- RESTful API ---------- */
+
+    $.map(['get', 'post', 'put', 'delete'],  function (method) {
+
+        $[ method ] = $[ method ]  ||  function (URL, data, callback, DataType) {
+
+            if (typeof data === 'function')
+                DataType = callback,  callback = data,  data = null;
+
+            return $.ajax($.extend(
+                {
+                    type:           method,
+                    url:            URL,
+                    crossDomain:    true,
+                    data:           data,
+                    dataType:       DataType,
+                    success:        callback
+                },
+                $.isPlainObject( URL )  ?  URL  :  { }
+            ));
+        };
+    });
+
+    $.getJSON = $.getJSON || $.get;
+
+
+/* ---------- Smart Load ---------- */
+
+    $.fn.load = function (iURL, iData, iCallback) {
+
+        if (! this[0])  return this;
+
+        if (typeof iData == 'function')
+            iCallback = iData,  iData = null;
+
+        var $_This = this;
+
+        iURL = iURL.trim().split(/\s+/);
+
+        $[iData ? 'post' : 'get'](iURL[0],  iData,  function (iHTML, _, iXHR) {
+
+            $_This.htmlExec(
+                (typeof iHTML === 'string')  ?  iHTML  :  iXHR.responseText,
+                iURL[1]
+            );
+
+            if (typeof iCallback === 'function')
+                $_This.each( $.proxy(iCallback, null, iHTML, _, iXHR) );
+        },  'html');
+
+        return this;
+    };
+
 })(jquery);
 
 

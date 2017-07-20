@@ -14,34 +14,38 @@ define(['../utility/ext/string'],  function ($) {
 
 /* ---------- DOM ShortCut ---------- */
 
-    var iGetter = {
-            firstElementChild:         function () {
-                return this.children[0];
-            },
-            lastElementChild:          function () {
+    var DOM_Proto = Element.prototype,
+        Text_Proto = Object.getPrototypeOf( DOM.createTextNode('') );
 
-                return  this.children[this.children.length - 1];
-            },
-            previousElementSibling:    function () {
-
-                return  $.trace(this,  'previousSibling',  1,  function () {
-
-                    return  (this.nodeType == 1);
-                })[0];
-            },
-            nextElementSibling:        function () {
-
-                return  $.trace(this,  'nextSibling',  function () {
-
-                    return  (this.nodeType == 1);
-                })[0];
-            }
+    $.each({
+        firstElementChild:         function () {
+            return this.children[0];
         },
-        DOM_Proto = Element.prototype;
+        lastElementChild:          function () {
 
-    for (var iName in iGetter)
-        Object.defineProperty(DOM_Proto,  iName,  {get: iGetter[iName]});
+            return  this.children[this.children.length - 1];
+        },
+        previousElementSibling:    function () {
 
+            return  $.trace(this,  'previousSibling',  1,  function () {
+
+                return  (this.nodeType == 1);
+            })[0];
+        },
+        nextElementSibling:        function () {
+
+            return  $.trace(this,  'nextSibling',  function () {
+
+                return  (this.nodeType == 1);
+            })[0];
+        }
+    },  function (key) {
+
+        Object.defineProperty(DOM_Proto,  key,  {get: this});
+
+        if (key.indexOf('Sibling') > 0)
+            Object.defineProperty(Text_Proto,  key,  {get: this});
+    });
 
 /* ---------- DOM Text Content ---------- */
 

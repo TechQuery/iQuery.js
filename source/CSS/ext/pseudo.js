@@ -76,7 +76,7 @@ define([
         },
         data:    function (iDOM, Index, iMatch) {
 
-            return  Boolean($.data(iDOM, iMatch[3]));
+            return  Boolean($( iDOM ).data( iMatch[3] ));
         }
     });
 
