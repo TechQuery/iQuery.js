@@ -57,19 +57,31 @@ define(['../../iQuery', '../utility'],  function ($) {
                     _This_ = (_This_.parentNode != _Root_)  &&  _This_.parentNode;
                 }
             },
+            replace:    function (iNew) {
+
+                iNew = $.buildFragment(
+                    (iNew instanceof Element)  ?
+                        [ iNew ]  :  $.makeArray( iNew )
+                );
+
+                if (! iNew.childNodes[0])  return;
+
+                _This_.parentNode.replaceChild(
+                    [iNew,  iNew = iNew.childNodes[0]][0],  _This_
+                );
+
+                _This_ = iNew;
+            },
             next:       function () {
 
                 if (! _This_)  return  {done: true};
 
                 var iNew = filter  &&  filter.call(_Root_, _This_);
 
-                if (iNew  &&  (iNew != _This_)  &&  _This_.parentNode) {
-
-                    _This_.parentNode.replaceChild(iNew, _This_);
-
-                    _This_ = iNew;
-
-                } else if (iNew === false)  this.forward();
+                if (iNew  &&  (iNew != _This_)  &&  _This_.parentNode)
+                    this.replace( iNew );
+                else if (iNew === false)
+                    this.forward();
 
                 if (! _This_)  return  {done: true};
 

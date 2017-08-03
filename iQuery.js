@@ -548,7 +548,7 @@ var object_index = (function (checker, $) {
 })(object_checkType, object_ext_base);
 
 
-(function ($) {
+var utility_ext_timer = (function ($) {
 
     var _Timer_ = { };
 
@@ -615,15 +615,27 @@ var object_index = (function (checker, $) {
 })(object_index);
 
 
+var CSS_ext_var = (function ($) {
+
+    return  $.extend(true, {
+        fn:       {uniqueId:  function () {
+
+            return  $.each(this,  function () {
+
+                if (! this.id)  this.id = $.uuid('iQuery');
+            })
+        }},
+        cssPX:    $.makeSet(
+            'width', 'height', 'padding', 'border-radius', 'margin',
+            'top', 'right', 'bottom',  'left'
+        )
+    });
+})(utility_ext_timer);
+
+
 var CSS_selector = (function ($) {
 
-    function uniqueId() {
-
-        return  $.each(this,  function () {
-
-            if (! this.id)  this.id = $.uuid('iQuery');
-        });
-    }
+    var uniqueId = $.fn.uniqueId;
 
     function QuerySelector(iPath) {
         if (
@@ -677,11 +689,10 @@ var CSS_selector = (function ($) {
     }
 
     return $.extend({
-        fn:      {uniqueId:  uniqueId},
         find:    find,
         expr:    {':': _Pseudo_,  pseudos: _Pseudo_}
     });
-})(object_index);
+})(CSS_ext_var);
 
 
 var DOM_uniqueSort = (function () {
@@ -730,6 +741,55 @@ var DOM_uniqueSort = (function () {
         };
 
 })();
+
+
+var CSS_pseudo = (function ($, selector) {
+
+    var Check_Type = $.makeSet('radio', 'checkbox');
+
+    $.extend(selector.expr[':'], arguments[2], {
+        visible:     function (iDOM) {
+            return !!(
+                iDOM.offsetWidth || iDOM.offsetHeight || iDOM.getClientRects[0]
+            );
+        },
+        hidden:      function () {
+            return  (! this.visible(arguments[0]));
+        },
+        header:      function () {
+            return  (arguments[0] instanceof HTMLHeadingElement);
+        },
+        checked:     function (iDOM) {
+            return (
+                (iDOM.tagName.toLowerCase() == 'input')  &&
+                (iDOM.type in Check_Type)  &&  (iDOM.checked === true)
+            );
+        },
+        parent:      function (iDOM) {
+
+            if (iDOM.children.length)  return true;
+
+            iDOM = iDOM.childNodes;
+
+            for (var i = 0;  iDOM[i];  i++)
+                if (iDOM[i].nodeType == 3)  return true;
+        },
+        empty:       function () {
+            return  (! this.parent(arguments[0]));
+        },
+        contains:    function (iDOM, Index, iMatch) {
+
+            return  (iDOM.textContent.indexOf( iMatch[3] )  >  -1);
+        },
+        not:         function (iDOM, Index, iMatch) {
+
+            return  (! selector.find(iMatch[3], iDOM)[0]);
+        }
+    });
+
+    return selector;
+
+})(object_index, CSS_selector);
 
 
 var DOM_parseHTML = (function ($) {
@@ -786,55 +846,6 @@ var DOM_parseHTML = (function ($) {
         });
     };
 })(object_index);
-
-
-var CSS_pseudo = (function ($, selector) {
-
-    var Check_Type = $.makeSet('radio', 'checkbox');
-
-    $.extend(selector.expr[':'], arguments[2], {
-        visible:     function (iDOM) {
-            return !!(
-                iDOM.offsetWidth || iDOM.offsetHeight || iDOM.getClientRects[0]
-            );
-        },
-        hidden:      function () {
-            return  (! this.visible(arguments[0]));
-        },
-        header:      function () {
-            return  (arguments[0] instanceof HTMLHeadingElement);
-        },
-        checked:     function (iDOM) {
-            return (
-                (iDOM.tagName.toLowerCase() == 'input')  &&
-                (iDOM.type in Check_Type)  &&  (iDOM.checked === true)
-            );
-        },
-        parent:      function (iDOM) {
-
-            if (iDOM.children.length)  return true;
-
-            iDOM = iDOM.childNodes;
-
-            for (var i = 0;  iDOM[i];  i++)
-                if (iDOM[i].nodeType == 3)  return true;
-        },
-        empty:       function () {
-            return  (! this.parent(arguments[0]));
-        },
-        contains:    function (iDOM, Index, iMatch) {
-
-            return  (iDOM.textContent.indexOf( iMatch[3] )  >  -1);
-        },
-        not:         function (iDOM, Index, iMatch) {
-
-            return  (! selector.find(iMatch[3], iDOM)[0]);
-        }
-    });
-
-    return selector;
-
-})(object_index, CSS_selector);
 
 
 var iQuery = (function (ObjectKit, selector, uniqueSort, parseHTML) {
@@ -2233,11 +2244,6 @@ var utility_index = (function ($) {
 
 /* ---------- DOM Style ---------- */
 
-    $.cssPX = $.makeSet(
-        'width', 'height', 'padding', 'border-radius', 'margin',
-        'top', 'right', 'bottom',  'left'
-    );
-
     _DOM_.css = {
         get:    function (iName) {
 
@@ -3152,19 +3158,31 @@ var event_ext_base = (function ($, Observer) {
                     _This_ = (_This_.parentNode != _Root_)  &&  _This_.parentNode;
                 }
             },
+            replace:    function (iNew) {
+
+                iNew = $.buildFragment(
+                    (iNew instanceof Element)  ?
+                        [ iNew ]  :  $.makeArray( iNew )
+                );
+
+                if (! iNew.childNodes[0])  return;
+
+                _This_.parentNode.replaceChild(
+                    [iNew,  iNew = iNew.childNodes[0]][0],  _This_
+                );
+
+                _This_ = iNew;
+            },
             next:       function () {
 
                 if (! _This_)  return  {done: true};
 
                 var iNew = filter  &&  filter.call(_Root_, _This_);
 
-                if (iNew  &&  (iNew != _This_)  &&  _This_.parentNode) {
-
-                    _This_.parentNode.replaceChild(iNew, _This_);
-
-                    _This_ = iNew;
-
-                } else if (iNew === false)  this.forward();
+                if (iNew  &&  (iNew != _This_)  &&  _This_.parentNode)
+                    this.replace( iNew );
+                else if (iNew === false)
+                    this.forward();
 
                 if (! _This_)  return  {done: true};
 
@@ -3813,6 +3831,19 @@ var AJAX_ext_URL = (function ($) {
 
                 return  $_This.insertTo(this.parentNode,  $( this ).index() + 1);
             }));
+        },
+        replaceWith:     function ($_New) {
+
+            $_New = $.buildFragment( $( $_New ) );
+
+            return  this.each(function () {
+
+                if ( this.parentNode )
+                    this.parentNode.replaceChild(
+                        arguments[0]  ?  $_New.cloneNode( true )  :  $_New,
+                        this
+                    );
+            });
         }
     });
 
@@ -3821,7 +3852,8 @@ var AJAX_ext_URL = (function ($) {
             appendTo:        'append',
             prependTo:       'prepend',
             insertBefore:    'before',
-            insertAfter:     'after'
+            insertAfter:     'after',
+            replaceWith:     'replaceAll'
         },
         function (iMethod) {
 
@@ -4104,17 +4136,55 @@ var AJAX_ext_URL = (function ($) {
 
     function FormData() {
 
-        this.ownerNode = arguments[0];
+        this.ownerNode = arguments[0] ||
+            $('<form style="display: none" />').appendTo( document.body )[0];
+    }
+
+    function itemOf() {
+
+        return  $('[name="' + arguments[0] + '"]:field',  this.ownerNode);
     }
 
     $.extend(FormData.prototype, {
-        append:      function () {
+        append:      function (name, value) {
 
-            this[ arguments[0] ] = arguments[1];
+            $('<input />', {
+                type:     'hidden',
+                name:     name,
+                value:    value
+            }).appendTo( this.ownerNode );
+        },
+        delete:      function (name) {
+
+            itemOf.call(this, name).remove();
+        },
+        set:         function (name, value) {
+
+            this.delete( name );    this.append(name, value);
+        },
+        get:         function (name) {
+
+            return  itemOf.call(this, name).val();
+        },
+        getAll:      function (name) {
+
+            return  $.map(itemOf.call(this, name),  function () {
+
+                return arguments[0].value;
+            });
         },
         toString:    function () {
 
             return  $( this.ownerNode ).serialize();
+        },
+        entries:     function () {
+
+            return $.makeIterator(Array.from(
+                $( this.ownerNode ).serializeArray(),  function (_This_) {
+
+                    return  [_This_.name, _This_.value];
+                }
+            ));
         }
     });
 
@@ -4773,8 +4843,7 @@ var AJAX_ext_HTML_Request = (function ($) {
         return  $.map(arguments[1].split( /\s*,\s*/ ),  function (_This_) {
 
             return  /[\s>\+~]?#/.test(_This_)  ?
-                _This_ :
-                '#' + _ID_ +  (/^\w/.test(_This_) ? ' ' : '')  +  _This_;
+                _This_  :  ('#'  +  _ID_  +  ' '  +  _This_);
 
         }).join(',  ');
     }
@@ -4807,13 +4876,15 @@ var AJAX_ext_HTML_Request = (function ($) {
             var _Rule_ = { };
 
             for (var iSelector in iRule)
-                _Rule_[Scope_Selector( this.id )] = iRule[ iSelector ];
+                _Rule_[Scope_Selector(this.id, iSelector)] = iRule[ iSelector ];
 
-            _Rule_ = $(
-                'style, link[rel="stylesheet"]',
-                (this.nodeName.toLowerCase() in Global_Style)  ?
-                    document.head  :  this
-            ).after( $.cssRule(_Rule_) );
+            _Rule_ = $( $.cssRule(_Rule_) ).insertAfter(
+                $(
+                    'style, link[rel="stylesheet"]',
+                    (this.nodeName.toLowerCase() in Global_Style)  ?
+                        document.head  :  this
+                ).slice( -1 )
+            )[0];
 
             if (typeof iCallback === 'function')
                 iCallback.call(this,  _Rule_.sheet || _Rule_.styleSheet);
@@ -6111,7 +6182,7 @@ var AJAX_ext_HTML_Request = (function ($) {
 //                >>>  iQuery.js  <<<
 //
 //
-//      [Version]    v3.0  (2017-07-20)  Beta
+//      [Version]    v3.0  (2017-08-03)  Beta
 //
 //      [Usage]      A Light-weight jQuery Compatible API
 //                   with IE 8+ compatibility.

@@ -91,11 +91,6 @@ define(['../utility/index'],  function ($) {
 
 /* ---------- DOM Style ---------- */
 
-    $.cssPX = $.makeSet(
-        'width', 'height', 'padding', 'border-radius', 'margin',
-        'top', 'right', 'bottom',  'left'
-    );
-
     _DOM_.css = {
         get:    function (iName) {
 

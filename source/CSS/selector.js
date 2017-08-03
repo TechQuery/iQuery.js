@@ -1,12 +1,6 @@
-define(['../object/index', '../utility/ext/timer'],  function ($) {
+define(['../CSS/ext/var'],  function ($) {
 
-    function uniqueId() {
-
-        return  $.each(this,  function () {
-
-            if (! this.id)  this.id = $.uuid('iQuery');
-        });
-    }
+    var uniqueId = $.fn.uniqueId;
 
     function QuerySelector(iPath) {
         if (
@@ -60,7 +54,6 @@ define(['../object/index', '../utility/ext/timer'],  function ($) {
     }
 
     return $.extend({
-        fn:      {uniqueId:  uniqueId},
         find:    find,
         expr:    {':': _Pseudo_,  pseudos: _Pseudo_}
     });

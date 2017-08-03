@@ -26,6 +26,19 @@ define(['../iQuery', './ext/base'],  function ($) {
 
                 return  $_This.insertTo(this.parentNode,  $( this ).index() + 1);
             }));
+        },
+        replaceWith:     function ($_New) {
+
+            $_New = $.buildFragment( $( $_New ) );
+
+            return  this.each(function () {
+
+                if ( this.parentNode )
+                    this.parentNode.replaceChild(
+                        arguments[0]  ?  $_New.cloneNode( true )  :  $_New,
+                        this
+                    );
+            });
         }
     });
 
@@ -34,7 +47,8 @@ define(['../iQuery', './ext/base'],  function ($) {
             appendTo:        'append',
             prependTo:       'prepend',
             insertBefore:    'before',
-            insertAfter:     'after'
+            insertAfter:     'after',
+            replaceWith:     'replaceAll'
         },
         function (iMethod) {
 
