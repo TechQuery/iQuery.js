@@ -117,7 +117,7 @@ define(function () {
 
         if (Number.isInteger( iterator.length )) {
 
-            for (var i = 0;  i < iterator.length;  i++)
+            for (var i = 0, length = iterator.length;  i < length;  i++)
                 Array_push.call(array, iterator[i], arguments[1], arguments[2]);
 
             return array;
@@ -145,7 +145,7 @@ define(function () {
 
     ArrayProto.reduce = ArrayProto.reduce  ||  function (callback, value) {
 
-        for (var i = 1;  i < this.length;  i++) {
+        for (var i = 1, length = this.length;  i < length;  i++) {
 
             if (i == 1)  value = this[0];
 

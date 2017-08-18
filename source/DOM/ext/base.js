@@ -2,6 +2,8 @@ define(['../../iQuery', '../utility'],  function ($) {
 
     $.buildFragment = $.buildFragment  ||  function (iNode) {
 
+        iNode = $.makeArray( iNode );
+
         var iFragment = (arguments[1] || document).createDocumentFragment();
 
         for (var i = 0;  iNode[i];  i++)  iFragment.appendChild( iNode[i] );

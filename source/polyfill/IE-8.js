@@ -41,27 +41,30 @@ define(['../utility/ext/string'],  function ($) {
         }
     },  function (key) {
 
-        Object.defineProperty(DOM_Proto,  key,  {get: this});
+        var config = {get: this,  enumerable: true};
+
+        Object.defineProperty(DOM_Proto, key, config);
 
         if (key.indexOf('Sibling') > 0)
-            Object.defineProperty(Text_Proto,  key,  {get: this});
+            Object.defineProperty(Text_Proto, key, config);
     });
 
 /* ---------- DOM Text Content ---------- */
 
     Object.defineProperty(DOM_Proto, 'textContent', {
-        get:    function () {
+        get:           function () {
 
             return this.innerText;
         },
-        set:    function (iText) {
+        set:           function (iText) {
 
             switch ( this.tagName.toLowerCase() ) {
                 case 'style':     return  this.styleSheet.cssText = iText;
                 case 'script':    return  this.text = iText;
             }
             this.innerText = iText;
-        }
+        },
+        enumerable:    true
     });
 
 /* ---------- DOM Attribute Name ---------- */

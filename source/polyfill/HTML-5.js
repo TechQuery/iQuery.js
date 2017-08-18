@@ -31,7 +31,7 @@ define(['../utility/index', '../utility/ext/browser'],  function ($) {
 
     if (! ('currentScript' in DOM))
         Object.defineProperty(Object.getPrototypeOf( DOM ),  'currentScript',  {
-            get:    function () {
+            get:           function () {
 
                 var iURL = ($.browser.msie < 10)  ||  Script_URL();
 
@@ -41,7 +41,8 @@ define(['../utility/index', '../utility/ext/browser'],  function ($) {
                         (DOM.scripts[i].src == iURL)
                     )
                         return DOM.scripts[i];
-            }
+            },
+            enumerable:    true
         });
 
 /* ---------- ParentNode Children ---------- */
@@ -65,9 +66,11 @@ define(['../utility/index', '../utility/ext/browser'],  function ($) {
         };
 
     var Children_Define = {
-            get:    function () {
+            get:           function () {
+
                 return  new HTMLCollection( this.childNodes );
-            }
+            },
+            enumerable:    true
         };
 
     if (! DOM.createDocumentFragment().children)
@@ -85,10 +88,12 @@ define(['../utility/index', '../utility/ext/browser'],  function ($) {
 
     if (! ('scrollingElement' in DOM))
         Object.defineProperty(DOM, 'scrollingElement', {
-            get:    function () {
+            get:           function () {
+
                 return  ($.browser.webkit || (DOM.compatMode == 'BackCompat'))  ?
                     DOM.body  :  DOM.documentElement;
-            }
+            },
+            enumerable:    true
         });
 
 /* ---------- Selected Options ---------- */
@@ -206,9 +211,11 @@ define(['../utility/index', '../utility/ext/browser'],  function ($) {
             return;
 
         Object.defineProperty(proto,  key + 'List',  {
-            get:    function () {
+            get:           function () {
+
                 return  new DOMTokenList(this, key);
-            }
+            },
+            enumerable:    true
         });
     });
 
@@ -232,9 +239,11 @@ define(['../utility/index', '../utility/ext/browser'],  function ($) {
     }
 
     Object.defineProperty(DOM_Proto, 'dataset', {
-        get:    function () {
-            return  new DOMStringMap(this);
-        }
+        get:           function () {
+
+            return  new DOMStringMap( this );
+        },
+        enumerable:    true
     });
 
     if (! ($.browser.msie < 10))  return;
@@ -258,7 +267,7 @@ define(['../utility/index', '../utility/ext/browser'],  function ($) {
     var InnerHTML = Object.getOwnPropertyDescriptor(DOM_Proto, 'innerHTML');
 
     Object.defineProperty(DOM_Proto, 'innerHTML', {
-        set:    function (iHTML) {
+        set:           function (iHTML) {
 
             if (! (iHTML + '').match(
                 /^[^<]*<\s*(head|meta|title|link|style|script|noscript|(!--[^>]*--))[^>]*>/i
@@ -272,6 +281,7 @@ define(['../utility/index', '../utility/ext/browser'],  function ($) {
             iChild[0].nodeValue = iChild[0].nodeValue.slice(8);
 
             if (! iChild[0].nodeValue[0])  this.removeChild( iChild[0] );
-        }
+        },
+        enumerable:    true
     });
 });

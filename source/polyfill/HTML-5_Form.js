@@ -33,10 +33,11 @@ define(['../iQuery', '../utility/ext/browser', '../DOM/utility'],  function ($) 
     }
 
     var iPlaceHolder = {
-            get:    function () {
+            get:           function () {
+
                 return this.getAttribute('placeholder');
             },
-            set:    function () {
+            set:           function () {
 
                 if ($.browser.modern)
                     this.setAttribute('placeholder', arguments[0]);
@@ -45,11 +46,14 @@ define(['../iQuery', '../utility/ext/browser', '../DOM/utility'],  function ($) 
 
                 $(this).off('focus', PH_Focus).off('blur', PH_Blur)
                     .focus( PH_Focus ).blur( PH_Blur );
-            }
+            },
+            enumerable:    true
         };
+
     Object.defineProperty(
         HTMLInputElement.prototype, 'placeholder', iPlaceHolder
     );
+
     Object.defineProperty(
         HTMLTextAreaElement.prototype, 'placeholder', iPlaceHolder
     );
@@ -66,14 +70,16 @@ define(['../iQuery', '../utility/ext/browser', '../DOM/utility'],  function ($) 
 /* ---------- Field Value ---------- */
 
     var Value_Patch = {
-            get:    function () {
-                var iValue = getValue.call(this);
+            get:           function () {
+
+                var iValue = getValue.call( this );
 
                 return (
                     (iValue == this.placeholder)  &&  (this.style.color === 'gray')
                 ) ?
                     '' : iValue;
-            }/*,
+            },
+            enumerable:    true/*,
             set:    function () {
                 _Value_.set.call(this, arguments[0]);
 

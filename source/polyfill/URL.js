@@ -8,7 +8,9 @@ define(['../iQuery', '../utility/ext/browser'],  function ($) {
 
         this.length = 0;
 
-        if (arguments[0] instanceof Array) {
+        var search = arguments[0] || '';
+
+        if (search instanceof Array) {
 
             for (var i = 0;  arguments[i];  i++)
                 this.append.apply(this, arguments[i]);
@@ -18,7 +20,7 @@ define(['../iQuery', '../utility/ext/browser'],  function ($) {
 
         var _This_ = this;
 
-        arguments[0].replace(/([^\?&=]+)=([^&]+)/g,  function (_, key, value) {
+        search.replace(/([^\?&=]+)=([^&]+)/g,  function (_, key, value) {
 
             try {  value = decodeURIComponent( value );  } catch (error) { }
 
@@ -91,25 +93,28 @@ define(['../iQuery', '../utility/ext/browser'],  function ($) {
 
     BOM.URL = BOM.URL || BOM.webkitURL;
 
-    if (typeof BOM.URL != 'function')  return;
+    if (typeof BOM.URL === 'function')  return;
+
+
+    var Origin_RE = /^\w+:\/\/.{2,}/;
 
 
     function URL(path, base) {
 
-        if (! /^\w+:\/\/.{2,}/.test(base || path))
+        var link = this.__data__ = document.createElement('a');
+
+        link.href = Origin_RE.test( path )  ?  path  :  base;
+
+        if (! Origin_RE.test( link.href ))
             throw  new TypeError(
                 "Failed to construct 'URL': Invalid " +
                 (base ? 'base' : '')  +  ' URL'
             );
 
-        var link = this.__data__ = document.createElement('a');
-
-        link.href = base || path;
-
-        if ( base )
+        if (link.href == base)
             link.href = link.origin + (
                 (path[0] === '/')  ?
-                    path  :  link.pathname.replace(/[^\/]+$/, path)
+                    path  :  link.pathname.replace(/[^\/]*$/, path)
             );
 
         return  $.browser.modern ? this : link;
@@ -121,31 +126,39 @@ define(['../iQuery', '../utility/ext/browser'],  function ($) {
         BOM.location.constructor, BOM.HTMLAnchorElement, BOM.HTMLAreaElement
     ],  function () {
 
-        Object.defineProperties(this.prototype, {
-            origin:          function () {
+        Object.defineProperty(this.prototype, 'origin', {
+            get:           function () {
 
                 return  this.protocol + '//' + this.host;
             },
-            searchParams:    function () {
+            enumerable:    true,
+        });
+
+        Object.defineProperty(this.prototype, 'searchParams', {
+            get:           function () {
 
                 return  new URLSearchParams( this.search );
-            }
+            },
+            enumerable:    true,
         });
     });
 
     if ( $.browser.modern )
         $.each(BOM.location,  function (key) {
 
-            if (typeof this != 'function')
+            if (typeof this !== 'function')
                 Object.defineProperty(URL.prototype, key, {
-                    get:    function () {
+                    get:             function () {
 
                         return  this.__data__[key];
                     },
-                    set:    function () {
+                    set:             (key === 'origin')  ?
+                        undefined  :  function () {
 
-                        this.__data__[key] = arguments[0];
-                    }
+                            this.__data__[key] = arguments[0];
+                        },
+                    enumerable:      true,
+                    configurable:    true
                 });
         });
 

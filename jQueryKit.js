@@ -132,7 +132,7 @@ var polyfill_ES_API = (function () {
 
         if (Number.isInteger( iterator.length )) {
 
-            for (var i = 0;  i < iterator.length;  i++)
+            for (var i = 0, length = iterator.length;  i < length;  i++)
                 Array_push.call(array, iterator[i], arguments[1], arguments[2]);
 
             return array;
@@ -160,7 +160,7 @@ var polyfill_ES_API = (function () {
 
     ArrayProto.reduce = ArrayProto.reduce  ||  function (callback, value) {
 
-        for (var i = 1;  i < this.length;  i++) {
+        for (var i = 1, length = this.length;  i < length;  i++) {
 
             if (i == 1)  value = this[0];
 
@@ -597,27 +597,30 @@ var utility_ext_string = (function ($) {
         }
     },  function (key) {
 
-        Object.defineProperty(DOM_Proto,  key,  {get: this});
+        var config = {get: this,  enumerable: true};
+
+        Object.defineProperty(DOM_Proto, key, config);
 
         if (key.indexOf('Sibling') > 0)
-            Object.defineProperty(Text_Proto,  key,  {get: this});
+            Object.defineProperty(Text_Proto, key, config);
     });
 
 /* ---------- DOM Text Content ---------- */
 
     Object.defineProperty(DOM_Proto, 'textContent', {
-        get:    function () {
+        get:           function () {
 
             return this.innerText;
         },
-        set:    function (iText) {
+        set:           function (iText) {
 
             switch ( this.tagName.toLowerCase() ) {
                 case 'style':     return  this.styleSheet.cssText = iText;
                 case 'script':    return  this.text = iText;
             }
             this.innerText = iText;
-        }
+        },
+        enumerable:    true
     });
 
 /* ---------- DOM Attribute Name ---------- */
@@ -904,7 +907,9 @@ var utility_ext_string = (function ($) {
 
         this.length = 0;
 
-        if (arguments[0] instanceof Array) {
+        var search = arguments[0] || '';
+
+        if (search instanceof Array) {
 
             for (var i = 0;  arguments[i];  i++)
                 this.append.apply(this, arguments[i]);
@@ -914,7 +919,7 @@ var utility_ext_string = (function ($) {
 
         var _This_ = this;
 
-        arguments[0].replace(/([^\?&=]+)=([^&]+)/g,  function (_, key, value) {
+        search.replace(/([^\?&=]+)=([^&]+)/g,  function (_, key, value) {
 
             try {  value = decodeURIComponent( value );  } catch (error) { }
 
@@ -987,25 +992,28 @@ var utility_ext_string = (function ($) {
 
     BOM.URL = BOM.URL || BOM.webkitURL;
 
-    if (typeof BOM.URL != 'function')  return;
+    if (typeof BOM.URL === 'function')  return;
+
+
+    var Origin_RE = /^\w+:\/\/.{2,}/;
 
 
     function URL(path, base) {
 
-        if (! /^\w+:\/\/.{2,}/.test(base || path))
+        var link = this.__data__ = document.createElement('a');
+
+        link.href = Origin_RE.test( path )  ?  path  :  base;
+
+        if (! Origin_RE.test( link.href ))
             throw  new TypeError(
                 "Failed to construct 'URL': Invalid " +
                 (base ? 'base' : '')  +  ' URL'
             );
 
-        var link = this.__data__ = document.createElement('a');
-
-        link.href = base || path;
-
-        if ( base )
+        if (link.href == base)
             link.href = link.origin + (
                 (path[0] === '/')  ?
-                    path  :  link.pathname.replace(/[^\/]+$/, path)
+                    path  :  link.pathname.replace(/[^\/]*$/, path)
             );
 
         return  $.browser.modern ? this : link;
@@ -1017,31 +1025,39 @@ var utility_ext_string = (function ($) {
         BOM.location.constructor, BOM.HTMLAnchorElement, BOM.HTMLAreaElement
     ],  function () {
 
-        Object.defineProperties(this.prototype, {
-            origin:          function () {
+        Object.defineProperty(this.prototype, 'origin', {
+            get:           function () {
 
                 return  this.protocol + '//' + this.host;
             },
-            searchParams:    function () {
+            enumerable:    true,
+        });
+
+        Object.defineProperty(this.prototype, 'searchParams', {
+            get:           function () {
 
                 return  new URLSearchParams( this.search );
-            }
+            },
+            enumerable:    true,
         });
     });
 
     if ( $.browser.modern )
         $.each(BOM.location,  function (key) {
 
-            if (typeof this != 'function')
+            if (typeof this !== 'function')
                 Object.defineProperty(URL.prototype, key, {
-                    get:    function () {
+                    get:             function () {
 
                         return  this.__data__[key];
                     },
-                    set:    function () {
+                    set:             (key === 'origin')  ?
+                        undefined  :  function () {
 
-                        this.__data__[key] = arguments[0];
-                    }
+                            this.__data__[key] = arguments[0];
+                        },
+                    enumerable:      true,
+                    configurable:    true
                 });
         });
 
@@ -1090,7 +1106,7 @@ var utility_ext_string = (function ($) {
 
     if (! ('currentScript' in DOM))
         Object.defineProperty(Object.getPrototypeOf( DOM ),  'currentScript',  {
-            get:    function () {
+            get:           function () {
 
                 var iURL = ($.browser.msie < 10)  ||  Script_URL();
 
@@ -1100,7 +1116,8 @@ var utility_ext_string = (function ($) {
                         (DOM.scripts[i].src == iURL)
                     )
                         return DOM.scripts[i];
-            }
+            },
+            enumerable:    true
         });
 
 /* ---------- ParentNode Children ---------- */
@@ -1124,9 +1141,11 @@ var utility_ext_string = (function ($) {
         };
 
     var Children_Define = {
-            get:    function () {
+            get:           function () {
+
                 return  new HTMLCollection( this.childNodes );
-            }
+            },
+            enumerable:    true
         };
 
     if (! DOM.createDocumentFragment().children)
@@ -1144,10 +1163,12 @@ var utility_ext_string = (function ($) {
 
     if (! ('scrollingElement' in DOM))
         Object.defineProperty(DOM, 'scrollingElement', {
-            get:    function () {
+            get:           function () {
+
                 return  ($.browser.webkit || (DOM.compatMode == 'BackCompat'))  ?
                     DOM.body  :  DOM.documentElement;
-            }
+            },
+            enumerable:    true
         });
 
 /* ---------- Selected Options ---------- */
@@ -1265,9 +1286,11 @@ var utility_ext_string = (function ($) {
             return;
 
         Object.defineProperty(proto,  key + 'List',  {
-            get:    function () {
+            get:           function () {
+
                 return  new DOMTokenList(this, key);
-            }
+            },
+            enumerable:    true
         });
     });
 
@@ -1291,9 +1314,11 @@ var utility_ext_string = (function ($) {
     }
 
     Object.defineProperty(DOM_Proto, 'dataset', {
-        get:    function () {
-            return  new DOMStringMap(this);
-        }
+        get:           function () {
+
+            return  new DOMStringMap( this );
+        },
+        enumerable:    true
     });
 
     if (! ($.browser.msie < 10))  return;
@@ -1317,7 +1342,7 @@ var utility_ext_string = (function ($) {
     var InnerHTML = Object.getOwnPropertyDescriptor(DOM_Proto, 'innerHTML');
 
     Object.defineProperty(DOM_Proto, 'innerHTML', {
-        set:    function (iHTML) {
+        set:           function (iHTML) {
 
             if (! (iHTML + '').match(
                 /^[^<]*<\s*(head|meta|title|link|style|script|noscript|(!--[^>]*--))[^>]*>/i
@@ -1331,7 +1356,8 @@ var utility_ext_string = (function ($) {
             iChild[0].nodeValue = iChild[0].nodeValue.slice(8);
 
             if (! iChild[0].nodeValue[0])  this.removeChild( iChild[0] );
-        }
+        },
+        enumerable:    true
     });
 })(jquery);
 
@@ -1806,6 +1832,8 @@ var event_ext_base = (function ($, Observer) {
 
     $.buildFragment = $.buildFragment  ||  function (iNode) {
 
+        iNode = $.makeArray( iNode );
+
         var iFragment = (arguments[1] || document).createDocumentFragment();
 
         for (var i = 0;  iNode[i];  i++)  iFragment.appendChild( iNode[i] );
@@ -2259,10 +2287,11 @@ var AJAX_ext_URL = (function ($) {
     }
 
     var iPlaceHolder = {
-            get:    function () {
+            get:           function () {
+
                 return this.getAttribute('placeholder');
             },
-            set:    function () {
+            set:           function () {
 
                 if ($.browser.modern)
                     this.setAttribute('placeholder', arguments[0]);
@@ -2271,11 +2300,14 @@ var AJAX_ext_URL = (function ($) {
 
                 $(this).off('focus', PH_Focus).off('blur', PH_Blur)
                     .focus( PH_Focus ).blur( PH_Blur );
-            }
+            },
+            enumerable:    true
         };
+
     Object.defineProperty(
         HTMLInputElement.prototype, 'placeholder', iPlaceHolder
     );
+
     Object.defineProperty(
         HTMLTextAreaElement.prototype, 'placeholder', iPlaceHolder
     );
@@ -2292,14 +2324,16 @@ var AJAX_ext_URL = (function ($) {
 /* ---------- Field Value ---------- */
 
     var Value_Patch = {
-            get:    function () {
-                var iValue = getValue.call(this);
+            get:           function () {
+
+                var iValue = getValue.call( this );
 
                 return (
                     (iValue == this.placeholder)  &&  (this.style.color === 'gray')
                 ) ?
                     '' : iValue;
-            }/*,
+            },
+            enumerable:    true/*,
             set:    function () {
                 _Value_.set.call(this, arguments[0]);
 

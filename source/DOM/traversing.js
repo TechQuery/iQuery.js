@@ -94,7 +94,7 @@ define(['../iQuery', '../CSS/class'],  function ($) {
         }),
         contents:        DOM_Map(function () {
 
-            switch ( this.tagName.toLowerCase() ) {
+            switch ( this.nodeName.toLowerCase() ) {
                 case 'iframe':
                     return this.contentWindow.document;
                 case 'template':
