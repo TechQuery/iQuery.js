@@ -54,22 +54,6 @@ define(['../../iQuery'],  function ($) {
                 patch(target.prototype,  (source || '').prototype);
 
             return target;
-        },
-        inherit:      function (iSup, iSub, iStatic, iProto) {
-
-            for (var iKey in iSup)
-                if (iSup.hasOwnProperty( iKey ))  iSub[iKey] = iSup[iKey];
-
-            for (var iKey in iStatic)  iSub[iKey] = iStatic[iKey];
-
-            iSub.prototype = $.extend(
-                Object.create( iSup.prototype ),  iSub.prototype
-            );
-            iSub.prototype.constructor = iSub;
-
-            for (var iKey in iProto)  iSub.prototype[iKey] = iProto[iKey];
-
-            return iSub;
         }
     });
 });

@@ -61,7 +61,7 @@ define([
 
     $.ajaxTransport('+*',  function (iOption) {
 
-        var iXHR,  iForm = (iOption.data || '').ownerNode;
+        var iXHR,  iForm = (iOption.data || '').__owner__;
 
         if (
             (iOption.data instanceof BOM.FormData)  &&

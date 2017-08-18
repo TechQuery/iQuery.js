@@ -1,4 +1,6 @@
-define(['../iQuery', '../utility/ext/browser', '../DOM/utility'],  function ($) {
+define([
+    '../iQuery', '../utility/ext/browser', '../object/ext/Class', '../DOM/utility'
+],  function ($) {
 
     if (! (($.browser.msie < 10)  ||  $.browser.ios))  return;
 
@@ -97,23 +99,26 @@ define(['../iQuery', '../utility/ext/browser', '../DOM/utility'],  function ($) 
 
     function FormData() {
 
-        this.ownerNode = arguments[0] ||
-            $('<form style="display: none" />').appendTo( document.body )[0];
+        this.setPrivate(
+            'owner',
+            arguments[0] ||
+                $('<form style="display: none" />').appendTo( document.body )[0]
+        );
     }
 
     function itemOf() {
 
-        return  $('[name="' + arguments[0] + '"]:field',  this.ownerNode);
+        return  $('[name="' + arguments[0] + '"]:field',  this.__owner__);
     }
 
-    $.extend(FormData.prototype, {
+    $.Class.extend(FormData, null, {
         append:      function (name, value) {
 
             $('<input />', {
                 type:     'hidden',
                 name:     name,
                 value:    value
-            }).appendTo( this.ownerNode );
+            }).appendTo( this.__owner__ );
         },
         delete:      function (name) {
 
@@ -136,12 +141,12 @@ define(['../iQuery', '../utility/ext/browser', '../DOM/utility'],  function ($) 
         },
         toString:    function () {
 
-            return  $( this.ownerNode ).serialize();
+            return  $( this.__owner__ ).serialize();
         },
         entries:     function () {
 
             return $.makeIterator(Array.from(
-                $( this.ownerNode ).serializeArray(),  function (_This_) {
+                $( this.__owner__ ).serializeArray(),  function (_This_) {
 
                     return  [_This_.name, _This_.value];
                 }

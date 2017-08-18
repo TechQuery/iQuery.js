@@ -1,12 +1,14 @@
-define(['../../iQuery'],  function ($) {
+define(['../../iQuery', '../../object/ext/Class'],  function ($) {
 
     function Observer(connect) {
 
         if (! (this instanceof Observer))  return  new Observer( connect );
 
-        this.__connect__ = connect;
-
-        this.__handle__ = [ ];
+        this.setPrivate({
+            connect:    connect,
+            handle:     [ ],
+            'break':    null
+        });
     }
 
     function next() {
@@ -15,7 +17,7 @@ define(['../../iQuery'],  function ($) {
             this.__handle__[i]( arguments[0] );
     }
 
-    $.extend(Observer.prototype, {
+    return  $.Observer = $.Class.extend(Observer, null, {
         listen:    function (callback) {
 
             if (this.__handle__.indexOf( callback )  <  0) {
@@ -47,7 +49,4 @@ define(['../../iQuery'],  function ($) {
             return this;
         }
     });
-
-    return  $.Observer = Observer;
-
 });

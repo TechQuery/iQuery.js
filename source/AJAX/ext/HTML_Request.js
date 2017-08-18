@@ -125,10 +125,10 @@ define([
             if (! Allow_Send.call( this ))  return;
 
             this.$_Transport =
-                (iData instanceof self.FormData)  &&  $( iData.ownerNode );
+                (iData instanceof self.FormData)  &&  $( iData.__owner__ );
 
             if (this.$_Transport && (
-                iData.ownerNode.method.toUpperCase() === 'POST'
+                iData.__owner__.method.toUpperCase() === 'POST'
             ))
                 iFrame_Send.call( this );
             else

@@ -13,11 +13,25 @@ define(function () {
             return iKey;
         };
 
-    Object.getPrototypeOf = Object.getPrototypeOf  ||  function (iObject) {
+    Object.getPrototypeOf = Object.getPrototypeOf  ||  function (object) {
 
-        return  (iObject != null)  &&  (
-            iObject.constructor.prototype || iObject.__proto__
-        );
+        if (! (object != null))
+            throw TypeError('Cannot convert undefined or null to object');
+
+        if ( object.__proto__ )  return object.__proto__;
+
+        if (! object.hasOwnProperty('constructor'))
+            return object.constructor.prototype;
+
+        var constructor = object.constructor;
+
+        delete object.constructor;
+
+        var prototype = object.constructor.prototype;
+
+        object.constructor = constructor;
+
+        return prototype;
     };
 
     Object.create = Object.create  ||  function (iProto, iProperty) {

@@ -1,4 +1,6 @@
-define(['../iQuery', '../utility/ext/browser'],  function ($) {
+define([
+    '../iQuery', '../object/ext/Class', '../utility/ext/browser'
+],  function ($) {
 
     var BOM = self;
 
@@ -6,7 +8,7 @@ define(['../iQuery', '../utility/ext/browser'],  function ($) {
 
     function URLSearchParams() {
 
-        this.length = 0;
+        this.setPrivate('length', 0);
 
         var search = arguments[0] || '';
 
@@ -28,12 +30,10 @@ define(['../iQuery', '../utility/ext/browser'],  function ($) {
         });
     }
 
-    var ArrayProto = Array.prototype;
-
-    $.extend(URLSearchParams.prototype, {
+    $.Class.extend(URLSearchParams, null, {
         append:      function (key, value) {
 
-            ArrayProto.push.call(this,  [key,  value + '']);
+            this.setPrivate(this.length++,  [key,  value + '']);
         },
         get:         function (key) {
 
@@ -50,7 +50,7 @@ define(['../iQuery', '../utility/ext/browser'],  function ($) {
         delete:      function (key) {
 
             for (var i = 0;  this[i];  i++)
-                if (this[i][0] === key)  ArrayProto.splice.call(this, i, 1);
+                if (this[i][0] === key)  Array.prototype.splice.call(this, i, 1);
         },
         set:         function (key, value) {
 
@@ -101,7 +101,7 @@ define(['../iQuery', '../utility/ext/browser'],  function ($) {
 
     function URL(path, base) {
 
-        var link = this.__data__ = document.createElement('a');
+        var link = this.setPrivate('data', document.createElement('a'));
 
         link.href = Origin_RE.test( path )  ?  path  :  base;
 
@@ -120,7 +120,9 @@ define(['../iQuery', '../utility/ext/browser'],  function ($) {
         return  $.browser.modern ? this : link;
     }
 
-    URL.prototype.toString = function () {  return this.href;  };
+    $.Class.extend(URL, null, {
+        toString:    function () {  return this.href;  }
+    });
 
     $.each([
         BOM.location.constructor, BOM.HTMLAnchorElement, BOM.HTMLAreaElement
