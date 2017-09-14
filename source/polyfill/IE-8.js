@@ -174,8 +174,8 @@ define(['../utility/ext/string'],  function ($) {
 
     function toHexInt(iDec, iLength) {
 
-        return $.leftPad(
-            parseInt( Number(iDec).toFixed(0) ).toString(16),  iLength || 2
+        return  parseInt( Number(iDec).toFixed(0) ).toString(16).padStart(
+            iLength || 2,  0
         );
     }
 

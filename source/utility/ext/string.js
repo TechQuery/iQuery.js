@@ -26,23 +26,6 @@ define(['../../iQuery'],  function ($) {
                 /[^\u0021-\u007e\uff61-\uffef]/g,  'xx'
             ).length;
         },
-        leftPad:       function (iRaw, iLength, iPad) {
-            iPad += '';
-
-            if (! iPad) {
-                if ($.isNumeric( iRaw ))
-                    iPad = '0';
-                else if (typeof iRaw == 'string')
-                    iPad = ' ';
-            }
-            iRaw += '',  iLength *= 1;
-
-            if (iRaw.length >= iLength)  return iRaw;
-
-            return iPad.repeat(
-                Math.ceil((iLength -= iRaw.length)  /  iPad.length)
-            ).slice(-iLength) + iRaw;
-        },
         isSelector:    function () {
             try {
                 return  (!! $( arguments[0] ));

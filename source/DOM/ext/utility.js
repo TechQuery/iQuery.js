@@ -63,25 +63,6 @@ define(['../../utility/ext/string', '../traversing', '../insert'],  function ($)
                 this.eq(0).parents(':scrollable'),  [ document ]
             )));
         },
-        inViewport:       function () {
-
-            for (var i = 0, _OS_, $_BOM, BOM_W, BOM_H;  this[i];  i++) {
-
-                _OS_ = this[i].getBoundingClientRect();
-
-                $_BOM = $( this[i].ownerDocument.defaultView );
-
-                BOM_W = $_BOM.width(),  BOM_H = $_BOM.height();
-
-                if (
-                    (_OS_.left < 0)  ||  (_OS_.left > BOM_W)  ||
-                    (_OS_.top < 0)  ||  (_OS_.top > BOM_H)
-                )
-                    return false;
-            }
-
-            return true;
-        },
         scrollTo:         function () {
 
             if (! this[0])  return this;

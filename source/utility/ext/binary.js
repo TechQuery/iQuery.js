@@ -18,28 +18,26 @@ define(['./string', '../../polyfill/Promise_A+'],  function ($) {
 
     $.bitOperate = function (iType, iLeft, iRight) {
 
-        iLeft = (typeof iLeft == 'string')  ?  iLeft  :  iLeft.toString(2);
+        iLeft = (typeof iLeft === 'string')  ?  iLeft  :  iLeft.toString(2);
 
-        iRight = (typeof iRight == 'string')  ?  iRight  :  iRight.toString(2);
+        iRight = (typeof iRight === 'string')  ?  iRight  :  iRight.toString(2);
 
         var iLength = Math.max(iLeft.length, iRight.length);
 
         if (iLength < 32)
             return  Bit_Calculate(iType, iLeft, iRight).toString(2);
 
-        iLeft = $.leftPad(iLeft, iLength, 0);
+        iLeft = iLeft.padStart(iLength, 0);
 
-        iRight = $.leftPad(iRight, iLength, 0);
+        iRight = iRight.padStart(iLength, 0);
 
         var iResult = '';
 
         for (var i = 0;  i < iLength;  i += 31)
-            iResult += $.leftPad(
-                Bit_Calculate(
-                    iType,  iLeft.slice(i, i + 31),  iRight.slice(i, i + 31)
-                ).toString(2),
-                Math.min(31,  iLength - i),
-                0
+            iResult += Bit_Calculate(
+                iType,  iLeft.slice(i, i + 31),  iRight.slice(i, i + 31)
+            ).toString(2).padStart(
+                Math.min(31,  iLength - i),  0
             );
 
         return iResult;

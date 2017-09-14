@@ -94,13 +94,19 @@ define(['../../iQuery', './base', '../../DOM/info'],  function ($) {
             for (var iSelector in iRule)
                 _Rule_[Scope_Selector(this.id, iSelector)] = iRule[ iSelector ];
 
-            _Rule_ = $( $.cssRule(_Rule_) ).insertAfter(
-                $(
+            var $_Insert = $(
                     'style, link[rel="stylesheet"]',
                     (this.nodeName.toLowerCase() in Global_Style)  ?
                         document.head  :  this
-                ).slice( -1 )
-            )[0];
+                ),
+                end = 'After';
+
+            if ( $_Insert[0] )
+                $_Insert = $_Insert.slice( -1 );
+            else
+                $_Insert = $( this ),  end = 'Before';
+
+            _Rule_ = $( $.cssRule(_Rule_) )['insert' + end]( $_Insert )[0];
 
             if (typeof iCallback === 'function')
                 iCallback.call(this,  _Rule_.sheet || _Rule_.styleSheet);

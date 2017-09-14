@@ -46,7 +46,7 @@ define(['../../iQuery'],  function ($) {
         ));
     }
 
-    function wrap(method) {
+    function wrap(method, failback) {
 
         var _method_ = function (key, value) {
                 try {
@@ -59,7 +59,7 @@ define(['../../iQuery'],  function ($) {
                     )
                         throw error;
 
-                    this[ key ] = value;
+                    if (failback !== false)  this[ key ] = value;
                 }
 
                 return value;
@@ -81,20 +81,17 @@ define(['../../iQuery'],  function ($) {
     setPrivate.call(Class.prototype,  'setPrivate',  wrap( setPrivate ));
 
     setPrivate.call(
-        Class.prototype,  'setPublic',  wrap(function (key, value, config) {
+        Class.prototype,  'setPublic',  wrap(function (key, Get_Set, config) {
 
             Object.defineProperty(this, key, $.extend(
-                (value != null)  &&  {
-                    value:       value,
-                    writable:    true,
-                },
                 {
                     enumerable:      true,
                     configurable:    true
                 },
-                config
+                config,
+                Get_Set
             ));
-        })
+        },  false)
     );
 
     return  $.Class = Class;

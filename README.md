@@ -61,10 +61,9 @@
  - 新增 **字符串部分分割**方法 —— `$.split()`（借鉴 PHP）
  - 新增 **连字符格式转换**方法 —— `$.hyphenCase()`
  - 新增 **字符串字节长度**方法 —— `$.byteLength()`
- - 新增 **字符串左补齐**方法 —— `$.leftPad()`
  - 新增 **函数柯里化**方法 —— `$.curry()`
  - 新增 **URL 信息提取**方法 —— `$.fileName()`、`$.filePath()`、`$.urlDomain()`
- - 新增 **URL 跨域判断**方法 —— `$.isCrossDomain()`
+ - 新增 **URL 跨域判断**方法 —— `$.isXDomain()`
  - 新增 **URL 参数对象化**方法（$.param() 的逆方法）—— `$.paramJSON()`
  - 新增 **URL 参数签名**方法 —— `$.paramSign()`
  - `$.parseJSON()` 支持 **递归解析**，会将 JSON 字符串中的内层字符串 eval 为 JS 实值/例
@@ -92,7 +91,6 @@
  - 新增 **DOM 树遍历器**生成方法 —— `$.fn.treeWalker()`（遵循 [ECMAScript 6 迭代器协议](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Iteration_protocols#The_iterator_protocol)）
  - 新增 **祖先元素交集**方法 —— `$.fn.sameParents()`
  - 新增 **有滚动条的祖先元素**方法 —— `$.fn.scrollParents()`
- - 新增 **元素可视口检测**方法 —— `$.fn.inViewport()`
  - 新增 **元素平滑滚动**方法 —— `$.fn.scrollTo()`
  - 所有类型的 **DOM 信息读写器**（`.attr()`、`.prop()`、`.css()`、`.data()`）均支持“不传键名时返回 **信息全集**”特性
  - 新增 **DOM 数据归并**方法 —— `$.fn.reduce()`
@@ -142,6 +140,8 @@
  - 自带 `Number.isSafeInteger()` 安全整数判断方法
  - 自带 支持“非空白符”的 `String.prototype.trim()`（借鉴 PHP）
  - 自带 `String.prototype.repeat` 标准方法
+ - 自带 `String.prototype.padStart` 标准方法
+ - 自带 `String.prototype.padEnd` 标准方法
  - 自带 `Array.from()` 标准方法
  - 自带 `Array.prototype.indexOf()` 标准方法
  - 自带 `Array.prototype.reduce()` 标准方法
@@ -168,7 +168,6 @@
  - 自带 **CSSStyleDeclaration 对象**，为 IE 8 提供 **getComputedStyle** 支持，并封装了 M$ DirectX 滤镜属性转换
  - 自带 Mozilla Firefox **元素 CSS 默认规则对象 获取**方法 `Window.getMatchedCSSRules()`
  - 自带 Google Chrome **元素 CSS 匹配规则对象 获取**方法 `Window.getMatchedCSSRules()`
- - 自带 **HTML 5 Form Placeholder** 补丁，为 IE 10-、iOS WebKit 提供兼容支持
  - 自带 `FormData()` 标准对象构造函数，为 IE 10- 提供 表单数据封装
  - 自带 `DOMParser()` 标准对象构造函数，为 IE 8 提供 **XML 文档解析**支持
  - 自带 `URL()` 标准对象构造函数

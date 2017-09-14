@@ -74,7 +74,7 @@ define(['../../utility/ext/string'],  function ($) {
     };
 
     return $.extend({
-        extendURL:        function (iURL) {
+        extendURL:    function (iURL) {
 
             if (! arguments[1])  return iURL;
 
@@ -92,24 +92,24 @@ define(['../../utility/ext/string'],  function ($) {
                 }
             )));
         },
-        fileName:         function () {
+        fileName:     function () {
             return (
                 arguments[0] || BOM.location.pathname
             ).match(/([^\?\#]+)(\?|\#)?/)[1].split('/').slice(-1)[0];
         },
-        filePath:         function () {
+        filePath:     function () {
             return (
                 arguments[0] || BOM.location.href
             ).match(/([^\?\#]+)(\?|\#)?/)[1].split('/').slice(0, -1).join('/');
         },
-        urlDomain:        function (iURL) {
+        urlDomain:    function (iURL) {
 
             return  (! iURL)  ?  BOM.location.origin  :
                 (iURL.match( /^(\w+:)?\/\/[^\/]+/ )  ||  '')[0];
         },
-        isCrossDomain:    function () {
+        isXDomain:    function () {
             return (
-                BOM.location.origin ===
+                BOM.location.origin !==
                 (new BOM.URL(arguments[0],  this.filePath() + '/')).origin
             );
         }

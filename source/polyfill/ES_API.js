@@ -106,6 +106,23 @@ define(function () {
         return  (new Array(Times + 1)).join(this);
     };
 
+    'padStart:0,padEnd:1'.replace(/(\w+):(\d)/g,  function (_, key, index) {
+
+        String.prototype[ key ] =
+            String.prototype[ key ]  ||  function (length, pad) {
+
+                length = length >> 0;    pad = pad  ?  (pad + '')  :  ' ';
+
+                if (this.length >= length)  return this + '';
+
+                pad = pad.repeat(
+                    Math.ceil((length -= this.length)  /  pad.length)
+                ).slice( length );
+
+                return  +index  ?  (this + pad)  :  (pad + this);
+            };
+    });
+
     /* ----- Array Patch ----- */
 
     var ArrayProto = Array.prototype;

@@ -105,7 +105,7 @@ define([
             );
         iURL = _Option_.url;
 
-        _Option_.crossDomain = $.isCrossDomain( iURL );
+        _Option_.crossDomain = $.isXDomain( iURL );
 
         _Option_.url = iURL = iURL.replace(/&?(\w+)=\?/,  function () {
 

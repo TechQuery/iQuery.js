@@ -67,7 +67,7 @@ define([
 
     /* ----- :list, :data ----- */
 
-    var pList = $.makeSet('ul', 'ol', 'dl', 'tbody', 'datalist');
+    var pList = $.makeSet('ul', 'ol', 'dl', 'tbody', 'select', 'datalist');
 
     $.extend($.expr[':'], {
         list:    function () {
