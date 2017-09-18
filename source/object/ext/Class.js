@@ -1,52 +1,52 @@
 define(['../../iQuery'],  function ($) {
 
-    function Class(abstract) {
+    function Class(abstract, method) {
 
-        if ((abstract || Class).prototype  ===  Object.getPrototypeOf( this ))
-            throw TypeError([
-                'Abstract class',
-                (Class.name instanceof Function)  ?
-                    this.constructor.name() : this.constructor.name,
-                "can't be instantiated"
-            ].join(' '));
+        abstract = abstract || Class;
+
+        var _class_ = (Class.name instanceof Function)  ?
+                abstract.name()  :  abstract.name;
+
+        if (abstract.prototype  ===  Object.getPrototypeOf( this ))
+            throw TypeError(
+                'Abstract class ' + _class_ + " can't be instantiated"
+            );
+
+        if (abstract !== Class)
+            Array.from(method,  function (name) {
+
+                this[ name ] = this[ name ]  ||  function () {
+
+                    throw TypeError(
+                        'Abstract method ' +
+                        _class_ + '.prototype.' + name +
+                        " isn't implemented"
+                    );
+                };
+            },  this);
 
         return this;
     }
 
-    Class.extend = function (sub, static, proto) {
+    $.extend(Class, {
+        extend:        function (sub, static, proto) {
 
-        for (var key in this)
-            if (this.hasOwnProperty( key ))  sub[ key ] = this[ key ];
+            for (var key in this)
+                if (this.hasOwnProperty( key ))  sub[ key ] = this[ key ];
 
-        $.extend(sub, static);
+            $.extend(sub, static);
 
-        sub.prototype = $.extend(
-            Object.create( this.prototype ),  sub.prototype,  proto
-        );
-        sub.prototype.constructor = sub;
+            sub.prototype = $.extend(
+                Object.create( this.prototype ),  sub.prototype,  proto
+            );
+            sub.prototype.constructor = sub;
 
-        return sub;
-    };
+            return sub;
+        },
+        enumerable:    (!! $.browser.modern)
+    });
 
-    function setPrivate(key, value, config) {
-
-        key = (
-            (key === 'length')  ||  Number.isInteger( +key )  ||
-            ((typeof value === 'function')  &&  this.hasOwnProperty('constructor'))
-        )  ?
-            key  :  ('__' + key + '__');
-
-        Object.defineProperty(this, key, $.extend(
-            {
-                value:           value,
-                writable:        true,
-                configurable:    true
-            },
-            config || { }
-        ));
-    }
-
-    function wrap(method, failback) {
+    function safeWrap(method, failback) {
 
         var _method_ = function (key, value) {
                 try {
@@ -59,7 +59,7 @@ define(['../../iQuery'],  function ($) {
                     )
                         throw error;
 
-                    if (failback !== false)  this[ key ] = value;
+                    if (failback !== false)  this[error.key || key] = value;
                 }
 
                 return value;
@@ -78,14 +78,38 @@ define(['../../iQuery'],  function ($) {
         };
     }
 
-    setPrivate.call(Class.prototype,  'setPrivate',  wrap( setPrivate ));
+    var setPrivate = safeWrap(function (key, value, config) {
+
+            key = (
+                (key === 'length')  ||  Number.isInteger( +key )  ||  (
+                    (typeof value === 'function')  &&
+                    this.hasOwnProperty('constructor')
+                )
+            )  ?  key  :  ('__' + key + '__');
+
+            try {
+                Object.defineProperty(this, key, $.extend(
+                    {
+                        value:           value,
+                        writable:        true,
+                        configurable:    true
+                    },
+                    config || { }
+                ));
+            } catch (error) {
+
+                error.key = key;    throw error;
+            }
+        });
+
+    setPrivate.call(Class.prototype, 'setPrivate', setPrivate);
 
     setPrivate.call(
-        Class.prototype,  'setPublic',  wrap(function (key, Get_Set, config) {
+        Class.prototype,  'setPublic',  safeWrap(function (key, Get_Set, config) {
 
             Object.defineProperty(this, key, $.extend(
                 {
-                    enumerable:      true,
+                    enumerable:      Class.enumerable,
                     configurable:    true
                 },
                 config,

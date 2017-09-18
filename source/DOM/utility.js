@@ -47,7 +47,7 @@ define(['../iQuery', '../CSS/ext/pseudo'],  function ($) {
     function Scroll_DOM() {
 
         return  (this.nodeName.toLowerCase() in Scroll_Root)  ?
-            DOM.scrollingElement  :  this;
+            document.scrollingElement  :  this;
     }
 
     function DOM_Scroll(iName) {

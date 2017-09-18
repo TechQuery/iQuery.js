@@ -90,9 +90,9 @@ define([
             var result;    event = Event(event,  {currentTarget: this});
 
             $.each(
-                $.event.handlers.call(
-                    this,  event,  $.data(this, '__event__'),  namespace
-                ),
+                $.event.handlers.apply(this, [
+                    event,  $.data(this, '__event__')[ event.type ],  namespace
+                ]),
                 function () {
 
                     for (var i = 0;  this.handler[i];  i++) {

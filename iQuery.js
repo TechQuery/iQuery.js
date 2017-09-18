@@ -35,16 +35,16 @@ var polyfill_ES_API = (function () {
 
         if ( object.__proto__ )  return object.__proto__;
 
-        if (! object.hasOwnProperty('constructor'))
+        if (! Object.prototype.hasOwnProperty.call(object, 'constructor'))
             return object.constructor.prototype;
 
         var constructor = object.constructor;
 
-        delete object.constructor;
+        try {  delete object.constructor;  } catch (error) { }
 
         var prototype = object.constructor.prototype;
 
-        object.constructor = constructor;
+        try {  object.constructor = constructor;  } catch (error) { }
 
         return prototype;
     };
@@ -509,8 +509,11 @@ var object_index = (function (checker, $) {
     }
 
     return extend({
-        merge:            merge,
         makeArray:        makeArray,
+        merge:            function (target, source) {
+
+            return  merge(target,  makeArray( source ));
+        },
         extend:           extend,
         each:             function (Arr_Obj, iEvery) {
 
@@ -874,9 +877,9 @@ var DOM_parseHTML = (function ($) {
                 .slice(-1)[0];
         }
 
-        return  Array.from(iNew.childNodes,  function (iDOM) {
+        return  $.each($.makeArray( iNew.childNodes ),  function () {
 
-            return  iDOM.parentNode.removeChild( iDOM );
+            return  this.parentNode.removeChild( this );
         });
     };
 })(object_index);
@@ -899,8 +902,6 @@ var iQuery = (function (ObjectKit, selector, uniqueSort, parseHTML) {
             return Element_Set;
 
         /* ----- Constructor ----- */
-
-        Element_Set = Element_Set.valueOf();
 
         switch ($.Type( Element_Set )) {
             case 'String':
@@ -1143,7 +1144,7 @@ var utility_ext_string = (function ($) {
         }
     },  function (key) {
 
-        var config = {get: this,  enumerable: true};
+        var config = {get: this};
 
         Object.defineProperty(DOM_Proto, key, config);
 
@@ -1154,19 +1155,18 @@ var utility_ext_string = (function ($) {
 /* ---------- DOM Text Content ---------- */
 
     Object.defineProperty(DOM_Proto, 'textContent', {
-        get:           function () {
+        get:    function () {
 
             return this.innerText;
         },
-        set:           function (iText) {
+        set:    function (iText) {
 
             switch ( this.tagName.toLowerCase() ) {
                 case 'style':     return  this.styleSheet.cssText = iText;
                 case 'script':    return  this.text = iText;
             }
             this.innerText = iText;
-        },
-        enumerable:    true
+        }
     });
 
 /* ---------- DOM Attribute Name ---------- */
@@ -1443,55 +1443,55 @@ var utility_ext_string = (function ($) {
 })(utility_ext_string);
 
 
-(function ($) {
+var object_ext_Class = (function ($) {
 
-    function Class(abstract) {
+    function Class(abstract, method) {
 
-        if ((abstract || Class).prototype  ===  Object.getPrototypeOf( this ))
-            throw TypeError([
-                'Abstract class',
-                (Class.name instanceof Function)  ?
-                    this.constructor.name() : this.constructor.name,
-                "can't be instantiated"
-            ].join(' '));
+        abstract = abstract || Class;
+
+        var _class_ = (Class.name instanceof Function)  ?
+                abstract.name()  :  abstract.name;
+
+        if (abstract.prototype  ===  Object.getPrototypeOf( this ))
+            throw TypeError(
+                'Abstract class ' + _class_ + " can't be instantiated"
+            );
+
+        if (abstract !== Class)
+            Array.from(method,  function (name) {
+
+                this[ name ] = this[ name ]  ||  function () {
+
+                    throw TypeError(
+                        'Abstract method ' +
+                        _class_ + '.prototype.' + name +
+                        " isn't implemented"
+                    );
+                };
+            },  this);
 
         return this;
     }
 
-    Class.extend = function (sub, static, proto) {
+    $.extend(Class, {
+        extend:        function (sub, static, proto) {
 
-        for (var key in this)
-            if (this.hasOwnProperty( key ))  sub[ key ] = this[ key ];
+            for (var key in this)
+                if (this.hasOwnProperty( key ))  sub[ key ] = this[ key ];
 
-        $.extend(sub, static);
+            $.extend(sub, static);
 
-        sub.prototype = $.extend(
-            Object.create( this.prototype ),  sub.prototype,  proto
-        );
-        sub.prototype.constructor = sub;
+            sub.prototype = $.extend(
+                Object.create( this.prototype ),  sub.prototype,  proto
+            );
+            sub.prototype.constructor = sub;
 
-        return sub;
-    };
+            return sub;
+        },
+        enumerable:    (!! $.browser.modern)
+    });
 
-    function setPrivate(key, value, config) {
-
-        key = (
-            (key === 'length')  ||  Number.isInteger( +key )  ||
-            ((typeof value === 'function')  &&  this.hasOwnProperty('constructor'))
-        )  ?
-            key  :  ('__' + key + '__');
-
-        Object.defineProperty(this, key, $.extend(
-            {
-                value:           value,
-                writable:        true,
-                configurable:    true
-            },
-            config || { }
-        ));
-    }
-
-    function wrap(method, failback) {
+    function safeWrap(method, failback) {
 
         var _method_ = function (key, value) {
                 try {
@@ -1504,7 +1504,7 @@ var utility_ext_string = (function ($) {
                     )
                         throw error;
 
-                    if (failback !== false)  this[ key ] = value;
+                    if (failback !== false)  this[error.key || key] = value;
                 }
 
                 return value;
@@ -1523,14 +1523,38 @@ var utility_ext_string = (function ($) {
         };
     }
 
-    setPrivate.call(Class.prototype,  'setPrivate',  wrap( setPrivate ));
+    var setPrivate = safeWrap(function (key, value, config) {
+
+            key = (
+                (key === 'length')  ||  Number.isInteger( +key )  ||  (
+                    (typeof value === 'function')  &&
+                    this.hasOwnProperty('constructor')
+                )
+            )  ?  key  :  ('__' + key + '__');
+
+            try {
+                Object.defineProperty(this, key, $.extend(
+                    {
+                        value:           value,
+                        writable:        true,
+                        configurable:    true
+                    },
+                    config || { }
+                ));
+            } catch (error) {
+
+                error.key = key;    throw error;
+            }
+        });
+
+    setPrivate.call(Class.prototype, 'setPrivate', setPrivate);
 
     setPrivate.call(
-        Class.prototype,  'setPublic',  wrap(function (key, Get_Set, config) {
+        Class.prototype,  'setPublic',  safeWrap(function (key, Get_Set, config) {
 
             Object.defineProperty(this, key, $.extend(
                 {
-                    enumerable:      true,
+                    enumerable:      Class.enumerable,
                     configurable:    true
                 },
                 config,
@@ -1544,7 +1568,7 @@ var utility_ext_string = (function ($) {
 })(iQuery);
 
 
-(function ($) {
+(function ($, Class) {
 
     var BOM = self;
 
@@ -1574,7 +1598,7 @@ var utility_ext_string = (function ($) {
         });
     }
 
-    $.Class.extend(URLSearchParams, null, {
+    Class.extend(URLSearchParams, null, {
         append:      function (key, value) {
 
             this.setPrivate(this.length++,  [key,  value + '']);
@@ -1591,14 +1615,14 @@ var utility_ext_string = (function ($) {
                 if (_This_[0] === key)  return _This_[1];
             });
         },
-        delete:      function (key) {
+        'delete':    function (key) {
 
             for (var i = 0;  this[i];  i++)
                 if (this[i][0] === key)  Array.prototype.splice.call(this, i, 1);
         },
         set:         function (key, value) {
 
-            if (this.get( key )  != null)  this.delete( key );
+            if (this.get( key )  != null)  this['delete']( key );
 
             this.append(key, value);
         },
@@ -1627,7 +1651,7 @@ var utility_ext_string = (function ($) {
                         A[1].localeCompare( B[1] );
                 });
 
-            for (var i = 0;  entry[i];  i++)  this.delete( entry[i][0] );
+            for (var i = 0;  entry[i];  i++)  this['delete']( entry[i][0] );
 
             for (var i = 0;  entry[i];  i++)
                 this.append(entry[i][0], entry[i][1]);
@@ -1645,7 +1669,7 @@ var utility_ext_string = (function ($) {
 
     function URL(path, base) {
 
-        var link = this.setPrivate('data', document.createElement('a'));
+        var link = this.setPrivate('data',  $('<div><a /></div>')[0].firstChild);
 
         link.href = Origin_RE.test( path )  ?  path  :  base;
 
@@ -1664,7 +1688,7 @@ var utility_ext_string = (function ($) {
         return  $.browser.modern ? this : link;
     }
 
-    $.Class.extend(URL, null, {
+    Class.extend(URL, null, {
         toString:    function () {  return this.href;  }
     });
 
@@ -1675,9 +1699,12 @@ var utility_ext_string = (function ($) {
         Object.defineProperty(this.prototype, 'origin', {
             get:           function () {
 
-                return  this.protocol + '//' + this.host;
+                return  this.protocol + '//' + this.hostname + (
+                    ((! this.port) || (this.port == 80))  ?
+                        ''  :  (':' + this.port)
+                );
             },
-            enumerable:    true,
+            enumerable:    Class.enumerable,
         });
 
         Object.defineProperty(this.prototype, 'searchParams', {
@@ -1685,7 +1712,7 @@ var utility_ext_string = (function ($) {
 
                 return  new URLSearchParams( this.search );
             },
-            enumerable:    true,
+            enumerable:    Class.enumerable,
         });
     });
 
@@ -1703,7 +1730,7 @@ var utility_ext_string = (function ($) {
 
                             this.__data__[key] = arguments[0];
                         },
-                    enumerable:      true,
+                    enumerable:      Class.enumerable,
                     configurable:    true
                 });
         });
@@ -1717,7 +1744,7 @@ var utility_ext_string = (function ($) {
 
     BOM.URL = URL;
 
-})(iQuery);
+})(iQuery, object_ext_Class);
 
 
 var utility_index = (function ($) {
@@ -1805,7 +1832,7 @@ var utility_index = (function ($) {
 
 (function ($) {
 
-    var BOM = self,  DOM = self.document;
+    var BOM = self,  DOM = self.document,  enumerable = $.Class.enumerable;
 
 /* ---------- Document Current Script ---------- */
 
@@ -1847,7 +1874,7 @@ var utility_index = (function ($) {
                     )
                         return DOM.scripts[i];
             },
-            enumerable:    true
+            enumerable:    enumerable
         });
 
 /* ---------- ParentNode Children ---------- */
@@ -1875,7 +1902,7 @@ var utility_index = (function ($) {
 
                 return  new HTMLCollection( this.childNodes );
             },
-            enumerable:    true
+            enumerable:    enumerable
         };
 
     if (! DOM.createDocumentFragment().children)
@@ -1898,7 +1925,7 @@ var utility_index = (function ($) {
                 return  ($.browser.webkit || (DOM.compatMode == 'BackCompat'))  ?
                     DOM.body  :  DOM.documentElement;
             },
-            enumerable:    true
+            enumerable:    enumerable
         });
 
 /* ---------- Selected Options ---------- */
@@ -2020,7 +2047,7 @@ var utility_index = (function ($) {
 
                 return  new DOMTokenList(this, key);
             },
-            enumerable:    true
+            enumerable:    enumerable
         });
     });
 
@@ -2048,7 +2075,7 @@ var utility_index = (function ($) {
 
             return  new DOMStringMap( this );
         },
-        enumerable:    true
+        enumerable:    enumerable
     });
 
     if (! ($.browser.msie < 10))  return;
@@ -2087,7 +2114,7 @@ var utility_index = (function ($) {
 
             if (! iChild[0].nodeValue[0])  this.removeChild( iChild[0] );
         },
-        enumerable:    true
+        enumerable:    enumerable
     });
 })(utility_index);
 
@@ -2685,7 +2712,7 @@ var utility_index = (function ($) {
     function Scroll_DOM() {
 
         return  (this.nodeName.toLowerCase() in Scroll_Root)  ?
-            DOM.scrollingElement  :  this;
+            document.scrollingElement  :  this;
     }
 
     function DOM_Scroll(iName) {
@@ -3467,9 +3494,9 @@ var event_ext_base = (function ($, Observer) {
             var result;    event = Event(event,  {currentTarget: this});
 
             $.each(
-                $.event.handlers.call(
-                    this,  event,  $.data(this, '__event__'),  namespace
-                ),
+                $.event.handlers.apply(this, [
+                    event,  $.data(this, '__event__')[ event.type ],  namespace
+                ]),
                 function () {
 
                     for (var i = 0;  this.handler[i];  i++) {
@@ -4048,13 +4075,13 @@ var AJAX_ext_URL = (function ($) {
                 value:    value
             }).appendTo( this.__owner__ );
         },
-        delete:      function (name) {
+        'delete':    function (name) {
 
             itemOf.call(this, name).remove();
         },
         set:         function (name, value) {
 
-            this.delete( name );    this.append(name, value);
+            this['delete']( name );    this.append(name, value);
         },
         get:         function (name) {
 
@@ -4251,7 +4278,7 @@ var object_ext_advanced = (function ($) {
 
                 return  (arguments.length >= iOrigin.length)  ?
                     iOrigin.apply(this, arguments)  :
-                    iProxy.bind.apply(iProxy,  $.merge([this], arguments));
+                    $.proxy.apply($,  $.merge([iProxy, this], arguments));
             };
         },
         intersect:    function intersect() {
@@ -4469,9 +4496,9 @@ var AJAX_ext_HTML_Request = (function ($) {
 
                 if (callback instanceof Array) {
 
-                    queue = queue[type || '*'][0];
+                    var handler = (queue[ type ]  ||  queue['*']  ||  '')[0];
 
-                    return  queue  &&  queue.apply(null, callback);
+                    return  handler  &&  handler.apply(null, callback);
                 }
 
                 callback = callback || type;
@@ -4499,7 +4526,7 @@ var AJAX_ext_HTML_Request = (function ($) {
 
                 iXHR = new self.XMLHttpRequest();
 
-                iXHR.open(iOption.type, iOption.url, true);
+                iXHR.open(iOption.method, iOption.url, true);
 
                 iXHR[iOption.crossDomain ? 'onload' : 'onreadystatechange'] =
                     function () {
@@ -4544,6 +4571,7 @@ var AJAX_ext_HTML_Request = (function ($) {
                 iXHR.send(iData);
             },
             abort:    function () {
+
                 iXHR.onload = iXHR.onreadystatechange = null;
 
                 iXHR.abort();  iXHR = null;
@@ -4586,7 +4614,7 @@ var AJAX_ext_HTML_Request = (function ($) {
 
                 iXHR = new HTMLHttpRequest();
 
-                iXHR.open(iOption.type, iOption.url);
+                iXHR.open(iOption.method, iOption.url);
 
                 iXHR.onload = iXHR.onerror = function () {
 
@@ -4609,7 +4637,7 @@ var AJAX_ext_HTML_Request = (function ($) {
 
     $.ajaxTransport('+script',  $.proxy(HHR_Transport, $));
 
-    if (! (BOM.XDomainRequest instanceof Function))  return;
+    if (! ($.browser.msie < 10))  return;
 
 
     $.ajaxTransport('+*',  function (iOption) {
@@ -4628,7 +4656,7 @@ var AJAX_ext_HTML_Request = (function ($) {
 
                 iXHR = new BOM.XDomainRequest();
 
-                iXHR.open(iOption.type, iOption.url, true);
+                iXHR.open(iOption.method, iOption.url, true);
 
                 $.extend(iXHR, {
                     timeout:      iOption.timeout || 0,
@@ -4997,7 +5025,7 @@ var AJAX_ext_HTML_Request = (function ($) {
 /* ---------- Request Core ---------- */
 
     var Default_Option = {
-            type:        'GET',
+            method:      'GET',
             dataType:    'text'
         },
         $_DOM = $( self.document );
@@ -5033,6 +5061,8 @@ var AJAX_ext_HTML_Request = (function ($) {
         var _Option_ = $.extend(
                 {url: self.location.href},  Default_Option,  iOption
             );
+        _Option_.method = (_Option_.type || _Option_.method).toUpperCase();
+
         iURL = _Option_.url;
 
         _Option_.crossDomain = $.isXDomain( iURL );
@@ -5044,7 +5074,7 @@ var AJAX_ext_HTML_Request = (function ($) {
             return '';
         });
 
-        if (_Option_.type == 'GET') {
+        if (_Option_.method === 'GET') {
 
             if (!  (_Option_.jsonp  ||  hasFetched( iURL )))
                 _Option_.data._ = $.now();
@@ -5052,14 +5082,16 @@ var AJAX_ext_HTML_Request = (function ($) {
             _Option_.data = $.extend($.paramJSON( iURL ),  _Option_.data);
 
             _Option_.url = $.extendURL(iURL, _Option_.data);
+
+            _Option_.data = '';
         }
 
     //  Prefilter & Transport
-        var iXHR = new self.XMLHttpRequest(),  iArgs = [_Option_, iOption, iXHR];
+        var iArgs = [_Option_, iOption, iXHR];
 
         $.ajaxPrefilter(_Option_.dataType, iArgs);
 
-        iXHR = $.ajaxTransport(_Option_.dataType, iArgs)  ||  iXHR;
+        var iXHR = $.ajaxTransport(_Option_.dataType, iArgs);
 
     //  Async Promise
         var iResult = new Promise(function (iResolve, iReject) {
@@ -6147,11 +6179,8 @@ var AJAX_ext_HTML_Request = (function ($) {
 
 //  Thanks "emu" --- http://blog.csdn.net/emu/article/details/39618297
 
-    if ( BOM.msCrypto ) {
-
-        BOM.crypto = BOM.msCrypto;
-
-        $.each(BOM.crypto.subtle,  function (key, _This_) {
+    if ( BOM.msCrypto )
+        $.each((BOM.crypto = BOM.msCrypto).subtle,  function (key, _This_) {
 
             if (! (_This_ instanceof Function))  return;
 
@@ -6170,7 +6199,8 @@ var AJAX_ext_HTML_Request = (function ($) {
                 });
             };
         });
-    }
+
+    if (! BOM.crypto)  return;
 
     BOM.crypto.subtle = BOM.crypto.subtle || BOM.crypto.webkitSubtle;
 
@@ -6214,7 +6244,7 @@ var AJAX_ext_HTML_Request = (function ($) {
 //                >>>  iQuery.js  <<<
 //
 //
-//      [Version]    v3.0  (2017-09-14)  Beta
+//      [Version]    v3.0  (2017-09-18)  Beta
 //
 //      [Usage]      A Light-weight jQuery Compatible API
 //                   with IE 8+ compatibility.
@@ -6225,6 +6255,8 @@ var AJAX_ext_HTML_Request = (function ($) {
 
 
 return  (function ($) {
+
+    if (typeof self.jQuery !== 'function')  self.$ = self.jQuery = $;
 
     return  self.iQuery = $;
 

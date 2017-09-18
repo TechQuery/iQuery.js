@@ -29,13 +29,13 @@ define([
                 value:    value
             }).appendTo( this.__owner__ );
         },
-        delete:      function (name) {
+        'delete':    function (name) {
 
             itemOf.call(this, name).remove();
         },
         set:         function (name, value) {
 
-            this.delete( name );    this.append(name, value);
+            this['delete']( name );    this.append(name, value);
         },
         get:         function (name) {
 

@@ -18,8 +18,6 @@ define([
 
         /* ----- Constructor ----- */
 
-        Element_Set = Element_Set.valueOf();
-
         switch ($.Type( Element_Set )) {
             case 'String':
                 Element_Set = this.init(Element_Set, iContext);    break;

@@ -41,7 +41,7 @@ define(['../utility/ext/string'],  function ($) {
         }
     },  function (key) {
 
-        var config = {get: this,  enumerable: true};
+        var config = {get: this};
 
         Object.defineProperty(DOM_Proto, key, config);
 
@@ -52,19 +52,18 @@ define(['../utility/ext/string'],  function ($) {
 /* ---------- DOM Text Content ---------- */
 
     Object.defineProperty(DOM_Proto, 'textContent', {
-        get:           function () {
+        get:    function () {
 
             return this.innerText;
         },
-        set:           function (iText) {
+        set:    function (iText) {
 
             switch ( this.tagName.toLowerCase() ) {
                 case 'style':     return  this.styleSheet.cssText = iText;
                 case 'script':    return  this.text = iText;
             }
             this.innerText = iText;
-        },
-        enumerable:    true
+        }
     });
 
 /* ---------- DOM Attribute Name ---------- */

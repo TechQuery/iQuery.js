@@ -12,7 +12,7 @@ define(['../../iQuery'],  function ($) {
 
                 return  (arguments.length >= iOrigin.length)  ?
                     iOrigin.apply(this, arguments)  :
-                    iProxy.bind.apply(iProxy,  $.merge([this], arguments));
+                    $.proxy.apply($,  $.merge([iProxy, this], arguments));
             };
         },
         intersect:    function intersect() {

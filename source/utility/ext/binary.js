@@ -143,11 +143,8 @@ define(['./string', '../../polyfill/Promise_A+'],  function ($) {
 
 //  Thanks "emu" --- http://blog.csdn.net/emu/article/details/39618297
 
-    if ( BOM.msCrypto ) {
-
-        BOM.crypto = BOM.msCrypto;
-
-        $.each(BOM.crypto.subtle,  function (key, _This_) {
+    if ( BOM.msCrypto )
+        $.each((BOM.crypto = BOM.msCrypto).subtle,  function (key, _This_) {
 
             if (! (_This_ instanceof Function))  return;
 
@@ -166,7 +163,8 @@ define(['./string', '../../polyfill/Promise_A+'],  function ($) {
                 });
             };
         });
-    }
+
+    if (! BOM.crypto)  return;
 
     BOM.crypto.subtle = BOM.crypto.subtle || BOM.crypto.webkitSubtle;
 

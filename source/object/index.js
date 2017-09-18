@@ -63,8 +63,11 @@ define(['./checkType', './ext/base'],  function (checker, $) {
     }
 
     return extend({
-        merge:            merge,
         makeArray:        makeArray,
+        merge:            function (target, source) {
+
+            return  merge(target,  makeArray( source ));
+        },
         extend:           extend,
         each:             function (Arr_Obj, iEvery) {
 

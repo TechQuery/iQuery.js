@@ -33,7 +33,7 @@ define([
 
                 iXHR = new HTMLHttpRequest();
 
-                iXHR.open(iOption.type, iOption.url);
+                iXHR.open(iOption.method, iOption.url);
 
                 iXHR.onload = iXHR.onerror = function () {
 
@@ -56,7 +56,7 @@ define([
 
     $.ajaxTransport('+script',  $.proxy(HHR_Transport, $));
 
-    if (! (BOM.XDomainRequest instanceof Function))  return;
+    if (! ($.browser.msie < 10))  return;
 
 
     $.ajaxTransport('+*',  function (iOption) {
@@ -75,7 +75,7 @@ define([
 
                 iXHR = new BOM.XDomainRequest();
 
-                iXHR.open(iOption.type, iOption.url, true);
+                iXHR.open(iOption.method, iOption.url, true);
 
                 $.extend(iXHR, {
                     timeout:      iOption.timeout || 0,

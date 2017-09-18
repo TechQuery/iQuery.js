@@ -12,9 +12,9 @@ define(['../iQuery'],  function ($) {
 
                 if (callback instanceof Array) {
 
-                    queue = queue[type || '*'][0];
+                    var handler = (queue[ type ]  ||  queue['*']  ||  '')[0];
 
-                    return  queue  &&  queue.apply(null, callback);
+                    return  handler  &&  handler.apply(null, callback);
                 }
 
                 callback = callback || type;
@@ -42,7 +42,7 @@ define(['../iQuery'],  function ($) {
 
                 iXHR = new self.XMLHttpRequest();
 
-                iXHR.open(iOption.type, iOption.url, true);
+                iXHR.open(iOption.method, iOption.url, true);
 
                 iXHR[iOption.crossDomain ? 'onload' : 'onreadystatechange'] =
                     function () {
@@ -87,6 +87,7 @@ define(['../iQuery'],  function ($) {
                 iXHR.send(iData);
             },
             abort:    function () {
+
                 iXHR.onload = iXHR.onreadystatechange = null;
 
                 iXHR.abort();  iXHR = null;

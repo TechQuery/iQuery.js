@@ -1,6 +1,6 @@
 define(['../utility/index', '../utility/ext/browser'],  function ($) {
 
-    var BOM = self,  DOM = self.document;
+    var BOM = self,  DOM = self.document,  enumerable = $.Class.enumerable;
 
 /* ---------- Document Current Script ---------- */
 
@@ -42,7 +42,7 @@ define(['../utility/index', '../utility/ext/browser'],  function ($) {
                     )
                         return DOM.scripts[i];
             },
-            enumerable:    true
+            enumerable:    enumerable
         });
 
 /* ---------- ParentNode Children ---------- */
@@ -70,7 +70,7 @@ define(['../utility/index', '../utility/ext/browser'],  function ($) {
 
                 return  new HTMLCollection( this.childNodes );
             },
-            enumerable:    true
+            enumerable:    enumerable
         };
 
     if (! DOM.createDocumentFragment().children)
@@ -93,7 +93,7 @@ define(['../utility/index', '../utility/ext/browser'],  function ($) {
                 return  ($.browser.webkit || (DOM.compatMode == 'BackCompat'))  ?
                     DOM.body  :  DOM.documentElement;
             },
-            enumerable:    true
+            enumerable:    enumerable
         });
 
 /* ---------- Selected Options ---------- */
@@ -215,7 +215,7 @@ define(['../utility/index', '../utility/ext/browser'],  function ($) {
 
                 return  new DOMTokenList(this, key);
             },
-            enumerable:    true
+            enumerable:    enumerable
         });
     });
 
@@ -243,7 +243,7 @@ define(['../utility/index', '../utility/ext/browser'],  function ($) {
 
             return  new DOMStringMap( this );
         },
-        enumerable:    true
+        enumerable:    enumerable
     });
 
     if (! ($.browser.msie < 10))  return;
@@ -282,6 +282,6 @@ define(['../utility/index', '../utility/ext/browser'],  function ($) {
 
             if (! iChild[0].nodeValue[0])  this.removeChild( iChild[0] );
         },
-        enumerable:    true
+        enumerable:    enumerable
     });
 });

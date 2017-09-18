@@ -46,9 +46,9 @@ define(['../object/index'],  function ($) {
                 .slice(-1)[0];
         }
 
-        return  Array.from(iNew.childNodes,  function (iDOM) {
+        return  $.each($.makeArray( iNew.childNodes ),  function () {
 
-            return  iDOM.parentNode.removeChild( iDOM );
+            return  this.parentNode.removeChild( this );
         });
     };
 });

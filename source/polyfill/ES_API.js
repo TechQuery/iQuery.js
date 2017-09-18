@@ -20,16 +20,16 @@ define(function () {
 
         if ( object.__proto__ )  return object.__proto__;
 
-        if (! object.hasOwnProperty('constructor'))
+        if (! Object.prototype.hasOwnProperty.call(object, 'constructor'))
             return object.constructor.prototype;
 
         var constructor = object.constructor;
 
-        delete object.constructor;
+        try {  delete object.constructor;  } catch (error) { }
 
         var prototype = object.constructor.prototype;
 
-        object.constructor = constructor;
+        try {  object.constructor = constructor;  } catch (error) { }
 
         return prototype;
     };

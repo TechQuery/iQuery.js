@@ -67,7 +67,7 @@ define([
 /* ---------- Request Core ---------- */
 
     var Default_Option = {
-            type:        'GET',
+            method:      'GET',
             dataType:    'text'
         },
         $_DOM = $( self.document );
@@ -103,6 +103,8 @@ define([
         var _Option_ = $.extend(
                 {url: self.location.href},  Default_Option,  iOption
             );
+        _Option_.method = (_Option_.type || _Option_.method).toUpperCase();
+
         iURL = _Option_.url;
 
         _Option_.crossDomain = $.isXDomain( iURL );
@@ -114,7 +116,7 @@ define([
             return '';
         });
 
-        if (_Option_.type == 'GET') {
+        if (_Option_.method === 'GET') {
 
             if (!  (_Option_.jsonp  ||  hasFetched( iURL )))
                 _Option_.data._ = $.now();
@@ -122,14 +124,16 @@ define([
             _Option_.data = $.extend($.paramJSON( iURL ),  _Option_.data);
 
             _Option_.url = $.extendURL(iURL, _Option_.data);
+
+            _Option_.data = '';
         }
 
     //  Prefilter & Transport
-        var iXHR = new self.XMLHttpRequest(),  iArgs = [_Option_, iOption, iXHR];
+        var iArgs = [_Option_, iOption, iXHR];
 
         $.ajaxPrefilter(_Option_.dataType, iArgs);
 
-        iXHR = $.ajaxTransport(_Option_.dataType, iArgs)  ||  iXHR;
+        var iXHR = $.ajaxTransport(_Option_.dataType, iArgs);
 
     //  Async Promise
         var iResult = new Promise(function (iResolve, iReject) {

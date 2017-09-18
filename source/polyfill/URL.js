@@ -1,6 +1,6 @@
 define([
     '../iQuery', '../object/ext/Class', '../utility/ext/browser'
-],  function ($) {
+],  function ($, Class) {
 
     var BOM = self;
 
@@ -30,7 +30,7 @@ define([
         });
     }
 
-    $.Class.extend(URLSearchParams, null, {
+    Class.extend(URLSearchParams, null, {
         append:      function (key, value) {
 
             this.setPrivate(this.length++,  [key,  value + '']);
@@ -47,14 +47,14 @@ define([
                 if (_This_[0] === key)  return _This_[1];
             });
         },
-        delete:      function (key) {
+        'delete':    function (key) {
 
             for (var i = 0;  this[i];  i++)
                 if (this[i][0] === key)  Array.prototype.splice.call(this, i, 1);
         },
         set:         function (key, value) {
 
-            if (this.get( key )  != null)  this.delete( key );
+            if (this.get( key )  != null)  this['delete']( key );
 
             this.append(key, value);
         },
@@ -83,7 +83,7 @@ define([
                         A[1].localeCompare( B[1] );
                 });
 
-            for (var i = 0;  entry[i];  i++)  this.delete( entry[i][0] );
+            for (var i = 0;  entry[i];  i++)  this['delete']( entry[i][0] );
 
             for (var i = 0;  entry[i];  i++)
                 this.append(entry[i][0], entry[i][1]);
@@ -101,7 +101,7 @@ define([
 
     function URL(path, base) {
 
-        var link = this.setPrivate('data', document.createElement('a'));
+        var link = this.setPrivate('data',  $('<div><a /></div>')[0].firstChild);
 
         link.href = Origin_RE.test( path )  ?  path  :  base;
 
@@ -120,7 +120,7 @@ define([
         return  $.browser.modern ? this : link;
     }
 
-    $.Class.extend(URL, null, {
+    Class.extend(URL, null, {
         toString:    function () {  return this.href;  }
     });
 
@@ -131,9 +131,12 @@ define([
         Object.defineProperty(this.prototype, 'origin', {
             get:           function () {
 
-                return  this.protocol + '//' + this.host;
+                return  this.protocol + '//' + this.hostname + (
+                    ((! this.port) || (this.port == 80))  ?
+                        ''  :  (':' + this.port)
+                );
             },
-            enumerable:    true,
+            enumerable:    Class.enumerable,
         });
 
         Object.defineProperty(this.prototype, 'searchParams', {
@@ -141,7 +144,7 @@ define([
 
                 return  new URLSearchParams( this.search );
             },
-            enumerable:    true,
+            enumerable:    Class.enumerable,
         });
     });
 
@@ -159,7 +162,7 @@ define([
 
                             this.__data__[key] = arguments[0];
                         },
-                    enumerable:      true,
+                    enumerable:      Class.enumerable,
                     configurable:    true
                 });
         });
