@@ -140,4 +140,12 @@ define([
         return  (iDOM.tagName in pMedia)  ||  $.expr[':'].image( iDOM );
     };
 
+    /* ----- :loaded ----- */
+
+    $.expr[':'].loaded = function (iDOM) {
+
+        return  iDOM.complete ||                    //  <img />
+            (iDOM.readyState === 'complete')  ||    //  document
+            (iDOM.readyState > 0);                  //  <audio />  &  <video />
+    };
 });

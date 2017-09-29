@@ -35,7 +35,7 @@ define(['../../iQuery', '../index'],  function ($) {
 
     $.fn.validate = function () {
 
-        var $_Field = this.find(':field').removeClass('invalid');
+        var $_Field = this.find(':field').addBack(':field').removeClass('invalid');
 
         for (var i = 0;  $_Field[i];  i++)
             if ((

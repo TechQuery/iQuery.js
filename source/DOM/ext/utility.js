@@ -1,4 +1,7 @@
-define(['../../utility/ext/string', '../traversing', '../insert'],  function ($) {
+define([
+    '../../utility/ext/string', '../traversing', '../../polyfill/Promise_A+',
+    '../insert'
+],  function ($) {
 
     var iOperator = {
             '+':    function () {
@@ -88,6 +91,20 @@ define(['../../utility/ext/string', '../traversing', '../insert'],  function ($)
             });
 
             return this;
+        },
+        mediaReady:       function () {
+
+            var $_Media = this.find('img, audio, video')
+                    .addBack('img, audio, video');
+
+            return  new Promise(function (resolve) {
+
+                $.every(0.25,  function () {
+
+                    if (! ($_Media = $_Media.not(':loaded'))[0])
+                        return  (!! resolve());
+                });
+            });
         }
     });
 

@@ -66,6 +66,7 @@
  - 新增 **URL 跨域判断**方法 —— `$.isXDomain()`
  - 新增 **URL 参数对象化**方法（$.param() 的逆方法）—— `$.paramJSON()`
  - 新增 **URL 参数签名**方法 —— `$.paramSign()`
+ - 新增 **HTTP 报文头解析**方法 —— `$.parseHeader()`
  - `$.parseJSON()` 支持 **递归解析**，会将 JSON 字符串中的内层字符串 eval 为 JS 实值/例
  - 新增 **JSON 格式化显示**方法 —— `$.formatJSON()`
  - 基于官方 `$.ajaxTransport()` 重载 **JSONP 实现**，支持基本的异常处理
@@ -73,6 +74,7 @@
  - `$.ajax()` **自动转换响应内容**为 HTML、XML 或 JSON 对象实例
  - 新增 `$.delete()`、`$.put()`，方便实现基于 **RESTful API** 的单页应用
  - 新增 `$.fn.htmlExec()` **W3C HTML 解析器**方法，并基于此重构 `$.fn.load()` 内部实现，方便 DOM 片段清理、脚本调试
+ - 新增 **多媒体元素加载完成**方法 —— `$.fn.mediaReady()`
  - 新增基于 **HTML 5 表单字段 验证规则**的 `$.fn.validate()`
  - 封装了 **表单元素无刷新提交**，并可直接绑定响应回调 —— `$.fn.ajaxSubmit()`（基于前述的几个 **AJAX 增强方法** 构建）
  - 新增 **选择符合法性判断**方法 —— `$.isSelector()`
@@ -86,6 +88,7 @@
    - 自带 `:field`，匹配所有含 **可提交字段**的元素
    - 新增 `:list`，等价于 `ul, ol, dl, tbody, datalist`
    - 新增 `:media`，等价于 `:image, iframe, object, embed, audio, video`
+   - 新增 `:loaded`，等价于 `img, audio, video`、`document` 加载结束
    - 新增 `:scrollable`，匹配所有 **内容可滚动**的元素
  - 新增 **子元素插入**方法 —— `$.fn.insertTo()`
  - 新增 **DOM 树遍历器**生成方法 —— `$.fn.treeWalker()`（遵循 [ECMAScript 6 迭代器协议](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Iteration_protocols#The_iterator_protocol)）
@@ -152,7 +155,7 @@
  - 自带 `Date.now()` 标准方法
  - 自带 `Promise()` 标准对象构造函数
  - 重写 `Error.prototype.valueOf()`，使 IE 10- 返回可查询的错误码（附带 官方文档 URL）
- - 新增 **DOMHttpRequest 对象**，封装了 **JSONP Get**、 **iframe Post**
+ - 新增 **HTMLHttpRequest 对象**，封装了 **JSONP Get**、 **iframe Post**
  - 自带 `HTMLDocument.prototype.currentScript` 属性
  - 自带 `HTMLDocument.prototype.scrollingElement` 属性
  - 自带 `Element.prototype.textContent` 属性

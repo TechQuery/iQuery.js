@@ -115,12 +115,12 @@ define([
     }
 
     $.extend(HTMLHttpRequest.prototype, {
-        open:                 function () {
+        open:                     function () {
             this.responseURL = arguments[1];
 
             this.readyState = 1;
         },
-        send:                 function (iData) {
+        send:                     function (iData) {
 
             if (! Allow_Send.call( this ))  return;
 
@@ -136,20 +136,31 @@ define([
 
             this.readyState = 2;
         },
-        abort:                function () {
+        abort:                    function () {
             this.$_Transport.remove();
 
             this.$_Transport = null;
 
             this.readyState = 0;
         },
-        setRequestHeader:     function () {
+        setRequestHeader:         function () {
 
             console.warn("JSONP/iframe doesn't support Changing HTTP Headers...");
         },
-        getResponseHeader:    function () {
+        getResponseHeader:        function () {
 
             return  this.responseHeader[ arguments[0] ]  ||  null;
+        },
+        getAllResponseHeaders:    function () {
+
+            return Array.from(
+                Object.keys( this.responseHeader ),
+                function (key) {
+
+                    return  key.toLowerCase()  +  ': '  +  this[ key ];
+                },
+                this.responseHeader
+            ).join("\r\n");
         }
     });
 

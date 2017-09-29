@@ -1,29 +1,22 @@
 define([
-    './ext/URL', '../DOM/ext/base', '../polyfill/Promise_A+', './ext/transport'
+    './ext/URL', './ext/header', '../DOM/ext/base', '../polyfill/Promise_A+',
+    './ext/transport'
 ],  function ($) {
 
 /* ---------- Response Data ---------- */
 
     var ResponseType = $.makeSet('html', 'xml', 'json');
 
-    function AJAX_Complete(iResolve, iReject, iCode) {
+    function AJAX_Complete(resolve, reject, code, status, response, header) {
 
-        var iHeader = { };
+        header = $.parseHeader(header || '');
 
-        if (arguments[5])
-            $.each(arguments[5].split("\r\n"),  function () {
-
-                var _Header_ = $.split(this, /:\s+/, 2);
-
-                iHeader[_Header_[0]] = _Header_[1];
-            });
-
-        var iType = (iHeader['Content-Type'] || '').split(';')[0].split('/');
+        var iType = (header['content-type'] || '').split(';')[0].split('/');
 
         $.extend(this, {
-            status:          iCode,
-            statusText:      arguments[3],
-            responseText:    arguments[4].text,
+            status:          code,
+            statusText:      status,
+            responseText:    response.text,
             responseType:
                 ((iType[1] in ResponseType) ? iType[1] : iType[0])  ||  'text'
         });
@@ -58,10 +51,10 @@ define([
             case 'xml':     this.response = this.responseXML;
         }
 
-        if (iCode < 400)
-            iResolve( this.response );
+        if (code < 400)
+            resolve( this.response );
         else
-            iReject( this.statusText );
+            reject( this.statusText );
     }
 
 /* ---------- Request Core ---------- */

@@ -2660,6 +2660,14 @@ var utility_index = (function ($) {
         return  (iDOM.tagName in pMedia)  ||  $.expr[':'].image( iDOM );
     };
 
+    /* ----- :loaded ----- */
+
+    $.expr[':'].loaded = function (iDOM) {
+
+        return  iDOM.complete ||                    //  <img />
+            (iDOM.readyState === 'complete')  ||    //  document
+            (iDOM.readyState > 0);                  //  <audio />  &  <video />
+    };
 })(iQuery);
 
 
@@ -4204,6 +4212,20 @@ var AJAX_ext_URL = (function ($) {
             });
 
             return this;
+        },
+        mediaReady:       function () {
+
+            var $_Media = this.find('img, audio, video')
+                    .addBack('img, audio, video');
+
+            return  new Promise(function (resolve) {
+
+                $.every(0.25,  function () {
+
+                    if (! ($_Media = $_Media.not(':loaded'))[0])
+                        return  (!! resolve());
+                });
+            });
         }
     });
 
@@ -4325,6 +4347,105 @@ var object_ext_advanced = (function ($) {
 })(iQuery);
 
 
+(function ($) {
+
+/* ---------- Hook API ---------- */
+
+    $.each(
+        {
+            Prefilter:  { },    Transport:  { }
+        },
+        function (hook, queue) {
+
+            $['ajax' + hook] = function (type, callback) {
+
+                if (callback instanceof Array) {
+
+                    var handler = (queue[ type ]  ||  queue['*']  ||  '')[0];
+
+                    return  handler  &&  handler.apply(null, callback);
+                }
+
+                callback = callback || type;
+
+                type = (callback === type)  ?  '*'  :  (type || '');
+
+                if (typeof callback != 'function')  return;
+
+                var method = 'push';
+
+                if (type[0] === '+')  method = 'unshift',  type = type.slice(1);
+
+                (queue[type] = queue[type] || [ ])[method]( callback );
+            };
+        }
+    );
+/* ---------- Original XHR ---------- */
+
+    $.ajaxTransport(function (iOption) {
+
+        var iXHR;
+
+        return {
+            send:    function (iHeader, iComplete) {
+
+                iXHR = new self.XMLHttpRequest();
+
+                iXHR.open(iOption.method, iOption.url, true);
+
+                iXHR[iOption.crossDomain ? 'onload' : 'onreadystatechange'] =
+                    function () {
+                        if (! (iOption.crossDomain || (iXHR.readyState == 4)))
+                            return;
+
+                        var iResponse = {text:  iXHR.responseText};
+
+                        iResponse[ iXHR.responseType ] = iXHR.response;
+
+                        iComplete(
+                            iXHR.status,
+                            iXHR.statusText,
+                            iResponse,
+                            iXHR.getAllResponseHeaders()
+                        );
+                    };
+
+                if ( iOption.xhrFields )  $.extend(iXHR, iOption.xhrFields);
+
+                if (! iOption.crossDomain)
+                    iOption.headers = $.extend(iOption.headers || { },  iHeader,  {
+                        'X-Requested-With':    'XMLHttpRequest',
+                        Accept:                '*/*'
+                    });
+
+                for (var iKey in iOption.headers)
+                    iXHR.setRequestHeader(iKey,  iOption.headers[ iKey ]);
+
+                var iData = iOption.data;
+
+                if ((iData instanceof Array)  ||  $.isPlainObject( iData ))
+                    iData = $.param( iData );
+
+                if ((typeof iData == 'string')  ||  iOption.contentType)
+                    iXHR.setRequestHeader('Content-Type', (
+                        iOption.contentType || 'application/x-www-form-urlencoded'
+                    ));
+
+                iOption.data = iData;
+
+                iXHR.send(iData);
+            },
+            abort:    function () {
+
+                iXHR.onload = iXHR.onreadystatechange = null;
+
+                iXHR.abort();  iXHR = null;
+            }
+        };
+    });
+})(iQuery);
+
+
 var AJAX_ext_HTML_Request = (function ($) {
 
     function HTMLHttpRequest() {
@@ -4439,12 +4560,12 @@ var AJAX_ext_HTML_Request = (function ($) {
     }
 
     $.extend(HTMLHttpRequest.prototype, {
-        open:                 function () {
+        open:                     function () {
             this.responseURL = arguments[1];
 
             this.readyState = 1;
         },
-        send:                 function (iData) {
+        send:                     function (iData) {
 
             if (! Allow_Send.call( this ))  return;
 
@@ -4460,125 +4581,37 @@ var AJAX_ext_HTML_Request = (function ($) {
 
             this.readyState = 2;
         },
-        abort:                function () {
+        abort:                    function () {
             this.$_Transport.remove();
 
             this.$_Transport = null;
 
             this.readyState = 0;
         },
-        setRequestHeader:     function () {
+        setRequestHeader:         function () {
 
             console.warn("JSONP/iframe doesn't support Changing HTTP Headers...");
         },
-        getResponseHeader:    function () {
+        getResponseHeader:        function () {
 
             return  this.responseHeader[ arguments[0] ]  ||  null;
+        },
+        getAllResponseHeaders:    function () {
+
+            return Array.from(
+                Object.keys( this.responseHeader ),
+                function (key) {
+
+                    return  key.toLowerCase()  +  ': '  +  this[ key ];
+                },
+                this.responseHeader
+            ).join("\r\n");
         }
     });
 
     return  self.HTMLHttpRequest = HTMLHttpRequest;
 
 })(AJAX_ext_URL);
-
-
-(function ($) {
-
-/* ---------- Hook API ---------- */
-
-    $.each(
-        {
-            Prefilter:  { },    Transport:  { }
-        },
-        function (hook, queue) {
-
-            $['ajax' + hook] = function (type, callback) {
-
-                if (callback instanceof Array) {
-
-                    var handler = (queue[ type ]  ||  queue['*']  ||  '')[0];
-
-                    return  handler  &&  handler.apply(null, callback);
-                }
-
-                callback = callback || type;
-
-                type = (callback === type)  ?  '*'  :  (type || '');
-
-                if (typeof callback != 'function')  return;
-
-                var method = 'push';
-
-                if (type[0] === '+')  method = 'unshift',  type = type.slice(1);
-
-                (queue[type] = queue[type] || [ ])[method]( callback );
-            };
-        }
-    );
-/* ---------- Original XHR ---------- */
-
-    $.ajaxTransport(function (iOption) {
-
-        var iXHR;
-
-        return {
-            send:    function (iHeader, iComplete) {
-
-                iXHR = new self.XMLHttpRequest();
-
-                iXHR.open(iOption.method, iOption.url, true);
-
-                iXHR[iOption.crossDomain ? 'onload' : 'onreadystatechange'] =
-                    function () {
-                        if (! (iOption.crossDomain || (iXHR.readyState == 4)))
-                            return;
-
-                        var iResponse = {text:  iXHR.responseText};
-
-                        iResponse[ iXHR.responseType ] = iXHR.response;
-
-                        iComplete(
-                            iXHR.status,
-                            iXHR.statusText,
-                            iResponse,
-                            iXHR.getAllResponseHeaders()
-                        );
-                    };
-
-                if ( iOption.xhrFields )  $.extend(iXHR, iOption.xhrFields);
-
-                if (! iOption.crossDomain)
-                    iOption.headers = $.extend(iOption.headers || { },  iHeader,  {
-                        'X-Requested-With':    'XMLHttpRequest',
-                        Accept:                '*/*'
-                    });
-
-                for (var iKey in iOption.headers)
-                    iXHR.setRequestHeader(iKey,  iOption.headers[ iKey ]);
-
-                var iData = iOption.data;
-
-                if ((iData instanceof Array)  ||  $.isPlainObject( iData ))
-                    iData = $.param( iData );
-
-                if ((typeof iData == 'string')  ||  iOption.contentType)
-                    iXHR.setRequestHeader('Content-Type', (
-                        iOption.contentType || 'application/x-www-form-urlencoded'
-                    ));
-
-                iOption.data = iData;
-
-                iXHR.send(iData);
-            },
-            abort:    function () {
-
-                iXHR.onload = iXHR.onreadystatechange = null;
-
-                iXHR.abort();  iXHR = null;
-            }
-        };
-    });
-})(iQuery);
 
 
 (function ($, HTMLHttpRequest) {
@@ -4688,6 +4721,51 @@ var AJAX_ext_HTML_Request = (function ($) {
         };
     });
 })(iQuery, AJAX_ext_HTML_Request);
+
+
+(function ($) {
+
+    var parser = {
+            link:    function (raw) {
+
+                var link = { };
+
+                raw.replace(
+                    /\<(\S+?)\>; rel="(\w+)"(; title="(.*?)")?/g,
+                    function (_, URI, rel, _, title) {
+
+                        link[ rel ] = {
+                            uri:      URI,
+                            rel:      rel,
+                            title:    title
+                        };
+                    }
+                );
+
+                return link;
+            }
+        };
+
+    $.parseHeader = function (raw) {
+
+        var header = { };
+
+        raw.replace(/^([\w\-]+):\s*(.*)$/mg,  function (_, key, value) {
+
+            if (parser[ key ])  value = parser[ key ]( value );
+
+            if (typeof header[ key ]  ===  'string')
+                header[ key ] = [header[ key ]];
+
+            if (header[ key ]  instanceof  Array)
+                header[ key ].push( value );
+            else
+                header[ key ] = value;
+        });
+
+        return header;
+    };
+})(iQuery);
 
 
 (function ($) {
@@ -4964,24 +5042,16 @@ var AJAX_ext_HTML_Request = (function ($) {
 
     var ResponseType = $.makeSet('html', 'xml', 'json');
 
-    function AJAX_Complete(iResolve, iReject, iCode) {
+    function AJAX_Complete(resolve, reject, code, status, response, header) {
 
-        var iHeader = { };
+        header = $.parseHeader(header || '');
 
-        if (arguments[5])
-            $.each(arguments[5].split("\r\n"),  function () {
-
-                var _Header_ = $.split(this, /:\s+/, 2);
-
-                iHeader[_Header_[0]] = _Header_[1];
-            });
-
-        var iType = (iHeader['Content-Type'] || '').split(';')[0].split('/');
+        var iType = (header['content-type'] || '').split(';')[0].split('/');
 
         $.extend(this, {
-            status:          iCode,
-            statusText:      arguments[3],
-            responseText:    arguments[4].text,
+            status:          code,
+            statusText:      status,
+            responseText:    response.text,
             responseType:
                 ((iType[1] in ResponseType) ? iType[1] : iType[0])  ||  'text'
         });
@@ -5016,10 +5086,10 @@ var AJAX_ext_HTML_Request = (function ($) {
             case 'xml':     this.response = this.responseXML;
         }
 
-        if (iCode < 400)
-            iResolve( this.response );
+        if (code < 400)
+            resolve( this.response );
         else
-            iReject( this.statusText );
+            reject( this.statusText );
     }
 
 /* ---------- Request Core ---------- */
@@ -5343,6 +5413,360 @@ var AJAX_ext_HTML_Request = (function ($) {
 
 (function ($) {
 
+    var W3C_Selection = (typeof document.getSelection === 'function');
+
+    function Select_Node(iSelection) {
+
+        var iFocus = W3C_Selection ?
+                iSelection.focusNode : iSelection.createRange().parentElement();
+
+        var iActive = iFocus.ownerDocument.activeElement;
+
+        return  $.contains(iActive, iFocus)  ?  iFocus  :  iActive;
+    }
+
+    function Find_Selection() {
+
+        var iDOM = this.document || this.ownerDocument || this;
+
+        if (iDOM.activeElement.tagName.toLowerCase() == 'iframe')  try {
+
+            return  Find_Selection.call( iDOM.activeElement.contentWindow );
+
+        } catch (iError) { }
+
+        var iSelection = W3C_Selection ? iDOM.getSelection() : iDOM.selection;
+
+        var iNode = Select_Node( iSelection );
+
+        return  $.contains(
+            (this instanceof Element)  ?  this  :  iDOM,  iNode
+        ) && [
+            iSelection, iNode
+        ];
+    }
+
+    $.fn.selection = function (iContent) {
+
+        if (! argument.length) {
+
+            var iSelection = Find_Selection.call( this[0] )[0];
+
+            return  W3C_Selection ?
+                (iSelection + '')  :  iSelection.createRange().htmlText;
+        }
+
+        return  this.each(function () {
+
+            var iSelection = Find_Selection.call( this );
+
+            var iNode = iSelection[1];    iSelection = iSelection[0];
+
+            iNode = (iNode.nodeType === 1)  ?  iNode  :  iNode.parentNode;
+
+            if (! W3C_Selection) {
+
+                iSelection = iSelection.createRange();
+
+                return  iSelection.text = (
+                    (typeof iContent === 'function')  ?
+                        iContent.call(iNode, iSelection.text)  :  iContent
+                );
+            }
+            var iProperty, iStart, iEnd;
+
+            if ((iNode.tagName || '').match( /input|textarea/i )) {
+
+                iProperty = 'value';
+
+                iStart = Math.min(iNode.selectionStart, iNode.selectionEnd);
+
+                iEnd = Math.max(iNode.selectionStart, iNode.selectionEnd);
+            } else {
+                iProperty = 'innerHTML';
+
+                iStart = Math.min(iSelection.anchorOffset, iSelection.focusOffset);
+
+                iEnd = Math.max(iSelection.anchorOffset, iSelection.focusOffset);
+            }
+
+            var iValue = iNode[ iProperty ];
+
+            iNode[ iProperty ] = iValue.slice(0, iStart)  +  (
+                (typeof iContent === 'function')  ?
+                    iContent.call(iNode, iValue.slice(iStart, iEnd))  :  iContent
+            )  +  iValue.slice( iEnd );
+        });
+    };
+})(utility_index);
+
+
+(function ($) {
+
+/* ---------- RESTful API ---------- */
+
+    $.map(['get', 'post', 'put', 'delete'],  function (method) {
+
+        $[ method ] = $[ method ]  ||  function (URL, data, callback, DataType) {
+
+            if (typeof data === 'function')
+                DataType = callback,  callback = data,  data = null;
+
+            return $.ajax($.extend(
+                {
+                    type:           method,
+                    url:            URL,
+                    crossDomain:    true,
+                    data:           data,
+                    dataType:       DataType,
+                    success:        callback
+                },
+                $.isPlainObject( URL )  ?  URL  :  { }
+            ));
+        };
+    });
+
+    $.getJSON = $.getJSON || $.get;
+
+
+/* ---------- Smart Load ---------- */
+
+    $.fn.load = function (iURL, iData, iCallback) {
+
+        if (! this[0])  return this;
+
+        if (typeof iData == 'function')
+            iCallback = iData,  iData = null;
+
+        var $_This = this;
+
+        iURL = iURL.trim().split(/\s+/);
+
+        $[iData ? 'post' : 'get'](iURL[0],  iData,  function (iHTML, _, iXHR) {
+
+            $_This.htmlExec(
+                (typeof iHTML === 'string')  ?  iHTML  :  iXHR.responseText,
+                iURL[1]
+            );
+
+            if (typeof iCallback === 'function')
+                $_This.each( $.proxy(iCallback, null, iHTML, _, iXHR) );
+        },  'html');
+
+        return this;
+    };
+
+})(iQuery);
+
+
+(function ($) {
+
+    var BOM = self;
+
+/* ---------- Bit Operation for Big Number  v0.1 ---------- */
+
+    function Bit_Calculate(iType, iLeft, iRight) {
+
+        iLeft = parseInt(iLeft, 2);    iRight = parseInt(iRight, 2);
+
+        switch (iType) {
+            case '&':    return  iLeft & iRight;
+            case '|':    return  iLeft | iRight;
+            case '^':    return  iLeft ^ iRight;
+            case '~':    return  ~iLeft;
+        }
+    }
+
+    $.bitOperate = function (iType, iLeft, iRight) {
+
+        iLeft = (typeof iLeft === 'string')  ?  iLeft  :  iLeft.toString(2);
+
+        iRight = (typeof iRight === 'string')  ?  iRight  :  iRight.toString(2);
+
+        var iLength = Math.max(iLeft.length, iRight.length);
+
+        if (iLength < 32)
+            return  Bit_Calculate(iType, iLeft, iRight).toString(2);
+
+        iLeft = iLeft.padStart(iLength, 0);
+
+        iRight = iRight.padStart(iLength, 0);
+
+        var iResult = '';
+
+        for (var i = 0;  i < iLength;  i += 31)
+            iResult += Bit_Calculate(
+                iType,  iLeft.slice(i, i + 31),  iRight.slice(i, i + 31)
+            ).toString(2).padStart(
+                Math.min(31,  iLength - i),  0
+            );
+
+        return iResult;
+    };
+
+/* ---------- Local Storage Wrapper  v0.1 ---------- */
+
+    var LS_Key = [ ];
+
+    $.storage = function (iName, iData) {
+
+        if (! (iData != null))  return  JSON.parse(BOM.localStorage[ iName ]);
+
+        var iLast = 0,  iLength = Math.min(LS_Key.length, BOM.localStorage.length);
+
+        do  try {
+            BOM.localStorage[ iName ] = JSON.stringify( iData );
+
+            if (LS_Key.indexOf( iName )  ==  -1)  LS_Key.push( iName );
+            break;
+        } catch (iError) {
+            if (LS_Key[ iLast ]) {
+                delete  BOM.localStorage[ LS_Key[iLast] ];
+
+                LS_Key.splice(iLast, 1);
+            } else
+                iLast++ ;
+        } while (iLast < iLength);
+
+        return iData;
+    };
+
+/* ---------- Base64 to Blob  v0.1 ---------- */
+
+//  Thanks "axes" --- http://www.cnblogs.com/axes/p/4603984.html
+
+    $.toBlob = function (iType, iString) {
+
+        if (arguments.length == 1) {
+
+            iString = iType.match(/^data:([^;]+);base64,(.+)/);
+
+            iType = iString[1];    iString = iString[2];
+        }
+
+        iString = BOM.atob( iString );
+
+        var iBuffer = new ArrayBuffer( iString.length );
+
+        var uBuffer = new Uint8Array( iBuffer );
+
+        for (var i = 0;  iString[i];  i++)
+            uBuffer[i] = iString.charCodeAt(i);
+
+        var BlobBuilder = BOM.WebKitBlobBuilder || BOM.MozBlobBuilder;
+
+        if (! BlobBuilder)
+            return  new BOM.Blob([iBuffer],  {type: iType});
+
+        var iBuilder = new BlobBuilder();    iBuilder.append( iBuffer );
+
+        return  iBuilder.getBlob( iType );
+    };
+
+/* ---------- CRC-32  v0.1 ---------- */
+
+//  Thanks "Bakasen" for http://blog.csdn.net/bakasen/article/details/6043797
+
+    var CRC_32_Table = (function () {
+
+            var iTable = new Array(256);
+
+            for (var i = 0, iCell;  i < 256;  i++) {
+                iCell = i;
+
+                for (var j = 0;  j < 8;  j++)
+                    if (iCell & 1)
+                        iCell = ((iCell >> 1) & 0x7FFFFFFF)  ^  0xEDB88320;
+                    else
+                        iCell = (iCell >> 1)  &  0x7FFFFFFF;
+
+                iTable[i] = iCell;
+            }
+
+            return iTable;
+        })();
+
+    function CRC_32(iRAW) {
+
+        iRAW = '' + iRAW;
+
+        var iValue = 0xFFFFFFFF;
+
+        for (var i = 0;  iRAW[i];  i++)
+            iValue = ((iValue >> 8) & 0x00FFFFFF)  ^  CRC_32_Table[
+                (iValue & 0xFF)  ^  iRAW.charCodeAt(i)
+            ];
+
+        return  iValue ^ 0xFFFFFFFF;
+    }
+
+/* ---------- Hash Algorithm (Crypto API Wrapper)  v0.1 ---------- */
+
+//  Thanks "emu" --- http://blog.csdn.net/emu/article/details/39618297
+
+    if ( BOM.msCrypto )
+        $.each((BOM.crypto = BOM.msCrypto).subtle,  function (key, _This_) {
+
+            if (! (_This_ instanceof Function))  return;
+
+            BOM.crypto.subtle[ key ] = function () {
+
+                var iObserver = _This_.apply(this, arguments);
+
+                return  new Promise(function (iResolve) {
+
+                    iObserver.oncomplete = function () {
+
+                        iResolve( arguments[0].target.result );
+                    };
+
+                    iObserver.onabort = iObserver.onerror = arguments[1];
+                });
+            };
+        });
+
+    if (! BOM.crypto)  return;
+
+    BOM.crypto.subtle = BOM.crypto.subtle || BOM.crypto.webkitSubtle;
+
+
+    function BufferToString(iBuffer){
+
+        var iDataView = new DataView(iBuffer),  iResult = '';
+
+        for (var i = 0, iTemp;  i < iBuffer.byteLength;  i += 4) {
+
+            iTemp = iDataView.getUint32(i).toString(16);
+
+            iResult += ((iTemp.length == 8) ? '' : 0)  +  iTemp;
+        }
+
+        return iResult;
+    }
+
+    $.dataHash = function (iAlgorithm, iData) {
+
+        if (arguments.length < 2) {
+
+            iData = iAlgorithm;  iAlgorithm = 'CRC-32';
+        }
+
+        return  (iAlgorithm === 'CRC-32')  ?
+            Promise.resolve( CRC_32( iData ) )  :
+            BOM.crypto.subtle.digest(
+                {name:  iAlgorithm},
+                new Uint8Array(Array.from(iData,  function () {
+
+                    return arguments[0].charCodeAt(0);
+                }))
+            ).then( BufferToString );
+    };
+
+})(utility_ext_string);
+
+
+(function ($) {
+
 /* ---------- Smart zIndex ---------- */
 
     function Get_zIndex() {
@@ -5514,278 +5938,6 @@ var AJAX_ext_HTML_Request = (function ($) {
 
 (function ($) {
 
-/* ---------- Focus AnyWhere ---------- */
-
-    var DOM_Focus = $.fn.focus;
-
-    $.fn.focus = function () {
-
-        this.not(':focusable').attr('tabIndex', -1).css('outline', 'none');
-
-        return  DOM_Focus.apply(this, arguments);
-    };
-
-/* ---------- User Idle Event ---------- */
-
-    var End_Event = 'keydown mousedown scroll';
-
-    $.fn.onIdleFor = function (iSecond, iCallback) {
-
-        return  this.each(function _Self_() {
-
-            var iNO,  $_This = $( this );
-
-            function iCancel() {
-
-                clearTimeout( iNO );
-
-                _Self_.call( $_This.off(End_Event, iCancel)[0] );
-            }
-
-            iNO = $.wait(iSecond,  function () {
-
-                iCallback.call(
-                    $_This.off(End_Event, iCancel)[0],
-                    $.Event({
-                        type:      'idle',
-                        target:    $_This[0]
-                    })
-                );
-
-                _Self_.call( $_This[0] );
-            });
-
-            $_This.one(End_Event, iCancel);
-        });
-    };
-
-/* ---------- Cross Page Event ---------- */
-
-    function CrossPageEvent(iType, iSource) {
-
-        if (typeof iType === 'string') {
-
-            this.type = iType;  this.target = iSource;
-        } else
-            $.extend(this, iType);
-
-        if (! (iSource && (iSource instanceof Element)))  return;
-
-        $.extend(this,  $.map(iSource.dataset,  function (iValue) {
-
-            if (typeof iValue === 'string')  try {
-
-                return  $.parseJSON( iValue );
-
-            } catch (iError) { }
-
-            return iValue;
-        }));
-    }
-
-    CrossPageEvent.prototype.valueOf = function () {
-
-        var iValue = $.extend({ }, this);
-
-        delete iValue.data;  delete iValue.target;  delete iValue.valueOf;
-
-        return iValue;
-    };
-
-    var $_BOM = $( self );
-
-    $.fn.onReply = function (iType, iData, iCallback) {
-
-        var iTarget = this[0],  $_Source;
-
-        if (typeof iTarget.postMessage != 'function')  return this;
-
-        if (arguments.length === 4) {
-
-            $_Source = $( iData );  iData = iCallback;  iCallback = arguments[3];
-        }
-
-        var _Event_ = new CrossPageEvent(iType,  ($_Source || { })[0]);
-
-        if (typeof iCallback === 'function')
-            $_BOM.on('message',  function onMessage(iEvent) {
-
-                iEvent = iEvent.originalEvent || iEvent;
-
-                var iReturn = new CrossPageEvent(
-                        (typeof iEvent.data === 'string')  ?
-                            $.parseJSON( iEvent.data )  :  iEvent.data
-                    );
-                if (
-                    (iEvent.source === iTarget)  &&
-                    (iReturn.type === iType)  &&
-                    $.isEqual(iReturn, _Event_)
-                ) {
-                    iCallback.call($_Source ? $_Source[0] : this,  iReturn);
-
-                    $_BOM.off('message', onMessage);
-                }
-            });
-
-        iData = $.extend({data: iData},  _Event_.valueOf());
-
-        iTarget.postMessage(
-            ($.browser.msie < 10)  ?  JSON.stringify( iData )  :  iData,  '*'
-        );
-    };
-})(iQuery);
-
-
-(function ($) {
-
-/* ---------- RESTful API ---------- */
-
-    $.map(['get', 'post', 'put', 'delete'],  function (method) {
-
-        $[ method ] = $[ method ]  ||  function (URL, data, callback, DataType) {
-
-            if (typeof data === 'function')
-                DataType = callback,  callback = data,  data = null;
-
-            return $.ajax($.extend(
-                {
-                    type:           method,
-                    url:            URL,
-                    crossDomain:    true,
-                    data:           data,
-                    dataType:       DataType,
-                    success:        callback
-                },
-                $.isPlainObject( URL )  ?  URL  :  { }
-            ));
-        };
-    });
-
-    $.getJSON = $.getJSON || $.get;
-
-
-/* ---------- Smart Load ---------- */
-
-    $.fn.load = function (iURL, iData, iCallback) {
-
-        if (! this[0])  return this;
-
-        if (typeof iData == 'function')
-            iCallback = iData,  iData = null;
-
-        var $_This = this;
-
-        iURL = iURL.trim().split(/\s+/);
-
-        $[iData ? 'post' : 'get'](iURL[0],  iData,  function (iHTML, _, iXHR) {
-
-            $_This.htmlExec(
-                (typeof iHTML === 'string')  ?  iHTML  :  iXHR.responseText,
-                iURL[1]
-            );
-
-            if (typeof iCallback === 'function')
-                $_This.each( $.proxy(iCallback, null, iHTML, _, iXHR) );
-        },  'html');
-
-        return this;
-    };
-
-})(iQuery);
-
-
-(function ($) {
-
-    var W3C_Selection = (typeof document.getSelection === 'function');
-
-    function Select_Node(iSelection) {
-
-        var iFocus = W3C_Selection ?
-                iSelection.focusNode : iSelection.createRange().parentElement();
-
-        var iActive = iFocus.ownerDocument.activeElement;
-
-        return  $.contains(iActive, iFocus)  ?  iFocus  :  iActive;
-    }
-
-    function Find_Selection() {
-
-        var iDOM = this.document || this.ownerDocument || this;
-
-        if (iDOM.activeElement.tagName.toLowerCase() == 'iframe')  try {
-
-            return  Find_Selection.call( iDOM.activeElement.contentWindow );
-
-        } catch (iError) { }
-
-        var iSelection = W3C_Selection ? iDOM.getSelection() : iDOM.selection;
-
-        var iNode = Select_Node( iSelection );
-
-        return  $.contains(
-            (this instanceof Element)  ?  this  :  iDOM,  iNode
-        ) && [
-            iSelection, iNode
-        ];
-    }
-
-    $.fn.selection = function (iContent) {
-
-        if (! argument.length) {
-
-            var iSelection = Find_Selection.call( this[0] )[0];
-
-            return  W3C_Selection ?
-                (iSelection + '')  :  iSelection.createRange().htmlText;
-        }
-
-        return  this.each(function () {
-
-            var iSelection = Find_Selection.call( this );
-
-            var iNode = iSelection[1];    iSelection = iSelection[0];
-
-            iNode = (iNode.nodeType === 1)  ?  iNode  :  iNode.parentNode;
-
-            if (! W3C_Selection) {
-
-                iSelection = iSelection.createRange();
-
-                return  iSelection.text = (
-                    (typeof iContent === 'function')  ?
-                        iContent.call(iNode, iSelection.text)  :  iContent
-                );
-            }
-            var iProperty, iStart, iEnd;
-
-            if ((iNode.tagName || '').match( /input|textarea/i )) {
-
-                iProperty = 'value';
-
-                iStart = Math.min(iNode.selectionStart, iNode.selectionEnd);
-
-                iEnd = Math.max(iNode.selectionStart, iNode.selectionEnd);
-            } else {
-                iProperty = 'innerHTML';
-
-                iStart = Math.min(iSelection.anchorOffset, iSelection.focusOffset);
-
-                iEnd = Math.max(iSelection.anchorOffset, iSelection.focusOffset);
-            }
-
-            var iValue = iNode[ iProperty ];
-
-            iNode[ iProperty ] = iValue.slice(0, iStart)  +  (
-                (typeof iContent === 'function')  ?
-                    iContent.call(iNode, iValue.slice(iStart, iEnd))  :  iContent
-            )  +  iValue.slice( iEnd );
-        });
-    };
-})(utility_index);
-
-
-(function ($) {
-
 /* ---------- Form Field Validation ---------- */
 
     function Value_Check() {
@@ -5821,7 +5973,7 @@ var AJAX_ext_HTML_Request = (function ($) {
 
     $.fn.validate = function () {
 
-        var $_Field = this.find(':field').removeClass('invalid');
+        var $_Field = this.find(':field').addBack(':field').removeClass('invalid');
 
         for (var i = 0;  $_Field[i];  i++)
             if ((
@@ -6036,215 +6188,133 @@ var AJAX_ext_HTML_Request = (function ($) {
 
 (function ($) {
 
-    var BOM = self;
+/* ---------- Focus AnyWhere ---------- */
 
-/* ---------- Bit Operation for Big Number  v0.1 ---------- */
+    var DOM_Focus = $.fn.focus;
 
-    function Bit_Calculate(iType, iLeft, iRight) {
+    $.fn.focus = function () {
 
-        iLeft = parseInt(iLeft, 2);    iRight = parseInt(iRight, 2);
+        this.not(':focusable').attr('tabIndex', -1).css('outline', 'none');
 
-        switch (iType) {
-            case '&':    return  iLeft & iRight;
-            case '|':    return  iLeft | iRight;
-            case '^':    return  iLeft ^ iRight;
-            case '~':    return  ~iLeft;
-        }
-    }
-
-    $.bitOperate = function (iType, iLeft, iRight) {
-
-        iLeft = (typeof iLeft === 'string')  ?  iLeft  :  iLeft.toString(2);
-
-        iRight = (typeof iRight === 'string')  ?  iRight  :  iRight.toString(2);
-
-        var iLength = Math.max(iLeft.length, iRight.length);
-
-        if (iLength < 32)
-            return  Bit_Calculate(iType, iLeft, iRight).toString(2);
-
-        iLeft = iLeft.padStart(iLength, 0);
-
-        iRight = iRight.padStart(iLength, 0);
-
-        var iResult = '';
-
-        for (var i = 0;  i < iLength;  i += 31)
-            iResult += Bit_Calculate(
-                iType,  iLeft.slice(i, i + 31),  iRight.slice(i, i + 31)
-            ).toString(2).padStart(
-                Math.min(31,  iLength - i),  0
-            );
-
-        return iResult;
+        return  DOM_Focus.apply(this, arguments);
     };
 
-/* ---------- Local Storage Wrapper  v0.1 ---------- */
+/* ---------- User Idle Event ---------- */
 
-    var LS_Key = [ ];
+    var End_Event = 'keydown mousedown scroll';
 
-    $.storage = function (iName, iData) {
+    $.fn.onIdleFor = function (iSecond, iCallback) {
 
-        if (! (iData != null))  return  JSON.parse(BOM.localStorage[ iName ]);
+        return  this.each(function _Self_() {
 
-        var iLast = 0,  iLength = Math.min(LS_Key.length, BOM.localStorage.length);
+            var iNO,  $_This = $( this );
 
-        do  try {
-            BOM.localStorage[ iName ] = JSON.stringify( iData );
+            function iCancel() {
 
-            if (LS_Key.indexOf( iName )  ==  -1)  LS_Key.push( iName );
-            break;
-        } catch (iError) {
-            if (LS_Key[ iLast ]) {
-                delete  BOM.localStorage[ LS_Key[iLast] ];
+                clearTimeout( iNO );
 
-                LS_Key.splice(iLast, 1);
-            } else
-                iLast++ ;
-        } while (iLast < iLength);
-
-        return iData;
-    };
-
-/* ---------- Base64 to Blob  v0.1 ---------- */
-
-//  Thanks "axes" --- http://www.cnblogs.com/axes/p/4603984.html
-
-    $.toBlob = function (iType, iString) {
-
-        if (arguments.length == 1) {
-
-            iString = iType.match(/^data:([^;]+);base64,(.+)/);
-
-            iType = iString[1];    iString = iString[2];
-        }
-
-        iString = BOM.atob( iString );
-
-        var iBuffer = new ArrayBuffer( iString.length );
-
-        var uBuffer = new Uint8Array( iBuffer );
-
-        for (var i = 0;  iString[i];  i++)
-            uBuffer[i] = iString.charCodeAt(i);
-
-        var BlobBuilder = BOM.WebKitBlobBuilder || BOM.MozBlobBuilder;
-
-        if (! BlobBuilder)
-            return  new BOM.Blob([iBuffer],  {type: iType});
-
-        var iBuilder = new BlobBuilder();    iBuilder.append( iBuffer );
-
-        return  iBuilder.getBlob( iType );
-    };
-
-/* ---------- CRC-32  v0.1 ---------- */
-
-//  Thanks "Bakasen" for http://blog.csdn.net/bakasen/article/details/6043797
-
-    var CRC_32_Table = (function () {
-
-            var iTable = new Array(256);
-
-            for (var i = 0, iCell;  i < 256;  i++) {
-                iCell = i;
-
-                for (var j = 0;  j < 8;  j++)
-                    if (iCell & 1)
-                        iCell = ((iCell >> 1) & 0x7FFFFFFF)  ^  0xEDB88320;
-                    else
-                        iCell = (iCell >> 1)  &  0x7FFFFFFF;
-
-                iTable[i] = iCell;
+                _Self_.call( $_This.off(End_Event, iCancel)[0] );
             }
 
-            return iTable;
-        })();
+            iNO = $.wait(iSecond,  function () {
 
-    function CRC_32(iRAW) {
+                iCallback.call(
+                    $_This.off(End_Event, iCancel)[0],
+                    $.Event({
+                        type:      'idle',
+                        target:    $_This[0]
+                    })
+                );
 
-        iRAW = '' + iRAW;
+                _Self_.call( $_This[0] );
+            });
 
-        var iValue = 0xFFFFFFFF;
-
-        for (var i = 0;  iRAW[i];  i++)
-            iValue = ((iValue >> 8) & 0x00FFFFFF)  ^  CRC_32_Table[
-                (iValue & 0xFF)  ^  iRAW.charCodeAt(i)
-            ];
-
-        return  iValue ^ 0xFFFFFFFF;
-    }
-
-/* ---------- Hash Algorithm (Crypto API Wrapper)  v0.1 ---------- */
-
-//  Thanks "emu" --- http://blog.csdn.net/emu/article/details/39618297
-
-    if ( BOM.msCrypto )
-        $.each((BOM.crypto = BOM.msCrypto).subtle,  function (key, _This_) {
-
-            if (! (_This_ instanceof Function))  return;
-
-            BOM.crypto.subtle[ key ] = function () {
-
-                var iObserver = _This_.apply(this, arguments);
-
-                return  new Promise(function (iResolve) {
-
-                    iObserver.oncomplete = function () {
-
-                        iResolve( arguments[0].target.result );
-                    };
-
-                    iObserver.onabort = iObserver.onerror = arguments[1];
-                });
-            };
+            $_This.one(End_Event, iCancel);
         });
-
-    if (! BOM.crypto)  return;
-
-    BOM.crypto.subtle = BOM.crypto.subtle || BOM.crypto.webkitSubtle;
-
-
-    function BufferToString(iBuffer){
-
-        var iDataView = new DataView(iBuffer),  iResult = '';
-
-        for (var i = 0, iTemp;  i < iBuffer.byteLength;  i += 4) {
-
-            iTemp = iDataView.getUint32(i).toString(16);
-
-            iResult += ((iTemp.length == 8) ? '' : 0)  +  iTemp;
-        }
-
-        return iResult;
-    }
-
-    $.dataHash = function (iAlgorithm, iData) {
-
-        if (arguments.length < 2) {
-
-            iData = iAlgorithm;  iAlgorithm = 'CRC-32';
-        }
-
-        return  (iAlgorithm === 'CRC-32')  ?
-            Promise.resolve( CRC_32( iData ) )  :
-            BOM.crypto.subtle.digest(
-                {name:  iAlgorithm},
-                new Uint8Array(Array.from(iData,  function () {
-
-                    return arguments[0].charCodeAt(0);
-                }))
-            ).then( BufferToString );
     };
 
-})(utility_ext_string);
+/* ---------- Cross Page Event ---------- */
+
+    function CrossPageEvent(iType, iSource) {
+
+        if (typeof iType === 'string') {
+
+            this.type = iType;  this.target = iSource;
+        } else
+            $.extend(this, iType);
+
+        if (! (iSource && (iSource instanceof Element)))  return;
+
+        $.extend(this,  $.map(iSource.dataset,  function (iValue) {
+
+            if (typeof iValue === 'string')  try {
+
+                return  $.parseJSON( iValue );
+
+            } catch (iError) { }
+
+            return iValue;
+        }));
+    }
+
+    CrossPageEvent.prototype.valueOf = function () {
+
+        var iValue = $.extend({ }, this);
+
+        delete iValue.data;  delete iValue.target;  delete iValue.valueOf;
+
+        return iValue;
+    };
+
+    var $_BOM = $( self );
+
+    $.fn.onReply = function (iType, iData, iCallback) {
+
+        var iTarget = this[0],  $_Source;
+
+        if (typeof iTarget.postMessage != 'function')  return this;
+
+        if (arguments.length === 4) {
+
+            $_Source = $( iData );  iData = iCallback;  iCallback = arguments[3];
+        }
+
+        var _Event_ = new CrossPageEvent(iType,  ($_Source || { })[0]);
+
+        if (typeof iCallback === 'function')
+            $_BOM.on('message',  function onMessage(iEvent) {
+
+                iEvent = iEvent.originalEvent || iEvent;
+
+                var iReturn = new CrossPageEvent(
+                        (typeof iEvent.data === 'string')  ?
+                            $.parseJSON( iEvent.data )  :  iEvent.data
+                    );
+                if (
+                    (iEvent.source === iTarget)  &&
+                    (iReturn.type === iType)  &&
+                    $.isEqual(iReturn, _Event_)
+                ) {
+                    iCallback.call($_Source ? $_Source[0] : this,  iReturn);
+
+                    $_BOM.off('message', onMessage);
+                }
+            });
+
+        iData = $.extend({data: iData},  _Event_.valueOf());
+
+        iTarget.postMessage(
+            ($.browser.msie < 10)  ?  JSON.stringify( iData )  :  iData,  '*'
+        );
+    };
+})(iQuery);
 
 
 //
 //                >>>  iQuery.js  <<<
 //
 //
-//      [Version]    v3.0  (2017-09-18)  Beta
+//      [Version]    v3.0  (2017-09-29)  Beta
 //
 //      [Usage]      A Light-weight jQuery Compatible API
 //                   with IE 8+ compatibility.
