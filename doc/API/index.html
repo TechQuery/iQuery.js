@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>Home - Documentation</title>
+
+    <script src="scripts/prettify/prettify.js"></script>
+    <script src="scripts/prettify/lang-css.js"></script>
+    <!--[if lt IE 9]>
+      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <link type="text/css" rel="stylesheet" href="styles/prettify.css">
+    <link type="text/css" rel="stylesheet" href="styles/jsdoc.css">
+</head>
+<body>
+
+<input type="checkbox" id="nav-trigger" class="nav-trigger" />
+<label for="nav-trigger" class="navicon-button x">
+  <div class="navicon"></div>
+</label>
+
+<label for="nav-trigger" class="overlay"></label>
+
+<nav>
+    <h2><a href="index.html">Home</a></h2><h3>Classes</h3><ul><li><a href="$.html">$</a><ul class='methods'><li data-type='method'><a href="$.html#.bitOperate">bitOperate</a></li><li data-type='method'><a href="$.html#.buildFragment">buildFragment</a></li><li data-type='method'><a href="$.html#.camelCase">camelCase</a></li><li data-type='method'><a href="$.html#.cssRule">cssRule</a></li><li data-type='method'><a href="$.html#.extendURL">extendURL</a></li><li data-type='method'><a href="$.html#.filePath">filePath</a></li><li data-type='method'><a href="$.html#.hyphenCase">hyphenCase</a></li><li data-type='method'><a href="$.html#.intersect">intersect</a></li><li data-type='method'><a href="$.html#.isEqual">isEqual</a></li><li data-type='method'><a href="$.html#.isXDomain">isXDomain</a></li><li data-type='method'><a href="$.html#.likeArray">likeArray</a></li><li data-type='method'><a href="$.html#.makeIterator">makeIterator</a></li><li data-type='method'><a href="$.html#.makeSet">makeSet</a></li><li data-type='method'><a href="$.html#.paramJSON">paramJSON</a></li><li data-type='method'><a href="$.html#.parseHeader">parseHeader</a></li><li data-type='method'><a href="$.html#.split">split</a></li><li data-type='method'><a href="$.html#.storage">storage</a></li><li data-type='method'><a href="$.html#.throttle">throttle</a></li><li data-type='method'><a href="$.html#.Type">Type</a></li><li data-type='method'><a href="$.html#.urlDomain">urlDomain</a></li><li data-type='method'><a href="$.html#.uuid">uuid</a></li><li data-type='method'><a href="$.html#cssRule">cssRule</a></li><li data-type='method'><a href="$.html#insertTo">insertTo</a></li><li data-type='method'><a href="$.html#treeWalker">treeWalker</a></li><li data-type='method'><a href="$.html#validate">validate</a></li></ul></li><li><a href="Class.html">Class</a><ul class='methods'><li data-type='method'><a href="Class.html#.extend">extend</a></li><li data-type='method'><a href="Class.html#setPrivate">setPrivate</a></li><li data-type='method'><a href="Class.html#setPublic">setPublic</a></li></ul></li></ul><h3>Modules</h3><ul><li><a href="module-iQuery.html">iQuery</a></li></ul><h3>Interfaces</h3><ul><li><a href="Iterator.html">Iterator</a><ul class='methods'><li data-type='method'><a href="Iterator.html#next">next</a></li></ul></li></ul><h3><a href="global.html">Global</a></h3>
+</nav>
+
+<div id="main">
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    <section class="readme">
+        <article><h1>iQuery</h1><p><a href="https://gitter.im/iQuery-js/Lobby?utm_source=badge&amp;utm_medium=badge&amp;utm_campaign=pr-badge&amp;utm_content=badge"><img src="https://badges.gitter.im/iQuery-js/Lobby.svg" alt="Join the chat at https://gitter.im/iQuery-js/Lobby"></a></p>
+<p><a href="http://tech_query.oschina.io/iquery"><strong>iQuery</strong></a> 是一个 <strong>普适</strong>而 <strong>轻巧</strong>的 <strong>DOM/JavaScript 开发库</strong> —— <strong>支持 IE 8+ 的 jQuery/W3C 兼容 API</strong>，包含 最常用的 jQuery 静态/实例 属性、方法，适合替代逻辑简单的网页中体积很大的 jQuery，或作为 <strong>Web 前端开发基础库</strong> 嵌入各种 独立发布（不能有外部依赖、自闭合、有兼容性要求）的 JavaScript 库。</p>
+<p>若 Zepto 相当于 jQuery v2.x 的精简版，那 iQuery 就相当于 <strong>jQuery v1.x 的精简版</strong>；而且 iQuery 在与 Zepto 接近的 <strong>Minimized 体积</strong>中提供了 IE 8/9 的兼容、 <strong>更贴近官方的 jQuery 对象实现</strong> 以及 <strong>更多的实用扩展</strong>（3200+ 行，近六成的体量，详见下文）。</p>
+<p>在 API 形态上尽力兼容 jQuery 的同时，iQuery 在内部实现上采取 <strong>“面向未来，向前兼容”的 Polyfill 策略</strong> —— 核心逻辑（4300+ 行）尽力基于 <strong>W3C、ECMA 最新标准中的优秀 API</strong>，老旧浏览器兼容代码（部分基于 jQuery API，1200+ 行）尽力包装成与新 API 相同的形式（原型拓展），并独立为外部模块。这样做不但能复用 jQuery API 来高效实现，还方便开发人员自行裁剪。</p>
+<p>【注】对 IE 的兼容仅限其“标准模式”，而非“兼容性视图”。</p>
+<h2>【入门】</h2><ol>
+<li>基础知识 ——《<a href="http://www.jquery123.com/api/">jQuery API 文档</a>》</li>
+<li>嵌入使用 —— 典型应用实例项目：文件级 <strong>前端脚本加载器</strong> <a href="http://git.oschina.net/Tech_Query/EasyImport.js">EasyImport.js</a></li>
+<li>独立使用 ——（HTML 源码基本结构示例如下）</li>
+</ol>
+<pre class="prettyprint source lang-html"><code>&lt;!DocType HTML>
+&lt;html>&lt;head>
+    &lt;meta http-equiv=&quot;X-UA-Compatible&quot; content=&quot;IE=Edge, Chrome=1&quot; />
+    &lt;script src=&quot;path/to/iQuery.js&quot;>&lt;/script>
+&lt;/head>&lt;body>
+    ...
+&lt;/body>&lt;/html></code></pre><h3>成功驱动的项目</h3><ol>
+<li>EasyImport.js</li>
+<li>某公司 JS-SDK</li>
+<li><a href="http://git.oschina.net/Tech_Query/EasyWebUI/">EasyWebUI</a></li>
+<li><a href="http://git.oschina.net/Tech_Query/EasyWebApp/">EasyWebApp</a></li>
+<li><a href="https://larsjung.de/jquery-qrcode/">jQuery-QRcode</a></li>
+<li><a href="http://git.oschina.net/Tech_Query/EasyWiki/">EasyWiki</a></li>
+<li>某公司 开放平台、业务后台</li>
+<li>某公司 微信轻应用</li>
+<li>某公司 WiFi 认证微官网</li>
+</ol>
+<h2>【API 总览】</h2><h3>对 jQuery（最新版）的增强</h3><p>以下扩展已收录在本项目的 <a href="/master/jQueryKit.js"><strong>jQueryKit.js</strong></a> 中，方便配合其它 jQuery API 实现 ——</p>
+<p><a href="doc/API/">【API 文档】</a>及更多变更：</p>
+<ul>
+<li>内置一个改进且向下兼容的 <strong>$.browser 对象</strong>，能通过 <strong>直接比较版本号</strong>来区分浏览器</li>
+<li>新增 <strong>计时相关方法（秒基准）</strong>—— <code>$.every()</code>、<code>$.wait()</code>、<code>$.start()</code>、<code>$.end()</code></li>
+<li><code>$.unique()</code> 方法不局限于 DOM 元素数组</li>
+<li>新增 <strong>对象链回溯</strong>方法 —— <code>$.trace()</code></li>
+<li>新增 <strong>对象补丁</strong>方法 —— <code>$.patch()</code></li>
+<li>新增 <strong>字符串字节长度</strong>方法 —— <code>$.byteLength()</code></li>
+<li>新增 <strong>函数柯里化</strong>方法 —— <code>$.curry()</code></li>
+<li>新增 <strong>URL 信息提取</strong>方法 —— <code>$.fileName()</code>、<code>$.filePath()</code>、<code>$.urlDomain()</code></li>
+<li>新增 <strong>URL 参数签名</strong>方法 —— <code>$.paramSign()</code></li>
+<li><code>$.parseJSON()</code> 支持 <strong>递归解析</strong>，会将 JSON 字符串中的内层字符串 eval 为 JS 实值/例</li>
+<li>新增 <strong>JSON 格式化显示</strong>方法 —— <code>$.formatJSON()</code></li>
+<li>基于官方 <code>$.ajaxTransport()</code> 重载 <strong>JSONP 实现</strong>，支持基本的异常处理</li>
+<li><code>$.ajax()</code> 支持 form 元素、FormData 对象的请求数据形式，整合 XHR、XDR、JSONP、iframe <strong>自适应 跨域请求</strong></li>
+<li><code>$.ajax()</code> <strong>自动转换响应内容</strong>为 HTML、XML 或 JSON 对象实例</li>
+<li>新增 <code>$.delete()</code>、<code>$.put()</code>，方便实现基于 <strong>RESTful API</strong> 的单页应用</li>
+<li>新增 <code>$.fn.htmlExec()</code> <strong>W3C HTML 解析器</strong>方法，并基于此重构 <code>$.fn.load()</code> 内部实现，方便 DOM 片段清理、脚本调试</li>
+<li>新增 <strong>多媒体元素加载完成</strong>方法 —— <code>$.fn.mediaReady()</code></li>
+<li>封装了 <strong>表单元素无刷新提交</strong>，并可直接绑定响应回调 —— <code>$.fn.ajaxSubmit()</code>（基于前述的几个 <strong>AJAX 增强方法</strong> 构建）</li>
+<li>新增 <strong>选择符合法性判断</strong>方法 —— <code>$.isSelector()</code></li>
+<li>更多 jQuery <strong>伪类选择符</strong>：<ul>
+<li><strong>:image</strong> 还支持 <code>img, link[type=&quot;image/x-icon&quot;], svg, canvas</code> 及设置了 <code>background-image</code> 的普通元素</li>
+<li><strong>:button</strong> 还支持 <code>input[type=&quot;submit&quot;], input[type=&quot;reset&quot;], input[type=&quot;image&quot;]</code></li>
+<li><strong>:input</strong> 还支持 contentEditable、designMode 属性</li>
+<li>自带 <code>:indeterminate</code>，属 <a href="https://developer.mozilla.org/zh-CN/docs/Web/CSS/:indeterminate">CSS 3 标准</a></li>
+<li>自带 <code>:focusable</code>，属 <a href="http://www.css88.com/jquery-ui-api/focusable-selector/">jQuery UI 标准</a></li>
+<li>自带 <code>:data()</code>，属 <a href="http://www.css88.com/jquery-ui-api/data-selector/">jQuery UI 标准</a></li>
+<li>自带 <code>:field</code>，匹配所有含 <strong>可提交字段</strong>的元素</li>
+<li>新增 <code>:list</code>，等价于 <code>ul, ol, dl, tbody, datalist</code></li>
+<li>新增 <code>:media</code>，等价于 <code>:image, iframe, object, embed, audio, video</code></li>
+<li>新增 <code>:loaded</code>，等价于 <code>img, audio, video</code>、<code>document</code> 加载结束</li>
+<li>新增 <code>:scrollable</code>，匹配所有 <strong>内容可滚动</strong>的元素</li>
+</ul>
+</li>
+<li>新增 <strong>祖先元素交集</strong>方法 —— <code>$.fn.sameParents()</code></li>
+<li>新增 <strong>有滚动条的祖先元素</strong>方法 —— <code>$.fn.scrollParents()</code></li>
+<li>新增 <strong>元素平滑滚动</strong>方法 —— <code>$.fn.scrollTo()</code></li>
+<li>所有类型的 <strong>DOM 信息读写器</strong>（<code>.attr()</code>、<code>.prop()</code>、<code>.css()</code>、<code>.data()</code>）均支持“不传键名时返回 <strong>信息全集</strong>”特性</li>
+<li>新增 <strong>DOM 数据归并</strong>方法 —— <code>$.fn.reduce()</code></li>
+<li>.css() 取值时，会把 纯数字值、像素值 直接返回为 Number 类型</li>
+<li>.css() 赋值一律默认 important 优先级，确保赋值的有效性</li>
+<li><code>$.fn.show()</code> 兼容 <strong>元素非固有 display 属性值</strong>，避免破坏 复杂布局</li>
+<li>新增 <strong>DOM 元素 z-index 集成</strong>方法 —— <code>$.fn.zIndex()</code>，集 <strong>取实际值、赋值、同辈置顶/沉底</strong> 功能于一身</li>
+<li>新增 <strong>CSS 选择符优先级计算</strong>方法 —— <code>$.selectorPriority()</code></li>
+<li>新增 <strong>CSS 厂商命名获取</strong>方法 —— <code>$.cssName()</code></li>
+<li>新增 <strong>CSS 集合对象搜索</strong>方法 —— <code>$.searchCSS()</code></li>
+<li>自带 <strong>DOM 唯一 ID 设置</strong>方法 —— <code>$.fn.uniqueId()</code>（<a href="http://www.css88.com/jquery-ui-api/uniqueId/">jQuery UI 标准</a>）</li>
+<li>新增 <strong>DOM 选中内容读写</strong>方法 —— <code>$.fn.selection()</code></li>
+<li><code>$.fn.focus()</code> 会让所有可见元素获得焦点</li>
+<li>新增 <strong>被动观察者</strong>对象 —— <code>$.Observer()</code></li>
+<li>新增 <code>$.customEvent()</code> <strong>事件扩展接口</strong>，并基于此实现 <code>input</code> 标准事件的补丁</li>
+<li>封装了 <strong>触屏单指手势事件</strong>（tap、press、swipe），并为桌面端、移动端提供一致的操作体验</li>
+<li>新增 <strong>用户操作空闲事件</strong>方法 —— <code>$.fn.onIdleFor()</code></li>
+<li>新增 <strong>跨页面消息事件</strong>方法 —— <code>$.fn.onReply()</code>（基于 <code>window.postMessage()</code>）</li>
+<li><code>$.fn.animate()</code> 支持类似 <a href="http://www.css88.com/jquery-ui-api/effect/">jQuery UI <code>$.fn.effect()</code></a> <strong>动画效果名</strong>参数（基于 <strong>CSS Animation</strong> 实现）</li>
+<li>新增 <strong>CSS 动画类切换</strong>方法 —— <code>$.fn.toggleAnimate()</code></li>
+<li>新增 Base64 文本转 <strong>二进制对象</strong>方法 —— <code>$.toBlob()</code></li>
+<li>新增 <strong>数据哈希</strong>方法 —— <code>$.dataHash()</code><ul>
+<li>默认算法：<strong>CRC-32</strong></li>
+<li>还支持 <strong>现代浏览器 Crypto API</strong></li>
+</ul>
+</li>
+</ul>
+<h3>未实现的 jQuery（最新版）特性</h3><ul>
+<li>没有 $.noConflict()，但不会强占 jQuery 变量</li>
+<li>不支持 浏览器 <strong>内置类型</strong>（构造函数）相应的 $.isXXX() 系列方法</li>
+<li>不支持 <strong>浏览器特性检测</strong></li>
+<li>不支持 $.ajax() 不常用的自定义选项</li>
+<li>不支持 $.Deferred()</li>
+<li><strong>jQuery 扩展伪类选择符</strong>：只支持 常用且“难以用 <strong>CSS 标准选择符</strong> 或 jQuery API 实现其功能”的</li>
+<li>不支持 <strong>XPath 选择器</strong>、操作 <strong>XML 文档</strong></li>
+<li>不支持一些不常用的 <strong>jQuery 静态/实例方法</strong></li>
+<li>不支持 <strong>动画队列</strong>外部操作 API</li>
+</ul>
+<h3>ECMA、W3C 标准 API 补丁</h3><ul>
+<li>自带 <code>Number.isInteger()</code> 整数判断方法</li>
+<li>自带 <code>Number.isSafeInteger()</code> 安全整数判断方法</li>
+<li>自带 支持“非空白符”的 <code>String.prototype.trim()</code>（借鉴 PHP）</li>
+<li>自带 <code>String.prototype.repeat</code> 标准方法</li>
+<li>自带 <code>String.prototype.padStart</code> 标准方法</li>
+<li>自带 <code>String.prototype.padEnd</code> 标准方法</li>
+<li>自带 <code>Array.from()</code> 标准方法</li>
+<li>自带 <code>Array.prototype.indexOf()</code> 标准方法</li>
+<li>自带 <code>Array.prototype.reduce()</code> 标准方法</li>
+<li>自带 <code>Function.prototype.name</code> 属性补丁</li>
+<li>自带 <code>Object.keys()</code> 标准方法</li>
+<li>自带 <code>Object.getPrototypeOf()</code> 标准方法</li>
+<li>自带 <code>Object.create()</code> 标准方法</li>
+<li>自带 <code>Date.now()</code> 标准方法</li>
+<li>自带 <code>Promise()</code> 标准对象构造函数</li>
+<li>重写 <code>Error.prototype.valueOf()</code>，使 IE 10- 返回可查询的错误码（附带 官方文档 URL）</li>
+<li>新增 <strong>HTMLHttpRequest 对象</strong>，封装了 <strong>JSONP Get</strong>、 <strong>iframe Post</strong></li>
+<li>自带 <code>HTMLDocument.prototype.currentScript</code> 属性</li>
+<li>自带 <code>HTMLDocument.prototype.scrollingElement</code> 属性</li>
+<li>自带 <code>Element.prototype.textContent</code> 属性</li>
+<li>自带 <code>Element.prototype.innerHTML</code> 的 IE 8 补丁</li>
+<li>自带 <strong>HTMLCollection 对象</strong>，修复 IE 10- <code>Element.prototype.children</code> 属性在其元素有 name 属性时的“数字键值缺失”Bug</li>
+<li>自带 Element 对象的 <code>firstElementChild</code>、<code>lastElementChild</code>、<code>previousElementSibling</code>、<code>nextElementSibling</code> 属性</li>
+<li>自带 <code>Element.prototype.matches</code> 标准草案方法</li>
+<li>自带 <strong>DOMTokenList 对象</strong>，为各种浏览器的 <code>&lt;a /&gt;</code>、<code>&lt;area /&gt;</code>、<code>&lt;link /&gt;</code>、<code>&lt;svg /&gt;</code> 等元素提供 <strong>classList</strong>、<strong>relList</strong> 属性支持</li>
+<li>自带 <strong>DOMStringMap 对象</strong>，为 IE 11- 提供 <strong>dataset</strong> 支持</li>
+<li>自带 <code>HTMLSelectElement.prototype.selectedOptions</code> 属性的 IE 补丁</li>
+<li>自带 <code>location.origin</code>、<code>HTMLAnchorElement.prototype.origin</code> 只读属性 IE 11- 补丁</li>
+<li>修正 IE 8 DOM Attribute 系列方法对 JavaScript 关键字的特殊处理</li>
+<li>自带 <strong>CSSStyleDeclaration 对象</strong>，为 IE 8 提供 <strong>getComputedStyle</strong> 支持，并封装了 M$ DirectX 滤镜属性转换</li>
+<li>自带 Mozilla Firefox <strong>元素 CSS 默认规则对象 获取</strong>方法 <code>Window.getMatchedCSSRules()</code></li>
+<li>自带 Google Chrome <strong>元素 CSS 匹配规则对象 获取</strong>方法 <code>Window.getMatchedCSSRules()</code></li>
+<li>自带 <code>FormData()</code> 标准对象构造函数，为 IE 10- 提供 表单数据封装</li>
+<li>自带 <code>DOMParser()</code> 标准对象构造函数，为 IE 8 提供 <strong>XML 文档解析</strong>支持</li>
+<li>自带 <code>URL()</code> 标准对象构造函数</li>
+<li>自带 <code>URLSearchParams()</code> 标准对象构造函数</li>
+</ul>
+<h2><del>【iQuery+ 插件库】</del>（废弃）</h2><blockquote>
+<p>【特别提醒】以下特性已在 <a href="http://git.oschina.net/Tech_Query/EasyWebApp/tree/MVVM/">EWA v4</a> 中基于 MVVM 完全重写，不再在本项目中维护！</p>
+</blockquote>
+<ul>
+<li>通用 <strong>CommonView 对象</strong>生成方法 —— <code>$.CommonView()</code></li>
+<li>通用 <strong>ListView 对象</strong>生成方法 —— <code>$.ListView()</code></li>
+<li>ListView 多媒体优化版 <strong>GalleryView 对象</strong>生成方法 —— <code>$.GalleryView()</code></li>
+<li>通用 <strong>TreeView 对象</strong>生成方法 —— <code>$.TreeView()</code></li>
+<li><strong>HTML 5  History API  Polyfill</strong> —— 为 IE 10- 提供兼容支持（需 服务器端响应 <code>./blank.html</code> 或 404 页面）</li>
+</ul>
+<h2>【参与开发】</h2><h3>环境搭建</h3><ol>
+<li>安装 <strong>Git</strong>（比 SVN 更适合 <strong>开源团队</strong>）</li>
+<li>安装 <strong>Node.JS</strong> 最新 LTS 版</li>
+</ol>
+<h3>从源码构建</h3><p>UNIX-Shell、Windows-CMD 通用脚本 ——</p>
+<pre class="prettyprint source lang-Shell"><code>git clone https://git.oschina.net/Tech_Query/iQuery.git
+
+npm install
+
+npm test
+
+npm run build</code></pre></article>
+    </section>
+
+
+
+
+
+
+</div>
+
+<br class="clear">
+
+<footer>
+    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.5.5</a> on Tue Oct 24 2017 04:06:41 GMT+0800 (中国标准时间) using the <a href="https://github.com/clenemt/docdash">docdash</a> theme.
+</footer>
+
+<script>prettyPrint();</script>
+<script src="scripts/linenumber.js"></script>
+</body>
+</html>

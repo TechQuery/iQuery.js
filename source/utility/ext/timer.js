@@ -34,30 +34,55 @@ define(['../../object/index'],  function ($) {
 
             return  (Date.now() - _Timer_[iName])  /  1000;
         },
-        throttle:    function (iSecond, iOrigin) {
+        /**
+         * 函数节流
+         *
+         * @author   TechQuery
+         *
+         * @memberof $
+         *
+         * @param    {number}   [second=0.25] - Minimum interval in second
+         * @param    {function} origin        - Original function
+         *
+         * @returns  {function} Wrapped function
+         */
+        throttle:    function (second, origin) {
 
-            if (! $.isNumeric( iSecond )) {
-                iOrigin = iSecond;
-                iSecond = 0;
+            if (! $.isNumeric( second )) {
+
+                origin = second;    second = 0;
             }
-            iSecond = (iSecond || 0.25)  *  1000;
+
+            second = (second || 0.25)  *  1000;
 
             var Last_Exec = 0;
 
             return  function () {
 
-                var iNow = Date.now();
+                var now = Date.now();
 
-                if (Last_Exec + iSecond  <=  iNow) {
-                    Last_Exec = iNow;
+                if (Last_Exec + second  <=  now) {
 
-                    return  iOrigin.apply(this, arguments);
+                    Last_Exec = now;
+
+                    return  origin.apply(this, arguments);
                 }
             };
         },
-        uuid:        function () {
+        /**
+         * 唯一标识符生成
+         *
+         * @author   TechQuery
+         *
+         * @memberof $
+         *
+         * @param    {string} prefix
+         *
+         * @returns  {string}
+         */
+        uuid:        function (prefix) {
 
-            return  (arguments[0] || 'uuid')  +  '_'  +
+            return  (prefix || 'uuid')  +  '_'  +
                 (Date.now() + Math.random()).toString(36)
                     .replace('.', '').toUpperCase();
         }

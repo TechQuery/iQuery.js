@@ -6,8 +6,8 @@ define(['../../iQuery'],  function ($) {
                 var link = { };
 
                 raw.replace(
-                    /\<(\S+?)\>; rel="(\w+)"(; title="(.*?)")?/g,
-                    function (_, URI, rel, _, title) {
+                    /\<(\S+?)\>; rel="(\w+)"(?:; title="(.*?)")?/g,
+                    function (_, URI, rel, title) {
 
                         link[ rel ] = {
                             uri:      URI,
@@ -20,6 +20,18 @@ define(['../../iQuery'],  function ($) {
                 return link;
             }
         };
+
+    /**
+     * HTTP 报文头解析
+     *
+     * @author   TechQuery
+     *
+     * @memberof $
+     *
+     * @param    {string} raw - Raw Text of HTTP Headers
+     *
+     * @returns  {object} Object of HTTP Headers
+     */
 
     $.parseHeader = function (raw) {
 

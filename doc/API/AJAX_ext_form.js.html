@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>AJAX/ext/form.js - Documentation</title>
+
+    <script src="scripts/prettify/prettify.js"></script>
+    <script src="scripts/prettify/lang-css.js"></script>
+    <!--[if lt IE 9]>
+      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <link type="text/css" rel="stylesheet" href="styles/prettify.css">
+    <link type="text/css" rel="stylesheet" href="styles/jsdoc.css">
+</head>
+<body>
+
+<input type="checkbox" id="nav-trigger" class="nav-trigger" />
+<label for="nav-trigger" class="navicon-button x">
+  <div class="navicon"></div>
+</label>
+
+<label for="nav-trigger" class="overlay"></label>
+
+<nav>
+    <h2><a href="index.html">Home</a></h2><h3>Classes</h3><ul><li><a href="$.html">$</a><ul class='methods'><li data-type='method'><a href="$.html#.bitOperate">bitOperate</a></li><li data-type='method'><a href="$.html#.buildFragment">buildFragment</a></li><li data-type='method'><a href="$.html#.camelCase">camelCase</a></li><li data-type='method'><a href="$.html#.cssRule">cssRule</a></li><li data-type='method'><a href="$.html#.extendURL">extendURL</a></li><li data-type='method'><a href="$.html#.filePath">filePath</a></li><li data-type='method'><a href="$.html#.hyphenCase">hyphenCase</a></li><li data-type='method'><a href="$.html#.intersect">intersect</a></li><li data-type='method'><a href="$.html#.isEqual">isEqual</a></li><li data-type='method'><a href="$.html#.isXDomain">isXDomain</a></li><li data-type='method'><a href="$.html#.likeArray">likeArray</a></li><li data-type='method'><a href="$.html#.makeIterator">makeIterator</a></li><li data-type='method'><a href="$.html#.makeSet">makeSet</a></li><li data-type='method'><a href="$.html#.paramJSON">paramJSON</a></li><li data-type='method'><a href="$.html#.parseHeader">parseHeader</a></li><li data-type='method'><a href="$.html#.split">split</a></li><li data-type='method'><a href="$.html#.storage">storage</a></li><li data-type='method'><a href="$.html#.throttle">throttle</a></li><li data-type='method'><a href="$.html#.Type">Type</a></li><li data-type='method'><a href="$.html#.urlDomain">urlDomain</a></li><li data-type='method'><a href="$.html#.uuid">uuid</a></li><li data-type='method'><a href="$.html#cssRule">cssRule</a></li><li data-type='method'><a href="$.html#insertTo">insertTo</a></li><li data-type='method'><a href="$.html#treeWalker">treeWalker</a></li><li data-type='method'><a href="$.html#validate">validate</a></li></ul></li><li><a href="Class.html">Class</a><ul class='methods'><li data-type='method'><a href="Class.html#.extend">extend</a></li><li data-type='method'><a href="Class.html#setPrivate">setPrivate</a></li><li data-type='method'><a href="Class.html#setPublic">setPublic</a></li></ul></li></ul><h3>Modules</h3><ul><li><a href="module-iQuery.html">iQuery</a></li></ul><h3>Interfaces</h3><ul><li><a href="Iterator.html">Iterator</a><ul class='methods'><li data-type='method'><a href="Iterator.html#next">next</a></li></ul></li></ul><h3><a href="global.html">Global</a></h3>
+</nav>
+
+<div id="main">
+
+    <h1 class="page-title">AJAX/ext/form.js</h1>
+
+
+
+
+
+
+
+    <section>
+        <article>
+            <pre class="prettyprint source linenums"><code>define(['../../iQuery', '../index'],  function ($) {
+
+/* ---------- Form Field Validation ---------- */
+
+    function Value_Check() {
+
+        if ((! this.value)  &amp;&amp;  (this.getAttribute('required') != null))
+            return false;
+
+        var iRegEx = this.getAttribute('pattern');
+
+        if (iRegEx)  try {
+
+            return  RegExp( iRegEx ).test( this.value );
+
+        } catch (iError) { }
+
+        if (
+            (this.tagName.toLowerCase() === 'input')  &amp;&amp;
+            (this.getAttribute('type') === 'number')
+        ) {
+            var iNumber = Number( this.value ),
+                iMin = Number( this.getAttribute('min') );
+            if (
+                isNaN( iNumber )  ||
+                (iNumber &lt; iMin)  ||
+                (iNumber > Number(this.getAttribute('max') || Infinity))  ||
+                ((iNumber - iMin)  %  Number( this.getAttribute('step') ))
+            )
+                return false;
+        }
+
+        return true;
+    }
+
+    /**
+     * 表单（项）校验
+     *
+     * @author   TechQuery
+     *
+     * @memberof $.prototype
+     * @function validate
+     *
+     * @returns  {boolean}
+     *
+     * @see {@link https://developer.mozilla.org/en-US/docs/Learn/HTML/Forms/Form_validation|Form Validation}
+     */
+
+    $.fn.validate = function () {
+
+        var $_Field = this.find(':field').addBack(':field').removeClass('invalid');
+
+        for (var i = 0;  $_Field[i];  i++)
+            if ((
+                (typeof $_Field[i].checkValidity === 'function')  &amp;&amp;
+                (! $_Field[i].checkValidity())
+            )  ||  (
+                ! Value_Check.call( $_Field[i] )
+            )) {
+                $_Field = $( $_Field[i] ).addClass('invalid');
+
+                $_Field.scrollParents().eq(0).scrollTo( $_Field.focus() );
+
+                return false;
+            }
+
+        return true;
+    };
+
+/* ---------- Form Element AJAX Submit ---------- */
+
+    function AJAX_Submit(DataType, iCallback) {
+
+        var $_Form = $( this );
+
+        if ((! $_Form.validate())  ||  $_Form.data('_AJAX_Submitting_'))
+            return false;
+
+        $_Form.data('_AJAX_Submitting_', 1);
+
+        var iMethod = ($_Form.attr('method') || 'Get').toLowerCase();
+
+        arguments[0].preventDefault();
+
+        var iOption = {
+                type:        iMethod,
+                dataType:    DataType || 'json'
+            };
+
+        if (! $_Form.find('input[type="file"]')[0])
+            iOption.data = $_Form.serialize();
+        else {
+            iOption.data = new self.FormData( $_Form[0] );
+
+            iOption.contentType = iOption.processData = false;
+        }
+
+        $.ajax(this.action, iOption).then(function () {
+
+            $_Form.data('_AJAX_Submitting_', 0);
+
+            if (typeof iCallback === 'function')
+                iCallback.call($_Form[0], arguments[0]);
+        });
+    }
+
+    $.fn.ajaxSubmit = function (DataType, iCallback) {
+
+        if (! this[0])  return this;
+
+        if (typeof DataType === 'function')
+            iCallback = DataType,  DataType = '';
+
+        iCallback = $.proxy(AJAX_Submit, null, DataType, iCallback);
+
+        var $_This = (this.length &lt; 2)  ?  this  :  this.sameParents().eq(0);
+
+        if ($_This[0].tagName.toLowerCase() === 'form')
+            $_This.submit( iCallback );
+        else
+            $_This.on('submit', 'form', iCallback);
+
+        return this;
+    };
+
+});
+</code></pre>
+        </article>
+    </section>
+
+
+
+
+</div>
+
+<br class="clear">
+
+<footer>
+    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.5.5</a> on Tue Oct 24 2017 04:06:41 GMT+0800 (中国标准时间) using the <a href="https://github.com/clenemt/docdash">docdash</a> theme.
+</footer>
+
+<script>prettyPrint();</script>
+<script src="scripts/linenumber.js"></script>
+</body>
+</html>

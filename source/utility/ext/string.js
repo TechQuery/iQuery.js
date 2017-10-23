@@ -1,23 +1,50 @@
 define(['../../iQuery'],  function ($) {
 
     return $.extend({
-        split:         function (iString, iSplit, iLimit, iJoin) {
+        /**
+         * 定字定数分割字符串
+         *
+         * @author TechQuery
+         *
+         * @memberof $
+         *
+         * @param   {string}        string  - Raw Text
+         * @param   {string|RegExp} [split] - Separator to split as
+         *                                    `Array.prototype.split`
+         * @param   {number}        [max]   - Max number of returned parts
+         * @param   {string}        [join]  - String to join
+         *                                    (Default value is same as `split`)
+         * @returns {string[]}
+         */
+        split:         function (string, split, max, join) {
 
-            iString = iString.split(iSplit);
+            string = string.split( split );
 
-            if (iLimit) {
-                iString[iLimit - 1] = iString.slice(iLimit - 1).join(
-                    (typeof iJoin == 'string') ? iJoin : iSplit
+            if (max) {
+                string[max - 1] = string.slice(max - 1).join(
+                    (typeof join == 'string') ? join : split
                 );
-                iString.length = iLimit;
+                string.length = max;
             }
 
-            return iString;
+            return string;
         },
-        hyphenCase:    function () {
-            return  arguments[0].replace(/([a-z0-9])[\s_]?([A-Z])/g,  function () {
+        /**
+         * 连字符化字符串
+         *
+         * @author   TechQuery
+         *
+         * @memberof $
+         *
+         * @param    {string} raw - Non Hyphen-Case String
+         *
+         * @returns  {string}
+         */
+        hyphenCase:    function (raw) {
 
-                return  arguments[1] + '-' + arguments[2].toLowerCase();
+            return  raw.toLowerCase().replace(/(\S)[^a-z0-9]+(\S)/g,  function () {
+
+                return  arguments[1] + '-' + arguments[2];
             });
         },
         byteLength:    function () {

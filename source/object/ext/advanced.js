@@ -15,26 +15,36 @@ define(['../../iQuery'],  function ($) {
                     $.proxy.apply($,  $.merge([iProxy, this], arguments));
             };
         },
-        intersect:    function intersect() {
+        /**
+         * 对象交集
+         *
+         * @author   TechQuery
+         *
+         * @memberof $
+         *
+         * @param    {(object|array)} set
+         *
+         * @returns  {(object|array)} Intersect of parameters
+         */
+        intersect:    function intersect(set) {
 
-            if (arguments.length < 2)  return arguments[0];
+            if (arguments.length < 2)  return set;
 
-            var iArgs = Array.from( arguments );
+            var isArray = $.likeArray( set );
 
-            var iArray = $.likeArray( iArgs[0] );
+            set = Array.from( arguments );
 
-            iArgs[0] = $.map(iArgs.shift(),  function (iValue, iKey) {
-                if ( iArray ) {
-                    if (iArgs.indexOf.call(iArgs[0], iValue)  >  -1)
-                        return iValue;
+            set[0] = $.map(set.shift(),  function (value, key) {
+                if ( isArray ) {
+                    if (set.indexOf.call(set[0], value)  >  -1)
+                        return value;
                 } else if (
-                    (iArgs[0][iKey] !== undefined)  &&
-                    (iArgs[0][iKey] === iValue)
+                    (set[0][key] !== undefined)  &&  (set[0][key] === value)
                 )
-                    return iValue;
+                    return value;
             });
 
-            return  intersect.apply(this, iArgs);
+            return  intersect.apply(this, set);
         },
         patch:        function patch(target, source) {
 

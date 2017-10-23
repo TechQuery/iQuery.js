@@ -34,12 +34,25 @@ define(['../../iQuery', './base', '../../DOM/info'],  function ($) {
         return  Rule_Text.concat('').join("\n");
     }
 
-    $.cssRule = function (At_Wrapper, iRule) {
+    /**
+     * 全局 CSS 设置
+     *
+     * @author TechQuery
+     *
+     * @memberof $
+     *
+     * @param   {string}           At_Wrapper - At Rule
+     * @param   {object}           rule       - Selector as Key, Rule as Value
+     *
+     * @returns {HTMLStyleElement} Generated Style Element
+     */
+
+    $.cssRule = function (At_Wrapper, rule) {
 
         if (typeof At_Wrapper.valueOf() != 'string')
-            iRule = At_Wrapper,  At_Wrapper = null;
+            rule = At_Wrapper,  At_Wrapper = null;
 
-        var CSS_Text = CSS_Rule2Text( iRule );
+        var CSS_Text = CSS_Rule2Text( rule );
 
         return  $('<style />', {
             type:       'text/css',
@@ -66,10 +79,22 @@ define(['../../iQuery', './base', '../../DOM/info'],  function ($) {
 
     var Global_Style = $.makeSet('#document', 'html', 'body');
 
+    /**
+     * 局部 CSS 读写
+     *
+     * @memberof $.prototype
+     * @function cssRule
+     *
+     * @param    {object}   [rule]     - Selector as Key, Rule as Value
+     * @param    {function} [callback] - Callback for every {@link HTMLElement}
+     *
+     * @return   {object|$} No parameter: CSS Rule Object\n
+     *                      One or two:   iQuery Object
+     */
 
-    $.fn.cssRule = function (iRule, iCallback) {
+    $.fn.cssRule = function (rule, callback) {
 
-        if (! $.isPlainObject( iRule )) {
+        if (! $.isPlainObject( rule )) {
 
             var $_This = this;
 
@@ -82,7 +107,7 @@ define(['../../iQuery', './base', '../../DOM/info'],  function ($) {
                 ))
                     return;
 
-                if ((! iRule)  ||  (iRule && _Rule_.style[iRule]))
+                if ((! rule)  ||  (rule && _Rule_.style[rule]))
                     return _Rule_;
             });
         }
@@ -91,8 +116,8 @@ define(['../../iQuery', './base', '../../DOM/info'],  function ($) {
 
             var _Rule_ = { };
 
-            for (var iSelector in iRule)
-                _Rule_[Scope_Selector(this.id, iSelector)] = iRule[ iSelector ];
+            for (var iSelector in rule)
+                _Rule_[Scope_Selector(this.id, iSelector)] = rule[ iSelector ];
 
             var $_Insert = $(
                     'style, link[rel="stylesheet"]',
@@ -108,8 +133,8 @@ define(['../../iQuery', './base', '../../DOM/info'],  function ($) {
 
             _Rule_ = $( $.cssRule(_Rule_) )['insert' + end]( $_Insert )[0];
 
-            if (typeof iCallback === 'function')
-                iCallback.call(this,  _Rule_.sheet || _Rule_.styleSheet);
+            if (typeof callback === 'function')
+                callback.call(this,  _Rule_.sheet || _Rule_.styleSheet);
         });
 
         return this;

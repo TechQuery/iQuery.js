@@ -5,14 +5,23 @@ define(['../iQuery', '../polyfill/IE-8', '../polyfill/URL'],  function ($) {
         trim:             function () {
             return arguments[0].trim();
         },
-        camelCase:        function (iName) {
+        /**
+         * 驼峰化字符串
+         *
+         * @author   TechQuery
+         *
+         * @memberof $
+         *
+         * @param    {string} raw - Non Camel-Case String
+         *
+         * @returns  {string}
+         */
+        camelCase:        function (raw) {
 
-            iName = iName.split(arguments[1] || '-');
+            return  raw.replace(/[^A-Za-z0-9]+([A-Za-z0-9])/g,  function () {
 
-            for (var i = 1;  i < iName.length;  i++)
-                iName[i] = iName[i][0].toUpperCase() + iName[i].slice(1);
-
-            return iName.join('');
+                return arguments[1].toUpperCase();
+            });
         },
         parseJSON:        function (iJSON) {
 

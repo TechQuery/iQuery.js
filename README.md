@@ -44,29 +44,18 @@
 ### 对 jQuery（最新版）的增强
 
 以下扩展已收录在本项目的 [**jQueryKit.js**](/master/jQueryKit.js) 中，方便配合其它 jQuery API 实现 ——
+
+[【API 文档】](doc/API/)及更多变更：
+
  - 内置一个改进且向下兼容的 **$.browser 对象**，能通过 **直接比较版本号**来区分浏览器
  - 新增 **计时相关方法（秒基准）**—— `$.every()`、`$.wait()`、`$.start()`、`$.end()`
- - 新增 **函数执行节流器** —— `$.throttle()`
- - 新增 **唯一串号生成器** —— `$.uuid()`
- - 新增 **类数组对象**判断方法 —— `$.likeArray()`
- - 新增 **对象构造函数名**获取方法 —— `$.Type()`
  - `$.unique()` 方法不局限于 DOM 元素数组
- - 新增 **对象值相等**判断方法 —— `$.isEqual()`
- - 新增 **集合对象**（可用于 in 操作符）生成方法 —— `$.makeSet()`
- - 新增 **迭代器**生成方法 —— `$.makeIterator()`
  - 新增 **对象链回溯**方法 —— `$.trace()`
- - 新增 **数组/对象交集**方法 —— `$.intersect()`
  - 新增 **对象补丁**方法 —— `$.patch()`
- - 新增 **类式 OOP** 抽象基类 —— `$.Class()`
- - 新增 **字符串部分分割**方法 —— `$.split()`（借鉴 PHP）
- - 新增 **连字符格式转换**方法 —— `$.hyphenCase()`
  - 新增 **字符串字节长度**方法 —— `$.byteLength()`
  - 新增 **函数柯里化**方法 —— `$.curry()`
  - 新增 **URL 信息提取**方法 —— `$.fileName()`、`$.filePath()`、`$.urlDomain()`
- - 新增 **URL 跨域判断**方法 —— `$.isXDomain()`
- - 新增 **URL 参数对象化**方法（$.param() 的逆方法）—— `$.paramJSON()`
  - 新增 **URL 参数签名**方法 —— `$.paramSign()`
- - 新增 **HTTP 报文头解析**方法 —— `$.parseHeader()`
  - `$.parseJSON()` 支持 **递归解析**，会将 JSON 字符串中的内层字符串 eval 为 JS 实值/例
  - 新增 **JSON 格式化显示**方法 —— `$.formatJSON()`
  - 基于官方 `$.ajaxTransport()` 重载 **JSONP 实现**，支持基本的异常处理
@@ -75,7 +64,6 @@
  - 新增 `$.delete()`、`$.put()`，方便实现基于 **RESTful API** 的单页应用
  - 新增 `$.fn.htmlExec()` **W3C HTML 解析器**方法，并基于此重构 `$.fn.load()` 内部实现，方便 DOM 片段清理、脚本调试
  - 新增 **多媒体元素加载完成**方法 —— `$.fn.mediaReady()`
- - 新增基于 **HTML 5 表单字段 验证规则**的 `$.fn.validate()`
  - 封装了 **表单元素无刷新提交**，并可直接绑定响应回调 —— `$.fn.ajaxSubmit()`（基于前述的几个 **AJAX 增强方法** 构建）
  - 新增 **选择符合法性判断**方法 —— `$.isSelector()`
  - 更多 jQuery **伪类选择符**：
@@ -90,8 +78,6 @@
    - 新增 `:media`，等价于 `:image, iframe, object, embed, audio, video`
    - 新增 `:loaded`，等价于 `img, audio, video`、`document` 加载结束
    - 新增 `:scrollable`，匹配所有 **内容可滚动**的元素
- - 新增 **子元素插入**方法 —— `$.fn.insertTo()`
- - 新增 **DOM 树遍历器**生成方法 —— `$.fn.treeWalker()`（遵循 [ECMAScript 6 迭代器协议](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Iteration_protocols#The_iterator_protocol)）
  - 新增 **祖先元素交集**方法 —— `$.fn.sameParents()`
  - 新增 **有滚动条的祖先元素**方法 —— `$.fn.scrollParents()`
  - 新增 **元素平滑滚动**方法 —— `$.fn.scrollTo()`
@@ -104,9 +90,7 @@
  - 新增 **CSS 选择符优先级计算**方法 —— `$.selectorPriority()`
  - 新增 **CSS 厂商命名获取**方法 —— `$.cssName()`
  - 新增 **CSS 集合对象搜索**方法 —— `$.searchCSS()`
- - 新增 **CSS 规则全局设置**方法 —— `$.cssRule()`
  - 自带 **DOM 唯一 ID 设置**方法 —— `$.fn.uniqueId()`（[jQuery UI 标准](http://www.css88.com/jquery-ui-api/uniqueId/)）
- - 新增 **DOM 元素 CSS 规则读写**方法 —— `$.fn.cssRule()`
  - 新增 **DOM 选中内容读写**方法 —— `$.fn.selection()`
  - `$.fn.focus()` 会让所有可见元素获得焦点
  - 新增 **被动观察者**对象 —— `$.Observer()`
@@ -116,8 +100,6 @@
  - 新增 **跨页面消息事件**方法 —— `$.fn.onReply()`（基于 `window.postMessage()`）
  - `$.fn.animate()` 支持类似 [jQuery UI `$.fn.effect()`](http://www.css88.com/jquery-ui-api/effect/) **动画效果名**参数（基于 **CSS Animation** 实现）
  - 新增 **CSS 动画类切换**方法 —— `$.fn.toggleAnimate()`
- - 新增 **大数位运算**方法 —— `$.bitOperate()`
- - 新增 **Local Storage 存取**方法 —— `$.storage()`
  - 新增 Base64 文本转 **二进制对象**方法 —— `$.toBlob()`
  - 新增 **数据哈希**方法 —— `$.dataHash()`
    - 默认算法：**CRC-32**
@@ -176,16 +158,6 @@
  - 自带 `URL()` 标准对象构造函数
  - 自带 `URLSearchParams()` 标准对象构造函数
 
-
-## ~~【iQuery+ 插件库】~~（废弃）
-
-> 【特别提醒】以下特性已在 [EWA v4](http://git.oschina.net/Tech_Query/EasyWebApp/tree/MVVM/) 中基于 MVVM 完全重写，不再在本项目中维护！
-
- - 通用 **CommonView 对象**生成方法 —— `$.CommonView()`
- - 通用 **ListView 对象**生成方法 —— `$.ListView()`
- - ListView 多媒体优化版 **GalleryView 对象**生成方法 —— `$.GalleryView()`
- - 通用 **TreeView 对象**生成方法 —— `$.TreeView()`
- - **HTML 5  History API  Polyfill** —— 为 IE 10- 提供兼容支持（需 服务器端响应 `./blank.html` 或 404 页面）
 
 
 ## 【参与开发】

@@ -11,6 +11,8 @@
   },
   "devDependencies": {
     "amd-bundle": "^0.4.2",
+    "docdash": "^0.4.0",
+    "jsdoc": "^3.5.5",
     "opn-cli": "^3.1.0",
     "uglify-js": "^3.0.24"
   },
@@ -18,7 +20,8 @@
     "patch": "cd source  &&  amd-bundle ../jQueryKit.js -e jquery -f ../build/extension",
     "bundle": "cd source  &&  amd-bundle ../iQuery.js",
     "compress": "uglifyjs iQuery.js -o build/iQuery.min.js --config-file build/compress.json",
-    "build": "npm run bundle  &&  npm run compress",
+    "document": "jsdoc ./source/ -c ./build/document.json",
+    "build": "npm run bundle  &&  npm run compress  &&  npm run document",
     "test": "opn ./test/unit.html"
   },
   "repository": {

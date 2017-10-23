@@ -33,6 +33,19 @@ define(['../../iQuery', '../index'],  function ($) {
         return true;
     }
 
+    /**
+     * 表单（项）校验
+     *
+     * @author   TechQuery
+     *
+     * @memberof $.prototype
+     * @function validate
+     *
+     * @returns  {boolean}
+     *
+     * @see {@link https://developer.mozilla.org/en-US/docs/Learn/HTML/Forms/Form_validation|Form Validation}
+     */
+
     $.fn.validate = function () {
 
         var $_Field = this.find(':field').addBack(':field').removeClass('invalid');
