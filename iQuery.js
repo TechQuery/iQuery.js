@@ -1746,9 +1746,8 @@ var object_ext_Class = (function ($) {
             try {
                 Object.defineProperty(this, key, $.extend(
                     {
-                        value:           value,
-                        writable:        true,
-                        configurable:    true
+                        value:       value,
+                        writable:    true
                     },
                     config || { }
                 ));
@@ -4286,9 +4285,10 @@ var AJAX_ext_URL = (function ($) {
          * @returns  {string}
          */
         filePath:     function (URL) {
-            return (
-                URL || BOM.location.href
-            ).match(/([^\?\#]+)(\?|\#)?/)[1].split('/').slice(0, -1).join('/');
+
+            return  (arguments.length ? URL : BOM.location).toString()
+                .split(/\?|\#/)[0]
+                .replace(/[^\/\\]*$/, '');
         },
         /**
          * 获取 URL 的域（源）
@@ -4321,7 +4321,7 @@ var AJAX_ext_URL = (function ($) {
         isXDomain:    function (URL) {
             return (
                 BOM.location.origin !==
-                (new BOM.URL(URL,  this.filePath() + '/')).origin
+                (new BOM.URL(URL, this.filePath())).origin
             );
         }
     });

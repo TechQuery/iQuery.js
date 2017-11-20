@@ -2,6 +2,9 @@
 
 [![Join the chat at https://gitter.im/iQuery-js/Lobby](https://badges.gitter.im/iQuery-js/Lobby.svg)](https://gitter.im/iQuery-js/Lobby?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 
+<a target='_blank' rel='nofollow' href='https://app.codesponsor.io/link/terHRJgDULkGjswWhddcBSDJ/TechQuery/iQuery.js'>
+  <img alt='Sponsor' width='888' height='68' src='https://app.codesponsor.io/embed/terHRJgDULkGjswWhddcBSDJ/TechQuery/iQuery.js.svg' />
+</a>
 
 [**iQuery**](http://tech_query.oschina.io/iquery) 是一个 **普适**而 **轻巧**的 **DOM/JavaScript 开发库** —— **支持 IE 8+ 的 jQuery/W3C 兼容 API**，包含 最常用的 jQuery 静态/实例 属性、方法，适合替代逻辑简单的网页中体积很大的 jQuery，或作为 **Web 前端开发基础库** 嵌入各种 独立发布（不能有外部依赖、自闭合、有兼容性要求）的 JavaScript 库。
 
@@ -157,25 +160,3 @@
  - 自带 `DOMParser()` 标准对象构造函数，为 IE 8 提供 **XML 文档解析**支持
  - 自带 `URL()` 标准对象构造函数
  - 自带 `URLSearchParams()` 标准对象构造函数
-
-
-
-## 【参与开发】
-
-### 环境搭建
- 1. 安装 **Git**（比 SVN 更适合 **开源团队**）
- 2. 安装 **Node.JS** 最新 LTS 版
-
-### 从源码构建
-
-UNIX-Shell、Windows-CMD 通用脚本 ——
-
-```Shell
-git clone https://git.oschina.net/Tech_Query/iQuery.git
-
-npm install
-
-npm test
-
-npm run build
-```

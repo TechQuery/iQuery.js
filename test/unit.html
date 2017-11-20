@@ -4,25 +4,13 @@
 
     <title>iQuery - Unit Test</title>
 
-    <script src="http://cdn.bootcss.com/require.js/2.3.3/require.min.js"></script>
+    <script src="https://cdn.bootcss.com/require.js/2.3.5/require.min.js"></script>
     <script>
         require.config({
             baseUrl:    '../source',
             paths:      {
-                jquery:    'http://cdn.bootcss.com/jquery/1.12.4/jquery.min',
-                iQuery:    '../build/iQuery.min'
+                jquery:    'https://cdn.bootcss.com/jquery/1.12.4/jquery.min'
             }
-        });
-
-        console.groupCollapsed = console.groupCollapsed || console.group;
-
-        require(['iQuery', '../test/case/index'],  function ($) {
-
-            console.info('iQuery() and iQuery.prototype are shown below:');
-
-            console.dir( $ );
-
-            console.dir( $.fn );
         });
     </script>
 </head><body>

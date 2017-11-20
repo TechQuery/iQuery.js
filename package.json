@@ -7,13 +7,16 @@
     "doc": "doc"
   },
   "engines": {
-    "node": "^5.0.0"
+    "node": "^7.6.0"
   },
   "devDependencies": {
     "amd-bundle": "^0.4.2",
+    "chromy": "^0.5.6",
     "docdash": "^0.4.0",
+    "html-pages": "^2.0.5",
     "jsdoc": "^3.5.5",
-    "opn-cli": "^3.1.0",
+    "mocha": "^4.0.1",
+    "reduce-blank": "^0.2.0",
     "uglify-js": "^3.0.24"
   },
   "scripts": {
@@ -21,8 +24,9 @@
     "bundle": "cd source  &&  amd-bundle ../iQuery.js",
     "compress": "uglifyjs iQuery.js -o build/iQuery.min.js --config-file build/compress.json",
     "document": "jsdoc ./source/ -c ./build/document.json",
-    "build": "npm run bundle  &&  npm run compress  &&  npm run document",
-    "test": "opn ./test/unit.html"
+    "clean": "reduce-blank ./doc/API/",
+    "build": "npm run bundle  &&  npm run compress  &&  npm run document  &&  npm run clean",
+    "test": "mocha --recursive --no-timeouts -c --inline-diffs --exit"
   },
   "repository": {
     "type": "git",

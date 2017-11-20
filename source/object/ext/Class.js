@@ -136,9 +136,8 @@ define(['../../iQuery'],  function ($) {
             try {
                 Object.defineProperty(this, key, $.extend(
                     {
-                        value:           value,
-                        writable:        true,
-                        configurable:    true
+                        value:       value,
+                        writable:    true
                     },
                     config || { }
                 ));
