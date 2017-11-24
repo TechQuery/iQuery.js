@@ -18,6 +18,18 @@ define(['../../polyfill/ES_API'],  function ($) {
      * @param    {object}  object
      *
      * @returns  {boolean}
+     *
+     * @example  // 字符串元素不可变，故不是类数组
+     *
+     *     $.likeArray(new String(''))    //  false
+     *
+     * @example  // 有 length 属性、但没有对应数量元素的，不是类数组
+     *
+     *     $.likeArray({0: 'a', length: 2})    //  false
+     *
+     * @example  // NodeList、HTMLCollection、jQuery 等是类数组
+     *
+     *     $.likeArray( document.head.childNodes )    //  true
      */
 
     $.likeArray = function (object) {
@@ -30,8 +42,9 @@ define(['../../polyfill/ES_API'],  function ($) {
 
         return Boolean(
             object  &&
+            (typeof object !== 'string')  &&
             (typeof object.length === 'number')  &&
-            (typeof object !== 'string')
+            (object.length  ?  ((object.length - 1)  in  object)  :  1)
         );
     };
 

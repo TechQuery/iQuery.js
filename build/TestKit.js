@@ -1,10 +1,18 @@
+'use strict';
+
 const Path = require('path'),
       HTMLPages = require('html-pages'),
       Chromy = require('chromy');
 
-const server = HTMLPages('./', {
+
+//  静态文件服务器
+
+const server = HTMLPages(process.cwd(), {
           'log-level':    'warn'
       });
+
+
+//  退出前清理 服务器、浏览器
 
 async function exit(code) {
 
@@ -12,7 +20,7 @@ async function exit(code) {
 
     server.stop();
 
-    process.exit((code != null) ? code : 1);
+    if (code !== 0)  process.exit(code || 1);
 };
 
 process.on('uncaughtException', exit);
@@ -21,20 +29,35 @@ process.on('unhandledRejection', exit);
 
 process.on('SIGINT', exit);
 
-process.on('exit', exit);
+process.on('exit',  exit.bind(null, 0));
 
+
+//  测试代码公用方法、对象
 
 exports.exit = exit;
 
-exports.require = new Function(`
+exports.chrome = new Chromy();
 
-    return  new Promise(function () {
+exports.requireAMD = new Function(`
+
+    return  new Promise(function (resolve, reject) {
 
         require(['iQuery', '${
             Path.relative(
                 Path.join(process.cwd(), 'test'),
                 module.parent.filename.slice(0, -3)
             ).replace(/\\/g, '/')
-        }'],  arguments[0],  arguments[1]);
+        }'],  function ($) {
+
+            resolve(self.$ = $);
+
+        },  reject);
     });
 `);
+
+exports.beforeAll = async function () {
+
+    await exports.chrome.goto('http://localhost:8084/test/unit.html');
+
+    await exports.chrome.evaluate( exports.requireAMD );
+};

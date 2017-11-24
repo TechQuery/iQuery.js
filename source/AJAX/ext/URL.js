@@ -13,6 +13,15 @@ define(['../../utility/ext/string'],  function ($) {
      *                               just use its value while the parameter is
      *                               empty
      * @returns  {object} Plain Object for the Query String
+     *
+     * @example  // URL 查询字符串
+     *
+     *     $.paramJSON('?a=1&b=two&b=true')
+     *
+     *     //  {
+     *             a:    1,
+     *             b:    ['two', true]
+     *         }
      */
 
     $.paramJSON = function (search) {
@@ -133,6 +142,26 @@ define(['../../utility/ext/string'],  function ($) {
          *                            (Use `location.href` while the parameter is
          *                            empty)
          * @returns  {string}
+         *
+         * @example  // 传 相对路径 时返回其目录
+         *
+         *     $.filePath('/test/unit.html')  // '/test/'
+         *
+         * @example  // 传 查询字符串 时返回空字符串
+         *
+         *     $.filePath('?query=string')  // ''
+         *
+         * @example  // 传 URL（字符串）时返回其目录
+         *
+         *     $.filePath('http://localhost:8084/test/unit.html')
+         *
+         *     // 'http://localhost:8084/test/'
+         *
+         * @example  // 传 URL（对象）时返回其目录
+         *
+         *     $.filePath(new URL('http://localhost:8084/test/unit.html'))
+         *
+         *     // 'http://localhost:8084/test/'
          */
         filePath:     function (URL) {
 
@@ -167,6 +196,14 @@ define(['../../utility/ext/string'],  function ($) {
          * @param    {string}  URL
          *
          * @returns  {boolean}
+         *
+         * @example  // 跨域 绝对路径
+         *
+         *     $.isXDomain('http://localhost/iQuery')  // true
+         *
+         * @example  // 同域 相对路径
+         *
+         *     $.isXDomain('/iQuery')  // false
          */
         isXDomain:    function (URL) {
             return (

@@ -1,94 +1,106 @@
-const TestKit = require('../../../build/TestKit'),
-      assert = require('assert'),
-      Chromy = require('chromy');
+'use strict';
 
-const chrome = new Chromy();
+require('should');
 
+const Path = require('path');
 
-before(async function () {
+const TestKit = require(Path.relative(
+          Path.dirname( module.filename ),
+          Path.join(process.cwd(), 'build/TestKit')
+      ));
 
-    await chrome.goto('http://localhost:8084/test/unit.html');
-
-    await chrome.evaluate( TestKit.require );
-});
-
-
-describe('$.filePath()',  function () {
-
-    it('传 相对路径 时返回其目录',  async function () {
-
-        var path = await chrome.evaluate(function () {
-
-                return  require('iQuery').filePath( location.pathname );
-            });
-
-        assert.equal(path, '/test/');
-    });
-
-    it('传 查询字符串 时返回空字符串',  async function () {
-
-        var path = await chrome.evaluate(function () {
-
-                return  require('iQuery').filePath( location.search );
-            });
-
-        assert.equal(path, '');
-    });
-
-    it('传 URL（字符串）时返回其目录',  async function () {
-
-        var path = await chrome.evaluate(function () {
-
-                return  require('iQuery').filePath( location.href );
-            });
-
-        assert.equal(path, 'http://localhost:8084/test/');
-    });
-
-    it('传 URL（对象）时返回其目录',  async function () {
-
-        var path = await chrome.evaluate(function () {
-
-                return  require('iQuery').filePath( location );
-            });
-
-        assert.equal(path, 'http://localhost:8084/test/');
-    });
-
-    it('没传参时应返回 location.href 的目录',  async function () {
-
-        var path = await chrome.evaluate(function () {
-
-                return require('iQuery').filePath();
-            });
-
-        assert.equal(path, 'http://localhost:8084/test/');
-    });
-});
-
-
-describe('$.isXDomain()',  function () {
-
-    it('跨域 绝对路径',  async function () {
-
-        var result = await chrome.evaluate(function () {
-
-                return require('iQuery').isXDomain('http://localhost/iQuery');
-            });
-
-        assert.strictEqual(result, true);
-    });
-
-    it('同域 相对路径',  async function () {
-
-        var result = await chrome.evaluate(function () {
-
-                return require('iQuery').isXDomain('/iQuery');
-            });
-
-        assert.strictEqual(result, false);
-    });
-});
-
+before( TestKit.beforeAll );
 
 after( TestKit.exit.bind(null, 0) );
+
+
+
+describe('$.paramJSON',  function () {
+
+
+
+    it('URL 查询字符串',  function () {
+
+        return  TestKit.chrome.evaluate(function () {
+
+            return  $.paramJSON('?a=1&b=two&b=true');
+
+        }).should.be.fulfilledWith( {
+            a:    1,
+            b:    ['two', true]
+        } );
+    });
+
+});
+
+
+describe('$.filePath',  function () {
+
+
+
+    it('传 相对路径 时返回其目录',  function () {
+
+        return  TestKit.chrome.evaluate(function () {
+
+            return  $.filePath('/test/unit.html');
+
+        }).should.be.fulfilledWith( '/test/' );
+    });
+
+
+    it('传 查询字符串 时返回空字符串',  function () {
+
+        return  TestKit.chrome.evaluate(function () {
+
+            return  $.filePath('?query=string');
+
+        }).should.be.fulfilledWith( '' );
+    });
+
+
+    it('传 URL（字符串）时返回其目录',  function () {
+
+        return  TestKit.chrome.evaluate(function () {
+
+            return  $.filePath('http://localhost:8084/test/unit.html');
+
+        }).should.be.fulfilledWith( 'http://localhost:8084/test/' );
+    });
+
+
+    it('传 URL（对象）时返回其目录',  function () {
+
+        return  TestKit.chrome.evaluate(function () {
+
+            return  $.filePath(new URL('http://localhost:8084/test/unit.html'));
+
+        }).should.be.fulfilledWith( 'http://localhost:8084/test/' );
+    });
+
+});
+
+
+describe('$.isXDomain',  function () {
+
+
+
+    it('跨域 绝对路径',  function () {
+
+        return  TestKit.chrome.evaluate(function () {
+
+            return  $.isXDomain('http://localhost/iQuery');
+
+        }).should.be.fulfilledWith( true );
+    });
+
+
+    it('同域 相对路径',  function () {
+
+        return  TestKit.chrome.evaluate(function () {
+
+            return  $.isXDomain('/iQuery');
+
+        }).should.be.fulfilledWith( false );
+    });
+
+});

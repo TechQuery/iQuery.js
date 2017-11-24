@@ -242,6 +242,18 @@ var object_ext_base = (function ($) {
      * @param    {object}  object
      *
      * @returns  {boolean}
+     *
+     * @example  // 字符串元素不可变，故不是类数组
+     *
+     *     $.likeArray(new String(''))    //  false
+     *
+     * @example  // 有 length 属性、但没有对应数量元素的，不是类数组
+     *
+     *     $.likeArray({0: 'a', length: 2})    //  false
+     *
+     * @example  // NodeList、HTMLCollection、jQuery 等是类数组
+     *
+     *     $.likeArray( document.head.childNodes )    //  true
      */
 
     $.likeArray = function (object) {
@@ -254,8 +266,9 @@ var object_ext_base = (function ($) {
 
         return Boolean(
             object  &&
+            (typeof object !== 'string')  &&
             (typeof object.length === 'number')  &&
-            (typeof object !== 'string')
+            (object.length  ?  ((object.length - 1)  in  object)  :  1)
         );
     };
 
@@ -3625,8 +3638,7 @@ var event_ext_base = (function ($, Observer) {
             replace:    function (iNew) {
 
                 iNew = $.buildFragment(
-                    (iNew instanceof Element)  ?
-                        [ iNew ]  :  $.makeArray( iNew )
+                    $.likeArray( iNew )  ?  $.makeArray( iNew )  :  [ iNew ]
                 );
 
                 if (! iNew.childNodes[0])  return;
@@ -4163,6 +4175,15 @@ var AJAX_ext_URL = (function ($) {
      *                               just use its value while the parameter is
      *                               empty
      * @returns  {object} Plain Object for the Query String
+     *
+     * @example  // URL 查询字符串
+     *
+     *     $.paramJSON('?a=1&b=two&b=true')
+     *
+     *     //  {
+     *             a:    1,
+     *             b:    ['two', true]
+     *         }
      */
 
     $.paramJSON = function (search) {
@@ -4283,6 +4304,26 @@ var AJAX_ext_URL = (function ($) {
          *                            (Use `location.href` while the parameter is
          *                            empty)
          * @returns  {string}
+         *
+         * @example  // 传 相对路径 时返回其目录
+         *
+         *     $.filePath('/test/unit.html')  // '/test/'
+         *
+         * @example  // 传 查询字符串 时返回空字符串
+         *
+         *     $.filePath('?query=string')  // ''
+         *
+         * @example  // 传 URL（字符串）时返回其目录
+         *
+         *     $.filePath('http://localhost:8084/test/unit.html')
+         *
+         *     // 'http://localhost:8084/test/'
+         *
+         * @example  // 传 URL（对象）时返回其目录
+         *
+         *     $.filePath(new URL('http://localhost:8084/test/unit.html'))
+         *
+         *     // 'http://localhost:8084/test/'
          */
         filePath:     function (URL) {
 
@@ -4317,6 +4358,14 @@ var AJAX_ext_URL = (function ($) {
          * @param    {string}  URL
          *
          * @returns  {boolean}
+         *
+         * @example  // 跨域 绝对路径
+         *
+         *     $.isXDomain('http://localhost/iQuery')  // true
+         *
+         * @example  // 同域 相对路径
+         *
+         *     $.isXDomain('/iQuery')  // false
          */
         isXDomain:    function (URL) {
             return (
@@ -6747,7 +6796,7 @@ var AJAX_ext_HTML_Request = (function ($) {
  *
  * @module    {function} iQuery
  *
- * @version   3.0 (2017-10-24) stable
+ * @version   3.0 (2017-11-24) stable
  *
  * @see       {@link http://jquery.com/ jQuery}
  *

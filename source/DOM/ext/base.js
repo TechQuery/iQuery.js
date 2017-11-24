@@ -114,8 +114,7 @@ define(['../../iQuery', '../utility'],  function ($) {
             replace:    function (iNew) {
 
                 iNew = $.buildFragment(
-                    (iNew instanceof Element)  ?
-                        [ iNew ]  :  $.makeArray( iNew )
+                    $.likeArray( iNew )  ?  $.makeArray( iNew )  :  [ iNew ]
                 );
 
                 if (! iNew.childNodes[0])  return;

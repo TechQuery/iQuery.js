@@ -477,7 +477,7 @@
 
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="AJAX_ext_URL.js.html">AJAX/ext/URL.js</a>, <a href="AJAX_ext_URL.js.html#line102">line 102</a>
+        <a href="AJAX_ext_URL.js.html">AJAX/ext/URL.js</a>, <a href="AJAX_ext_URL.js.html#line111">line 111</a>
     </li></ul></dd>
 
     <dt class="tag-author">Author:</dt>
@@ -564,7 +564,7 @@
 
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="AJAX_ext_URL.js.html">AJAX/ext/URL.js</a>, <a href="AJAX_ext_URL.js.html#line137">line 137</a>
+        <a href="AJAX_ext_URL.js.html">AJAX/ext/URL.js</a>, <a href="AJAX_ext_URL.js.html#line166">line 166</a>
     </li></ul></dd>
 
     <dt class="tag-author">Author:</dt>
@@ -579,6 +579,28 @@
 <div class="description">
     <p>获取文件路径</p>
 </div>
+
+    <h5>Examples</h5>
+
+    <pre class="prettyprint"><code>// 传 相对路径 时返回其目录
+
+    $.filePath('/test/unit.html')  // '/test/'</code></pre>
+
+    <pre class="prettyprint"><code>// 传 查询字符串 时返回空字符串
+
+    $.filePath('?query=string')  // ''</code></pre>
+
+    <pre class="prettyprint"><code>// 传 URL（字符串）时返回其目录
+
+    $.filePath('http://localhost:8084/test/unit.html')
+
+    // 'http://localhost:8084/test/'</code></pre>
+
+    <pre class="prettyprint"><code>// 传 URL（对象）时返回其目录
+
+    $.filePath(new URL('http://localhost:8084/test/unit.html'))
+
+    // 'http://localhost:8084/test/'</code></pre>
 
     <h5>Parameters:</h5>
 
@@ -783,7 +805,7 @@
 
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="object_ext_base.js.html">object/ext/base.js</a>, <a href="object_ext_base.js.html#line156">line 156</a>
+        <a href="object_ext_base.js.html">object/ext/base.js</a>, <a href="object_ext_base.js.html#line169">line 169</a>
     </li></ul></dd>
 
     <dt class="tag-author">Author:</dt>
@@ -908,7 +930,7 @@
 
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="AJAX_ext_URL.js.html">AJAX/ext/URL.js</a>, <a href="AJAX_ext_URL.js.html#line171">line 171</a>
+        <a href="AJAX_ext_URL.js.html">AJAX/ext/URL.js</a>, <a href="AJAX_ext_URL.js.html#line208">line 208</a>
     </li></ul></dd>
 
     <dt class="tag-author">Author:</dt>
@@ -923,6 +945,16 @@
 <div class="description">
     <p>URL 跨域判断</p>
 </div>
+
+    <h5>Examples</h5>
+
+    <pre class="prettyprint"><code>// 跨域 绝对路径
+
+    $.isXDomain('http://localhost/iQuery')  // true</code></pre>
+
+    <pre class="prettyprint"><code>// 同域 相对路径
+
+    $.isXDomain('/iQuery')  // false</code></pre>
 
     <h5>Parameters:</h5>
 
@@ -975,7 +1007,7 @@
 
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="object_ext_base.js.html">object/ext/base.js</a>, <a href="object_ext_base.js.html#line23">line 23</a>
+        <a href="object_ext_base.js.html">object/ext/base.js</a>, <a href="object_ext_base.js.html#line35">line 35</a>
     </li></ul></dd>
 
     <dt class="tag-author">Author:</dt>
@@ -990,6 +1022,20 @@
 <div class="description">
     <p>类数组对象 检测</p>
 </div>
+
+    <h5>Examples</h5>
+
+    <pre class="prettyprint"><code>// 字符串元素不可变，故不是类数组
+
+    $.likeArray(new String(''))    //  false</code></pre>
+
+    <pre class="prettyprint"><code>// 有 length 属性、但没有对应数量元素的，不是类数组
+
+    $.likeArray({0: 'a', length: 2})    //  false</code></pre>
+
+    <pre class="prettyprint"><code>// NodeList、HTMLCollection、jQuery 等是类数组
+
+    $.likeArray( document.head.childNodes )    //  true</code></pre>
 
     <h5>Parameters:</h5>
 
@@ -1042,7 +1088,7 @@
 
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="object_ext_base.js.html">object/ext/base.js</a>, <a href="object_ext_base.js.html#line244">line 244</a>
+        <a href="object_ext_base.js.html">object/ext/base.js</a>, <a href="object_ext_base.js.html#line257">line 257</a>
     </li></ul></dd>
 
     <dt class="tag-author">Author:</dt>
@@ -1109,7 +1155,7 @@
 
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="object_ext_base.js.html">object/ext/base.js</a>, <a href="object_ext_base.js.html#line51">line 51</a>
+        <a href="object_ext_base.js.html">object/ext/base.js</a>, <a href="object_ext_base.js.html#line64">line 64</a>
     </li></ul></dd>
 
     <dt class="tag-author">Author:</dt>
@@ -1208,7 +1254,7 @@
 
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="AJAX_ext_URL.js.html">AJAX/ext/URL.js</a>, <a href="AJAX_ext_URL.js.html#line18">line 18</a>
+        <a href="AJAX_ext_URL.js.html">AJAX/ext/URL.js</a>, <a href="AJAX_ext_URL.js.html#line27">line 27</a>
     </li></ul></dd>
 
     <dt class="tag-author">Author:</dt>
@@ -1223,6 +1269,17 @@
 <div class="description">
     <p>URL 查询参数对象化</p>
 </div>
+
+    <h5>Example</h5>
+
+    <pre class="prettyprint"><code>// URL 查询字符串
+
+    $.paramJSON('?a=1&amp;b=two&amp;b=true')
+
+    //  {
+            a:    1,
+            b:    ['two', true]
+        }</code></pre>
 
     <h5>Parameters:</h5>
 
@@ -1686,7 +1743,7 @@
 
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="object_ext_base.js.html">object/ext/base.js</a>, <a href="object_ext_base.js.html#line89">line 89</a>
+        <a href="object_ext_base.js.html">object/ext/base.js</a>, <a href="object_ext_base.js.html#line102">line 102</a>
     </li></ul></dd>
 
     <dt class="tag-author">Author:</dt>
@@ -1757,7 +1814,7 @@
 
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="AJAX_ext_URL.js.html">AJAX/ext/URL.js</a>, <a href="AJAX_ext_URL.js.html#line155">line 155</a>
+        <a href="AJAX_ext_URL.js.html">AJAX/ext/URL.js</a>, <a href="AJAX_ext_URL.js.html#line184">line 184</a>
     </li></ul></dd>
 
     <dt class="tag-author">Author:</dt>
@@ -2222,7 +2279,7 @@
 <br class="clear">
 
 <footer>
-    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.5.5</a> on Tue Nov 21 2017 05:14:37 GMT+0800 (中国标准时间) using the <a href="https://github.com/clenemt/docdash">docdash</a> theme.
+    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.5.5</a> using the <a href="https://github.com/clenemt/docdash">docdash</a> theme.
 </footer>
 
 <script>prettyPrint();</script>
