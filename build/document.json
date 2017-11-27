@@ -19,9 +19,6 @@
         "hardwrap":    true
     },
     "test-example":    {
-        "sourcePath":    "./source/",
-        "overWrite":     true,
-        "headerFile":    "./build/TestHeader.js",
         "hookModule":    "./build/TestHook"
     }
 }

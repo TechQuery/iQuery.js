@@ -30,6 +30,10 @@ define(['../../polyfill/ES_API'],  function ($) {
      * @example  // NodeList、HTMLCollection、jQuery 等是类数组
      *
      *     $.likeArray( document.head.childNodes )    //  true
+     *
+     * @example  // Node 及其子类不是类数组
+     *
+     *     $.likeArray( document.createTextNode('') )    //  false
      */
 
     $.likeArray = function (object) {
@@ -43,8 +47,11 @@ define(['../../polyfill/ES_API'],  function ($) {
         return Boolean(
             object  &&
             (typeof object !== 'string')  &&
-            (typeof object.length === 'number')  &&
-            (object.length  ?  ((object.length - 1)  in  object)  :  1)
+            (typeof object.length === 'number')  &&  (
+                object.length  ?
+                    ((object.length - 1)  in  object)  :
+                    !(object instanceof Node)
+            )
         );
     };
 

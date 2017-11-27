@@ -38,26 +38,19 @@ exports.exit = exit;
 
 exports.chrome = new Chromy();
 
-exports.requireAMD = new Function(`
-
-    return  new Promise(function (resolve, reject) {
-
-        require(['iQuery', '${
-            Path.relative(
-                Path.join(process.cwd(), 'test'),
-                module.parent.filename.slice(0, -3)
-            ).replace(/\\/g, '/')
-        }'],  function ($) {
-
-            resolve(self.$ = $);
-
-        },  reject);
-    });
-`);
-
-exports.beforeAll = async function () {
+exports.pageLoad = async function (sourceURI) {
 
     await exports.chrome.goto('http://localhost:8084/test/unit.html');
 
-    await exports.chrome.evaluate( exports.requireAMD );
+    await exports.chrome.evaluate(function (sourceURI) {
+
+        return  new Promise(function (resolve, reject) {
+
+            require(['iQuery', sourceURI],  function ($) {
+
+                resolve(self.$ = $);
+
+            },  reject);
+        });
+    },  [ sourceURI ]);
 };

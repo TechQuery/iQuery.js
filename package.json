@@ -19,7 +19,7 @@
     "mocha": "^4.0.1",
     "reduce-blank": "^0.2.0",
     "should": "^13.1.3",
-    "test-example": "^0.3.1",
+    "test-example": "^0.4.0",
     "uglify-js": "^3.0.24"
   },
   "scripts": {
@@ -27,7 +27,7 @@
     "bundle": "cd source  &&  amd-bundle ../iQuery.js",
     "compress": "uglifyjs iQuery.js -o build/iQuery.min.js --config-file build/compress.json",
     "document": "jsdoc -c ./build/document.json  &&  reduce-blank ./doc/API/",
-    "build": "npm run bundle  &&  npm run compress  &&  npm run document",
+    "build": "npm run bundle  &&  npm run compress  &&  npm run patch  &&  npm run document",
     "start": "html-pages",
     "test": "mocha --recursive --no-timeouts -c --inline-diffs --exit",
     "precommit": "npm test"
