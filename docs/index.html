@@ -28,36 +28,99 @@
 <div id="main">
 
     <section class="readme">
-        <article><h1>iQuery</h1><p><a href="https://gitter.im/iQuery-js/Lobby?utm_source=badge&amp;utm_medium=badge&amp;utm_campaign=pr-badge&amp;utm_content=badge"><img src="https://badges.gitter.im/iQuery-js/Lobby.svg" alt="Join the chat at https://gitter.im/iQuery-js/Lobby"></a></p>
+        <article><h1>iQuery</h1><p>兼容 <a href="http://api.jquery.com/">jQuery API</a> 的 DOM / AJAX 基础库，基于原创的 ECMA / W3C polyfill 构建，并内置很多常用的 jQuery 扩展 API。</p>
+<p><a href="https://gitter.im/iQuery-js/Lobby?utm_source=badge&amp;utm_medium=badge&amp;utm_campaign=pr-badge&amp;utm_content=badge"><img src="https://badges.gitter.im/iQuery-js/Lobby.svg" alt="Join the chat at https://gitter.im/iQuery-js/Lobby"></a></p>
 <p><a target='_blank' rel='nofollow' href='https://app.codesponsor.io/link/terHRJgDULkGjswWhddcBSDJ/TechQuery/iQuery.js'><br>  <img alt='Sponsor' width='888' height='68' src='https://app.codesponsor.io/embed/terHRJgDULkGjswWhddcBSDJ/TechQuery/iQuery.js.svg' /><br></a></p>
-<p><a href="http://tech_query.oschina.io/iquery"><strong>iQuery</strong></a> 是一个 <strong>普适</strong>而 <strong>轻巧</strong>的 <strong>DOM/JavaScript 开发库</strong> —— <strong>支持 IE 8+ 的 jQuery/W3C 兼容 API</strong>，包含 最常用的 jQuery 静态/实例 属性、方法，适合替代逻辑简单的网页中体积很大的 jQuery，或作为 <strong>Web 前端开发基础库</strong> 嵌入各种 独立发布（不能有外部依赖、自闭合、有兼容性要求）的 JavaScript 库。</p>
-<p>若 Zepto 相当于 jQuery v2.x 的精简版，那 iQuery 就相当于 <strong>jQuery v1.x 的精简版</strong>；而且 iQuery 在与 Zepto 接近的 <strong>Minimized 体积</strong>中提供了 IE 8/9 的兼容、 <strong>更贴近官方的 jQuery 对象实现</strong> 以及 <strong>更多的实用扩展</strong>（3200+ 行，近六成的体量，详见下文）。</p>
 <p>在 API 形态上尽力兼容 jQuery 的同时，iQuery 在内部实现上采取 <strong>“面向未来，向前兼容”的 Polyfill 策略</strong> —— 核心逻辑（4300+ 行）尽力基于 <strong>W3C、ECMA 最新标准中的优秀 API</strong>，老旧浏览器兼容代码（部分基于 jQuery API，1200+ 行）尽力包装成与新 API 相同的形式（原型拓展），并独立为外部模块。这样做不但能复用 jQuery API 来高效实现，还方便开发人员自行裁剪。</p>
 <p>【注】对 IE 的兼容仅限其“标准模式”，而非“兼容性视图”。</p>
+<h2>【竞品比较】</h2><table>
+<thead>
+<tr>
+<th style="text-align:center"></th>
+<th style="text-align:center">iQuery</th>
+<th style="text-align:center">jQuery</th>
+<th style="text-align:center">Zepto</th>
+<th style="text-align:center">JSLite</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:center">浏览器兼容</td>
+<td style="text-align:center">IE 8+</td>
+<td style="text-align:center">IE 6+ (v1.x)、IE 9+ (v2.0+)</td>
+<td style="text-align:center">IE 10+</td>
+<td style="text-align:center">IE 10+</td>
+</tr>
+<tr>
+<td style="text-align:center">ECMA / W3C polyfill</td>
+<td style="text-align:center">多</td>
+<td style="text-align:center">×（各模块自行实现 Fix）</td>
+<td style="text-align:center">少</td>
+<td style="text-align:center">少</td>
+</tr>
+<tr>
+<td style="text-align:center">扩展 API</td>
+<td style="text-align:center">多</td>
+<td style="text-align:center"></td>
+<td style="text-align:center">少</td>
+<td style="text-align:center">少</td>
+</tr>
+<tr>
+<td style="text-align:center">触控事件</td>
+<td style="text-align:center">单指</td>
+<td style="text-align:center">×</td>
+<td style="text-align:center">多指</td>
+<td style="text-align:center">×</td>
+</tr>
+<tr>
+<td style="text-align:center">源代码模块化</td>
+<td style="text-align:center">AMD</td>
+<td style="text-align:center">AMD</td>
+<td style="text-align:center">IIFE</td>
+<td style="text-align:center">IIFE</td>
+</tr>
+<tr>
+<td style="text-align:center">API 注解（JSDoc）</td>
+<td style="text-align:center">√</td>
+<td style="text-align:center">×</td>
+<td style="text-align:center">×</td>
+<td style="text-align:center">×</td>
+</tr>
+<tr>
+<td style="text-align:center">测试框架</td>
+<td style="text-align:center">Mocha</td>
+<td style="text-align:center">QUnit</td>
+<td style="text-align:center">Evidence</td>
+<td style="text-align:center">Mocha</td>
+</tr>
+</tbody>
+</table>
 <h2>【入门】</h2><ol>
-<li>基础知识 ——《<a href="http://www.jquery123.com/api/">jQuery API 文档</a>》</li>
-<li>嵌入使用 —— 典型应用实例项目：文件级 <strong>前端脚本加载器</strong> <a href="http://git.oschina.net/Tech_Query/EasyImport.js">EasyImport.js</a></li>
-<li>独立使用 ——（HTML 源码基本结构示例如下）</li>
+<li><p>基础知识 ——《<a href="http://www.jquery123.com/">jQuery API 文档</a>》</p>
+</li>
+<li><p>HTML 源码基本结构</p>
+</li>
 </ol>
 <pre class="prettyprint source lang-html"><code>&lt;!DocType HTML>
 &lt;html>&lt;head>
     &lt;meta http-equiv=&quot;X-UA-Compatible&quot; content=&quot;IE=Edge, Chrome=1&quot; />
-    &lt;script src=&quot;path/to/iQuery.js&quot;>&lt;/script>
+
+    &lt;!--  1. 独立使用  -->
+    &lt;script src=&quot;path/to/iQuery.min.js&quot;>&lt;/script>
+
+    &lt;!--  2. AMD 规范加载  -->
+    &lt;script src=&quot;https://cdn.bootcss.com/require.js/2.3.5/require.min.js&quot;>&lt;/script>
+    &lt;script>
+        require.config({
+            paths:    {
+                iQuery:    'path/to/iQuery.min.js'
+            }
+        });
+    &lt;/script>
 &lt;/head>&lt;body>
     ...
-&lt;/body>&lt;/html></code></pre><h3>成功驱动的项目</h3><ol>
-<li>EasyImport.js</li>
-<li>某公司 JS-SDK</li>
-<li><a href="http://git.oschina.net/Tech_Query/EasyWebUI/">EasyWebUI</a></li>
-<li><a href="http://git.oschina.net/Tech_Query/EasyWebApp/">EasyWebApp</a></li>
-<li><a href="https://larsjung.de/jquery-qrcode/">jQuery-QRcode</a></li>
-<li><a href="http://git.oschina.net/Tech_Query/EasyWiki/">EasyWiki</a></li>
-<li>某公司 开放平台、业务后台</li>
-<li>某公司 微信轻应用</li>
-<li>某公司 WiFi 认证微官网</li>
-</ol>
-<h2>【API 总览】</h2><h3>对 jQuery（最新版）的增强</h3><p>以下扩展已收录在本项目的 <a href="/master/jQueryKit.js"><strong>jQueryKit.js</strong></a> 中，方便配合其它 jQuery API 实现 ——</p>
-<p><a href="doc/API/">【API 文档】</a>及更多变更：</p>
+&lt;/body>&lt;/html></code></pre><h2>【API 总览】</h2><h3>对 jQuery（最新版）的增强</h3><p>以下扩展已收录在本项目的 <a href="/master/jQueryKit.js"><strong>jQueryKit.js</strong></a> 中，方便配合其它 jQuery API 实现 ——</p>
+<p><a href="https://techquery.github.io/iQuery.js/">【API 文档】</a>及更多变更：</p>
 <ul>
 <li>内置一个改进且向下兼容的 <strong>$.browser 对象</strong>，能通过 <strong>直接比较版本号</strong>来区分浏览器</li>
 <li>新增 <strong>计时相关方法（秒基准）</strong>—— <code>$.every()</code>、<code>$.wait()</code>、<code>$.start()</code>、<code>$.end()</code></li>

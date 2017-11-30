@@ -1,45 +1,60 @@
 # iQuery
 
+兼容 [jQuery API](http://api.jquery.com/) 的 DOM / AJAX 基础库，基于原创的 ECMA / W3C polyfill 构建，并内置很多常用的 jQuery 扩展 API。
+
 [![Join the chat at https://gitter.im/iQuery-js/Lobby](https://badges.gitter.im/iQuery-js/Lobby.svg)](https://gitter.im/iQuery-js/Lobby?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 
 <a target='_blank' rel='nofollow' href='https://app.codesponsor.io/link/terHRJgDULkGjswWhddcBSDJ/TechQuery/iQuery.js'>
   <img alt='Sponsor' width='888' height='68' src='https://app.codesponsor.io/embed/terHRJgDULkGjswWhddcBSDJ/TechQuery/iQuery.js.svg' />
 </a>
 
-[**iQuery**](http://tech_query.oschina.io/iquery) 是一个 **普适**而 **轻巧**的 **DOM/JavaScript 开发库** —— **支持 IE 8+ 的 jQuery/W3C 兼容 API**，包含 最常用的 jQuery 静态/实例 属性、方法，适合替代逻辑简单的网页中体积很大的 jQuery，或作为 **Web 前端开发基础库** 嵌入各种 独立发布（不能有外部依赖、自闭合、有兼容性要求）的 JavaScript 库。
-
-若 Zepto 相当于 jQuery v2.x 的精简版，那 iQuery 就相当于 **jQuery v1.x 的精简版**；而且 iQuery 在与 Zepto 接近的 **Minimized 体积**中提供了 IE 8/9 的兼容、 **更贴近官方的 jQuery 对象实现** 以及 **更多的实用扩展**（3200+ 行，近六成的体量，详见下文）。
-
 在 API 形态上尽力兼容 jQuery 的同时，iQuery 在内部实现上采取 **“面向未来，向前兼容”的 Polyfill 策略** —— 核心逻辑（4300+ 行）尽力基于 **W3C、ECMA 最新标准中的优秀 API**，老旧浏览器兼容代码（部分基于 jQuery API，1200+ 行）尽力包装成与新 API 相同的形式（原型拓展），并独立为外部模块。这样做不但能复用 jQuery API 来高效实现，还方便开发人员自行裁剪。
 
 【注】对 IE 的兼容仅限其“标准模式”，而非“兼容性视图”。
 
 
+
+## 【竞品比较】
+
+|                     | iQuery | jQuery                      | Zepto   | JSLite  |
+|:-------------------:|:------:|:---------------------------:|:-------:|:-------:|
+| 浏览器兼容            | IE 8+  | IE 6+ (v1.x)、IE 9+ (v2.0+) | IE 10+  | IE 10+  |
+| ECMA / W3C polyfill | 多      | ×（各模块自行实现 Fix）       | 少       | 少      |
+| 扩展 API             | 多      |                            | 少       | 少      |
+| 触控事件              | 单指    | ×                          | 多指     | ×       |
+| 源代码模块化           | AMD    | AMD                        | IIFE     | IIFE   |
+| API 注解（JSDoc）     | √      | ×                          | ×        | ×       |
+| 测试框架              | Mocha  | QUnit                      | Evidence | Mocha   |
+
+
+
 ## 【入门】
 
-1. 基础知识 ——《[jQuery API 文档](http://www.jquery123.com/api/)》
-2. 嵌入使用 —— 典型应用实例项目：文件级 **前端脚本加载器** [EasyImport.js](http://git.oschina.net/Tech_Query/EasyImport.js)
-3. 独立使用 ——（HTML 源码基本结构示例如下）
+ 1. 基础知识 ——《[jQuery API 文档](http://www.jquery123.com/)》
+
+ 2. HTML 源码基本结构
 
 ```html
 <!DocType HTML>
 <html><head>
     <meta http-equiv="X-UA-Compatible" content="IE=Edge, Chrome=1" />
-    <script src="path/to/iQuery.js"></script>
+
+    <!--  1. 独立使用  -->
+    <script src="path/to/iQuery.min.js"></script>
+
+    <!--  2. AMD 规范加载  -->
+    <script src="https://cdn.bootcss.com/require.js/2.3.5/require.min.js"></script>
+    <script>
+        require.config({
+            paths:    {
+                iQuery:    'path/to/iQuery.min.js'
+            }
+        });
+    </script>
 </head><body>
     ...
 </body></html>
 ```
-### 成功驱动的项目
- 1. EasyImport.js
- 2. 某公司 JS-SDK
- 3. [EasyWebUI](http://git.oschina.net/Tech_Query/EasyWebUI/)
- 4. [EasyWebApp](http://git.oschina.net/Tech_Query/EasyWebApp/)
- 5. [jQuery-QRcode](https://larsjung.de/jquery-qrcode/)
- 6. [EasyWiki](http://git.oschina.net/Tech_Query/EasyWiki/)
- 7. 某公司 开放平台、业务后台
- 8. 某公司 微信轻应用
- 9. 某公司 WiFi 认证微官网
 
 
 ## 【API 总览】
@@ -48,7 +63,7 @@
 
 以下扩展已收录在本项目的 [**jQueryKit.js**](/master/jQueryKit.js) 中，方便配合其它 jQuery API 实现 ——
 
-[【API 文档】](doc/API/)及更多变更：
+[【API 文档】](https://techquery.github.io/iQuery.js/)及更多变更：
 
  - 内置一个改进且向下兼容的 **$.browser 对象**，能通过 **直接比较版本号**来区分浏览器
  - 新增 **计时相关方法（秒基准）**—— `$.every()`、`$.wait()`、`$.start()`、`$.end()`

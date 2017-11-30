@@ -582,25 +582,13 @@
 
     <h5>Examples</h5>
 
-    <pre class="prettyprint"><code>// 传 相对路径 时返回其目录
+    <pre class="prettyprint"><code>// 传 相对路径 时返回其目录    $.filePath('/test/unit.html')  // '/test/'</code></pre>
 
-    $.filePath('/test/unit.html')  // '/test/'</code></pre>
+    <pre class="prettyprint"><code>// 传 查询字符串 时返回空字符串    $.filePath('?query=string')  // ''</code></pre>
 
-    <pre class="prettyprint"><code>// 传 查询字符串 时返回空字符串
+    <pre class="prettyprint"><code>// 传 URL（字符串）时返回其目录    $.filePath('http://localhost:8084/test/unit.html')    // 'http://localhost:8084/test/'</code></pre>
 
-    $.filePath('?query=string')  // ''</code></pre>
-
-    <pre class="prettyprint"><code>// 传 URL（字符串）时返回其目录
-
-    $.filePath('http://localhost:8084/test/unit.html')
-
-    // 'http://localhost:8084/test/'</code></pre>
-
-    <pre class="prettyprint"><code>// 传 URL（对象）时返回其目录
-
-    $.filePath(new URL('http://localhost:8084/test/unit.html'))
-
-    // 'http://localhost:8084/test/'</code></pre>
+    <pre class="prettyprint"><code>// 传 URL（对象）时返回其目录    $.filePath(new URL('http://localhost:8084/test/unit.html'))    // 'http://localhost:8084/test/'</code></pre>
 
     <h5>Parameters:</h5>
 
@@ -948,13 +936,9 @@
 
     <h5>Examples</h5>
 
-    <pre class="prettyprint"><code>// 跨域 绝对路径
+    <pre class="prettyprint"><code>// 跨域 绝对路径    $.isXDomain('http://localhost/iQuery')  // true</code></pre>
 
-    $.isXDomain('http://localhost/iQuery')  // true</code></pre>
-
-    <pre class="prettyprint"><code>// 同域 相对路径
-
-    $.isXDomain('/iQuery')  // false</code></pre>
+    <pre class="prettyprint"><code>// 同域 相对路径    $.isXDomain('/iQuery')  // false</code></pre>
 
     <h5>Parameters:</h5>
 
@@ -1276,14 +1260,7 @@
 
     <h5>Example</h5>
 
-    <pre class="prettyprint"><code>// URL 查询字符串
-
-    $.paramJSON('?a=1&amp;b=two&amp;b=true')
-
-    //  {
-            a:    1,
-            b:    ['two', true]
-        }</code></pre>
+    <pre class="prettyprint"><code>// URL 查询字符串    $.paramJSON('?a=1&amp;b=two&amp;b=true')    //  {            a:    1,            b:    ['two', true]        }</code></pre>
 
     <h5>Parameters:</h5>
 

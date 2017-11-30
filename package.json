@@ -26,7 +26,7 @@
     "patch": "cd source  &&  amd-bundle ../jQueryKit.js -e jquery -f ../build/extension",
     "bundle": "cd source  &&  amd-bundle ../iQuery.js",
     "compress": "uglifyjs iQuery.js -o build/iQuery.min.js --config-file build/compress.json",
-    "document": "jsdoc -c ./build/document.json  &&  reduce-blank ./doc/API/",
+    "document": "jsdoc -c ./build/document.json  &&  reduce-blank ./docs/",
     "build": "npm run bundle  &&  npm run compress  &&  npm run patch  &&  npm run document",
     "start": "html-pages",
     "test": "mocha --recursive --no-timeouts -c --inline-diffs --exit",

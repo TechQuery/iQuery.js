@@ -6,7 +6,7 @@
         "recurse":        true,
         "readme":         "ReadMe.md",
         "template":       "node_modules/docdash",
-        "destination":    "doc/API/",
+        "destination":    "docs/",
         "verbose":        true
     },
     "templates":       {
