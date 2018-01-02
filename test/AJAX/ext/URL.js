@@ -83,6 +83,22 @@ describe('AJAX/ext/URL.js',  function () {
 
 
 
+    describe('$.urlDomain',  function () {
+
+
+
+        it('给定 URL',  function () {
+
+            return  TestKit.chrome.evaluate(function () {
+
+                return  $.urlDomain('http://localhost:8080/path?query=string');
+
+            }).should.be.fulfilledWith( 'http://localhost:8080' );
+        });
+    });
+
+
+
     describe('$.isXDomain',  function () {
 
 

@@ -20,12 +20,12 @@
     "reduce-blank": "^0.2.0",
     "should": "^13.1.3",
     "test-example": "^0.4.0",
-    "uglify-js": "^3.0.24"
+    "uglify-js": "3.0.28"
   },
   "scripts": {
-    "patch": "cd source  &&  amd-bundle ../jQueryKit.js -e jquery -f ../build/extension",
     "bundle": "cd source  &&  amd-bundle ../iQuery.js",
     "compress": "uglifyjs iQuery.js -o build/iQuery.min.js --config-file build/compress.json",
+    "patch": "cd source  &&  amd-bundle ../jQueryKit.js -e jquery -f ../build/extension",
     "document": "jsdoc -c ./build/document.json  &&  reduce-blank ./docs/",
     "build": "npm run bundle  &&  npm run compress  &&  npm run patch  &&  npm run document",
     "start": "html-pages",

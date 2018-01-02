@@ -649,7 +649,7 @@
 
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="utility_ext_string.js.html">utility/ext/string.js</a>, <a href="utility_ext_string.js.html#line43">line 43</a>
+        <a href="utility_ext_string.js.html">utility/ext/string.js</a>, <a href="utility_ext_string.js.html#line69">line 69</a>
     </li></ul></dd>
 
     <dt class="tag-author">Author:</dt>
@@ -664,6 +664,14 @@
 <div class="description">
     <p>连字符化字符串</p>
 </div>
+
+    <h5>Examples</h5>
+
+    <pre class="prettyprint"><code>// 符号间隔    $.hyphenCase('UPPER_CASE')    // 'upper-case'</code></pre>
+
+    <pre class="prettyprint"><code>// 驼峰法    $.hyphenCase('camelCase')    // 'camel-case'</code></pre>
+
+    <pre class="prettyprint"><code>// 混杂写法    $.hyphenCase('UPPER_CASEMix -camelCase')    // 'upper-case-mix-camel-case'</code></pre>
 
     <h5>Parameters:</h5>
 
@@ -793,7 +801,7 @@
 
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="object_ext_base.js.html">object/ext/base.js</a>, <a href="object_ext_base.js.html#line176">line 176</a>
+        <a href="object_ext_base.js.html">object/ext/base.js</a>, <a href="object_ext_base.js.html#line188">line 188</a>
     </li></ul></dd>
 
     <dt class="tag-author">Author:</dt>
@@ -808,6 +816,20 @@
 <div class="description">
     <p>值相等 检测</p>
 </div>
+
+    <h5>Examples</h5>
+
+    <pre class="prettyprint"><code>// 基本类型比较
+
+    $.isEqual(1, 1)    //  true</code></pre>
+
+    <pre class="prettyprint"><code>// 引用类型（浅）
+
+    $.isEqual({a: 1},  {a: 1})    // true</code></pre>
+
+    <pre class="prettyprint"><code>// 引用类型（深）
+
+    $.isEqual({a: 1, b: {c: 2}},  {a: 1, b: {c: 2}},  2)    // true</code></pre>
 
     <h5>Parameters:</h5>
 
@@ -918,7 +940,7 @@
 
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="AJAX_ext_URL.js.html">AJAX/ext/URL.js</a>, <a href="AJAX_ext_URL.js.html#line208">line 208</a>
+        <a href="AJAX_ext_URL.js.html">AJAX/ext/URL.js</a>, <a href="AJAX_ext_URL.js.html#line214">line 214</a>
     </li></ul></dd>
 
     <dt class="tag-author">Author:</dt>
@@ -1076,7 +1098,7 @@
 
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="object_ext_base.js.html">object/ext/base.js</a>, <a href="object_ext_base.js.html#line264">line 264</a>
+        <a href="object_ext_base.js.html">object/ext/base.js</a>, <a href="object_ext_base.js.html#line276">line 276</a>
     </li></ul></dd>
 
     <dt class="tag-author">Author:</dt>
@@ -1396,7 +1418,7 @@
 
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="utility_ext_string.js.html">utility/ext/string.js</a>, <a href="utility_ext_string.js.html#line19">line 19</a>
+        <a href="utility_ext_string.js.html">utility/ext/string.js</a>, <a href="utility_ext_string.js.html#line31">line 31</a>
     </li></ul></dd>
 
     <dt class="tag-author">Author:</dt>
@@ -1411,6 +1433,14 @@
 <div class="description">
     <p>定字定数分割字符串</p>
 </div>
+
+    <h5>Examples</h5>
+
+    <pre class="prettyprint"><code>// 原型方法等效    $.split('abc', '')    // ['a', 'b', 'c']</code></pre>
+
+    <pre class="prettyprint"><code>// PHP str_split() 等效    $.split('abc', '', 2)    // ['a', 'bc']</code></pre>
+
+    <pre class="prettyprint"><code>// 连接字符串    $.split("a  b\tc",  /\s+/,  2,  ' ')    // ['a', 'b c']</code></pre>
 
     <h5>Parameters:</h5>
 
@@ -1466,7 +1496,7 @@
 
                 </td>
 
-            <td class="description last"><p>Separator to split as<br>                                   <code>Array.prototype.split</code></p></td>
+            <td class="description last"><p>Separator to split as<br>                                 <code>String.prototype.split</code></p></td>
         </tr>
 
         <tr>
@@ -1504,7 +1534,7 @@
 
                 </td>
 
-            <td class="description last"><p>String to join<br>                                   (Default value is same as <code>split</code>)</p></td>
+            <td class="description last"><p>String to join<br>                                 (Default value is same as <code>split</code>)</p></td>
         </tr>
 
     </tbody>
@@ -1795,7 +1825,7 @@
 
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="AJAX_ext_URL.js.html">AJAX/ext/URL.js</a>, <a href="AJAX_ext_URL.js.html#line184">line 184</a>
+        <a href="AJAX_ext_URL.js.html">AJAX/ext/URL.js</a>, <a href="AJAX_ext_URL.js.html#line190">line 190</a>
     </li></ul></dd>
 
     <dt class="tag-author">Author:</dt>
@@ -1810,6 +1840,14 @@
 <div class="description">
     <p>获取 URL 的域（源）</p>
 </div>
+
+    <h5>Example</h5>
+
+    <pre class="prettyprint"><code>// 给定 URL
+
+    $.urlDomain('http://localhost:8080/path?query=string')
+
+    // 'http://localhost:8080'</code></pre>
 
     <h5>Parameters:</h5>
 
@@ -2215,7 +2253,7 @@
 
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="AJAX_ext_form.js.html">AJAX/ext/form.js</a>, <a href="AJAX_ext_form.js.html#line36">line 36</a>
+        <a href="AJAX_ext_form.js.html">AJAX/ext/form.js</a>, <a href="AJAX_ext_form.js.html#line38">line 38</a>
     </li></ul></dd>
 
     <dt class="tag-author">Author:</dt>

@@ -166,11 +166,23 @@ define(['../../polyfill/ES_API'],  function ($) {
      *
      * @memberof $
      *
-     * @param   {*}       left
-     * @param   {*}       right
-     * @param   {number}  [depth=1]
+     * @param  {*}       left
+     * @param  {*}       right
+     * @param  {number}  [depth=1]
      *
-     * @returns {boolean}
+     * @return {boolean}
+     *
+     * @example  // 基本类型比较
+     *
+     *     $.isEqual(1, 1)    //  true
+     *
+     * @example  // 引用类型（浅）
+     *
+     *     $.isEqual({a: 1},  {a: 1})    // true
+     *
+     * @example  // 引用类型（深）
+     *
+     *     $.isEqual({a: 1, b: {c: 2}},  {a: 1, b: {c: 2}},  2)    // true
      */
 
     $.isEqual = function isEqual(left, right, depth) {

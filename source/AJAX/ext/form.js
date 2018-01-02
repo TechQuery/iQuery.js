@@ -4,14 +4,16 @@ define(['../../iQuery', '../index'],  function ($) {
 
     function Value_Check() {
 
-        if ((! this.value)  &&  (this.getAttribute('required') != null))
+        var value = this.value || this.textContent;
+
+        if ((! value)  &&  (this.getAttribute('required') != null))
             return false;
 
-        var iRegEx = this.getAttribute('pattern');
+        var regexp = this.getAttribute('pattern');
 
-        if (iRegEx)  try {
+        if (regexp)  try {
 
-            return  RegExp( iRegEx ).test( this.value );
+            return  RegExp( regexp ).test( value );
 
         } catch (iError) { }
 
@@ -19,13 +21,13 @@ define(['../../iQuery', '../index'],  function ($) {
             (this.tagName.toLowerCase() === 'input')  &&
             (this.getAttribute('type') === 'number')
         ) {
-            var iNumber = Number( this.value ),
-                iMin = Number( this.getAttribute('min') );
+            var number = +value,  min = +( this.getAttribute('min') );
+
             if (
-                isNaN( iNumber )  ||
-                (iNumber < iMin)  ||
-                (iNumber > Number(this.getAttribute('max') || Infinity))  ||
-                ((iNumber - iMin)  %  Number( this.getAttribute('step') ))
+                isNaN( number )  ||
+                (number < min)  ||
+                (number > +(this.getAttribute('max') || Infinity))  ||
+                ((number - min)  %  this.getAttribute('step'))
             )
                 return false;
         }

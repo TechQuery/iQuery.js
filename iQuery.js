@@ -390,11 +390,23 @@ var object_ext_base = (function ($) {
      *
      * @memberof $
      *
-     * @param   {*}       left
-     * @param   {*}       right
-     * @param   {number}  [depth=1]
+     * @param  {*}       left
+     * @param  {*}       right
+     * @param  {number}  [depth=1]
      *
-     * @returns {boolean}
+     * @return {boolean}
+     *
+     * @example  // 基本类型比较
+     *
+     *     $.isEqual(1, 1)    //  true
+     *
+     * @example  // 引用类型（浅）
+     *
+     *     $.isEqual({a: 1},  {a: 1})    // true
+     *
+     * @example  // 引用类型（深）
+     *
+     *     $.isEqual({a: 1, b: {c: 2}},  {a: 1, b: {c: 2}},  2)    // true
      */
 
     $.isEqual = function isEqual(left, right, depth) {
@@ -1231,21 +1243,33 @@ var utility_ext_string = (function ($) {
          *
          * @memberof $
          *
-         * @param   {string}        string  - Raw Text
-         * @param   {string|RegExp} [split] - Separator to split as
-         *                                    `Array.prototype.split`
-         * @param   {number}        [max]   - Max number of returned parts
-         * @param   {string}        [join]  - String to join
-         *                                    (Default value is same as `split`)
-         * @returns {string[]}
+         * @param {string}        string  - Raw Text
+         * @param {string|RegExp} [split] - Separator to split as
+         *                                  `String.prototype.split`
+         * @param {number}        [max]   - Max number of returned parts
+         * @param {string}        [join]  - String to join
+         *                                  (Default value is same as `split`)
+         * @return {string[]}
+         *
+         * @example  // 原型方法等效
+         *
+         *     $.split('abc', '')    // ['a', 'b', 'c']
+         *
+         * @example  // PHP str_split() 等效
+         *
+         *     $.split('abc', '', 2)    // ['a', 'bc']
+         *
+         * @example  // 连接字符串
+         *
+         *     $.split("a  b\tc",  /\s+/,  2,  ' ')    // ['a', 'b c']
          */
         split:         function (string, split, max, join) {
 
             string = string.split( split );
 
-            if (max) {
+            if ( max ) {
                 string[max - 1] = string.slice(max - 1).join(
-                    (typeof join == 'string') ? join : split
+                    (typeof join === 'string')  ?  join  :  split
                 );
                 string.length = max;
             }
@@ -1255,20 +1279,35 @@ var utility_ext_string = (function ($) {
         /**
          * 连字符化字符串
          *
-         * @author   TechQuery
+         * @author TechQuery
          *
          * @memberof $
          *
-         * @param    {string} raw - Non Hyphen-Case String
+         * @param {string} raw - Non Hyphen-Case String
          *
-         * @returns  {string}
+         * @return {string}
+         *
+         * @example  // 符号间隔
+         *
+         *     $.hyphenCase('UPPER_CASE')    // 'upper-case'
+         *
+         * @example  // 驼峰法
+         *
+         *     $.hyphenCase('camelCase')    // 'camel-case'
+         *
+         * @example  // 混杂写法
+         *
+         *     $.hyphenCase('UPPER_CASEMix -camelCase')
+         *
+         *     // 'upper-case-mix-camel-case'
          */
         hyphenCase:    function (raw) {
 
-            return  raw.toLowerCase().replace(/(\S)[^a-z0-9]+(\S)/g,  function () {
-
-                return  arguments[1] + '-' + arguments[2];
-            });
+            return raw.replace(
+                /[^A-Za-z0-9]+/g, '-'
+            ).replace(
+                /([A-Za-z0-9])([A-Z][a-z])/g, '$1-$2'
+            ).toLowerCase();
         },
         byteLength:    function () {
 
@@ -1339,18 +1378,37 @@ var utility_ext_string = (function ($) {
 
 /* ---------- DOM Text Content ---------- */
 
-    Object.defineProperty(DOM_Proto, 'textContent', {
+    function mapTree(node, filter) {
+
+        var children = node.childNodes, list = [ ];
+
+        for (var i = 0, value;  children[i];  i++) {
+
+            if ((value = filter.call(node, children[i]))  !=  null)
+                list.push( value );
+
+            if ( children[i].childNodes[0] )
+                list.push.apply(list,  mapTree(children[i], filter));
+        }
+
+        return list;
+    }
+
+    Object.defineProperty(Node.prototype, 'textContent', {
         get:    function () {
 
-            return this.innerText;
-        },
-        set:    function (iText) {
+            return  mapTree(this,  function (node) {
 
-            switch ( this.tagName.toLowerCase() ) {
-                case 'style':     return  this.styleSheet.cssText = iText;
-                case 'script':    return  this.text = iText;
-            }
-            this.innerText = iText;
+                if (node.nodeType !== 1)  return  node.nodeValue || '';
+
+            }).join('');
+        },
+        set:    function (text) {
+
+            if (this.nodeName.toLowerCase() === 'style')
+                this.styleSheet.cssText = text;
+            else
+                this[(this.nodeType === 1) ? 'innerText' : 'nodeValue'] = text;
         }
     });
 
@@ -4349,6 +4407,12 @@ var AJAX_ext_URL = (function ($) {
          *                            (Use `location.origin` while the parameter
          *                            is empty)
          * @returns  {string} Origin of the URL
+         *
+         * @example  // 给定 URL
+         *
+         *     $.urlDomain('http://localhost:8080/path?query=string')
+         *
+         *     // 'http://localhost:8080'
          */
         urlDomain:    function (URL) {
 
@@ -6417,14 +6481,16 @@ var AJAX_ext_HTML_Request = (function ($) {
 
     function Value_Check() {
 
-        if ((! this.value)  &&  (this.getAttribute('required') != null))
+        var value = this.value || this.textContent;
+
+        if ((! value)  &&  (this.getAttribute('required') != null))
             return false;
 
-        var iRegEx = this.getAttribute('pattern');
+        var regexp = this.getAttribute('pattern');
 
-        if (iRegEx)  try {
+        if (regexp)  try {
 
-            return  RegExp( iRegEx ).test( this.value );
+            return  RegExp( regexp ).test( value );
 
         } catch (iError) { }
 
@@ -6432,13 +6498,13 @@ var AJAX_ext_HTML_Request = (function ($) {
             (this.tagName.toLowerCase() === 'input')  &&
             (this.getAttribute('type') === 'number')
         ) {
-            var iNumber = Number( this.value ),
-                iMin = Number( this.getAttribute('min') );
+            var number = +value,  min = +( this.getAttribute('min') );
+
             if (
-                isNaN( iNumber )  ||
-                (iNumber < iMin)  ||
-                (iNumber > Number(this.getAttribute('max') || Infinity))  ||
-                ((iNumber - iMin)  %  Number( this.getAttribute('step') ))
+                isNaN( number )  ||
+                (number < min)  ||
+                (number > +(this.getAttribute('max') || Infinity))  ||
+                ((number - min)  %  this.getAttribute('step'))
             )
                 return false;
         }
@@ -6803,11 +6869,11 @@ var AJAX_ext_HTML_Request = (function ($) {
  *
  * @module    {function} iQuery
  *
- * @version   3.0 (2017-11-24) stable
+ * @version   3.0 (2018-01-02) stable
  *
  * @see       {@link http://jquery.com/ jQuery}
  *
- * @copyright TechQuery <shiy2008@gmail.com> 2015-2017
+ * @copyright TechQuery <shiy2008@gmail.com> 2015-2018
  */
 
 

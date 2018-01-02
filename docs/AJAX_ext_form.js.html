@@ -37,14 +37,16 @@
 
     function Value_Check() {
 
-        if ((! this.value)  &amp;&amp;  (this.getAttribute('required') != null))
+        var value = this.value || this.textContent;
+
+        if ((! value)  &amp;&amp;  (this.getAttribute('required') != null))
             return false;
 
-        var iRegEx = this.getAttribute('pattern');
+        var regexp = this.getAttribute('pattern');
 
-        if (iRegEx)  try {
+        if (regexp)  try {
 
-            return  RegExp( iRegEx ).test( this.value );
+            return  RegExp( regexp ).test( value );
 
         } catch (iError) { }
 
@@ -52,13 +54,13 @@
             (this.tagName.toLowerCase() === 'input')  &amp;&amp;
             (this.getAttribute('type') === 'number')
         ) {
-            var iNumber = Number( this.value ),
-                iMin = Number( this.getAttribute('min') );
+            var number = +value,  min = +( this.getAttribute('min') );
+
             if (
-                isNaN( iNumber )  ||
-                (iNumber &lt; iMin)  ||
-                (iNumber > Number(this.getAttribute('max') || Infinity))  ||
-                ((iNumber - iMin)  %  Number( this.getAttribute('step') ))
+                isNaN( number )  ||
+                (number &lt; min)  ||
+                (number > +(this.getAttribute('max') || Infinity))  ||
+                ((number - min)  %  this.getAttribute('step'))
             )
                 return false;
         }

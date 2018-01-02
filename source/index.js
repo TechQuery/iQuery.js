@@ -3,11 +3,11 @@
  *
  * @module    {function} iQuery
  *
- * @version   3.0 (2017-11-24) stable
+ * @version   3.0 (2018-01-02) stable
  *
  * @see       {@link http://jquery.com/ jQuery}
  *
- * @copyright TechQuery <shiy2008@gmail.com> 2015-2017
+ * @copyright TechQuery <shiy2008@gmail.com> 2015-2018
  */
 
 

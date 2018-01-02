@@ -51,18 +51,37 @@ define(['../utility/ext/string'],  function ($) {
 
 /* ---------- DOM Text Content ---------- */
 
-    Object.defineProperty(DOM_Proto, 'textContent', {
+    function mapTree(node, filter) {
+
+        var children = node.childNodes, list = [ ];
+
+        for (var i = 0, value;  children[i];  i++) {
+
+            if ((value = filter.call(node, children[i]))  !=  null)
+                list.push( value );
+
+            if ( children[i].childNodes[0] )
+                list.push.apply(list,  mapTree(children[i], filter));
+        }
+
+        return list;
+    }
+
+    Object.defineProperty(Node.prototype, 'textContent', {
         get:    function () {
 
-            return this.innerText;
-        },
-        set:    function (iText) {
+            return  mapTree(this,  function (node) {
 
-            switch ( this.tagName.toLowerCase() ) {
-                case 'style':     return  this.styleSheet.cssText = iText;
-                case 'script':    return  this.text = iText;
-            }
-            this.innerText = iText;
+                if (node.nodeType !== 1)  return  node.nodeValue || '';
+
+            }).join('');
+        },
+        set:    function (text) {
+
+            if (this.nodeName.toLowerCase() === 'style')
+                this.styleSheet.cssText = text;
+            else
+                this[(this.nodeType === 1) ? 'innerText' : 'nodeValue'] = text;
         }
     });
 

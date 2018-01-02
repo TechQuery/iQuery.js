@@ -31,7 +31,7 @@
 
     <section>
         <article>
-            <pre class="prettyprint source linenums"><code>define(['../../utility/ext/string'],  function ($) {
+            <pre class="prettyprint source linenums"><code>define(['../../utility/ext/string', '../../utility/index'],  function ($) {
 
     var BOM = self;
 
@@ -213,6 +213,12 @@
          *                            (Use `location.origin` while the parameter
          *                            is empty)
          * @returns  {string} Origin of the URL
+         *
+         * @example  // 给定 URL
+         *
+         *     $.urlDomain('http://localhost:8080/path?query=string')
+         *
+         *     // 'http://localhost:8080'
          */
         urlDomain:    function (URL) {
 

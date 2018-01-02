@@ -42,15 +42,11 @@ exports.pageLoad = async function (sourceURI) {
 
     await exports.chrome.goto('http://localhost:8084/test/unit.html');
 
-    await exports.chrome.evaluate(function (sourceURI) {
+    await exports.chrome.evaluate(function () {
 
         return  new Promise(function (resolve, reject) {
 
-            require(['iQuery', sourceURI],  function ($) {
-
-                resolve(self.$ = $);
-
-            },  reject);
+            require(['iQuery'], resolve, reject);
         });
-    },  [ sourceURI ]);
+    });
 };

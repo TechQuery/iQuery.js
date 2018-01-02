@@ -1,4 +1,4 @@
-define(['../../utility/ext/string'],  function ($) {
+define(['../../utility/ext/string', '../../utility/index'],  function ($) {
 
     var BOM = self;
 
@@ -180,6 +180,12 @@ define(['../../utility/ext/string'],  function ($) {
          *                            (Use `location.origin` while the parameter
          *                            is empty)
          * @returns  {string} Origin of the URL
+         *
+         * @example  // 给定 URL
+         *
+         *     $.urlDomain('http://localhost:8080/path?query=string')
+         *
+         *     // 'http://localhost:8080'
          */
         urlDomain:    function (URL) {
 

@@ -62,4 +62,38 @@ describe('object/ext/base.js',  function () {
         });
     });
 
+
+
+    describe('$.isEqual',  function () {
+
+
+
+        it('基本类型比较',  function () {
+
+            return  TestKit.chrome.evaluate(function () {
+
+                return  $.isEqual(1, 1);
+
+            }).should.be.fulfilledWith( true );
+        });
+
+        it('引用类型（浅）',  function () {
+
+            return  TestKit.chrome.evaluate(function () {
+
+                return  $.isEqual({a: 1},  {a: 1});
+
+            }).should.be.fulfilledWith( true );
+        });
+
+        it('引用类型（深）',  function () {
+
+            return  TestKit.chrome.evaluate(function () {
+
+                return  $.isEqual({a: 1, b: {c: 2}},  {a: 1, b: {c: 2}},  2);
+
+            }).should.be.fulfilledWith( true );
+        });
+    });
+
 });
