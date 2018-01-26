@@ -96,4 +96,28 @@ describe('object/ext/base.js',  function () {
         });
     });
 
+
+
+    describe('$.mapTree',  function () {
+
+
+
+        it('DOM 树遍历',  function () {
+
+            return  TestKit.chrome.evaluate(function () {
+
+                return  $.mapTree(
+        $('<a>A<b>B<!--C--></b></a>')[0],
+        'childNodes',
+        function (node, index, depth) {
+            return  depth + (
+                (node.nodeType === 3)  ?  node.nodeValue  :  ''
+            );
+        }
+    ).join('');
+
+            }).should.be.fulfilledWith( '1A12B2' );
+        });
+    });
+
 });

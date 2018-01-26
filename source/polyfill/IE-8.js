@@ -51,28 +51,12 @@ define(['../utility/ext/string'],  function ($) {
 
 /* ---------- DOM Text Content ---------- */
 
-    function mapTree(node, filter) {
-
-        var children = node.childNodes, list = [ ];
-
-        for (var i = 0, value;  children[i];  i++) {
-
-            if ((value = filter.call(node, children[i]))  !=  null)
-                list.push( value );
-
-            if ( children[i].childNodes[0] )
-                list.push.apply(list,  mapTree(children[i], filter));
-        }
-
-        return list;
-    }
-
     Object.defineProperty(Node.prototype, 'textContent', {
         get:    function () {
 
-            return  mapTree(this,  function (node) {
+            return  $.mapTree(this,  'childNodes',  function (node) {
 
-                if (node.nodeType !== 1)  return  node.nodeValue || '';
+                return  (node.nodeType !== 1)  ?  node.nodeValue  :  '';
 
             }).join('');
         },

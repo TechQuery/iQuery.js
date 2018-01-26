@@ -248,6 +248,69 @@ define(['../../polyfill/ES_API'],  function ($) {
         return iResult;
     };
 
+    var depth = 0;
+    /**
+     * 对象树 递归遍历
+     *
+     * @author TechQuery <shiy007@qq.com>
+     *
+     * @memberof $
+     *
+     * @param {object}        node     - Object tree
+     * @param {string}        fork_key - Key of children list
+     * @param {MapTreeFilter} filter   - Map filter
+     *
+     * @return {Array}  Result list of Map filter
+     *
+     * @example  // DOM 树遍历
+     *
+     *     $.mapTree(
+     *         $('<a>A<b>B<!--C--></b></a>')[0],
+     *         'childNodes',
+     *         function (node, index, depth) {
+     *             return  depth + (
+     *                 (node.nodeType === 3)  ?  node.nodeValue  :  ''
+     *             );
+     *         }
+     *     ).join('')
+     *
+     *     //  '1A12B2'
+     */
+    $.mapTree = function mapTree(node, fork_key, filter) {
+
+        var children = node[fork_key], list = [ ];    depth++ ;
+
+        for (var i = 0, value;  children[i];  i++) {
+            /**
+             * 对象遍历过滤器
+             *
+             * @callback MapTreeFilter
+             *
+             * @param {object} child
+             * @param {number} index
+             * @param {number} depth
+             *
+             * @return {?object}  `Null` or `Undefined` to **Skip the Sub-Tree**,
+             *                    and Any other Type to Add into the Result Array.
+             */
+            value = filter.call(node, children[i], i, depth);
+
+            if (value != null) {
+
+                list.push( value );
+
+                if ( children[i][fork_key][0] )
+                    list.push.apply(
+                        list,  mapTree(children[i], fork_key, filter)
+                    );
+            }
+        }
+
+        depth-- ;
+
+        return list;
+    };
+
     /**
      * ES 6 迭代器协议
      *

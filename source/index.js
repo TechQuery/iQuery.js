@@ -3,7 +3,7 @@
  *
  * @module    {function} iQuery
  *
- * @version   3.0 (2018-01-02) stable
+ * @version   3.0 (2018-01-26) stable
  *
  * @see       {@link http://jquery.com/ jQuery}
  *

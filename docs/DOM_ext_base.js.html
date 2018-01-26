@@ -22,7 +22,7 @@
 <label for="nav-trigger" class="overlay"></label>
 
 <nav>
-    <h2><a href="index.html">Home</a></h2><h3>Classes</h3><ul><li><a href="$.html">$</a><ul class='methods'><li data-type='method'><a href="$.html#.bitOperate">bitOperate</a></li><li data-type='method'><a href="$.html#.buildFragment">buildFragment</a></li><li data-type='method'><a href="$.html#.camelCase">camelCase</a></li><li data-type='method'><a href="$.html#.cssRule">cssRule</a></li><li data-type='method'><a href="$.html#.extendURL">extendURL</a></li><li data-type='method'><a href="$.html#.filePath">filePath</a></li><li data-type='method'><a href="$.html#.hyphenCase">hyphenCase</a></li><li data-type='method'><a href="$.html#.intersect">intersect</a></li><li data-type='method'><a href="$.html#.isEqual">isEqual</a></li><li data-type='method'><a href="$.html#.isXDomain">isXDomain</a></li><li data-type='method'><a href="$.html#.likeArray">likeArray</a></li><li data-type='method'><a href="$.html#.makeIterator">makeIterator</a></li><li data-type='method'><a href="$.html#.makeSet">makeSet</a></li><li data-type='method'><a href="$.html#.paramJSON">paramJSON</a></li><li data-type='method'><a href="$.html#.parseHeader">parseHeader</a></li><li data-type='method'><a href="$.html#.split">split</a></li><li data-type='method'><a href="$.html#.storage">storage</a></li><li data-type='method'><a href="$.html#.throttle">throttle</a></li><li data-type='method'><a href="$.html#.Type">Type</a></li><li data-type='method'><a href="$.html#.urlDomain">urlDomain</a></li><li data-type='method'><a href="$.html#.uuid">uuid</a></li><li data-type='method'><a href="$.html#cssRule">cssRule</a></li><li data-type='method'><a href="$.html#insertTo">insertTo</a></li><li data-type='method'><a href="$.html#treeWalker">treeWalker</a></li><li data-type='method'><a href="$.html#validate">validate</a></li></ul></li><li><a href="Class.html">Class</a><ul class='methods'><li data-type='method'><a href="Class.html#.extend">extend</a></li><li data-type='method'><a href="Class.html#setPrivate">setPrivate</a></li><li data-type='method'><a href="Class.html#setPublic">setPublic</a></li></ul></li></ul><h3>Modules</h3><ul><li><a href="module-iQuery.html">iQuery</a></li></ul><h3>Interfaces</h3><ul><li><a href="Iterator.html">Iterator</a><ul class='methods'><li data-type='method'><a href="Iterator.html#next">next</a></li></ul></li></ul><h3><a href="global.html">Global</a></h3>
+    <h2><a href="index.html">Home</a></h2><h3>Classes</h3><ul><li><a href="$.html">$</a><ul class='methods'><li data-type='method'><a href="$.html#.bitOperate">bitOperate</a></li><li data-type='method'><a href="$.html#.buildFragment">buildFragment</a></li><li data-type='method'><a href="$.html#.camelCase">camelCase</a></li><li data-type='method'><a href="$.html#.cssRule">cssRule</a></li><li data-type='method'><a href="$.html#.extendURL">extendURL</a></li><li data-type='method'><a href="$.html#.filePath">filePath</a></li><li data-type='method'><a href="$.html#.hyphenCase">hyphenCase</a></li><li data-type='method'><a href="$.html#.intersect">intersect</a></li><li data-type='method'><a href="$.html#.isEqual">isEqual</a></li><li data-type='method'><a href="$.html#.isXDomain">isXDomain</a></li><li data-type='method'><a href="$.html#.likeArray">likeArray</a></li><li data-type='method'><a href="$.html#.makeIterator">makeIterator</a></li><li data-type='method'><a href="$.html#.makeSet">makeSet</a></li><li data-type='method'><a href="$.html#.mapTree">mapTree</a></li><li data-type='method'><a href="$.html#.paramJSON">paramJSON</a></li><li data-type='method'><a href="$.html#.parseHeader">parseHeader</a></li><li data-type='method'><a href="$.html#.split">split</a></li><li data-type='method'><a href="$.html#.storage">storage</a></li><li data-type='method'><a href="$.html#.throttle">throttle</a></li><li data-type='method'><a href="$.html#.Type">Type</a></li><li data-type='method'><a href="$.html#.urlDomain">urlDomain</a></li><li data-type='method'><a href="$.html#.uuid">uuid</a></li><li data-type='method'><a href="$.html#cssRule">cssRule</a></li><li data-type='method'><a href="$.html#insertTo">insertTo</a></li><li data-type='method'><a href="$.html#validate">validate</a></li></ul></li><li><a href="Class.html">Class</a><ul class='methods'><li data-type='method'><a href="Class.html#.extend">extend</a></li><li data-type='method'><a href="Class.html#setPrivate">setPrivate</a></li><li data-type='method'><a href="Class.html#setPublic">setPublic</a></li></ul></li></ul><h3>Modules</h3><ul><li><a href="module-iQuery.html">iQuery</a></li></ul><h3>Interfaces</h3><ul><li><a href="Iterator.html">Iterator</a><ul class='methods'><li data-type='method'><a href="Iterator.html#next">next</a></li></ul></li></ul><h3><a href="global.html">Global</a></h3>
 </nav>
 
 <div id="main">
@@ -94,121 +94,60 @@
     };
 
     /**
-     * 迭代过滤器
+     * HTML 执行器
      *
-     * @callback IteratorFilter
+     * @author TechQuery &lt;shiy007@qq.com>
      *
-     * @this  Node
-     * @param {Node} node - Current Node
+     * @param {string} HTML       - HTML source code with scripts executable
+     * @param {string} [selector] - CSS selector to filter
+     *                              without scripts executable
+     *
+     * @return {$}     Element set of HTML source code
+     *
+     * @example  // 同步执行脚本
+     *
+     *     $('body').htmlExec(
+     *         "&lt;script>self.test = $('body')[0].lastChild.tagName;&lt;/script>xxx"
+     *     ) &amp;&amp; self.test
+     *
+     *     // 'SCRIPT'
+     *
+     * @example  // CSS 选择符不执行脚本
+     *
+     *     $('body').htmlExec(
+     *         "&lt;script>self.name = 'xxx';&lt;/script>&lt;a />&lt;b />",  'script, a'
+     *     ) &amp;&amp; (
+     *         self.name + $('body')[0].children.length
+     *     )
+     *
+     *     // '2'
      */
-
-    /**
-     * DOM 树遍历迭代器
-     *
-     * @author   TechQuery
-     *
-     * @memberof $.prototype
-     * @function treeWalker
-     *
-     * @param    {number}         [nodeType]
-     * @param    {IteratorFilter} filter
-     *
-     * @returns  {Iterator}       Iterator Object for walking on DOM tree
-     */
-
-    $.fn.treeWalker = function (nodeType, filter) {
-
-        if (nodeType instanceof Function)
-            filter = nodeType,  nodeType = 0;
-        else
-            filter = (typeof filter === 'function')  ?  filter  :  '';
-
-        var element = (nodeType === 1)  ?  'Element'  :  '',  _This_,  _Root_;
-
-        var FC = 'first' + element + 'Child',  NS = 'next' + element + 'Sibling';
-
-        _This_ = _Root_ = this[0];
-
-        return {
-            forward:    function (noChild) {
-
-                if ((! noChild)  &amp;&amp;  _This_[ FC ])
-                    return  _This_ = _This_[ FC ];
-
-                _This_ = (_This_ != _Root_)  &amp;&amp;  _This_;
-
-                while (_This_) {
-
-                    if (_This_[ NS ])  return  _This_ = _This_[ NS ];
-
-                    _This_ = (_This_.parentNode != _Root_)  &amp;&amp;  _This_.parentNode;
-                }
-            },
-            replace:    function (iNew) {
-
-                iNew = $.buildFragment(
-                    $.likeArray( iNew )  ?  $.makeArray( iNew )  :  [ iNew ]
-                );
-
-                if (! iNew.childNodes[0])  return;
-
-                _This_.parentNode.replaceChild(
-                    [iNew,  iNew = iNew.childNodes[0]][0],  _This_
-                );
-
-                _This_ = iNew;
-            },
-            next:       function () {
-
-                if (! _This_)  return  {done: true};
-
-                var iNew = filter  &amp;&amp;  filter.call(_Root_, _This_);
-
-                if (iNew  &amp;&amp;  (iNew != _This_)  &amp;&amp;  _This_.parentNode)
-                    this.replace( iNew );
-                else if (iNew === false)
-                    this.forward();
-
-                if (! _This_)  return  {done: true};
-
-                var item = {value: _This_,  done: false};
-
-                this.forward(iNew === null);
-
-                return item;
-            }
-        };
-    };
-/* ---------- HTML with Script Executable ---------- */
-
     $.fn.htmlExec = function (HTML, selector) {
 
         this.empty();
 
-        var $_Box = $('&lt;div />');
-
-        $_Box[0].innerHTML = HTML;
+        var $_Box = $('&lt;div />').prop('innerHTML', HTML);
 
         return  (! selector)  ?
             this.each(function () {
 
                 $_Box = $( $_Box[0].cloneNode( true ) );
 
-                var walker = $_Box.treeWalker(1,  function (iDOM) {
+                $.mapTree($_Box[0],  'childNodes',  function (child) {
 
-                        if (iDOM.tagName.toLowerCase() != 'script')  return;
+                    if (child.nodeName.toLowerCase() !== 'script')
+                        return child;
 
-                        var iAttr = { };
+                    var attribute = { };
 
-                        $.each(iDOM.attributes,  function () {
+                    $.each(child.attributes,  function () {
 
-                            iAttr[ this.nodeName ] = this.nodeValue;
-                        });
-
-                        return  $('&lt;script />',  iAttr)[0];
+                        attribute[ this.nodeName ] = this.nodeValue;
                     });
 
-                while (! walker.next().done)  ;
+                    $('&lt;script />',  attribute).prop('text', child.text)
+                        .replaceAll( child );
+                });
 
                 $_Box.children().insertTo( this );
             })  :

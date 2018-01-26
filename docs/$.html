@@ -22,7 +22,7 @@
 <label for="nav-trigger" class="overlay"></label>
 
 <nav>
-    <h2><a href="index.html">Home</a></h2><h3>Classes</h3><ul><li><a href="$.html">$</a><ul class='methods'><li data-type='method'><a href="$.html#.bitOperate">bitOperate</a></li><li data-type='method'><a href="$.html#.buildFragment">buildFragment</a></li><li data-type='method'><a href="$.html#.camelCase">camelCase</a></li><li data-type='method'><a href="$.html#.cssRule">cssRule</a></li><li data-type='method'><a href="$.html#.extendURL">extendURL</a></li><li data-type='method'><a href="$.html#.filePath">filePath</a></li><li data-type='method'><a href="$.html#.hyphenCase">hyphenCase</a></li><li data-type='method'><a href="$.html#.intersect">intersect</a></li><li data-type='method'><a href="$.html#.isEqual">isEqual</a></li><li data-type='method'><a href="$.html#.isXDomain">isXDomain</a></li><li data-type='method'><a href="$.html#.likeArray">likeArray</a></li><li data-type='method'><a href="$.html#.makeIterator">makeIterator</a></li><li data-type='method'><a href="$.html#.makeSet">makeSet</a></li><li data-type='method'><a href="$.html#.paramJSON">paramJSON</a></li><li data-type='method'><a href="$.html#.parseHeader">parseHeader</a></li><li data-type='method'><a href="$.html#.split">split</a></li><li data-type='method'><a href="$.html#.storage">storage</a></li><li data-type='method'><a href="$.html#.throttle">throttle</a></li><li data-type='method'><a href="$.html#.Type">Type</a></li><li data-type='method'><a href="$.html#.urlDomain">urlDomain</a></li><li data-type='method'><a href="$.html#.uuid">uuid</a></li><li data-type='method'><a href="$.html#cssRule">cssRule</a></li><li data-type='method'><a href="$.html#insertTo">insertTo</a></li><li data-type='method'><a href="$.html#treeWalker">treeWalker</a></li><li data-type='method'><a href="$.html#validate">validate</a></li></ul></li><li><a href="Class.html">Class</a><ul class='methods'><li data-type='method'><a href="Class.html#.extend">extend</a></li><li data-type='method'><a href="Class.html#setPrivate">setPrivate</a></li><li data-type='method'><a href="Class.html#setPublic">setPublic</a></li></ul></li></ul><h3>Modules</h3><ul><li><a href="module-iQuery.html">iQuery</a></li></ul><h3>Interfaces</h3><ul><li><a href="Iterator.html">Iterator</a><ul class='methods'><li data-type='method'><a href="Iterator.html#next">next</a></li></ul></li></ul><h3><a href="global.html">Global</a></h3>
+    <h2><a href="index.html">Home</a></h2><h3>Classes</h3><ul><li><a href="$.html">$</a><ul class='methods'><li data-type='method'><a href="$.html#.bitOperate">bitOperate</a></li><li data-type='method'><a href="$.html#.buildFragment">buildFragment</a></li><li data-type='method'><a href="$.html#.camelCase">camelCase</a></li><li data-type='method'><a href="$.html#.cssRule">cssRule</a></li><li data-type='method'><a href="$.html#.extendURL">extendURL</a></li><li data-type='method'><a href="$.html#.filePath">filePath</a></li><li data-type='method'><a href="$.html#.hyphenCase">hyphenCase</a></li><li data-type='method'><a href="$.html#.intersect">intersect</a></li><li data-type='method'><a href="$.html#.isEqual">isEqual</a></li><li data-type='method'><a href="$.html#.isXDomain">isXDomain</a></li><li data-type='method'><a href="$.html#.likeArray">likeArray</a></li><li data-type='method'><a href="$.html#.makeIterator">makeIterator</a></li><li data-type='method'><a href="$.html#.makeSet">makeSet</a></li><li data-type='method'><a href="$.html#.mapTree">mapTree</a></li><li data-type='method'><a href="$.html#.paramJSON">paramJSON</a></li><li data-type='method'><a href="$.html#.parseHeader">parseHeader</a></li><li data-type='method'><a href="$.html#.split">split</a></li><li data-type='method'><a href="$.html#.storage">storage</a></li><li data-type='method'><a href="$.html#.throttle">throttle</a></li><li data-type='method'><a href="$.html#.Type">Type</a></li><li data-type='method'><a href="$.html#.urlDomain">urlDomain</a></li><li data-type='method'><a href="$.html#.uuid">uuid</a></li><li data-type='method'><a href="$.html#cssRule">cssRule</a></li><li data-type='method'><a href="$.html#insertTo">insertTo</a></li><li data-type='method'><a href="$.html#validate">validate</a></li></ul></li><li><a href="Class.html">Class</a><ul class='methods'><li data-type='method'><a href="Class.html#.extend">extend</a></li><li data-type='method'><a href="Class.html#setPrivate">setPrivate</a></li><li data-type='method'><a href="Class.html#setPublic">setPublic</a></li></ul></li></ul><h3>Modules</h3><ul><li><a href="module-iQuery.html">iQuery</a></li></ul><h3>Interfaces</h3><ul><li><a href="Iterator.html">Iterator</a><ul class='methods'><li data-type='method'><a href="Iterator.html#next">next</a></li></ul></li></ul><h3><a href="global.html">Global</a></h3>
 </nav>
 
 <div id="main">
@@ -667,11 +667,19 @@
 
     <h5>Examples</h5>
 
-    <pre class="prettyprint"><code>// 符号间隔    $.hyphenCase('UPPER_CASE')    // 'upper-case'</code></pre>
+    <pre class="prettyprint"><code>// 符号间隔
 
-    <pre class="prettyprint"><code>// 驼峰法    $.hyphenCase('camelCase')    // 'camel-case'</code></pre>
+    $.hyphenCase('UPPER_CASE')    // 'upper-case'</code></pre>
 
-    <pre class="prettyprint"><code>// 混杂写法    $.hyphenCase('UPPER_CASEMix -camelCase')    // 'upper-case-mix-camel-case'</code></pre>
+    <pre class="prettyprint"><code>// 驼峰法
+
+    $.hyphenCase('camelCase')    // 'camel-case'</code></pre>
+
+    <pre class="prettyprint"><code>// 混杂写法
+
+    $.hyphenCase('UPPER_CASEMix -camelCase')
+
+    // 'upper-case-mix-camel-case'</code></pre>
 
     <h5>Parameters:</h5>
 
@@ -1098,7 +1106,7 @@
 
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="object_ext_base.js.html">object/ext/base.js</a>, <a href="object_ext_base.js.html#line276">line 276</a>
+        <a href="object_ext_base.js.html">object/ext/base.js</a>, <a href="object_ext_base.js.html#line339">line 339</a>
     </li></ul></dd>
 
     <dt class="tag-author">Author:</dt>
@@ -1254,6 +1262,119 @@
     <dd>
 
 <span class="param-type">object</span>
+
+    </dd>
+</dl>
+
+    <h4 class="name" id=".mapTree"><span class="type-signature">(static) </span>mapTree<span class="signature">(node, fork_key, filter)</span><span class="type-signature"> &rarr; {Array}</span></h4>
+
+<dl class="details">
+
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="object_ext_base.js.html">object/ext/base.js</a>, <a href="object_ext_base.js.html#line279">line 279</a>
+    </li></ul></dd>
+
+    <dt class="tag-author">Author:</dt>
+    <dd class="tag-author">
+        <ul>
+            <li><a href="mailto:shiy007@qq.com">TechQuery</a></li>
+        </ul>
+    </dd>
+
+</dl>
+
+<div class="description">
+    <p>对象树 递归遍历</p>
+</div>
+
+    <h5>Example</h5>
+
+    <pre class="prettyprint"><code>// DOM 树遍历
+
+    $.mapTree(
+        $('&lt;a>A&lt;b>B&lt;!--C-->&lt;/b>&lt;/a>')[0],
+        'childNodes',
+        function (node, index, depth) {
+            return  depth + (
+                (node.nodeType === 3)  ?  node.nodeValue  :  ''
+            );
+        }
+    ).join('')
+
+    //  '1A12B2'</code></pre>
+
+    <h5>Parameters:</h5>
+
+<table class="params">
+    <thead>
+    <tr>
+
+        <th>Name</th>
+
+        <th>Type</th>
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+
+        <tr>
+
+                <td class="name"><code>node</code></td>
+
+            <td class="type">
+
+<span class="param-type">object</span>
+
+            </td>
+
+            <td class="description last"><p>Object tree</p></td>
+        </tr>
+
+        <tr>
+
+                <td class="name"><code>fork_key</code></td>
+
+            <td class="type">
+
+<span class="param-type">string</span>
+
+            </td>
+
+            <td class="description last"><p>Key of children list</p></td>
+        </tr>
+
+        <tr>
+
+                <td class="name"><code>filter</code></td>
+
+            <td class="type">
+
+<span class="param-type"><a href="global.html#MapTreeFilter">MapTreeFilter</a></span>
+
+            </td>
+
+            <td class="description last"><p>Map filter</p></td>
+        </tr>
+
+    </tbody>
+</table>
+
+<h5>Returns:</h5>
+
+<div class="param-desc">
+    <p>Result list of Map filter</p>
+</div>
+
+<dl class="param-type">
+    <dt>
+        Type
+    </dt>
+    <dd>
+
+<span class="param-type">Array</span>
 
     </dd>
 </dl>
@@ -1436,11 +1557,17 @@
 
     <h5>Examples</h5>
 
-    <pre class="prettyprint"><code>// 原型方法等效    $.split('abc', '')    // ['a', 'b', 'c']</code></pre>
+    <pre class="prettyprint"><code>// 原型方法等效
 
-    <pre class="prettyprint"><code>// PHP str_split() 等效    $.split('abc', '', 2)    // ['a', 'bc']</code></pre>
+    $.split('abc', '')    // ['a', 'b', 'c']</code></pre>
 
-    <pre class="prettyprint"><code>// 连接字符串    $.split("a  b\tc",  /\s+/,  2,  ' ')    // ['a', 'b c']</code></pre>
+    <pre class="prettyprint"><code>// PHP str_split() 等效
+
+    $.split('abc', '', 2)    // ['a', 'bc']</code></pre>
+
+    <pre class="prettyprint"><code>// 连接字符串
+
+    $.split("a  b\tc",  /\s+/,  2,  ' ')    // ['a', 'b c']</code></pre>
 
     <h5>Parameters:</h5>
 
@@ -2147,102 +2274,6 @@
     <dd>
 
 <span class="param-type"><a href="$.html">$</a></span>
-
-    </dd>
-</dl>
-
-    <h4 class="name" id="treeWalker"><span class="type-signature"></span>treeWalker<span class="signature">(nodeType<span class="signature-attributes">opt</span>, filter)</span><span class="type-signature"> &rarr; {<a href="Iterator.html">Iterator</a>}</span></h4>
-
-<dl class="details">
-
-    <dt class="tag-source">Source:</dt>
-    <dd class="tag-source"><ul class="dummy"><li>
-        <a href="DOM_ext_base.js.html">DOM/ext/base.js</a>, <a href="DOM_ext_base.js.html#line72">line 72</a>
-    </li></ul></dd>
-
-    <dt class="tag-author">Author:</dt>
-    <dd class="tag-author">
-        <ul>
-            <li>TechQuery</li>
-        </ul>
-    </dd>
-
-</dl>
-
-<div class="description">
-    <p>DOM 树遍历迭代器</p>
-</div>
-
-    <h5>Parameters:</h5>
-
-<table class="params">
-    <thead>
-    <tr>
-
-        <th>Name</th>
-
-        <th>Type</th>
-
-        <th>Attributes</th>
-
-        <th class="last">Description</th>
-    </tr>
-    </thead>
-
-    <tbody>
-
-        <tr>
-
-                <td class="name"><code>nodeType</code></td>
-
-            <td class="type">
-
-<span class="param-type">number</span>
-
-            </td>
-
-                <td class="attributes">
-
-                    &lt;optional><br>
-
-                </td>
-
-            <td class="description last"></td>
-        </tr>
-
-        <tr>
-
-                <td class="name"><code>filter</code></td>
-
-            <td class="type">
-
-<span class="param-type"><a href="global.html#IteratorFilter">IteratorFilter</a></span>
-
-            </td>
-
-                <td class="attributes">
-
-                </td>
-
-            <td class="description last"></td>
-        </tr>
-
-    </tbody>
-</table>
-
-<h5>Returns:</h5>
-
-<div class="param-desc">
-    <p>Iterator Object for walking on DOM tree</p>
-</div>
-
-<dl class="param-type">
-    <dt>
-        Type
-    </dt>
-    <dd>
-
-<span class="param-type"><a href="Iterator.html">Iterator</a></span>
 
     </dd>
 </dl>

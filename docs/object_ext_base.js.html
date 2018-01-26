@@ -22,7 +22,7 @@
 <label for="nav-trigger" class="overlay"></label>
 
 <nav>
-    <h2><a href="index.html">Home</a></h2><h3>Classes</h3><ul><li><a href="$.html">$</a><ul class='methods'><li data-type='method'><a href="$.html#.bitOperate">bitOperate</a></li><li data-type='method'><a href="$.html#.buildFragment">buildFragment</a></li><li data-type='method'><a href="$.html#.camelCase">camelCase</a></li><li data-type='method'><a href="$.html#.cssRule">cssRule</a></li><li data-type='method'><a href="$.html#.extendURL">extendURL</a></li><li data-type='method'><a href="$.html#.filePath">filePath</a></li><li data-type='method'><a href="$.html#.hyphenCase">hyphenCase</a></li><li data-type='method'><a href="$.html#.intersect">intersect</a></li><li data-type='method'><a href="$.html#.isEqual">isEqual</a></li><li data-type='method'><a href="$.html#.isXDomain">isXDomain</a></li><li data-type='method'><a href="$.html#.likeArray">likeArray</a></li><li data-type='method'><a href="$.html#.makeIterator">makeIterator</a></li><li data-type='method'><a href="$.html#.makeSet">makeSet</a></li><li data-type='method'><a href="$.html#.paramJSON">paramJSON</a></li><li data-type='method'><a href="$.html#.parseHeader">parseHeader</a></li><li data-type='method'><a href="$.html#.split">split</a></li><li data-type='method'><a href="$.html#.storage">storage</a></li><li data-type='method'><a href="$.html#.throttle">throttle</a></li><li data-type='method'><a href="$.html#.Type">Type</a></li><li data-type='method'><a href="$.html#.urlDomain">urlDomain</a></li><li data-type='method'><a href="$.html#.uuid">uuid</a></li><li data-type='method'><a href="$.html#cssRule">cssRule</a></li><li data-type='method'><a href="$.html#insertTo">insertTo</a></li><li data-type='method'><a href="$.html#treeWalker">treeWalker</a></li><li data-type='method'><a href="$.html#validate">validate</a></li></ul></li><li><a href="Class.html">Class</a><ul class='methods'><li data-type='method'><a href="Class.html#.extend">extend</a></li><li data-type='method'><a href="Class.html#setPrivate">setPrivate</a></li><li data-type='method'><a href="Class.html#setPublic">setPublic</a></li></ul></li></ul><h3>Modules</h3><ul><li><a href="module-iQuery.html">iQuery</a></li></ul><h3>Interfaces</h3><ul><li><a href="Iterator.html">Iterator</a><ul class='methods'><li data-type='method'><a href="Iterator.html#next">next</a></li></ul></li></ul><h3><a href="global.html">Global</a></h3>
+    <h2><a href="index.html">Home</a></h2><h3>Classes</h3><ul><li><a href="$.html">$</a><ul class='methods'><li data-type='method'><a href="$.html#.bitOperate">bitOperate</a></li><li data-type='method'><a href="$.html#.buildFragment">buildFragment</a></li><li data-type='method'><a href="$.html#.camelCase">camelCase</a></li><li data-type='method'><a href="$.html#.cssRule">cssRule</a></li><li data-type='method'><a href="$.html#.extendURL">extendURL</a></li><li data-type='method'><a href="$.html#.filePath">filePath</a></li><li data-type='method'><a href="$.html#.hyphenCase">hyphenCase</a></li><li data-type='method'><a href="$.html#.intersect">intersect</a></li><li data-type='method'><a href="$.html#.isEqual">isEqual</a></li><li data-type='method'><a href="$.html#.isXDomain">isXDomain</a></li><li data-type='method'><a href="$.html#.likeArray">likeArray</a></li><li data-type='method'><a href="$.html#.makeIterator">makeIterator</a></li><li data-type='method'><a href="$.html#.makeSet">makeSet</a></li><li data-type='method'><a href="$.html#.mapTree">mapTree</a></li><li data-type='method'><a href="$.html#.paramJSON">paramJSON</a></li><li data-type='method'><a href="$.html#.parseHeader">parseHeader</a></li><li data-type='method'><a href="$.html#.split">split</a></li><li data-type='method'><a href="$.html#.storage">storage</a></li><li data-type='method'><a href="$.html#.throttle">throttle</a></li><li data-type='method'><a href="$.html#.Type">Type</a></li><li data-type='method'><a href="$.html#.urlDomain">urlDomain</a></li><li data-type='method'><a href="$.html#.uuid">uuid</a></li><li data-type='method'><a href="$.html#cssRule">cssRule</a></li><li data-type='method'><a href="$.html#insertTo">insertTo</a></li><li data-type='method'><a href="$.html#validate">validate</a></li></ul></li><li><a href="Class.html">Class</a><ul class='methods'><li data-type='method'><a href="Class.html#.extend">extend</a></li><li data-type='method'><a href="Class.html#setPrivate">setPrivate</a></li><li data-type='method'><a href="Class.html#setPublic">setPublic</a></li></ul></li></ul><h3>Modules</h3><ul><li><a href="module-iQuery.html">iQuery</a></li></ul><h3>Interfaces</h3><ul><li><a href="Iterator.html">Iterator</a><ul class='methods'><li data-type='method'><a href="Iterator.html#next">next</a></li></ul></li></ul><h3><a href="global.html">Global</a></h3>
 </nav>
 
 <div id="main">
@@ -279,6 +279,69 @@
         }
 
         return iResult;
+    };
+
+    var depth = 0;
+    /**
+     * 对象树 递归遍历
+     *
+     * @author TechQuery &lt;shiy007@qq.com>
+     *
+     * @memberof $
+     *
+     * @param {object}        node     - Object tree
+     * @param {string}        fork_key - Key of children list
+     * @param {MapTreeFilter} filter   - Map filter
+     *
+     * @return {Array}  Result list of Map filter
+     *
+     * @example  // DOM 树遍历
+     *
+     *     $.mapTree(
+     *         $('&lt;a>A&lt;b>B&lt;!--C-->&lt;/b>&lt;/a>')[0],
+     *         'childNodes',
+     *         function (node, index, depth) {
+     *             return  depth + (
+     *                 (node.nodeType === 3)  ?  node.nodeValue  :  ''
+     *             );
+     *         }
+     *     ).join('')
+     *
+     *     //  '1A12B2'
+     */
+    $.mapTree = function mapTree(node, fork_key, filter) {
+
+        var children = node[fork_key], list = [ ];    depth++ ;
+
+        for (var i = 0, value;  children[i];  i++) {
+            /**
+             * 对象遍历过滤器
+             *
+             * @callback MapTreeFilter
+             *
+             * @param {object} child
+             * @param {number} index
+             * @param {number} depth
+             *
+             * @return {?object}  `Null` or `Undefined` to **Skip the Sub-Tree**,
+             *                    and Any other Type to Add into the Result Array.
+             */
+            value = filter.call(node, children[i], i, depth);
+
+            if (value != null) {
+
+                list.push( value );
+
+                if ( children[i][fork_key][0] )
+                    list.push.apply(
+                        list,  mapTree(children[i], fork_key, filter)
+                    );
+            }
+        }
+
+        depth-- ;
+
+        return list;
     };
 
     /**

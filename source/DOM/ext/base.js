@@ -61,121 +61,60 @@ define(['../../iQuery', '../utility'],  function ($) {
     };
 
     /**
-     * 迭代过滤器
+     * HTML 执行器
      *
-     * @callback IteratorFilter
+     * @author TechQuery <shiy007@qq.com>
      *
-     * @this  Node
-     * @param {Node} node - Current Node
+     * @param {string} HTML       - HTML source code with scripts executable
+     * @param {string} [selector] - CSS selector to filter
+     *                              without scripts executable
+     *
+     * @return {$}     Element set of HTML source code
+     *
+     * @example  // 同步执行脚本
+     *
+     *     $('body').htmlExec(
+     *         "<script>self.test = $('body')[0].lastChild.tagName;</script>xxx"
+     *     ) && self.test
+     *
+     *     // 'SCRIPT'
+     *
+     * @example  // CSS 选择符不执行脚本
+     *
+     *     $('body').htmlExec(
+     *         "<script>self.name = 'xxx';</script><a /><b />",  'script, a'
+     *     ) && (
+     *         self.name + $('body')[0].children.length
+     *     )
+     *
+     *     // '2'
      */
-
-    /**
-     * DOM 树遍历迭代器
-     *
-     * @author   TechQuery
-     *
-     * @memberof $.prototype
-     * @function treeWalker
-     *
-     * @param    {number}         [nodeType]
-     * @param    {IteratorFilter} filter
-     *
-     * @returns  {Iterator}       Iterator Object for walking on DOM tree
-     */
-
-    $.fn.treeWalker = function (nodeType, filter) {
-
-        if (nodeType instanceof Function)
-            filter = nodeType,  nodeType = 0;
-        else
-            filter = (typeof filter === 'function')  ?  filter  :  '';
-
-        var element = (nodeType === 1)  ?  'Element'  :  '',  _This_,  _Root_;
-
-        var FC = 'first' + element + 'Child',  NS = 'next' + element + 'Sibling';
-
-        _This_ = _Root_ = this[0];
-
-        return {
-            forward:    function (noChild) {
-
-                if ((! noChild)  &&  _This_[ FC ])
-                    return  _This_ = _This_[ FC ];
-
-                _This_ = (_This_ != _Root_)  &&  _This_;
-
-                while (_This_) {
-
-                    if (_This_[ NS ])  return  _This_ = _This_[ NS ];
-
-                    _This_ = (_This_.parentNode != _Root_)  &&  _This_.parentNode;
-                }
-            },
-            replace:    function (iNew) {
-
-                iNew = $.buildFragment(
-                    $.likeArray( iNew )  ?  $.makeArray( iNew )  :  [ iNew ]
-                );
-
-                if (! iNew.childNodes[0])  return;
-
-                _This_.parentNode.replaceChild(
-                    [iNew,  iNew = iNew.childNodes[0]][0],  _This_
-                );
-
-                _This_ = iNew;
-            },
-            next:       function () {
-
-                if (! _This_)  return  {done: true};
-
-                var iNew = filter  &&  filter.call(_Root_, _This_);
-
-                if (iNew  &&  (iNew != _This_)  &&  _This_.parentNode)
-                    this.replace( iNew );
-                else if (iNew === false)
-                    this.forward();
-
-                if (! _This_)  return  {done: true};
-
-                var item = {value: _This_,  done: false};
-
-                this.forward(iNew === null);
-
-                return item;
-            }
-        };
-    };
-/* ---------- HTML with Script Executable ---------- */
-
     $.fn.htmlExec = function (HTML, selector) {
 
         this.empty();
 
-        var $_Box = $('<div />');
-
-        $_Box[0].innerHTML = HTML;
+        var $_Box = $('<div />').prop('innerHTML', HTML);
 
         return  (! selector)  ?
             this.each(function () {
 
                 $_Box = $( $_Box[0].cloneNode( true ) );
 
-                var walker = $_Box.treeWalker(1,  function (iDOM) {
+                $.mapTree($_Box[0],  'childNodes',  function (child) {
 
-                        if (iDOM.tagName.toLowerCase() != 'script')  return;
+                    if (child.nodeName.toLowerCase() !== 'script')
+                        return child;
 
-                        var iAttr = { };
+                    var attribute = { };
 
-                        $.each(iDOM.attributes,  function () {
+                    $.each(child.attributes,  function () {
 
-                            iAttr[ this.nodeName ] = this.nodeValue;
-                        });
-
-                        return  $('<script />',  iAttr)[0];
+                        attribute[ this.nodeName ] = this.nodeValue;
                     });
 
-                while (! walker.next().done)  ;
+                    $('<script />',  attribute).prop('text', child.text)
+                        .replaceAll( child );
+                });
 
                 $_Box.children().insertTo( this );
             })  :
