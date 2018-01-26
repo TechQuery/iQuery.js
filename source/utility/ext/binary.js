@@ -18,16 +18,22 @@ define(['./string', '../../polyfill/Promise_A+'],  function ($) {
     /**
      * 大数位操作
      *
-     * @author   TechQuery
-     * @version  0.1
+     * @author  TechQuery
+     * @version 0.1
      *
      * @memberof $
      *
-     * @param    {string}          type  - `&`, `|`, `^`
-     * @param    {(number|string)} left  - Number may be big
-     * @param    {(number|string)} right - Number may be big
+     * @param {string}          type    `&`, `|`, `^` or `~`
+     * @param {(number|string)} left    Number may be big
+     * @param {(number|string)} [right] Number may be big
      *
-     * @returns  {(number|string)}
+     * @return {(number|string)}
+     *
+     * @example  // 按位或
+     *
+     *     $.bitOperate('|', '10'.repeat(16), '01'.repeat(16))
+     *
+     *     // '1'.repeat(32)
      */
 
     $.bitOperate = function (type, left, right) {

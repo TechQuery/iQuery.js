@@ -40,6 +40,22 @@ describe('AJAX/ext/URL.js',  function () {
 
 
 
+    describe('$.extendURL',  function () {
+
+
+
+        it('多种参数',  function () {
+
+            return  TestKit.chrome.evaluate(function () {
+
+                return  $.extendURL('path/to/model?a=0',  'a=1&b=1',  {b: 2, c: 3});
+
+            }).should.be.fulfilledWith( 'path/to/model?a=1&b=2&c=3' );
+        });
+    });
+
+
+
     describe('$.filePath',  function () {
 
 

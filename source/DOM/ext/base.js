@@ -38,10 +38,27 @@ define(['../../iQuery', '../utility'],  function ($) {
      * @memberof $.prototype
      * @function insertTo
      *
-     * @param    {jQueryAcceptable} $_Target
-     * @param    {number}           Index
+     * @param {jQueryAcceptable} $_Target
+     * @param {number}           [Index=0] Position index of `$_Target`'s
+     *                                     child Elements
      *
-     * @returns  {$}           All the Elements inserted
+     * @return {$}               All the Elements inserted
+     *
+     * @example  // 插入到最前
+     *
+     *     $('<a>insert</a>').insertTo('body')  &&  (
+     *         $('body > :first-child')[0].textContent
+     *     )
+     *
+     *     // 'insert'
+     *
+     * @example  // 插入到最后
+     *
+     *     $('<a>insert</a>').insertTo('body', Infinity)  &&  (
+     *         $('body > :last-child')[0].textContent
+     *     )
+     *
+     *     // 'insert'
      */
 
     $.fn.insertTo = function ($_Target, Index) {
@@ -65,9 +82,12 @@ define(['../../iQuery', '../utility'],  function ($) {
      *
      * @author TechQuery <shiy007@qq.com>
      *
-     * @param {string} HTML       - HTML source code with scripts executable
-     * @param {string} [selector] - CSS selector to filter
-     *                              without scripts executable
+     * @memberof $.prototype
+     * @function htmlExec
+     *
+     * @param {string} HTML       HTML source code with scripts executable
+     * @param {string} [selector] CSS selector to filter
+     *                            without scripts executable
      *
      * @return {$}     Element set of HTML source code
      *
@@ -89,6 +109,7 @@ define(['../../iQuery', '../utility'],  function ($) {
      *
      *     // '2'
      */
+
     $.fn.htmlExec = function (HTML, selector) {
 
         this.empty();

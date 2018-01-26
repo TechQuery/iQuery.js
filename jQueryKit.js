@@ -2334,10 +2334,27 @@ var event_ext_base = (function ($, Observer) {
      * @memberof $.prototype
      * @function insertTo
      *
-     * @param    {jQueryAcceptable} $_Target
-     * @param    {number}           Index
+     * @param {jQueryAcceptable} $_Target
+     * @param {number}           [Index=0] Position index of `$_Target`'s
+     *                                     child Elements
      *
-     * @returns  {$}           All the Elements inserted
+     * @return {$}               All the Elements inserted
+     *
+     * @example  // 插入到最前
+     *
+     *     $('<a>insert</a>').insertTo('body')  &&  (
+     *         $('body > :first-child')[0].textContent
+     *     )
+     *
+     *     // 'insert'
+     *
+     * @example  // 插入到最后
+     *
+     *     $('<a>insert</a>').insertTo('body', Infinity)  &&  (
+     *         $('body > :last-child')[0].textContent
+     *     )
+     *
+     *     // 'insert'
      */
 
     $.fn.insertTo = function ($_Target, Index) {
@@ -2361,9 +2378,12 @@ var event_ext_base = (function ($, Observer) {
      *
      * @author TechQuery <shiy007@qq.com>
      *
-     * @param {string} HTML       - HTML source code with scripts executable
-     * @param {string} [selector] - CSS selector to filter
-     *                              without scripts executable
+     * @memberof $.prototype
+     * @function htmlExec
+     *
+     * @param {string} HTML       HTML source code with scripts executable
+     * @param {string} [selector] CSS selector to filter
+     *                            without scripts executable
      *
      * @return {$}     Element set of HTML source code
      *
@@ -2385,6 +2405,7 @@ var event_ext_base = (function ($, Observer) {
      *
      *     // '2'
      */
+
     $.fn.htmlExec = function (HTML, selector) {
 
         this.empty();
@@ -2521,14 +2542,20 @@ var AJAX_ext_URL = (function ($) {
         /**
          * 更新 URL 查询参数
          *
-         * @author   TechQuery
+         * @author TechQuery
          *
          * @memberof $
          *
-         * @param    {string}        URL   - the URL needs to be updated
-         * @param    {string|object} param - One or more `key1=value1&key2=value2`
-         *                                   or Key-Value Object
-         * @returns  {string}        the Updated URL
+         * @param {string}        URL   - the URL needs to be updated
+         * @param {string|object} param - One or more **Query String** or Object
+         *
+         * @return {string}       the Updated URL
+         *
+         * @example  // 多种参数
+         *
+         *     $.extendURL('path/to/model?a=0',  'a=1&b=1',  {b: 2, c: 3})
+         *
+         *     // 'path/to/model?a=1&b=2&c=3'
          */
         extendURL:    function (URL, param) {
 
@@ -3741,16 +3768,22 @@ var AJAX_ext_HTML_Request = (function ($) {
     /**
      * 大数位操作
      *
-     * @author   TechQuery
-     * @version  0.1
+     * @author  TechQuery
+     * @version 0.1
      *
      * @memberof $
      *
-     * @param    {string}          type  - `&`, `|`, `^`
-     * @param    {(number|string)} left  - Number may be big
-     * @param    {(number|string)} right - Number may be big
+     * @param {string}          type    `&`, `|`, `^` or `~`
+     * @param {(number|string)} left    Number may be big
+     * @param {(number|string)} [right] Number may be big
      *
-     * @returns  {(number|string)}
+     * @return {(number|string)}
+     *
+     * @example  // 按位或
+     *
+     *     $.bitOperate('|', '10'.repeat(16), '01'.repeat(16))
+     *
+     *     // '1'.repeat(32)
      */
 
     $.bitOperate = function (type, left, right) {

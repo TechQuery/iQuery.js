@@ -21,7 +21,36 @@ describe('DOM/ext/base.js',  function () {
 
 
 
-    describe('$.fn.htmlExec',  function () {
+    describe('$#insertTo',  function () {
+
+
+
+        it('插入到最前',  function () {
+
+            return  TestKit.chrome.evaluate(function () {
+
+                return  $('<a>insert</a>').insertTo('body')  &&  (
+        $('body > :first-child')[0].textContent
+    );
+
+            }).should.be.fulfilledWith( 'insert' );
+        });
+
+        it('插入到最后',  function () {
+
+            return  TestKit.chrome.evaluate(function () {
+
+                return  $('<a>insert</a>').insertTo('body', Infinity)  &&  (
+        $('body > :last-child')[0].textContent
+    );
+
+            }).should.be.fulfilledWith( 'insert' );
+        });
+    });
+
+
+
+    describe('$#htmlExec',  function () {
 
 
 

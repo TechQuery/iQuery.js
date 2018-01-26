@@ -99,14 +99,20 @@ define(['../../utility/ext/string', '../../utility/index'],  function ($) {
         /**
          * 更新 URL 查询参数
          *
-         * @author   TechQuery
+         * @author TechQuery
          *
          * @memberof $
          *
-         * @param    {string}        URL   - the URL needs to be updated
-         * @param    {string|object} param - One or more `key1=value1&key2=value2`
-         *                                   or Key-Value Object
-         * @returns  {string}        the Updated URL
+         * @param {string}        URL   - the URL needs to be updated
+         * @param {string|object} param - One or more **Query String** or Object
+         *
+         * @return {string}       the Updated URL
+         *
+         * @example  // 多种参数
+         *
+         *     $.extendURL('path/to/model?a=0',  'a=1&b=1',  {b: 2, c: 3})
+         *
+         *     // 'path/to/model?a=1&b=2&c=3'
          */
         extendURL:    function (URL, param) {
 

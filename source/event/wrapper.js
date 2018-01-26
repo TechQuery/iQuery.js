@@ -34,45 +34,47 @@ define(['../iQuery', './index', '../polyfill/Promise_A+'],  function ($) {
 
     /* ----- DOM Ready ----- */
 
-    var DOM_Ready = (new Promise(function (iResolve) {
+    $.ready = new Promise(function (iResolve) {
 
-            $.start('DOM_Ready');
+        $.start('DOM_Ready');
 
-            if ( $.browser.modern )
-                $( document ).one('DOMContentLoaded', iResolve)
-            else if (self === self.top)
-                $.every(0.01,  function () {
-                    try {
-                        document.documentElement.doScroll('left');
+        if ( $.browser.modern )
+            $( document ).one('DOMContentLoaded', iResolve)
+        else if (self === self.top)
+            $.every(0.01,  function () {
+                try {
+                    document.documentElement.doScroll('left');
 
-                        return  Boolean( iResolve( arguments[0] ) );
-
-                    } catch (iError) {  return;  }
-                });
-
-            $( self ).one('load', iResolve);
-
-            $.every(0.5,  function () {
-                if (
-                    (document.readyState === 'complete')  &&
-                    (document.body || '').lastChild
-                )
                     return  Boolean( iResolve( arguments[0] ) );
+
+                } catch (iError) {  return;  }
             });
-        })).then(function () {
 
-            $( document ).data('Load_During', $.end('DOM_Ready')).trigger('ready');
+        $( self ).one('load', iResolve);
 
-            console.info('[DOM Ready Event]');
-            console.log( arguments[0] );
+        $.every(0.5,  function () {
+            if (
+                (document.readyState === 'complete')  &&
+                (document.body || '').lastChild
+            )
+                return  Boolean( iResolve( arguments[0] ) );
         });
+    });
+
+    $.ready.then(function () {
+
+        $( document ).data('Load_During', $.end('DOM_Ready')).trigger('ready');
+
+        console.info('[DOM Ready Event]');
+        console.log( arguments[0] );
+    });
 
     $.fn.ready = function () {
 
         if ($.Type( this[0] )  !=  'Document')
             throw 'The Ready Method is only used for Document Object !';
 
-        DOM_Ready.then( $.proxy(arguments[0], this[0], $) );
+        $.ready.then( $.proxy(arguments[0], this[0], $) );
 
         return this;
     };

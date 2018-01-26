@@ -46,7 +46,13 @@ exports.pageLoad = async function (sourceURI) {
 
         return  new Promise(function (resolve, reject) {
 
-            require(['iQuery'], resolve, reject);
+            require(['iQuery'],  function check() {
+
+                if (document.readyState !== 'loading')
+                    resolve();
+                else
+                    setTimeout( check );
+            }, reject);
         });
     });
 };
