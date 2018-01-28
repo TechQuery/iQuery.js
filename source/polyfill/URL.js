@@ -125,7 +125,7 @@ define([
     });
 
     $.each([
-        BOM.location.constructor, BOM.HTMLAnchorElement, BOM.HTMLAreaElement
+        BOM.Location, BOM.HTMLAnchorElement, BOM.HTMLAreaElement
     ],  function () {
 
         Object.defineProperty(this.prototype, 'origin', {

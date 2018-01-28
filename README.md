@@ -172,6 +172,7 @@
  - 自带 Mozilla Firefox **元素 CSS 默认规则对象 获取**方法 `Window.getMatchedCSSRules()`
  - 自带 Google Chrome **元素 CSS 匹配规则对象 获取**方法 `Window.getMatchedCSSRules()`
  - 自带 `FormData()` 标准对象构造函数，为 IE 10- 提供 表单数据封装
- - 自带 `DOMParser()` 标准对象构造函数，为 IE 8 提供 **XML 文档解析**支持
+ - 自带 `DOMImplementation()` 标准对象 `createDocument`、`createHTMLDocment` 实例方法，为 IE 8 提供 **XML / HTML 文档对象创建**支持
+ - 自带 `DOMParser()` 标准对象构造函数，为 IE 8+ 提供 **XML / SVG / HTML 文档代码解析**支持
  - 自带 `URL()` 标准对象构造函数
  - 自带 `URLSearchParams()` 标准对象构造函数

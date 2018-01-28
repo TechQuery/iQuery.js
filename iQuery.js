@@ -1395,17 +1395,28 @@ var utility_ext_string = (function ($) {
     if ( $.browser.modern )  return;
 
 
-/* ---------- Document ShortCut ---------- */
+/* ---------- Global property ---------- */
 
-    DOM.defaultView = DOM.parentWindow;
+    var config = {
+            writable:      false,
+            enumerable:    true
+        };
 
-    DOM.head = DOM.documentElement.firstChild;
+    $.each([
+        [BOM, 'Document', DOM.constructor],
+        [BOM, 'Text', DOM.createTextNode('').constructor],
+        [DOM, 'defaultView', DOM.parentWindow],
+        [DOM, 'head', DOM.documentElement.firstChild]
+    ],  function () {
 
+        config.value = this[2];
+
+        Object.defineProperty(this[0], this[1], config);
+    });
 
 /* ---------- DOM ShortCut ---------- */
 
-    var DOM_Proto = Element.prototype,
-        Text_Proto = Object.getPrototypeOf( DOM.createTextNode('') );
+    var DOM_Proto = Element.prototype;
 
     $.each({
         firstElementChild:         function () {
@@ -1436,7 +1447,7 @@ var utility_ext_string = (function ($) {
         Object.defineProperty(DOM_Proto, key, config);
 
         if (key.indexOf('Sibling') > 0)
-            Object.defineProperty(Text_Proto, key, config);
+            Object.defineProperty(Text.prototype, key, config);
     });
 
 /* ---------- DOM Text Content ---------- */
@@ -1461,7 +1472,7 @@ var utility_ext_string = (function ($) {
 
 /* ---------- DOM Attribute Name ---------- */
 
-    var iAlias = {
+    var alias = {
             'class':    'className',
             'for':      'htmlFor'
         },
@@ -1470,21 +1481,21 @@ var utility_ext_string = (function ($) {
         Remove_Attribute = DOM_Proto.removeAttribute;
 
     $.extend(DOM_Proto, {
-        getAttribute:    function (iName) {
+        getAttribute:    function (name) {
 
-            return  iAlias[iName] ?
-                this[ iAlias[iName] ]  :  Get_Attribute.call(this, iName,  0);
+            return  alias[name] ?
+                this[ alias[name] ]  :  Get_Attribute.call(this, name,  0);
         },
-        setAttribute:    function (iName, iValue) {
+        setAttribute:    function (name, value) {
 
-            if (iAlias[iName])
-                this[ iAlias[iName] ] = iValue;
+            if (alias[name])
+                this[ alias[name] ] = value;
             else
-                Set_Attribute.call(this, iName, iValue,  0);
+                Set_Attribute.call(this, name, value,  0);
         },
-        removeAttribute:    function (iName) {
+        removeAttribute:    function (name) {
 
-            return  Remove_Attribute.call(this,  iAlias[iName] || iName,  0);
+            return  Remove_Attribute.call(this,  alias[name] || name,  0);
         }
     });
 
@@ -1493,143 +1504,151 @@ var utility_ext_string = (function ($) {
     var PX_Attr = $.makeSet('left', 'right', 'top', 'bottom', 'width', 'height'),
         DX_Filter = 'DXImageTransform.Microsoft.';
 
-    function ValueUnit(iValue) {
+    function ValueUnit(value) {
 
-        return  iValue.slice((parseFloat(iValue) + '').length);
+        return  value.slice((parseFloat(value) + '').length);
     }
 
-    function toPX(iName) {
+    function toPX(name) {
 
-        var iValue = this[iName];    var iNumber = parseFloat( iValue );
+        var value = this[name];    var number = parseFloat( value );
 
-        if (isNaN( iNumber ))  return;
+        if (isNaN( number ))  return;
 
-        if ( iNumber )
-            switch (ValueUnit( iValue )) {
+        if ( number )
+            switch (ValueUnit( value )) {
                 case 'em':    {
                     var Font_Size =
                         this.ownerNode.parentNode.currentStyle.fontSize;
 
-                    iNumber *= parseFloat( Font_Size );
+                    number *= parseFloat( Font_Size );
 
                     if (ValueUnit( Font_Size )  !=  'pt')  break;
                 }
-                case 'pt':    iNumber *= (BOM.screen.deviceXDPI / 72);    break;
+                case 'pt':    number *= (BOM.screen.deviceXDPI / 72);    break;
                 default:      return;
             }
 
-        this[iName] = iNumber + 'px';
+        this[name] = number + 'px';
     }
 
-    function CSSStyleDeclaration(iDOM) {
+    function CSSStyleDeclaration(element) {
 
-        var iStyle = iDOM.currentStyle;
+        var style = element.currentStyle;
 
         $.extend(this, {
             length:       0,
             cssText:      '',
-            ownerNode:    iDOM
+            ownerNode:    element
         });
 
-        for (var iName in iStyle) {
+        for (var name in style) {
 
-            this[iName] = (iName in PX_Attr)  &&  iStyle[
-                $.camelCase('pixel-' + iName)
+            this[name] = (name in PX_Attr)  &&  style[
+                $.camelCase('pixel-' + name)
             ];
 
-            this[iName] = (typeof this[iName] === 'number')  ?
-                (this[iName] + 'px')  :  (iStyle[iName] + '');
+            this[name] = (typeof this[name] === 'number')  ?
+                (this[name] + 'px')  :  (style[name] + '');
 
-            if (typeof this[iName] === 'string')  toPX.call(this, iName);
+            if (typeof this[name] === 'string')  toPX.call(this, name);
 
-            this.cssText += [iName,  ': ',  this[ iName ],  '; '].join('');
+            this.cssText += name  +  ': '  +  this[ name ]  +  '; ';
         }
 
         this.cssText = this.cssText.trim();
 
-        var iAlpha = iDOM.filters.Alpha  ||  iDOM.filters[DX_Filter + 'Alpha'];
+        var alpha = element.filters.Alpha ||
+                element.filters[DX_Filter + 'Alpha'];
 
-        this.opacity = (iAlpha  ?  (iAlpha.opacity / 100)  :  1)  +  '';
+        this.opacity = (alpha  ?  (alpha.opacity / 100)  :  1)  +  '';
     }
 
-    CSSStyleDeclaration.prototype.getPropertyValue = function () {
+    CSSStyleDeclaration.prototype.getPropertyValue = function (name) {
 
-        return  this[$.camelCase( arguments[0] )];
+        return  this[$.camelCase( name )];
     };
 
-    BOM.getComputedStyle = function () {
+    config.value = CSSStyleDeclaration;
+
+    Object.defineProperty(BOM, 'CSSStyleDeclaration', config);
+
+    config.value = function () {
 
         return  new CSSStyleDeclaration( arguments[0] );
     };
 
+    Object.defineProperty(BOM, 'getComputedStyle', config);
+
+
 /* ---------- Set Style ---------- */
 
-    function toHexInt(iDec, iLength) {
+    function toHexInt(decimal, length) {
 
-        return  parseInt( Number(iDec).toFixed(0) ).toString(16).padStart(
-            iLength || 2,  0
-        );
+        return  parseInt( Number( decimal ).toFixed(0) )
+            .toString(16).padStart(length || 2,  0);
     }
 
-    function RGB_Hex(iRed, iGreen, iBlue) {
+    function RGB_Hex(red, green, blue) {
 
-        var iArgs = $.makeArray( arguments );
+        return Array.from(
+            ((arguments.length > 1)  ||  (typeof red !== 'string'))  ?
+                arguments  :
+                red.replace(/rgb\(([^\)]+)\)/i, '$1')
+                    .replace(/,\s*/g, ',').split(','),
+            toHexInt
+        ).join('');
+    }
 
-        if ((iArgs.length < 2)  &&  (typeof iArgs[0] === 'string'))
-            iArgs = iArgs[0].replace(/rgb\(([^\)]+)\)/i, '$1')
-                .replace(/,\s*/g, ',').split(',');
+    function setProperty(name, value) {
 
-        for (var i = 0;  i < 3;  i++)  iArgs[i] = toHexInt( iArgs[i] );
+        var string = '',  wrapper,  scale = 1,  convert;
 
-        return iArgs.join('');
+        var RGBA = (typeof value === 'string')  &&
+                value.match( /\s*rgba\(([^\)]+),\s*(\d\.\d+)\)/i );
+
+        if (name === 'opacity') {
+
+            name = 'filter',  scale = 100;
+
+            wrapper = 'progid:' + DX_Filter + 'Alpha(opacity={n})';
+
+        } else if ( RGBA ) {
+
+            string = value.replace(RGBA[0], '');
+
+            if ( string )
+                string += setProperty.call(this, name, string);
+
+            if (name != 'background')
+                string += setProperty.apply(this, [
+                    (name.indexOf('-color') > -1) ? name : (name + '-color'),
+                    'rgb(' + RGBA[1] + ')'
+                ]);
+
+            name = 'filter';
+
+            wrapper = 'progid:' + DX_Filter +
+                'Gradient(startColorStr=#{n},endColorStr=#{n})';
+
+            convert = function (alpha, RGB) {
+
+                return  toHexInt(parseFloat(alpha) * 256)  +  RGB_Hex( RGB );
+            };
+        }
+
+        if ( wrapper )
+            value = wrapper.replace(
+                /\{n\}/g,
+                convert  ?  convert(RGBA[2], RGBA[1])  :  (value * scale)
+            );
+
+        this.setAttribute(name, value, arguments[2]);
     }
 
     Object.getPrototypeOf( DOM.documentElement.style ).setProperty =
-        function setProperty(iName, iValue) {
+        CSSStyleDeclaration.prototype.setProperty = setProperty;
 
-            var iString = '',  iWrapper,  iScale = 1,  iConvert;
-
-            var iRGBA = (typeof iValue === 'string')  &&
-                    iValue.match( /\s*rgba\(([^\)]+),\s*(\d\.\d+)\)/i );
-
-            if (iName === 'opacity') {
-
-                iName = 'filter',  iScale = 100;
-
-                iWrapper = 'progid:' + DX_Filter + 'Alpha(opacity={n})';
-
-            } else if ( iRGBA ) {
-
-                iString = iValue.replace(iRGBA[0], '');
-
-                if ( iString )
-                    iString += setProperty.call(this, iName, iString);
-
-                if (iName != 'background')
-                    iString += setProperty.apply(this, [
-                        (iName.indexOf('-color') > -1) ? iName : (iName + '-color'),
-                        'rgb(' + iRGBA[1] + ')'
-                    ]);
-
-                iName = 'filter';
-
-                iWrapper = 'progid:' + DX_Filter +
-                    'Gradient(startColorStr=#{n},endColorStr=#{n})';
-
-                iConvert = function (iAlpha, iRGB) {
-
-                    return  toHexInt(parseFloat(iAlpha) * 256)  +  RGB_Hex( iRGB );
-                };
-            }
-
-            if ( iWrapper )
-                iValue = iWrapper.replace(
-                    /\{n\}/g,
-                    iConvert  ?  iConvert(iRGBA[2], iRGBA[1])  :  (iValue * iScale)
-                );
-
-            this.setAttribute(iName, iValue, arguments[2]);
-        };
 
 /* ---------- DOM Event ---------- */
 
@@ -1642,7 +1661,7 @@ var utility_ext_string = (function ($) {
         var name = 'scroll'  +  KeyMap[ key ];
 
         return  this['client' + key]  +  Math.max(
-            document.documentElement[ name ],  document.body[ name ]
+            DOM.documentElement[ name ],  DOM.body[ name ]
         );
     }
 
@@ -1688,47 +1707,51 @@ var utility_ext_string = (function ($) {
         }
     });
 
-/* ---------- XML DOM Parser ---------- */
+/* ---------- Document Implementation ---------- */
 
-    var IE_DOMParser = (function () {
+    var Class = {
+            XML:     (function () {
 
-            for (var i = 0;  arguments[i];  i++)  try {
+                for (var i = 0;  arguments[i];  i++)  try {
 
-                return  new ActiveXObject( arguments[i] )  &&  arguments[i];
+                    if (new BOM.ActiveXObject( arguments[i] ))
+                        return arguments[i];
 
-            } catch (iError) { }
-        })(
-            'MSXML2.DOMDocument.6.0', 'MSXML2.DOMDocument.5.0',
-            'MSXML2.DOMDocument.4.0', 'MSXML2.DOMDocument.3.0',
-            'MSXML2.DOMDocument',     'Microsoft.XMLDOM'
+                } catch (iError) { }
+            })(
+                'MSXML2.DOMDocument.6.0', 'MSXML2.DOMDocument.5.0',
+                'MSXML2.DOMDocument.4.0', 'MSXML2.DOMDocument.3.0',
+                'MSXML2.DOMDocument',     'Microsoft.XMLDOM'
+            ),
+            HTML:    'HTMLFile'
+        };
+
+    config.value = function (nameSpace, rootName, docType) {
+
+        var document = new BOM.ActiveXObject( Class.XML );
+
+        if ( rootName )
+            document.appendChild( document.createElementNS(nameSpace, rootName) );
+
+        return document;
+    };
+
+    Object.defineProperty(DOM.implementation, 'createDocument', config);
+
+    config.value = function (title) {
+
+        var document = new BOM.ActiveXObject( Class.HTML );
+
+        document.write(
+            '<html><head><title>'  +
+                (title || '')  +
+            '</title></head><body /></html>'
         );
 
-    function XML_Create() {
-
-        var iXML = new ActiveXObject( IE_DOMParser );
-
-        iXML.async = false;
-
-        iXML.loadXML( arguments[0] );
-
-        return iXML;
-    }
-
-    BOM.DOMParser = function () { };
-
-    BOM.DOMParser.prototype.parseFromString = function () {
-
-        var iXML = XML_Create( arguments[0] );
-
-        if ( iXML.parseError.errorCode )
-            iXML = XML_Create([
-                '<xml><parsererror><h3>This page contains the following errors:</h3><div>',
-                iXML.parseError.reason,
-                '</div></parsererror></xml>'
-            ].join(''));
-
-        return iXML;
+        return document;
     };
+
+    Object.defineProperty(DOM.implementation, 'createHTMLDocument', config);
 
 })(utility_ext_string);
 
@@ -2041,7 +2064,7 @@ var object_ext_Class = (function ($) {
     });
 
     $.each([
-        BOM.location.constructor, BOM.HTMLAnchorElement, BOM.HTMLAreaElement
+        BOM.Location, BOM.HTMLAnchorElement, BOM.HTMLAreaElement
     ],  function () {
 
         Object.defineProperty(this.prototype, 'origin', {
@@ -2264,7 +2287,7 @@ var utility_index = (function ($) {
 
     if (! DOM.createDocumentFragment().children)
         Object.defineProperty(
-            ($.browser.modern ? DocumentFragment : DOM.constructor).prototype,
+            ($.browser.modern ? DocumentFragment : Document).prototype,
             'children',
             Children_Define
         );
@@ -2411,6 +2434,82 @@ var utility_index = (function ($) {
     if (BOM.DOMTokenList  &&  ($.browser.msie < 12))
         BOM.DOMTokenList.prototype.toggle = DOMTokenList.prototype.toggle;
 
+
+/* ---------- Document Parse & Serialize ---------- */
+
+    var createXML = ($.browser.msie < 12)  ?
+            function (code) {
+
+                var document = DOM.implementation.createDocument(null, null);
+
+                document.async = false;
+
+                document.loadXML( code );
+
+                return document;
+            }  :
+            function (code, type) {
+
+                var XHR = new XMLHttpRequest();
+
+                XHR.open(
+                    'GET',
+                    'data:'  +  (type || 'application/xml')  +  ','  +  code,
+                    false
+                );
+
+                XHR.send();
+
+                return XHR.responseXML;
+            },
+        _parse_ = DOMParser.prototype.parseFromString;
+
+    function parse(type, code) {
+        try {
+            return  _parse_.call(new DOMParser(),  code || '',  type);
+        } catch (error) { }
+    }
+
+    $.each([
+        function DOMParser() { },
+        function XMLSerializer() { }
+    ],  function () {
+
+        if (BOM[ $.Type(new this()) ])  return;
+
+        config.value = this;
+
+        Object.defineProperty(BOM, this.name(), config);
+    });
+
+    if (! parse('image/svg+xml'))
+        DOMParser.prototype.parseFromString = function (code, type) {
+
+            var document;
+
+            switch ( type ) {
+                case 'application/xml':    ;
+                case 'image/svg+xml':
+                    document = createXML(code, type);    break;
+                case 'text/html':          {
+                    document = DOM.implementation.createHTMLDocument();
+
+                    document.write( code );
+                }
+                default:
+                    throw  TypeError(type + "isn't supported");
+            }
+
+            if ( document.parseError.errorCode )
+                document = createXML(
+                    '<xml><parsererror>' +
+                        '<h3>This page contains the following errors:</h3><div>' +
+                            document.parseError.reason +
+                    '</div></parsererror></xml>'
+                );
+
+            return document;
+        };
 
     if (! ($.browser.msie < 11))  return;
 

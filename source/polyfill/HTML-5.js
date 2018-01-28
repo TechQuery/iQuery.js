@@ -75,7 +75,7 @@ define(['../utility/index', '../utility/ext/browser'],  function ($) {
 
     if (! DOM.createDocumentFragment().children)
         Object.defineProperty(
-            ($.browser.modern ? DocumentFragment : DOM.constructor).prototype,
+            ($.browser.modern ? DocumentFragment : Document).prototype,
             'children',
             Children_Define
         );
@@ -222,6 +222,82 @@ define(['../utility/index', '../utility/ext/browser'],  function ($) {
     if (BOM.DOMTokenList  &&  ($.browser.msie < 12))
         BOM.DOMTokenList.prototype.toggle = DOMTokenList.prototype.toggle;
 
+
+/* ---------- Document Parse & Serialize ---------- */
+
+    var createXML = ($.browser.msie < 12)  ?
+            function (code) {
+
+                var document = DOM.implementation.createDocument(null, null);
+
+                document.async = false;
+
+                document.loadXML( code );
+
+                return document;
+            }  :
+            function (code, type) {
+
+                var XHR = new XMLHttpRequest();
+
+                XHR.open(
+                    'GET',
+                    'data:'  +  (type || 'application/xml')  +  ','  +  code,
+                    false
+                );
+
+                XHR.send();
+
+                return XHR.responseXML;
+            },
+        _parse_ = DOMParser.prototype.parseFromString;
+
+    function parse(type, code) {
+        try {
+            return  _parse_.call(new DOMParser(),  code || '',  type);
+        } catch (error) { }
+    }
+
+    $.each([
+        function DOMParser() { },
+        function XMLSerializer() { }
+    ],  function () {
+
+        if (BOM[ $.Type(new this()) ])  return;
+
+        config.value = this;
+
+        Object.defineProperty(BOM, this.name(), config);
+    });
+
+    if (! parse('image/svg+xml'))
+        DOMParser.prototype.parseFromString = function (code, type) {
+
+            var document;
+
+            switch ( type ) {
+                case 'application/xml':    ;
+                case 'image/svg+xml':
+                    document = createXML(code, type);    break;
+                case 'text/html':          {
+                    document = DOM.implementation.createHTMLDocument();
+
+                    document.write( code );
+                }
+                default:
+                    throw  TypeError(type + "isn't supported");
+            }
+
+            if ( document.parseError.errorCode )
+                document = createXML(
+                    '<xml><parsererror>' +
+                        '<h3>This page contains the following errors:</h3><div>' +
+                            document.parseError.reason +
+                    '</div></parsererror></xml>'
+                );
+
+            return document;
+        };
 
     if (! ($.browser.msie < 11))  return;
 
