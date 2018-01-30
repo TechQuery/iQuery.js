@@ -42,7 +42,7 @@
 <article>
     <div class="container-overview">
 
-    <h4 class="name" id="$"><span class="type-signature"></span>new $<span class="signature">(Element_Set<span class="signature-attributes">opt</span>, context)</span><span class="type-signature"> &rarr; {<a href="$.html">$</a>}</span></h4>
+    <h4 class="name" id="$"><span class="type-signature"></span>new $<span class="signature">(Element_Set<span class="signature-attributes">opt</span>, context<span class="signature-attributes">opt</span>)</span><span class="type-signature"> &rarr; {<a href="$.html">$</a>}</span></h4>
 
 <dl class="details">
 
@@ -123,6 +123,8 @@
 
                 <td class="attributes">
 
+                    &lt;optional><br>
+
                 </td>
 
             <td class="description last"><p>Selector context DOM or<br>                                            Element Constructor property</p></td>
@@ -179,11 +181,7 @@
 
     <h5>Example</h5>
 
-    <pre class="prettyprint"><code>// 按位或
-
-    $.bitOperate('|', '10'.repeat(16), '01'.repeat(16))
-
-    // '1'.repeat(32)</code></pre>
+    <pre class="prettyprint"><code>// 按位或    $.bitOperate('|', '10'.repeat(16), '01'.repeat(16))    // '1'.repeat(32)</code></pre>
 
     <h5>Parameters:</h5>
 
@@ -695,19 +693,11 @@
 
     <h5>Examples</h5>
 
-    <pre class="prettyprint"><code>// 符号间隔
+    <pre class="prettyprint"><code>// 符号间隔    $.hyphenCase('UPPER_CASE')    // 'upper-case'</code></pre>
 
-    $.hyphenCase('UPPER_CASE')    // 'upper-case'</code></pre>
+    <pre class="prettyprint"><code>// 驼峰法    $.hyphenCase('camelCase')    // 'camel-case'</code></pre>
 
-    <pre class="prettyprint"><code>// 驼峰法
-
-    $.hyphenCase('camelCase')    // 'camel-case'</code></pre>
-
-    <pre class="prettyprint"><code>// 混杂写法
-
-    $.hyphenCase('UPPER_CASEMix -camelCase')
-
-    // 'upper-case-mix-camel-case'</code></pre>
+    <pre class="prettyprint"><code>// 混杂写法    $.hyphenCase('UPPER_CASEMix -camelCase')    // 'upper-case-mix-camel-case'</code></pre>
 
     <h5>Parameters:</h5>
 
@@ -855,17 +845,11 @@
 
     <h5>Examples</h5>
 
-    <pre class="prettyprint"><code>// 基本类型比较
+    <pre class="prettyprint"><code>// 基本类型比较    $.isEqual(1, 1)    //  true</code></pre>
 
-    $.isEqual(1, 1)    //  true</code></pre>
+    <pre class="prettyprint"><code>// 引用类型（浅）    $.isEqual({a: 1},  {a: 1})    // true</code></pre>
 
-    <pre class="prettyprint"><code>// 引用类型（浅）
-
-    $.isEqual({a: 1},  {a: 1})    // true</code></pre>
-
-    <pre class="prettyprint"><code>// 引用类型（深）
-
-    $.isEqual({a: 1, b: {c: 2}},  {a: 1, b: {c: 2}},  2)    // true</code></pre>
+    <pre class="prettyprint"><code>// 引用类型（深）    $.isEqual({a: 1, b: {c: 2}},  {a: 1, b: {c: 2}},  2)    // true</code></pre>
 
     <h5>Parameters:</h5>
 
@@ -1067,21 +1051,13 @@
 
     <h5>Examples</h5>
 
-    <pre class="prettyprint"><code>// 字符串元素不可变，故不是类数组
+    <pre class="prettyprint"><code>// 字符串元素不可变，故不是类数组    $.likeArray(new String(''))    //  false</code></pre>
 
-    $.likeArray(new String(''))    //  false</code></pre>
+    <pre class="prettyprint"><code>// 有 length 属性、但没有对应数量元素的，不是类数组    $.likeArray({0: 'a', length: 2})    //  false</code></pre>
 
-    <pre class="prettyprint"><code>// 有 length 属性、但没有对应数量元素的，不是类数组
+    <pre class="prettyprint"><code>// NodeList、HTMLCollection、jQuery 等是类数组    $.likeArray( document.head.childNodes )    //  true</code></pre>
 
-    $.likeArray({0: 'a', length: 2})    //  false</code></pre>
-
-    <pre class="prettyprint"><code>// NodeList、HTMLCollection、jQuery 等是类数组
-
-    $.likeArray( document.head.childNodes )    //  true</code></pre>
-
-    <pre class="prettyprint"><code>// Node 及其子类不是类数组
-
-    $.likeArray( document.createTextNode('') )    //  false</code></pre>
+    <pre class="prettyprint"><code>// Node 及其子类不是类数组    $.likeArray( document.createTextNode('') )    //  false</code></pre>
 
     <h5>Parameters:</h5>
 
@@ -1134,7 +1110,7 @@
 
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="object_ext_base.js.html">object/ext/base.js</a>, <a href="object_ext_base.js.html#line339">line 339</a>
+        <a href="object_ext_base.js.html">object/ext/base.js</a>, <a href="object_ext_base.js.html#line344">line 344</a>
     </li></ul></dd>
 
     <dt class="tag-author">Author:</dt>
@@ -1318,19 +1294,7 @@
 
     <h5>Example</h5>
 
-    <pre class="prettyprint"><code>// DOM 树遍历
-
-    $.mapTree(
-        $('&lt;a>A&lt;b>B&lt;!--C-->&lt;/b>&lt;/a>')[0],
-        'childNodes',
-        function (node, index, depth) {
-            return  depth + (
-                (node.nodeType === 3)  ?  node.nodeValue  :  ''
-            );
-        }
-    ).join('')
-
-    //  '1A12B2'</code></pre>
+    <pre class="prettyprint"><code>// DOM 树遍历    $.mapTree(        $('&lt;a>A&lt;b>B&lt;!--C-->&lt;/b>&lt;/a>')[0],        'childNodes',        function (node, index, depth) {            return  depth + (                (node.nodeType === 3)  ?  node.nodeValue  :  ''            );        }    ).join('')    //  '1A12B2'</code></pre>
 
     <h5>Parameters:</h5>
 
@@ -1585,17 +1549,11 @@
 
     <h5>Examples</h5>
 
-    <pre class="prettyprint"><code>// 原型方法等效
+    <pre class="prettyprint"><code>// 原型方法等效    $.split('abc', '')    // ['a', 'b', 'c']</code></pre>
 
-    $.split('abc', '')    // ['a', 'b', 'c']</code></pre>
+    <pre class="prettyprint"><code>// PHP str_split() 等效    $.split('abc', '', 2)    // ['a', 'bc']</code></pre>
 
-    <pre class="prettyprint"><code>// PHP str_split() 等效
-
-    $.split('abc', '', 2)    // ['a', 'bc']</code></pre>
-
-    <pre class="prettyprint"><code>// 连接字符串
-
-    $.split("a  b\tc",  /\s+/,  2,  ' ')    // ['a', 'b c']</code></pre>
+    <pre class="prettyprint"><code>// 连接字符串    $.split("a  b\tc",  /\s+/,  2,  ' ')    // ['a', 'b c']</code></pre>
 
     <h5>Parameters:</h5>
 
@@ -2344,21 +2302,9 @@
 
     <h5>Examples</h5>
 
-    <pre class="prettyprint"><code>// 插入到最前
+    <pre class="prettyprint"><code>// 插入到最前    $('&lt;a>insert&lt;/a>').insertTo('body')  &amp;&amp;  (        $('body > :first-child')[0].textContent    )    // 'insert'</code></pre>
 
-    $('&lt;a>insert&lt;/a>').insertTo('body')  &amp;&amp;  (
-        $('body > :first-child')[0].textContent
-    )
-
-    // 'insert'</code></pre>
-
-    <pre class="prettyprint"><code>// 插入到最后
-
-    $('&lt;a>insert&lt;/a>').insertTo('body', Infinity)  &amp;&amp;  (
-        $('body > :last-child')[0].textContent
-    )
-
-    // 'insert'</code></pre>
+    <pre class="prettyprint"><code>// 插入到最后    $('&lt;a>insert&lt;/a>').insertTo('body', Infinity)  &amp;&amp;  (        $('body > :last-child')[0].textContent    )    // 'insert'</code></pre>
 
     <h5>Parameters:</h5>
 

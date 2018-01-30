@@ -136,7 +136,7 @@ define([
                         ''  :  (':' + this.port)
                 );
             },
-            enumerable:    Class.enumerable,
+            enumerable:    $.browser.modern
         });
 
         Object.defineProperty(this.prototype, 'searchParams', {
@@ -144,7 +144,7 @@ define([
 
                 return  new URLSearchParams( this.search );
             },
-            enumerable:    Class.enumerable,
+            enumerable:    $.browser.modern
         });
     });
 
@@ -162,7 +162,7 @@ define([
 
                             this.__data__[key] = arguments[0];
                         },
-                    enumerable:      Class.enumerable,
+                    enumerable:      true,
                     configurable:    true
                 });
         });

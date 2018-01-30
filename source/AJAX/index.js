@@ -33,8 +33,8 @@ define([
 
                 } catch (iError) {
 
-                    this.response = $.buildFragment(
-                        $.parseHTML( this.responseText )
+                    this.response = (new DOMParser()).parseFromString(
+                        this.responseText
                     );
                     this.responseType = 'html';
                 }

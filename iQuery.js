@@ -504,7 +504,7 @@ var object_ext_base = (function ($) {
 
         var children = node[fork_key], list = [ ];    depth++ ;
 
-        for (var i = 0, value;  children[i];  i++) {
+        for (var i = 0, value;  i < children.length;  i++) {
             /**
              * 对象遍历过滤器
              *
@@ -517,17 +517,22 @@ var object_ext_base = (function ($) {
              * @return {?object}  `Null` or `Undefined` to **Skip the Sub-Tree**,
              *                    and Any other Type to Add into the Result Array.
              */
-            value = filter.call(node, children[i], i, depth);
+            try {
+                value = filter.call(node, children[i], i, depth);
 
-            if (value != null) {
+            } catch (error) {
 
-                list.push( value );
-
-                if ( children[i][fork_key][0] )
-                    list.push.apply(
-                        list,  mapTree(children[i], fork_key, filter)
-                    );
+                depth = 0;    throw error;
             }
+
+            if (! (value != null))  continue;
+
+            list.push( value );
+
+            if ((children[i] != null)  &&  (children[i][fork_key] || '')[0])
+                list.push.apply(
+                    list,  mapTree(children[i], fork_key, filter)
+                );
         }
 
         depth-- ;
@@ -1115,7 +1120,7 @@ var iQuery = (function (ObjectKit, selector, uniqueSort, parseHTML) {
      * @alias   $
      *
      * @param   {jQueryAcceptable}   [Element_Set]
-     * @param   {HTMLElement|object} context       Selector context DOM or
+     * @param   {HTMLElement|object} [context]     Selector context DOM or
      *                                             Element Constructor property
      * @returns {$}                  Array-Like object
      *
@@ -1164,7 +1169,7 @@ var iQuery = (function (ObjectKit, selector, uniqueSort, parseHTML) {
     $.fn.extend = $.extend;    $.fn.jquery = '3.2.1';
 
 
-    $.fn.init = function (Element_Set, iContext) {
+    $.fn.init = function (Element_Set, context) {
 
         Element_Set = Element_Set.trim();
 
@@ -1172,7 +1177,7 @@ var iQuery = (function (ObjectKit, selector, uniqueSort, parseHTML) {
 
         if (Element_Set[0] != '<') {
 
-            this.context = iContext || document;
+            this.context = context || document;
 
             this.selector = Element_Set;
 
@@ -1184,17 +1189,17 @@ var iQuery = (function (ObjectKit, selector, uniqueSort, parseHTML) {
 
     //  Create DOM
 
-        Element_Set = $.map($.parseHTML( Element_Set ),  function () {
+        Element_Set = $.map($.parseHTML( Element_Set ),  function (node) {
 
-            if (arguments[0].nodeType == 1)  return arguments[0];
+            if (node.nodeType === 1)  return node;
         });
 
-        if ((Element_Set.length == 1)  &&  $.isPlainObject( iContext ))
-            for (var iKey in iContext) {
-                if (typeof this[iKey] == 'function')
-                    $( Element_Set[0] )[iKey]( iContext[iKey] );
+        if ((Element_Set.length == 1)  &&  $.isPlainObject( context ))
+            for (var key in context) {
+                if (typeof this[key] === 'function')
+                    $( Element_Set[0] )[key]( context[key] );
                 else
-                    $( Element_Set[0] ).attr(iKey, iContext[iKey]);
+                    $( Element_Set[0] ).attr(key, context[key]);
             }
 
         return Element_Set;
@@ -1215,23 +1220,23 @@ var iQuery = (function (ObjectKit, selector, uniqueSort, parseHTML) {
 
             return $_New;
         },
-        index:        function (iTarget) {
-            if (! iTarget)
+        index:        function (target) {
+            if (! target)
                 return  $.trace(this[0], 'previousElementSibling').length;
 
-            var iType = $.Type( iTarget );
+            var type = $.Type( target );
 
-            if (iType === 'String')
-                return  $.inArray(this[0],  $( iTarget ));
+            if (type === 'String')
+                return  $.inArray(this[0],  $( target ));
 
-            if ($.likeArray( iTarget )  &&  (! (iType in DOM_Type))) {
+            if ($.likeArray( target )  &&  (! (type in DOM_Type))) {
 
-                iTarget = iTarget[0];
+                target = target[0];
 
-                iType = $.Type( iTarget );
+                type = $.Type( target );
             }
 
-            return  (iType in DOM_Type)  ?  $.inArray(iTarget, this)  :  -1;
+            return  (type in DOM_Type)  ?  $.inArray(target, this)  :  -1;
         },
         each:         function () {
 
@@ -1397,21 +1402,24 @@ var utility_ext_string = (function ($) {
 
 /* ---------- Global property ---------- */
 
-    var config = {
-            writable:      false,
-            enumerable:    true
-        };
+    BOM.Document = DOM.constructor;
 
-    $.each([
-        [BOM, 'Document', DOM.constructor],
-        [BOM, 'Text', DOM.createTextNode('').constructor],
-        [DOM, 'defaultView', DOM.parentWindow],
-        [DOM, 'head', DOM.documentElement.firstChild]
-    ],  function () {
+    BOM.Text = DOM.createTextNode('').constructor;
 
-        config.value = this[2];
+    BOM.Comment = DOM.createComment('').constructor;
 
-        Object.defineProperty(this[0], this[1], config);
+    $.each({
+        defaultView:    function () {
+
+            return  this.parentWindow;
+        },
+        head:           function () {
+
+            return  this.documentElement ? this.documentElement.firstChild : null;
+        }
+    },  function (key) {
+
+        Object.defineProperty(Document.prototype,  key,  {get: this});
     });
 
 /* ---------- DOM ShortCut ---------- */
@@ -1452,23 +1460,33 @@ var utility_ext_string = (function ($) {
 
 /* ---------- DOM Text Content ---------- */
 
-    Object.defineProperty(Node.prototype, 'textContent', {
+    Object.defineProperty(DOM_Proto, 'textContent', {
         get:    function () {
 
             return  $.mapTree(this,  'childNodes',  function (node) {
 
-                return  (node.nodeType !== 1)  ?  node.nodeValue  :  '';
+                return  (node.nodeType === 3)  ?  node.nodeValue  :  '';
 
             }).join('');
         },
         set:    function (text) {
 
-            if (this.nodeName.toLowerCase() === 'style')
-                this.styleSheet.cssText = text;
+            if (this.tagName.toLowerCase() !== 'style')
+                this.innerText = text;
             else
-                this[(this.nodeType === 1) ? 'innerText' : 'nodeValue'] = text;
+                this.styleSheet.cssText = text;
         }
     });
+
+    var textContent = {
+            get:    function () {  return this.nodeValue;  },
+            set:    function (text) {  this.nodeValue = text;  }
+        };
+
+    Object.defineProperty(Text.prototype, 'textContent', textContent);
+
+    Object.defineProperty(Comment.prototype, 'textContent', textContent);
+
 
 /* ---------- DOM Attribute Name ---------- */
 
@@ -1569,17 +1587,12 @@ var utility_ext_string = (function ($) {
         return  this[$.camelCase( name )];
     };
 
-    config.value = CSSStyleDeclaration;
+    BOM.CSSStyleDeclaration = CSSStyleDeclaration;
 
-    Object.defineProperty(BOM, 'CSSStyleDeclaration', config);
-
-    config.value = function () {
+    BOM.getComputedStyle = function () {
 
         return  new CSSStyleDeclaration( arguments[0] );
     };
-
-    Object.defineProperty(BOM, 'getComputedStyle', config);
-
 
 /* ---------- Set Style ---------- */
 
@@ -1726,32 +1739,44 @@ var utility_ext_string = (function ($) {
             HTML:    'HTMLFile'
         };
 
-    config.value = function (nameSpace, rootName, docType) {
+    BOM.DOMImplementation = DOM.implementation.constructor;
 
-        var document = new BOM.ActiveXObject( Class.XML );
+    $.extend(DOMImplementation.prototype, {
+        createDocument:        function (nameSpace, rootName, docType) {
 
-        if ( rootName )
-            document.appendChild( document.createElementNS(nameSpace, rootName) );
+            var document = new BOM.ActiveXObject( Class.XML );
 
-        return document;
+            if ( rootName )
+                document.appendChild(
+                    document.createElementNS(nameSpace, rootName)
+                );
+
+            return document;
+        },
+        createHTMLDocument:    function (title) {
+
+            var document = new BOM.ActiveXObject( Class.HTML );
+
+            document.write(
+                '<html><head><title>'  +
+                    (title || '')  +
+                '</title></head><body /></html>'
+            );
+
+            return document;
+        }
+    });
+
+/* ---------- Document Serialize ---------- */
+
+    function XMLSerializer() { }
+
+    XMLSerializer.prototype.serializeToString = function (node) {
+
+        return node.xml;
     };
 
-    Object.defineProperty(DOM.implementation, 'createDocument', config);
-
-    config.value = function (title) {
-
-        var document = new BOM.ActiveXObject( Class.HTML );
-
-        document.write(
-            '<html><head><title>'  +
-                (title || '')  +
-            '</title></head><body /></html>'
-        );
-
-        return document;
-    };
-
-    Object.defineProperty(DOM.implementation, 'createHTMLDocument', config);
+    BOM.XMLSerializer = XMLSerializer;
 
 })(utility_ext_string);
 
@@ -1799,43 +1824,33 @@ var object_ext_Class = (function ($) {
         return this;
     }
 
-    $.extend(Class, {
-        /**
-         * 继承出一个子类
-         *
-         * @author   TechQuery
-         *
-         * @memberof Class
-         *
-         * @param    {function} sub     - Constructor of Sub Class
-         * @param    {?object}  Static  - Static properties
-         * @param    {object}   [proto] - Instance properties
-         *
-         * @returns  {function} The Sub Class
-         */
-        extend:        function (sub, Static, proto) {
+    /**
+     * 继承出一个子类
+     *
+     * @author   TechQuery
+     *
+     * @memberof Class
+     *
+     * @param    {function} sub     - Constructor of Sub Class
+     * @param    {?object}  Static  - Static properties
+     * @param    {object}   [proto] - Instance properties
+     *
+     * @returns  {function} The Sub Class
+     */
+    Class.extend = function (sub, Static, proto) {
 
-            for (var key in this)
-                if (this.hasOwnProperty( key ))  sub[ key ] = this[ key ];
+        for (var key in this)
+            if (this.hasOwnProperty( key ))  sub[ key ] = this[ key ];
 
-            $.extend(sub, Static);
+        $.extend(sub, Static);
 
-            sub.prototype = $.extend(
-                Object.create( this.prototype ),  sub.prototype,  proto
-            );
-            sub.prototype.constructor = sub;
+        sub.prototype = $.extend(
+            Object.create( this.prototype ),  sub.prototype,  proto
+        );
+        sub.prototype.constructor = sub;
 
-            return sub;
-        },
-        /**
-         * 枚举设置 是否可用
-         *
-         * @memberof Class
-         *
-         * @type     {boolean}
-         */
-        enumerable:    (!! $.browser.modern)
-    });
+        return sub;
+    };
 
     function safeWrap(method, failback) {
 
@@ -1925,7 +1940,7 @@ var object_ext_Class = (function ($) {
 
             Object.defineProperty(this, key, $.extend(
                 {
-                    enumerable:      Class.enumerable,
+                    enumerable:      true,
                     configurable:    true
                 },
                 config,
@@ -2075,7 +2090,7 @@ var object_ext_Class = (function ($) {
                         ''  :  (':' + this.port)
                 );
             },
-            enumerable:    Class.enumerable,
+            enumerable:    $.browser.modern
         });
 
         Object.defineProperty(this.prototype, 'searchParams', {
@@ -2083,7 +2098,7 @@ var object_ext_Class = (function ($) {
 
                 return  new URLSearchParams( this.search );
             },
-            enumerable:    Class.enumerable,
+            enumerable:    $.browser.modern
         });
     });
 
@@ -2101,7 +2116,7 @@ var object_ext_Class = (function ($) {
 
                             this.__data__[key] = arguments[0];
                         },
-                    enumerable:      Class.enumerable,
+                    enumerable:      true,
                     configurable:    true
                 });
         });
@@ -2212,7 +2227,7 @@ var utility_index = (function ($) {
 
 (function ($) {
 
-    var BOM = self,  DOM = self.document,  enumerable = $.Class.enumerable;
+    var BOM = self,  DOM = self.document,  enumerable = $.browser.modern;
 
 /* ---------- Document Current Script ---------- */
 
@@ -2224,35 +2239,36 @@ var utility_index = (function ($) {
 
     function Script_URL() {
 
-        try {  throw  new Error('AMD_Loader');  } catch (iError) {
+        try {  throw  new Error('AMD_Loader');  } catch (error) {
 
-            var iURL;
+            var URI;
 
-            for (var iCore in Stack_Prefix)
-                if ($.browser[ iCore ]) {
+            for (var core in Stack_Prefix)
+                if ($.browser[ core ]) {
 
-                    iURL = iError.stack.match(RegExp(
-                        "\\s+"  +  Stack_Prefix[ iCore ]  +
+                    URI = error.stack.match(RegExp(
+                        "\\s+"  +  Stack_Prefix[ core ]  +
                             "(http(s)?:\\/\\/[^:]+)"
                     ));
 
-                    return  iURL && iURL[1];
+                    return  URI && URI[1];
                 }
         }
     }
 
     if (! ('currentScript' in DOM))
-        Object.defineProperty(Object.getPrototypeOf( DOM ),  'currentScript',  {
+        Object.defineProperty(Document.prototype,  'currentScript',  {
             get:           function () {
 
-                var iURL = ($.browser.msie < 10)  ||  Script_URL();
+                var scripts = this.scripts,
+                    URI = ($.browser.msie < 10)  ||  Script_URL();
 
-                for (var i = 0;  DOM.scripts[i];  i++)
-                    if ((iURL === true)  ?
-                        (DOM.scripts[i].readyState == 'interactive')  :
-                        (DOM.scripts[i].src == iURL)
+                for (var i = 0;  script[i];  i++)
+                    if ((URI === true)  ?
+                        (scripts[i].readyState === 'interactive')  :
+                        (scripts[i].src === URI)
                     )
-                        return DOM.scripts[i];
+                        return scripts[i];
             },
             enumerable:    enumerable
         });
@@ -2283,7 +2299,8 @@ var utility_index = (function ($) {
                 return  new HTMLCollection( this.childNodes );
             },
             enumerable:    enumerable
-        };
+        },
+        DOM_Proto = Element.prototype;
 
     if (! DOM.createDocumentFragment().children)
         Object.defineProperty(
@@ -2299,7 +2316,7 @@ var utility_index = (function ($) {
 /* ---------- Scrolling Element ---------- */
 
     if (! ('scrollingElement' in DOM))
-        Object.defineProperty(DOM, 'scrollingElement', {
+        Object.defineProperty(Document.prototype, 'scrollingElement', {
             get:           function () {
 
                 return  ($.browser.webkit || (DOM.compatMode == 'BackCompat'))  ?
@@ -2312,18 +2329,19 @@ var utility_index = (function ($) {
 
     if ($.browser.msie < 12)
         Object.defineProperty(HTMLSelectElement.prototype, 'selectedOptions', {
-            get:    function () {
-                return  new HTMLCollection(
-                    $.map(this.options,  function (iOption) {
+            get:           function () {
 
-                        return  iOption.selected ? iOption : null;
+                return  new HTMLCollection(
+                    $.map(this.options,  function (option) {
+
+                        return  option.selected ? option : null;
                     })
                 );
-            }
+            },
+            enumerable:    enumerable
         });
-/* ---------- Element CSS Selector Match ---------- */
 
-    var DOM_Proto = Element.prototype;
+/* ---------- Element CSS Selector Match ---------- */
 
     DOM_Proto.matches = DOM_Proto.matches || DOM_Proto.webkitMatchesSelector ||
         DOM_Proto.msMatchesSelector || DOM_Proto.mozMatchesSelector ||
@@ -2337,11 +2355,11 @@ var utility_index = (function ($) {
 
 /* ---------- DOM Token List ---------- */
 
-    function DOMTokenList(iDOM, iName) {
+    function DOMTokenList(element, name) {
 
         this.length = 0;
 
-        this.__Node__ = iDOM.attributes.getNamedItem( iName );
+        this.__Node__ = element.attributes.getNamedItem( name );
 
         this.value = (this.__Node__.nodeValue  ||  '').trim();
 
@@ -2435,7 +2453,9 @@ var utility_index = (function ($) {
         BOM.DOMTokenList.prototype.toggle = DOMTokenList.prototype.toggle;
 
 
-/* ---------- Document Parse & Serialize ---------- */
+/* ---------- Document Parse ---------- */
+
+    function DOMParser() { }
 
     var createXML = ($.browser.msie < 12)  ?
             function (code) {
@@ -2470,20 +2490,8 @@ var utility_index = (function ($) {
         } catch (error) { }
     }
 
-    $.each([
-        function DOMParser() { },
-        function XMLSerializer() { }
-    ],  function () {
-
-        if (BOM[ $.Type(new this()) ])  return;
-
-        config.value = this;
-
-        Object.defineProperty(BOM, this.name(), config);
-    });
-
     if (! parse('image/svg+xml'))
-        DOMParser.prototype.parseFromString = function (code, type) {
+        DOMParser.prototype.parseFromString = _parse_ = function (code, type) {
 
             var document;
 
@@ -2500,7 +2508,7 @@ var utility_index = (function ($) {
                     throw  TypeError(type + "isn't supported");
             }
 
-            if ( document.parseError.errorCode )
+            if ((document.parseError || '').errorCode)
                 document = createXML(
                     '<xml><parsererror>' +
                         '<h3>This page contains the following errors:</h3><div>' +
@@ -2511,18 +2519,24 @@ var utility_index = (function ($) {
             return document;
         };
 
+    if (! BOM.DOMParser)
+        Object.defineProperty(BOM, 'DOMParser', {
+            value:         DOMParser,
+            enumerable:    true
+        });
+
     if (! ($.browser.msie < 11))  return;
 
 /* ---------- Element Data Set ---------- */
 
     function DOMStringMap() {
 
-        var iMap = this;
+        var map = this;
 
         $.each(arguments[0].attributes,  function () {
 
             if (! this.nodeName.indexOf('data-'))
-                iMap[$.camelCase( this.nodeName.slice(5) )] = this.nodeValue;
+                map[$.camelCase( this.nodeName.slice(5) )] = this.nodeValue;
         });
     }
 
@@ -2555,20 +2569,20 @@ var utility_index = (function ($) {
     var InnerHTML = Object.getOwnPropertyDescriptor(DOM_Proto, 'innerHTML');
 
     Object.defineProperty(DOM_Proto, 'innerHTML', {
-        set:           function (iHTML) {
+        set:           function (HTML) {
 
-            if (! (iHTML + '').match(
+            if (! (HTML + '').match(
                 /^[^<]*<\s*(head|meta|title|link|style|script|noscript|(!--[^>]*--))[^>]*>/i
             ))
-                return  InnerHTML.set.call(this, iHTML);
+                return  InnerHTML.set.call(this, HTML);
 
-            InnerHTML.set.call(this,  'IE_Scope' + iHTML);
+            InnerHTML.set.call(this,  'IE_Scope' + HTML);
 
-            var iChild = this.childNodes;
+            var child = this.childNodes;
 
-            iChild[0].nodeValue = iChild[0].nodeValue.slice(8);
+            child[0].nodeValue = child[0].nodeValue.slice(8);
 
-            if (! iChild[0].nodeValue[0])  this.removeChild( iChild[0] );
+            if (! child[0].nodeValue[0])  this.removeChild( child[0] );
         },
         enumerable:    enumerable
     });
@@ -5694,8 +5708,8 @@ var AJAX_ext_HTML_Request = (function ($) {
 
                 } catch (iError) {
 
-                    this.response = $.buildFragment(
-                        $.parseHTML( this.responseText )
+                    this.response = (new DOMParser()).parseFromString(
+                        this.responseText
                     );
                     this.responseType = 'html';
                 }
@@ -6988,12 +7002,12 @@ var AJAX_ext_HTML_Request = (function ($) {
  * iQuery.js - A Light-weight jQuery Compatible API with IE 8+ compatibility
  *
  * @module    {function} iQuery
- *
- * @version   3.0 (2018-01-26) stable
- *
- * @see       {@link http://jquery.com/ jQuery}
+ * @version   3.0 (2018-01-29) stable
  *
  * @copyright TechQuery <shiy2008@gmail.com> 2015-2018
+ * @license   GPL-2.0-or-later
+ *
+ * @see       {@link http://jquery.com/ jQuery}
  */
 
 

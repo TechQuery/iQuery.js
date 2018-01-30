@@ -41,43 +41,33 @@ define(['../../iQuery'],  function ($) {
         return this;
     }
 
-    $.extend(Class, {
-        /**
-         * 继承出一个子类
-         *
-         * @author   TechQuery
-         *
-         * @memberof Class
-         *
-         * @param    {function} sub     - Constructor of Sub Class
-         * @param    {?object}  Static  - Static properties
-         * @param    {object}   [proto] - Instance properties
-         *
-         * @returns  {function} The Sub Class
-         */
-        extend:        function (sub, Static, proto) {
+    /**
+     * 继承出一个子类
+     *
+     * @author   TechQuery
+     *
+     * @memberof Class
+     *
+     * @param    {function} sub     - Constructor of Sub Class
+     * @param    {?object}  Static  - Static properties
+     * @param    {object}   [proto] - Instance properties
+     *
+     * @returns  {function} The Sub Class
+     */
+    Class.extend = function (sub, Static, proto) {
 
-            for (var key in this)
-                if (this.hasOwnProperty( key ))  sub[ key ] = this[ key ];
+        for (var key in this)
+            if (this.hasOwnProperty( key ))  sub[ key ] = this[ key ];
 
-            $.extend(sub, Static);
+        $.extend(sub, Static);
 
-            sub.prototype = $.extend(
-                Object.create( this.prototype ),  sub.prototype,  proto
-            );
-            sub.prototype.constructor = sub;
+        sub.prototype = $.extend(
+            Object.create( this.prototype ),  sub.prototype,  proto
+        );
+        sub.prototype.constructor = sub;
 
-            return sub;
-        },
-        /**
-         * 枚举设置 是否可用
-         *
-         * @memberof Class
-         *
-         * @type     {boolean}
-         */
-        enumerable:    (!! $.browser.modern)
-    });
+        return sub;
+    };
 
     function safeWrap(method, failback) {
 
@@ -167,7 +157,7 @@ define(['../../iQuery'],  function ($) {
 
             Object.defineProperty(this, key, $.extend(
                 {
-                    enumerable:      Class.enumerable,
+                    enumerable:      true,
                     configurable:    true
                 },
                 config,

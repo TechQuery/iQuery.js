@@ -7,21 +7,24 @@ define(['../utility/ext/string'],  function ($) {
 
 /* ---------- Global property ---------- */
 
-    var config = {
-            writable:      false,
-            enumerable:    true
-        };
+    BOM.Document = DOM.constructor;
 
-    $.each([
-        [BOM, 'Document', DOM.constructor],
-        [BOM, 'Text', DOM.createTextNode('').constructor],
-        [DOM, 'defaultView', DOM.parentWindow],
-        [DOM, 'head', DOM.documentElement.firstChild]
-    ],  function () {
+    BOM.Text = DOM.createTextNode('').constructor;
 
-        config.value = this[2];
+    BOM.Comment = DOM.createComment('').constructor;
 
-        Object.defineProperty(this[0], this[1], config);
+    $.each({
+        defaultView:    function () {
+
+            return  this.parentWindow;
+        },
+        head:           function () {
+
+            return  this.documentElement ? this.documentElement.firstChild : null;
+        }
+    },  function (key) {
+
+        Object.defineProperty(Document.prototype,  key,  {get: this});
     });
 
 /* ---------- DOM ShortCut ---------- */
@@ -62,23 +65,33 @@ define(['../utility/ext/string'],  function ($) {
 
 /* ---------- DOM Text Content ---------- */
 
-    Object.defineProperty(Node.prototype, 'textContent', {
+    Object.defineProperty(DOM_Proto, 'textContent', {
         get:    function () {
 
             return  $.mapTree(this,  'childNodes',  function (node) {
 
-                return  (node.nodeType !== 1)  ?  node.nodeValue  :  '';
+                return  (node.nodeType === 3)  ?  node.nodeValue  :  '';
 
             }).join('');
         },
         set:    function (text) {
 
-            if (this.nodeName.toLowerCase() === 'style')
-                this.styleSheet.cssText = text;
+            if (this.tagName.toLowerCase() !== 'style')
+                this.innerText = text;
             else
-                this[(this.nodeType === 1) ? 'innerText' : 'nodeValue'] = text;
+                this.styleSheet.cssText = text;
         }
     });
+
+    var textContent = {
+            get:    function () {  return this.nodeValue;  },
+            set:    function (text) {  this.nodeValue = text;  }
+        };
+
+    Object.defineProperty(Text.prototype, 'textContent', textContent);
+
+    Object.defineProperty(Comment.prototype, 'textContent', textContent);
+
 
 /* ---------- DOM Attribute Name ---------- */
 
@@ -179,17 +192,12 @@ define(['../utility/ext/string'],  function ($) {
         return  this[$.camelCase( name )];
     };
 
-    config.value = CSSStyleDeclaration;
+    BOM.CSSStyleDeclaration = CSSStyleDeclaration;
 
-    Object.defineProperty(BOM, 'CSSStyleDeclaration', config);
-
-    config.value = function () {
+    BOM.getComputedStyle = function () {
 
         return  new CSSStyleDeclaration( arguments[0] );
     };
-
-    Object.defineProperty(BOM, 'getComputedStyle', config);
-
 
 /* ---------- Set Style ---------- */
 
@@ -336,31 +344,43 @@ define(['../utility/ext/string'],  function ($) {
             HTML:    'HTMLFile'
         };
 
-    config.value = function (nameSpace, rootName, docType) {
+    BOM.DOMImplementation = DOM.implementation.constructor;
 
-        var document = new BOM.ActiveXObject( Class.XML );
+    $.extend(DOMImplementation.prototype, {
+        createDocument:        function (nameSpace, rootName, docType) {
 
-        if ( rootName )
-            document.appendChild( document.createElementNS(nameSpace, rootName) );
+            var document = new BOM.ActiveXObject( Class.XML );
 
-        return document;
+            if ( rootName )
+                document.appendChild(
+                    document.createElementNS(nameSpace, rootName)
+                );
+
+            return document;
+        },
+        createHTMLDocument:    function (title) {
+
+            var document = new BOM.ActiveXObject( Class.HTML );
+
+            document.write(
+                '<html><head><title>'  +
+                    (title || '')  +
+                '</title></head><body /></html>'
+            );
+
+            return document;
+        }
+    });
+
+/* ---------- Document Serialize ---------- */
+
+    function XMLSerializer() { }
+
+    XMLSerializer.prototype.serializeToString = function (node) {
+
+        return node.xml;
     };
 
-    Object.defineProperty(DOM.implementation, 'createDocument', config);
-
-    config.value = function (title) {
-
-        var document = new BOM.ActiveXObject( Class.HTML );
-
-        document.write(
-            '<html><head><title>'  +
-                (title || '')  +
-            '</title></head><body /></html>'
-        );
-
-        return document;
-    };
-
-    Object.defineProperty(DOM.implementation, 'createHTMLDocument', config);
+    BOM.XMLSerializer = XMLSerializer;
 
 });

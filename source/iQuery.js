@@ -27,7 +27,7 @@ define([
      * @alias   $
      *
      * @param   {jQueryAcceptable}   [Element_Set]
-     * @param   {HTMLElement|object} context       Selector context DOM or
+     * @param   {HTMLElement|object} [context]     Selector context DOM or
      *                                             Element Constructor property
      * @returns {$}                  Array-Like object
      *
@@ -76,7 +76,7 @@ define([
     $.fn.extend = $.extend;    $.fn.jquery = '3.2.1';
 
 
-    $.fn.init = function (Element_Set, iContext) {
+    $.fn.init = function (Element_Set, context) {
 
         Element_Set = Element_Set.trim();
 
@@ -84,7 +84,7 @@ define([
 
         if (Element_Set[0] != '<') {
 
-            this.context = iContext || document;
+            this.context = context || document;
 
             this.selector = Element_Set;
 
@@ -96,17 +96,17 @@ define([
 
     //  Create DOM
 
-        Element_Set = $.map($.parseHTML( Element_Set ),  function () {
+        Element_Set = $.map($.parseHTML( Element_Set ),  function (node) {
 
-            if (arguments[0].nodeType == 1)  return arguments[0];
+            if (node.nodeType === 1)  return node;
         });
 
-        if ((Element_Set.length == 1)  &&  $.isPlainObject( iContext ))
-            for (var iKey in iContext) {
-                if (typeof this[iKey] == 'function')
-                    $( Element_Set[0] )[iKey]( iContext[iKey] );
+        if ((Element_Set.length == 1)  &&  $.isPlainObject( context ))
+            for (var key in context) {
+                if (typeof this[key] === 'function')
+                    $( Element_Set[0] )[key]( context[key] );
                 else
-                    $( Element_Set[0] ).attr(iKey, iContext[iKey]);
+                    $( Element_Set[0] ).attr(key, context[key]);
             }
 
         return Element_Set;
@@ -127,23 +127,23 @@ define([
 
             return $_New;
         },
-        index:        function (iTarget) {
-            if (! iTarget)
+        index:        function (target) {
+            if (! target)
                 return  $.trace(this[0], 'previousElementSibling').length;
 
-            var iType = $.Type( iTarget );
+            var type = $.Type( target );
 
-            if (iType === 'String')
-                return  $.inArray(this[0],  $( iTarget ));
+            if (type === 'String')
+                return  $.inArray(this[0],  $( target ));
 
-            if ($.likeArray( iTarget )  &&  (! (iType in DOM_Type))) {
+            if ($.likeArray( target )  &&  (! (type in DOM_Type))) {
 
-                iTarget = iTarget[0];
+                target = target[0];
 
-                iType = $.Type( iTarget );
+                type = $.Type( target );
             }
 
-            return  (iType in DOM_Type)  ?  $.inArray(iTarget, this)  :  -1;
+            return  (type in DOM_Type)  ?  $.inArray(target, this)  :  -1;
         },
         each:         function () {
 

@@ -1,6 +1,6 @@
 define(['../utility/index', '../utility/ext/browser'],  function ($) {
 
-    var BOM = self,  DOM = self.document,  enumerable = $.Class.enumerable;
+    var BOM = self,  DOM = self.document,  enumerable = $.browser.modern;
 
 /* ---------- Document Current Script ---------- */
 
@@ -12,35 +12,36 @@ define(['../utility/index', '../utility/ext/browser'],  function ($) {
 
     function Script_URL() {
 
-        try {  throw  new Error('AMD_Loader');  } catch (iError) {
+        try {  throw  new Error('AMD_Loader');  } catch (error) {
 
-            var iURL;
+            var URI;
 
-            for (var iCore in Stack_Prefix)
-                if ($.browser[ iCore ]) {
+            for (var core in Stack_Prefix)
+                if ($.browser[ core ]) {
 
-                    iURL = iError.stack.match(RegExp(
-                        "\\s+"  +  Stack_Prefix[ iCore ]  +
+                    URI = error.stack.match(RegExp(
+                        "\\s+"  +  Stack_Prefix[ core ]  +
                             "(http(s)?:\\/\\/[^:]+)"
                     ));
 
-                    return  iURL && iURL[1];
+                    return  URI && URI[1];
                 }
         }
     }
 
     if (! ('currentScript' in DOM))
-        Object.defineProperty(Object.getPrototypeOf( DOM ),  'currentScript',  {
+        Object.defineProperty(Document.prototype,  'currentScript',  {
             get:           function () {
 
-                var iURL = ($.browser.msie < 10)  ||  Script_URL();
+                var scripts = this.scripts,
+                    URI = ($.browser.msie < 10)  ||  Script_URL();
 
-                for (var i = 0;  DOM.scripts[i];  i++)
-                    if ((iURL === true)  ?
-                        (DOM.scripts[i].readyState == 'interactive')  :
-                        (DOM.scripts[i].src == iURL)
+                for (var i = 0;  script[i];  i++)
+                    if ((URI === true)  ?
+                        (scripts[i].readyState === 'interactive')  :
+                        (scripts[i].src === URI)
                     )
-                        return DOM.scripts[i];
+                        return scripts[i];
             },
             enumerable:    enumerable
         });
@@ -71,7 +72,8 @@ define(['../utility/index', '../utility/ext/browser'],  function ($) {
                 return  new HTMLCollection( this.childNodes );
             },
             enumerable:    enumerable
-        };
+        },
+        DOM_Proto = Element.prototype;
 
     if (! DOM.createDocumentFragment().children)
         Object.defineProperty(
@@ -87,7 +89,7 @@ define(['../utility/index', '../utility/ext/browser'],  function ($) {
 /* ---------- Scrolling Element ---------- */
 
     if (! ('scrollingElement' in DOM))
-        Object.defineProperty(DOM, 'scrollingElement', {
+        Object.defineProperty(Document.prototype, 'scrollingElement', {
             get:           function () {
 
                 return  ($.browser.webkit || (DOM.compatMode == 'BackCompat'))  ?
@@ -100,18 +102,19 @@ define(['../utility/index', '../utility/ext/browser'],  function ($) {
 
     if ($.browser.msie < 12)
         Object.defineProperty(HTMLSelectElement.prototype, 'selectedOptions', {
-            get:    function () {
-                return  new HTMLCollection(
-                    $.map(this.options,  function (iOption) {
+            get:           function () {
 
-                        return  iOption.selected ? iOption : null;
+                return  new HTMLCollection(
+                    $.map(this.options,  function (option) {
+
+                        return  option.selected ? option : null;
                     })
                 );
-            }
+            },
+            enumerable:    enumerable
         });
-/* ---------- Element CSS Selector Match ---------- */
 
-    var DOM_Proto = Element.prototype;
+/* ---------- Element CSS Selector Match ---------- */
 
     DOM_Proto.matches = DOM_Proto.matches || DOM_Proto.webkitMatchesSelector ||
         DOM_Proto.msMatchesSelector || DOM_Proto.mozMatchesSelector ||
@@ -125,11 +128,11 @@ define(['../utility/index', '../utility/ext/browser'],  function ($) {
 
 /* ---------- DOM Token List ---------- */
 
-    function DOMTokenList(iDOM, iName) {
+    function DOMTokenList(element, name) {
 
         this.length = 0;
 
-        this.__Node__ = iDOM.attributes.getNamedItem( iName );
+        this.__Node__ = element.attributes.getNamedItem( name );
 
         this.value = (this.__Node__.nodeValue  ||  '').trim();
 
@@ -223,7 +226,9 @@ define(['../utility/index', '../utility/ext/browser'],  function ($) {
         BOM.DOMTokenList.prototype.toggle = DOMTokenList.prototype.toggle;
 
 
-/* ---------- Document Parse & Serialize ---------- */
+/* ---------- Document Parse ---------- */
+
+    function DOMParser() { }
 
     var createXML = ($.browser.msie < 12)  ?
             function (code) {
@@ -258,20 +263,8 @@ define(['../utility/index', '../utility/ext/browser'],  function ($) {
         } catch (error) { }
     }
 
-    $.each([
-        function DOMParser() { },
-        function XMLSerializer() { }
-    ],  function () {
-
-        if (BOM[ $.Type(new this()) ])  return;
-
-        config.value = this;
-
-        Object.defineProperty(BOM, this.name(), config);
-    });
-
     if (! parse('image/svg+xml'))
-        DOMParser.prototype.parseFromString = function (code, type) {
+        DOMParser.prototype.parseFromString = _parse_ = function (code, type) {
 
             var document;
 
@@ -288,7 +281,7 @@ define(['../utility/index', '../utility/ext/browser'],  function ($) {
                     throw  TypeError(type + "isn't supported");
             }
 
-            if ( document.parseError.errorCode )
+            if ((document.parseError || '').errorCode)
                 document = createXML(
                     '<xml><parsererror>' +
                         '<h3>This page contains the following errors:</h3><div>' +
@@ -299,18 +292,24 @@ define(['../utility/index', '../utility/ext/browser'],  function ($) {
             return document;
         };
 
+    if (! BOM.DOMParser)
+        Object.defineProperty(BOM, 'DOMParser', {
+            value:         DOMParser,
+            enumerable:    true
+        });
+
     if (! ($.browser.msie < 11))  return;
 
 /* ---------- Element Data Set ---------- */
 
     function DOMStringMap() {
 
-        var iMap = this;
+        var map = this;
 
         $.each(arguments[0].attributes,  function () {
 
             if (! this.nodeName.indexOf('data-'))
-                iMap[$.camelCase( this.nodeName.slice(5) )] = this.nodeValue;
+                map[$.camelCase( this.nodeName.slice(5) )] = this.nodeValue;
         });
     }
 
@@ -343,20 +342,20 @@ define(['../utility/index', '../utility/ext/browser'],  function ($) {
     var InnerHTML = Object.getOwnPropertyDescriptor(DOM_Proto, 'innerHTML');
 
     Object.defineProperty(DOM_Proto, 'innerHTML', {
-        set:           function (iHTML) {
+        set:           function (HTML) {
 
-            if (! (iHTML + '').match(
+            if (! (HTML + '').match(
                 /^[^<]*<\s*(head|meta|title|link|style|script|noscript|(!--[^>]*--))[^>]*>/i
             ))
-                return  InnerHTML.set.call(this, iHTML);
+                return  InnerHTML.set.call(this, HTML);
 
-            InnerHTML.set.call(this,  'IE_Scope' + iHTML);
+            InnerHTML.set.call(this,  'IE_Scope' + HTML);
 
-            var iChild = this.childNodes;
+            var child = this.childNodes;
 
-            iChild[0].nodeValue = iChild[0].nodeValue.slice(8);
+            child[0].nodeValue = child[0].nodeValue.slice(8);
 
-            if (! iChild[0].nodeValue[0])  this.removeChild( iChild[0] );
+            if (! child[0].nodeValue[0])  this.removeChild( child[0] );
         },
         enumerable:    enumerable
     });

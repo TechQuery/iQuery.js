@@ -280,7 +280,7 @@ define(['../../polyfill/ES_API'],  function ($) {
 
         var children = node[fork_key], list = [ ];    depth++ ;
 
-        for (var i = 0, value;  children[i];  i++) {
+        for (var i = 0, value;  i < children.length;  i++) {
             /**
              * 对象遍历过滤器
              *
@@ -293,17 +293,22 @@ define(['../../polyfill/ES_API'],  function ($) {
              * @return {?object}  `Null` or `Undefined` to **Skip the Sub-Tree**,
              *                    and Any other Type to Add into the Result Array.
              */
-            value = filter.call(node, children[i], i, depth);
+            try {
+                value = filter.call(node, children[i], i, depth);
 
-            if (value != null) {
+            } catch (error) {
 
-                list.push( value );
-
-                if ( children[i][fork_key][0] )
-                    list.push.apply(
-                        list,  mapTree(children[i], fork_key, filter)
-                    );
+                depth = 0;    throw error;
             }
+
+            if (! (value != null))  continue;
+
+            list.push( value );
+
+            if ((children[i] != null)  &&  (children[i][fork_key] || '')[0])
+                list.push.apply(
+                    list,  mapTree(children[i], fork_key, filter)
+                );
         }
 
         depth-- ;

@@ -1,6 +1,12 @@
 {
+    "compress":     {
+        "unused":    false
+    },
     "mangle":       {
         "keep_fnames":    true
+    },
+    "output":       {
+        "comments":    "some"
     },
     "sourceMap":    {
         "url":    "iQuery.min.js.map"
