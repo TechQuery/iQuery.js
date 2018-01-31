@@ -44,15 +44,13 @@ define(['../../iQuery'],  function ($) {
     /**
      * 继承出一个子类
      *
-     * @author   TechQuery
-     *
      * @memberof Class
      *
-     * @param    {function} sub     - Constructor of Sub Class
-     * @param    {?object}  Static  - Static properties
-     * @param    {object}   [proto] - Instance properties
+     * @param {function} sub     Constructor of Sub Class
+     * @param {?object}  Static  Static properties
+     * @param {object}   [proto] Instance properties
      *
-     * @returns  {function} The Sub Class
+     * @return {function} The Sub Class
      */
     Class.extend = function (sub, Static, proto) {
 
@@ -65,6 +63,14 @@ define(['../../iQuery'],  function ($) {
             Object.create( this.prototype ),  sub.prototype,  proto
         );
         sub.prototype.constructor = sub;
+
+        if (! (Object.create( this.prototype )  instanceof  Class)) {
+
+            for (var key in Class)
+                if (Class.hasOwnProperty( key ))  sub[ key ] = Class[ key ];
+
+            $.extend(sub.prototype, Class.prototype);
+        }
 
         return sub;
     };
@@ -101,20 +107,21 @@ define(['../../iQuery'],  function ($) {
         };
     }
 
-    /**
-     * 设置私有成员
-     *
-     * @memberof Class.prototype
-     * @function setPrivate
-     *
-     * @param    {string|object} key      Key or Key-Value
-     * @param    {*}             [value]
-     * @param    {object}        [config] More config
-     *
-     * @return   {*}             Value while set one or
-     *                           This object when set Key-Value
-     */
-    var setPrivate = safeWrap(function (key, value, config) {
+    $.extend(Class.prototype, {
+        /**
+         * 设置私有成员
+         *
+         * @memberof Class.prototype
+         * @function setPrivate
+         *
+         * @param    {string|object} key      Key or Key-Value
+         * @param    {*}             [value]
+         * @param    {object}        [config] More config
+         *
+         * @return   {*}             Value while set one or
+         *                           This object when set Key-Value
+         */
+        setPrivate:    safeWrap(function (key, value, config) {
 
             key = (
                 (key === 'length')  ||  Number.isInteger( +key )  ||  (
@@ -135,25 +142,21 @@ define(['../../iQuery'],  function ($) {
 
                 error.key = key;    throw error;
             }
-        });
-
-    setPrivate.call(Class.prototype, 'setPrivate', setPrivate);
-
-    /**
-     * 设置公开成员
-     *
-     * @memberof Class.prototype
-     * @function setPublic
-     *
-     * @param    {string|object} key       Key or Key-Value
-     * @param    {object}        [Get_Set] Getter & Setter
-     * @param    {object}        [config]  More config
-     *
-     * @return   {object}        Get_Set while set one or
-     *                           This object when set Key-Value
-     */
-    setPrivate.call(
-        Class.prototype,  'setPublic',  safeWrap(function (key, Get_Set, config) {
+        }),
+        /**
+         * 设置公开成员
+         *
+         * @memberof Class.prototype
+         * @function setPublic
+         *
+         * @param {string|object} key       Key or Key-Value
+         * @param {object}        [Get_Set] Getter & Setter
+         * @param {object}        [config]  More config
+         *
+         * @return {object} Get_Set while set one or
+         *                  This object when set Key-Value
+         */
+        setPublic:    safeWrap(function (key, Get_Set, config) {
 
             Object.defineProperty(this, key, $.extend(
                 {
@@ -163,8 +166,8 @@ define(['../../iQuery'],  function ($) {
                 config,
                 Get_Set
             ));
-        },  false)
-    );
+        })
+    });
 
     return  $.Class = Class;
 

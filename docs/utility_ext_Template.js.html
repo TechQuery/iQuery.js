@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="utf-8">
-    <title>utility/ext/string.js - Documentation</title>
+    <title>utility/ext/Template.js - Documentation</title>
 
     <script src="scripts/prettify/prettify.js"></script>
     <script src="scripts/prettify/lang-css.js"></script>
@@ -27,97 +27,116 @@
 
 <div id="main">
 
-    <h1 class="page-title">utility/ext/string.js</h1>
+    <h1 class="page-title">utility/ext/Template.js</h1>
 
     <section>
         <article>
-            <pre class="prettyprint source linenums"><code>define(['../../iQuery'],  function ($) {
+            <pre class="prettyprint source linenums"><code>define(['../../iQuery', '../../object/ext/Class'],  function ($) {
 
-    return $.extend({
-        /**
-         * 定字定数分割字符串
-         *
-         * @author TechQuery
-         *
-         * @memberof $
-         *
-         * @param {string}        string  - Raw Text
-         * @param {string|RegExp} [split] - Separator to split as
-         *                                  `String.prototype.split`
-         * @param {number}        [max]   - Max number of returned parts
-         * @param {string}        [join]  - String to join
-         *                                  (Default value is same as `split`)
-         * @return {string[]}
-         *
-         * @example  // 原型方法等效
-         *
-         *     $.split('abc', '')    // ['a', 'b', 'c']
-         *
-         * @example  // PHP str_split() 等效
-         *
-         *     $.split('abc', '', 2)    // ['a', 'bc']
-         *
-         * @example  // 连接字符串
-         *
-         *     $.split("a  b\tc",  /\s+/,  2,  ' ')    // ['a', 'b c']
-         */
-        split:         function (string, split, max, join) {
+    /**
+     * 字符串模板
+     *
+     * @class Template
+     *
+     * @param {string}   raw
+     * @param {Array}    [nameList] Name list of the Local variable
+     * @param {function} [onChange] Call with New &amp; Old value
+     */
+    function Template(raw, nameList, onChange) {
 
-            string = string.split( split );
+        if (! (this instanceof Template))
+            return  new Template(raw, nameList, onChange);
 
-            if ( max ) {
-                string[max - 1] = string.slice(max - 1).join(
-                    (typeof join === 'string')  ?  join  :  split
+        this.setPrivate('raw', raw);
+
+        this.setPrivate('name',  nameList || [ ]);
+
+        this.setPrivate('value', '');
+
+        onChange = (nameList instanceof Array)  ?  onChange  :  nameList;
+
+        this.onChange = (onChange instanceof Function)  ?  onChange  :  null;
+
+        return this.parse();
+    }
+
+    try {  eval('``');  } catch (error) {  var Classic = true;  }
+
+
+    return  $.Template = $.Class.extend.call(Array, Template, null, {
+        compile:     function (expression) {
+
+            return  this.push(
+                new (Function.prototype.bind.apply(
+                    Function,
+                    [ null ].concat(this.__name__,  'return ' + expression.trim())
+                ))()
+            );
+        },
+        parse:       function () {
+
+            var _this_ = this;
+
+            if ( Classic )
+                this.__raw__ = this.__raw__.replace(
+                    /\$\{([\s\S]+?)\}/g,  function (_, expression) {
+
+                        return  '${' + (_this_.compile( expression ) - 1) + '}';
+                    }
                 );
-                string.length = max;
-            }
+            else
+                this.compile('`' + this.__raw__ + '`');
 
-            return string;
+            return this;
         },
         /**
-         * 连字符化字符串
+         * 表达式求值
          *
-         * @author TechQuery
+         * @memberof Template.prototype
          *
-         * @memberof $
-         *
-         * @param {string} raw - Non Hyphen-Case String
+         * @param {?object} context     Value of `this` in the expression
+         * @param {*}       [parameter] One or more value of the Local variable
          *
          * @return {string}
          *
-         * @example  // 符号间隔
+         * @example  // 模板求值
          *
-         *     $.hyphenCase('UPPER_CASE')    // 'upper-case'
+         *     $.Template(
+         *         "[ ${this.time} ]  Hello, ${scope.creator}'s ${view.name} !",
+         *         ['view', 'scope']
+         *     ).evaluate(
+         *         {time: '2015-04-30'},
+         *         {name: 'iQuery.js'},
+         *         {creator: 'TechQuery'}
+         *     )
          *
-         * @example  // 驼峰法
-         *
-         *     $.hyphenCase('camelCase')    // 'camel-case'
-         *
-         * @example  // 混杂写法
-         *
-         *     $.hyphenCase('UPPER_CASEMix -camelCase')
-         *
-         *     // 'upper-case-mix-camel-case'
+         *     // "[ 2015-04-30 ]  Hello, TechQuery's iQuery.js !"
          */
-        hyphenCase:    function (raw) {
+        evaluate:    function (context, parameter) {
 
-            return raw.replace(
-                /[^A-Za-z0-9]+/g, '-'
-            ).replace(
-                /([A-Za-z0-9])([A-Z][a-z])/g, '$1-$2'
-            ).toLowerCase();
+            var _this_ = this;
+
+            parameter = Array.from( arguments ).slice(1);
+
+            var value = Classic ?
+                    this.__raw__.replace(/\$\{(\d+)\}/g,  function (_, index) {
+
+                        return  _this_[index].apply(context, parameter);
+                    }) :
+                    this[0].apply(context, parameter);
+
+            if (value !== this.__value__) {
+
+                if ( this.onChange )  this.onChange(value,  this.__value__);
+
+                this.__value__ = value;
+            }
+
+            return value;
         },
-        byteLength:    function () {
+        toString:    function () {
 
-            return arguments[0].replace(
-                /[^\u0021-\u007e\uff61-\uffef]/g,  'xx'
-            ).length;
-        },
-        isSelector:    function () {
-            try {
-                return  (!! $( arguments[0] ));
-
-            } catch (iError) {  return false;  }
+            return  this.__value__;
         }
     });
 });

@@ -17,7 +17,8 @@ define([
     './CSS/ext/rule', './CSS/ext/utility',
     './event/ext/shim', './event/ext/wrapper',
     './AJAX/ext/wrapper', './AJAX/ext/form',
-    './animate/effect', './utility/ext/binary'
+    './utility/ext/Template', './utility/ext/binary',
+    './animate/effect'
 ],  function ($) {
 
     if (typeof self.jQuery !== 'function')  self.$ = self.jQuery = $;

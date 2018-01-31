@@ -1264,15 +1264,13 @@ var object_ext_Class = (function ($) {
     /**
      * 继承出一个子类
      *
-     * @author   TechQuery
-     *
      * @memberof Class
      *
-     * @param    {function} sub     - Constructor of Sub Class
-     * @param    {?object}  Static  - Static properties
-     * @param    {object}   [proto] - Instance properties
+     * @param {function} sub     Constructor of Sub Class
+     * @param {?object}  Static  Static properties
+     * @param {object}   [proto] Instance properties
      *
-     * @returns  {function} The Sub Class
+     * @return {function} The Sub Class
      */
     Class.extend = function (sub, Static, proto) {
 
@@ -1285,6 +1283,14 @@ var object_ext_Class = (function ($) {
             Object.create( this.prototype ),  sub.prototype,  proto
         );
         sub.prototype.constructor = sub;
+
+        if (! (Object.create( this.prototype )  instanceof  Class)) {
+
+            for (var key in Class)
+                if (Class.hasOwnProperty( key ))  sub[ key ] = Class[ key ];
+
+            $.extend(sub.prototype, Class.prototype);
+        }
 
         return sub;
     };
@@ -1321,20 +1327,21 @@ var object_ext_Class = (function ($) {
         };
     }
 
-    /**
-     * 设置私有成员
-     *
-     * @memberof Class.prototype
-     * @function setPrivate
-     *
-     * @param    {string|object} key      Key or Key-Value
-     * @param    {*}             [value]
-     * @param    {object}        [config] More config
-     *
-     * @return   {*}             Value while set one or
-     *                           This object when set Key-Value
-     */
-    var setPrivate = safeWrap(function (key, value, config) {
+    $.extend(Class.prototype, {
+        /**
+         * 设置私有成员
+         *
+         * @memberof Class.prototype
+         * @function setPrivate
+         *
+         * @param    {string|object} key      Key or Key-Value
+         * @param    {*}             [value]
+         * @param    {object}        [config] More config
+         *
+         * @return   {*}             Value while set one or
+         *                           This object when set Key-Value
+         */
+        setPrivate:    safeWrap(function (key, value, config) {
 
             key = (
                 (key === 'length')  ||  Number.isInteger( +key )  ||  (
@@ -1355,25 +1362,21 @@ var object_ext_Class = (function ($) {
 
                 error.key = key;    throw error;
             }
-        });
-
-    setPrivate.call(Class.prototype, 'setPrivate', setPrivate);
-
-    /**
-     * 设置公开成员
-     *
-     * @memberof Class.prototype
-     * @function setPublic
-     *
-     * @param    {string|object} key       Key or Key-Value
-     * @param    {object}        [Get_Set] Getter & Setter
-     * @param    {object}        [config]  More config
-     *
-     * @return   {object}        Get_Set while set one or
-     *                           This object when set Key-Value
-     */
-    setPrivate.call(
-        Class.prototype,  'setPublic',  safeWrap(function (key, Get_Set, config) {
+        }),
+        /**
+         * 设置公开成员
+         *
+         * @memberof Class.prototype
+         * @function setPublic
+         *
+         * @param {string|object} key       Key or Key-Value
+         * @param {object}        [Get_Set] Getter & Setter
+         * @param {object}        [config]  More config
+         *
+         * @return {object} Get_Set while set one or
+         *                  This object when set Key-Value
+         */
+        setPublic:    safeWrap(function (key, Get_Set, config) {
 
             Object.defineProperty(this, key, $.extend(
                 {
@@ -1383,8 +1386,8 @@ var object_ext_Class = (function ($) {
                 config,
                 Get_Set
             ));
-        },  false)
-    );
+        })
+    });
 
     return  $.Class = Class;
 
@@ -2785,74 +2788,6 @@ var AJAX_ext_URL = (function ($) {
 
 (function ($) {
 
-/* ---------- Form Data Object ---------- */
-
-    if (! ($.browser.msie < 10))  return;
-
-    function FormData() {
-
-        this.setPrivate(
-            'owner',
-            arguments[0] ||
-                $('<form style="display: none" />').appendTo( document.body )[0]
-        );
-    }
-
-    function itemOf() {
-
-        return  $('[name="' + arguments[0] + '"]:field',  this.__owner__);
-    }
-
-    $.Class.extend(FormData, null, {
-        append:      function (name, value) {
-
-            $('<input />', {
-                type:     'hidden',
-                name:     name,
-                value:    value
-            }).appendTo( this.__owner__ );
-        },
-        'delete':    function (name) {
-
-            itemOf.call(this, name).remove();
-        },
-        set:         function (name, value) {
-
-            this['delete']( name );    this.append(name, value);
-        },
-        get:         function (name) {
-
-            return  itemOf.call(this, name).val();
-        },
-        getAll:      function (name) {
-
-            return  $.map(itemOf.call(this, name),  function () {
-
-                return arguments[0].value;
-            });
-        },
-        toString:    function () {
-
-            return  $( this.__owner__ ).serialize();
-        },
-        entries:     function () {
-
-            return $.makeIterator(Array.from(
-                $( this.__owner__ ).serializeArray(),  function (_This_) {
-
-                    return  [_This_.name, _This_.value];
-                }
-            ));
-        }
-    });
-
-    self.FormData = FormData;
-
-})(jquery);
-
-
-(function ($) {
-
     var iOperator = {
             '+':    function () {
                 return  arguments[0] + arguments[1];
@@ -3011,6 +2946,74 @@ var AJAX_ext_URL = (function ($) {
 
         return  $_iFrame[0].parentElement ? this : $_iFrame.appendTo('body');
     };
+
+})(jquery);
+
+
+(function ($) {
+
+/* ---------- Form Data Object ---------- */
+
+    if (! ($.browser.msie < 10))  return;
+
+    function FormData() {
+
+        this.setPrivate(
+            'owner',
+            arguments[0] ||
+                $('<form style="display: none" />').appendTo( document.body )[0]
+        );
+    }
+
+    function itemOf() {
+
+        return  $('[name="' + arguments[0] + '"]:field',  this.__owner__);
+    }
+
+    $.Class.extend(FormData, null, {
+        append:      function (name, value) {
+
+            $('<input />', {
+                type:     'hidden',
+                name:     name,
+                value:    value
+            }).appendTo( this.__owner__ );
+        },
+        'delete':    function (name) {
+
+            itemOf.call(this, name).remove();
+        },
+        set:         function (name, value) {
+
+            this['delete']( name );    this.append(name, value);
+        },
+        get:         function (name) {
+
+            return  itemOf.call(this, name).val();
+        },
+        getAll:      function (name) {
+
+            return  $.map(itemOf.call(this, name),  function () {
+
+                return arguments[0].value;
+            });
+        },
+        toString:    function () {
+
+            return  $( this.__owner__ ).serialize();
+        },
+        entries:     function () {
+
+            return $.makeIterator(Array.from(
+                $( this.__owner__ ).serializeArray(),  function (_This_) {
+
+                    return  [_This_.name, _This_.value];
+                }
+            ));
+        }
+    });
+
+    self.FormData = FormData;
 
 })(jquery);
 
@@ -3254,6 +3257,63 @@ var AJAX_ext_HTML_Request = (function ($) {
 })(jquery);
 
 
+(function ($) {
+
+    var parser = {
+            link:    function (raw) {
+
+                var link = { };
+
+                raw.replace(
+                    /\<(\S+?)\>; rel="(\w+)"(?:; title="(.*?)")?/g,
+                    function (_, URI, rel, title) {
+
+                        link[ rel ] = {
+                            uri:      URI,
+                            rel:      rel,
+                            title:    title
+                        };
+                    }
+                );
+
+                return link;
+            }
+        };
+
+    /**
+     * HTTP 报文头解析
+     *
+     * @author   TechQuery
+     *
+     * @memberof $
+     *
+     * @param    {string} raw - Raw Text of HTTP Headers
+     *
+     * @returns  {object} Object of HTTP Headers
+     */
+
+    $.parseHeader = function (raw) {
+
+        var header = { };
+
+        raw.replace(/^([\w\-]+):\s*(.*)$/mg,  function (_, key, value) {
+
+            if (parser[ key ])  value = parser[ key ]( value );
+
+            if (typeof header[ key ]  ===  'string')
+                header[ key ] = [header[ key ]];
+
+            if (header[ key ]  instanceof  Array)
+                header[ key ].push( value );
+            else
+                header[ key ] = value;
+        });
+
+        return header;
+    };
+})(jquery);
+
+
 (function ($, HTMLHttpRequest) {
 
     var BOM = self;
@@ -3361,63 +3421,6 @@ var AJAX_ext_HTML_Request = (function ($) {
         };
     });
 })(jquery, AJAX_ext_HTML_Request);
-
-
-(function ($) {
-
-    var parser = {
-            link:    function (raw) {
-
-                var link = { };
-
-                raw.replace(
-                    /\<(\S+?)\>; rel="(\w+)"(?:; title="(.*?)")?/g,
-                    function (_, URI, rel, title) {
-
-                        link[ rel ] = {
-                            uri:      URI,
-                            rel:      rel,
-                            title:    title
-                        };
-                    }
-                );
-
-                return link;
-            }
-        };
-
-    /**
-     * HTTP 报文头解析
-     *
-     * @author   TechQuery
-     *
-     * @memberof $
-     *
-     * @param    {string} raw - Raw Text of HTTP Headers
-     *
-     * @returns  {object} Object of HTTP Headers
-     */
-
-    $.parseHeader = function (raw) {
-
-        var header = { };
-
-        raw.replace(/^([\w\-]+):\s*(.*)$/mg,  function (_, key, value) {
-
-            if (parser[ key ])  value = parser[ key ]( value );
-
-            if (typeof header[ key ]  ===  'string')
-                header[ key ] = [header[ key ]];
-
-            if (header[ key ]  instanceof  Array)
-                header[ key ].push( value );
-            else
-                header[ key ] = value;
-        });
-
-        return header;
-    };
-})(jquery);
 
 
 (function ($) {
@@ -3715,6 +3718,188 @@ var AJAX_ext_HTML_Request = (function ($) {
 
 (function ($) {
 
+/* ---------- Focus AnyWhere ---------- */
+
+    var DOM_Focus = $.fn.focus;
+
+    $.fn.focus = function () {
+
+        this.not(':focusable').attr('tabIndex', -1).css('outline', 'none');
+
+        return  DOM_Focus.apply(this, arguments);
+    };
+
+/* ---------- User Idle Event ---------- */
+
+    var End_Event = 'keydown mousedown scroll';
+
+    $.fn.onIdleFor = function (iSecond, iCallback) {
+
+        return  this.each(function _Self_() {
+
+            var iNO,  $_This = $( this );
+
+            function iCancel() {
+
+                clearTimeout( iNO );
+
+                _Self_.call( $_This.off(End_Event, iCancel)[0] );
+            }
+
+            iNO = $.wait(iSecond,  function () {
+
+                iCallback.call(
+                    $_This.off(End_Event, iCancel)[0],
+                    $.Event({
+                        type:      'idle',
+                        target:    $_This[0]
+                    })
+                );
+
+                _Self_.call( $_This[0] );
+            });
+
+            $_This.one(End_Event, iCancel);
+        });
+    };
+
+/* ---------- Cross Page Event ---------- */
+
+    function CrossPageEvent(iType, iSource) {
+
+        if (typeof iType === 'string') {
+
+            this.type = iType;  this.target = iSource;
+        } else
+            $.extend(this, iType);
+
+        if (! (iSource && (iSource instanceof Element)))  return;
+
+        $.extend(this,  $.map(iSource.dataset,  function (iValue) {
+
+            if (typeof iValue === 'string')  try {
+
+                return  $.parseJSON( iValue );
+
+            } catch (iError) { }
+
+            return iValue;
+        }));
+    }
+
+    CrossPageEvent.prototype.valueOf = function () {
+
+        var iValue = $.extend({ }, this);
+
+        delete iValue.data;  delete iValue.target;  delete iValue.valueOf;
+
+        return iValue;
+    };
+
+    var $_BOM = $( self );
+
+    $.fn.onReply = function (iType, iData, iCallback) {
+
+        var iTarget = this[0],  $_Source;
+
+        if (typeof iTarget.postMessage != 'function')  return this;
+
+        if (arguments.length === 4) {
+
+            $_Source = $( iData );  iData = iCallback;  iCallback = arguments[3];
+        }
+
+        var _Event_ = new CrossPageEvent(iType,  ($_Source || { })[0]);
+
+        if (typeof iCallback === 'function')
+            $_BOM.on('message',  function onMessage(iEvent) {
+
+                iEvent = iEvent.originalEvent || iEvent;
+
+                var iReturn = new CrossPageEvent(
+                        (typeof iEvent.data === 'string')  ?
+                            $.parseJSON( iEvent.data )  :  iEvent.data
+                    );
+                if (
+                    (iEvent.source === iTarget)  &&
+                    (iReturn.type === iType)  &&
+                    $.isEqual(iReturn, _Event_)
+                ) {
+                    iCallback.call($_Source ? $_Source[0] : this,  iReturn);
+
+                    $_BOM.off('message', onMessage);
+                }
+            });
+
+        iData = $.extend({data: iData},  _Event_.valueOf());
+
+        iTarget.postMessage(
+            ($.browser.msie < 10)  ?  JSON.stringify( iData )  :  iData,  '*'
+        );
+    };
+})(jquery);
+
+
+(function ($) {
+
+/* ---------- RESTful API ---------- */
+
+    $.map(['get', 'post', 'put', 'delete'],  function (method) {
+
+        $[ method ] = $[ method ]  ||  function (URL, data, callback, DataType) {
+
+            if (typeof data === 'function')
+                DataType = callback,  callback = data,  data = null;
+
+            return $.ajax($.extend(
+                {
+                    type:           method,
+                    url:            URL,
+                    crossDomain:    true,
+                    data:           data,
+                    dataType:       DataType,
+                    success:        callback
+                },
+                $.isPlainObject( URL )  ?  URL  :  { }
+            ));
+        };
+    });
+
+    $.getJSON = $.getJSON || $.get;
+
+
+/* ---------- Smart Load ---------- */
+
+    $.fn.load = function (iURL, iData, iCallback) {
+
+        if (! this[0])  return this;
+
+        if (typeof iData == 'function')
+            iCallback = iData,  iData = null;
+
+        var $_This = this;
+
+        iURL = iURL.trim().split(/\s+/);
+
+        $[iData ? 'post' : 'get'](iURL[0],  iData,  function (iHTML, _, iXHR) {
+
+            $_This.htmlExec(
+                (typeof iHTML === 'string')  ?  iHTML  :  iXHR.responseText,
+                iURL[1]
+            );
+
+            if (typeof iCallback === 'function')
+                $_This.each( $.proxy(iCallback, null, iHTML, _, iXHR) );
+        },  'html');
+
+        return this;
+    };
+
+})(jquery);
+
+
+(function ($) {
+
     var W3C_Selection = (typeof document.getSelection === 'function');
 
     function Select_Node(iSelection) {
@@ -3800,303 +3985,6 @@ var AJAX_ext_HTML_Request = (function ($) {
             )  +  iValue.slice( iEnd );
         });
     };
-})(jquery);
-
-
-(function ($) {
-
-/* ---------- RESTful API ---------- */
-
-    $.map(['get', 'post', 'put', 'delete'],  function (method) {
-
-        $[ method ] = $[ method ]  ||  function (URL, data, callback, DataType) {
-
-            if (typeof data === 'function')
-                DataType = callback,  callback = data,  data = null;
-
-            return $.ajax($.extend(
-                {
-                    type:           method,
-                    url:            URL,
-                    crossDomain:    true,
-                    data:           data,
-                    dataType:       DataType,
-                    success:        callback
-                },
-                $.isPlainObject( URL )  ?  URL  :  { }
-            ));
-        };
-    });
-
-    $.getJSON = $.getJSON || $.get;
-
-
-/* ---------- Smart Load ---------- */
-
-    $.fn.load = function (iURL, iData, iCallback) {
-
-        if (! this[0])  return this;
-
-        if (typeof iData == 'function')
-            iCallback = iData,  iData = null;
-
-        var $_This = this;
-
-        iURL = iURL.trim().split(/\s+/);
-
-        $[iData ? 'post' : 'get'](iURL[0],  iData,  function (iHTML, _, iXHR) {
-
-            $_This.htmlExec(
-                (typeof iHTML === 'string')  ?  iHTML  :  iXHR.responseText,
-                iURL[1]
-            );
-
-            if (typeof iCallback === 'function')
-                $_This.each( $.proxy(iCallback, null, iHTML, _, iXHR) );
-        },  'html');
-
-        return this;
-    };
-
-})(jquery);
-
-
-(function ($) {
-
-    var BOM = self;
-
-
-    function Bit_Calculate(type, left, right) {
-
-        left = parseInt(left, 2);    right = parseInt(right, 2);
-
-        switch (type) {
-            case '&':    return  left & right;
-            case '|':    return  left | right;
-            case '^':    return  left ^ right;
-            case '~':    return  ~left;
-        }
-    }
-
-    /**
-     * 大数位操作
-     *
-     * @author  TechQuery
-     * @version 0.1
-     *
-     * @memberof $
-     *
-     * @param {string}          type    `&`, `|`, `^` or `~`
-     * @param {(number|string)} left    Number may be big
-     * @param {(number|string)} [right] Number may be big
-     *
-     * @return {(number|string)}
-     *
-     * @example  // 按位或
-     *
-     *     $.bitOperate('|', '10'.repeat(16), '01'.repeat(16))
-     *
-     *     // '1'.repeat(32)
-     */
-
-    $.bitOperate = function (type, left, right) {
-
-        left = (typeof left === 'string')  ?  left  :  left.toString(2);
-
-        right = (typeof right === 'string')  ?  right  :  right.toString(2);
-
-        var iLength = Math.max(left.length, right.length);
-
-        if (iLength < 32)
-            return  Bit_Calculate(type, left, right).toString(2);
-
-        left = left.padStart(iLength, 0);
-
-        right = right.padStart(iLength, 0);
-
-        var result = '';
-
-        for (var i = 0;  i < iLength;  i += 31)
-            result += Bit_Calculate(
-                type,  left.slice(i, i + 31),  right.slice(i, i + 31)
-            ).toString(2).padStart(
-                Math.min(31,  iLength - i),  0
-            );
-
-        return result;
-    };
-
-
-    var LS_Key = [ ];
-
-    /**
-     * 本地存储 存取器
-     *
-     * @author   TechQuery
-     * @version  0.1
-     *
-     * @memberof $
-     *
-     * @param    {string} name
-     * @param    {*}      data
-     *
-     * @returns  {*}      Same as `data`
-     */
-
-    $.storage = function (name, data) {
-
-        if (! (data != null))  return  JSON.parse(BOM.localStorage[ name ]);
-
-        var iLast = 0,  iLength = Math.min(LS_Key.length, BOM.localStorage.length);
-
-        do  try {
-            BOM.localStorage[ name ] = JSON.stringify( data );
-
-            if (LS_Key.indexOf( name )  ===  -1)  LS_Key.push( name );
-            break;
-        } catch (iError) {
-            if (LS_Key[ iLast ]) {
-                delete  BOM.localStorage[ LS_Key[iLast] ];
-
-                LS_Key.splice(iLast, 1);
-            } else
-                iLast++ ;
-        } while (iLast < iLength);
-
-        return data;
-    };
-
-/* ---------- Base64 to Blob  v0.1 ---------- */
-
-//  Thanks "axes" --- http://www.cnblogs.com/axes/p/4603984.html
-
-    $.toBlob = function (iType, iString) {
-
-        if (arguments.length == 1) {
-
-            iString = iType.match(/^data:([^;]+);base64,(.+)/);
-
-            iType = iString[1];    iString = iString[2];
-        }
-
-        iString = BOM.atob( iString );
-
-        var iBuffer = new ArrayBuffer( iString.length );
-
-        var uBuffer = new Uint8Array( iBuffer );
-
-        for (var i = 0;  iString[i];  i++)
-            uBuffer[i] = iString.charCodeAt(i);
-
-        var BlobBuilder = BOM.WebKitBlobBuilder || BOM.MozBlobBuilder;
-
-        if (! BlobBuilder)
-            return  new BOM.Blob([iBuffer],  {type: iType});
-
-        var iBuilder = new BlobBuilder();    iBuilder.append( iBuffer );
-
-        return  iBuilder.getBlob( iType );
-    };
-
-/* ---------- CRC-32  v0.1 ---------- */
-
-//  Thanks "Bakasen" for http://blog.csdn.net/bakasen/article/details/6043797
-
-    var CRC_32_Table = (function () {
-
-            var iTable = new Array(256);
-
-            for (var i = 0, iCell;  i < 256;  i++) {
-                iCell = i;
-
-                for (var j = 0;  j < 8;  j++)
-                    if (iCell & 1)
-                        iCell = ((iCell >> 1) & 0x7FFFFFFF)  ^  0xEDB88320;
-                    else
-                        iCell = (iCell >> 1)  &  0x7FFFFFFF;
-
-                iTable[i] = iCell;
-            }
-
-            return iTable;
-        })();
-
-    function CRC_32(iRAW) {
-
-        iRAW = '' + iRAW;
-
-        var iValue = 0xFFFFFFFF;
-
-        for (var i = 0;  iRAW[i];  i++)
-            iValue = ((iValue >> 8) & 0x00FFFFFF)  ^  CRC_32_Table[
-                (iValue & 0xFF)  ^  iRAW.charCodeAt(i)
-            ];
-
-        return  iValue ^ 0xFFFFFFFF;
-    }
-
-/* ---------- Hash Algorithm (Crypto API Wrapper)  v0.1 ---------- */
-
-//  Thanks "emu" --- http://blog.csdn.net/emu/article/details/39618297
-
-    if ( BOM.msCrypto )
-        $.each((BOM.crypto = BOM.msCrypto).subtle,  function (key, _This_) {
-
-            if (! (_This_ instanceof Function))  return;
-
-            BOM.crypto.subtle[ key ] = function () {
-
-                var iObserver = _This_.apply(this, arguments);
-
-                return  new Promise(function (iResolve) {
-
-                    iObserver.oncomplete = function () {
-
-                        iResolve( arguments[0].target.result );
-                    };
-
-                    iObserver.onabort = iObserver.onerror = arguments[1];
-                });
-            };
-        });
-
-    if (! BOM.crypto)  return;
-
-    BOM.crypto.subtle = BOM.crypto.subtle || BOM.crypto.webkitSubtle;
-
-
-    function BufferToString(iBuffer){
-
-        var iDataView = new DataView(iBuffer),  iResult = '';
-
-        for (var i = 0, iTemp;  i < iBuffer.byteLength;  i += 4) {
-
-            iTemp = iDataView.getUint32(i).toString(16);
-
-            iResult += ((iTemp.length == 8) ? '' : 0)  +  iTemp;
-        }
-
-        return iResult;
-    }
-
-    $.dataHash = function (iAlgorithm, iData) {
-
-        if (arguments.length < 2) {
-
-            iData = iAlgorithm;  iAlgorithm = 'CRC-32';
-        }
-
-        return  (iAlgorithm === 'CRC-32')  ?
-            Promise.resolve( CRC_32( iData ) )  :
-            BOM.crypto.subtle.digest(
-                {name:  iAlgorithm},
-                new Uint8Array(Array.from(iData,  function () {
-
-                    return arguments[0].charCodeAt(0);
-                }))
-            ).then( BufferToString );
-    };
-
 })(jquery);
 
 
@@ -4403,124 +4291,350 @@ var AJAX_ext_HTML_Request = (function ($) {
 
 (function ($) {
 
-/* ---------- Focus AnyWhere ---------- */
+    /**
+     * 字符串模板
+     *
+     * @class Template
+     *
+     * @param {string}   raw
+     * @param {Array}    [nameList] Name list of the Local variable
+     * @param {function} [onChange] Call with New & Old value
+     */
+    function Template(raw, nameList, onChange) {
 
-    var DOM_Focus = $.fn.focus;
+        if (! (this instanceof Template))
+            return  new Template(raw, nameList, onChange);
 
-    $.fn.focus = function () {
+        this.setPrivate('raw', raw);
 
-        this.not(':focusable').attr('tabIndex', -1).css('outline', 'none');
+        this.setPrivate('name',  nameList || [ ]);
 
-        return  DOM_Focus.apply(this, arguments);
-    };
+        this.setPrivate('value', '');
 
-/* ---------- User Idle Event ---------- */
+        onChange = (nameList instanceof Array)  ?  onChange  :  nameList;
 
-    var End_Event = 'keydown mousedown scroll';
+        this.onChange = (onChange instanceof Function)  ?  onChange  :  null;
 
-    $.fn.onIdleFor = function (iSecond, iCallback) {
-
-        return  this.each(function _Self_() {
-
-            var iNO,  $_This = $( this );
-
-            function iCancel() {
-
-                clearTimeout( iNO );
-
-                _Self_.call( $_This.off(End_Event, iCancel)[0] );
-            }
-
-            iNO = $.wait(iSecond,  function () {
-
-                iCallback.call(
-                    $_This.off(End_Event, iCancel)[0],
-                    $.Event({
-                        type:      'idle',
-                        target:    $_This[0]
-                    })
-                );
-
-                _Self_.call( $_This[0] );
-            });
-
-            $_This.one(End_Event, iCancel);
-        });
-    };
-
-/* ---------- Cross Page Event ---------- */
-
-    function CrossPageEvent(iType, iSource) {
-
-        if (typeof iType === 'string') {
-
-            this.type = iType;  this.target = iSource;
-        } else
-            $.extend(this, iType);
-
-        if (! (iSource && (iSource instanceof Element)))  return;
-
-        $.extend(this,  $.map(iSource.dataset,  function (iValue) {
-
-            if (typeof iValue === 'string')  try {
-
-                return  $.parseJSON( iValue );
-
-            } catch (iError) { }
-
-            return iValue;
-        }));
+        return this.parse();
     }
 
-    CrossPageEvent.prototype.valueOf = function () {
+    try {  eval('``');  } catch (error) {  var Classic = true;  }
 
-        var iValue = $.extend({ }, this);
 
-        delete iValue.data;  delete iValue.target;  delete iValue.valueOf;
+    return  $.Template = $.Class.extend.call(Array, Template, null, {
+        compile:     function (expression) {
 
-        return iValue;
+            return  this.push(
+                new (Function.prototype.bind.apply(
+                    Function,
+                    [ null ].concat(this.__name__,  'return ' + expression.trim())
+                ))()
+            );
+        },
+        parse:       function () {
+
+            var _this_ = this;
+
+            if ( Classic )
+                this.__raw__ = this.__raw__.replace(
+                    /\$\{([\s\S]+?)\}/g,  function (_, expression) {
+
+                        return  '${' + (_this_.compile( expression ) - 1) + '}';
+                    }
+                );
+            else
+                this.compile('`' + this.__raw__ + '`');
+
+            return this;
+        },
+        /**
+         * 表达式求值
+         *
+         * @memberof Template.prototype
+         *
+         * @param {?object} context     Value of `this` in the expression
+         * @param {*}       [parameter] One or more value of the Local variable
+         *
+         * @return {string}
+         *
+         * @example  // 模板求值
+         *
+         *     $.Template(
+         *         "[ ${this.time} ]  Hello, ${scope.creator}'s ${view.name} !",
+         *         ['view', 'scope']
+         *     ).evaluate(
+         *         {time: '2015-04-30'},
+         *         {name: 'iQuery.js'},
+         *         {creator: 'TechQuery'}
+         *     )
+         *
+         *     // "[ 2015-04-30 ]  Hello, TechQuery's iQuery.js !"
+         */
+        evaluate:    function (context, parameter) {
+
+            var _this_ = this;
+
+            parameter = Array.from( arguments ).slice(1);
+
+            var value = Classic ?
+                    this.__raw__.replace(/\$\{(\d+)\}/g,  function (_, index) {
+
+                        return  _this_[index].apply(context, parameter);
+                    }) :
+                    this[0].apply(context, parameter);
+
+            if (value !== this.__value__) {
+
+                if ( this.onChange )  this.onChange(value,  this.__value__);
+
+                this.__value__ = value;
+            }
+
+            return value;
+        },
+        toString:    function () {
+
+            return  this.__value__;
+        }
+    });
+})(jquery);
+
+
+(function ($) {
+
+    var BOM = self;
+
+
+    function Bit_Calculate(type, left, right) {
+
+        left = parseInt(left, 2);    right = parseInt(right, 2);
+
+        switch (type) {
+            case '&':    return  left & right;
+            case '|':    return  left | right;
+            case '^':    return  left ^ right;
+            case '~':    return  ~left;
+        }
+    }
+
+    /**
+     * 大数位操作
+     *
+     * @author  TechQuery
+     * @version 0.1
+     *
+     * @memberof $
+     *
+     * @param {string}          type    `&`, `|`, `^` or `~`
+     * @param {(number|string)} left    Number may be big
+     * @param {(number|string)} [right] Number may be big
+     *
+     * @return {(number|string)}
+     *
+     * @example  // 按位或
+     *
+     *     $.bitOperate('|', '10'.repeat(16), '01'.repeat(16))
+     *
+     *     // '1'.repeat(32)
+     */
+
+    $.bitOperate = function (type, left, right) {
+
+        left = (typeof left === 'string')  ?  left  :  left.toString(2);
+
+        right = (typeof right === 'string')  ?  right  :  right.toString(2);
+
+        var iLength = Math.max(left.length, right.length);
+
+        if (iLength < 32)
+            return  Bit_Calculate(type, left, right).toString(2);
+
+        left = left.padStart(iLength, 0);
+
+        right = right.padStart(iLength, 0);
+
+        var result = '';
+
+        for (var i = 0;  i < iLength;  i += 31)
+            result += Bit_Calculate(
+                type,  left.slice(i, i + 31),  right.slice(i, i + 31)
+            ).toString(2).padStart(
+                Math.min(31,  iLength - i),  0
+            );
+
+        return result;
     };
 
-    var $_BOM = $( self );
 
-    $.fn.onReply = function (iType, iData, iCallback) {
+    var LS_Key = [ ];
 
-        var iTarget = this[0],  $_Source;
+    /**
+     * 本地存储 存取器
+     *
+     * @author   TechQuery
+     * @version  0.1
+     *
+     * @memberof $
+     *
+     * @param    {string} name
+     * @param    {*}      data
+     *
+     * @returns  {*}      Same as `data`
+     */
 
-        if (typeof iTarget.postMessage != 'function')  return this;
+    $.storage = function (name, data) {
 
-        if (arguments.length === 4) {
+        if (! (data != null))  return  JSON.parse(BOM.localStorage[ name ]);
 
-            $_Source = $( iData );  iData = iCallback;  iCallback = arguments[3];
+        var iLast = 0,  iLength = Math.min(LS_Key.length, BOM.localStorage.length);
+
+        do  try {
+            BOM.localStorage[ name ] = JSON.stringify( data );
+
+            if (LS_Key.indexOf( name )  ===  -1)  LS_Key.push( name );
+            break;
+        } catch (iError) {
+            if (LS_Key[ iLast ]) {
+                delete  BOM.localStorage[ LS_Key[iLast] ];
+
+                LS_Key.splice(iLast, 1);
+            } else
+                iLast++ ;
+        } while (iLast < iLength);
+
+        return data;
+    };
+
+/* ---------- Base64 to Blob  v0.1 ---------- */
+
+//  Thanks "axes" --- http://www.cnblogs.com/axes/p/4603984.html
+
+    $.toBlob = function (iType, iString) {
+
+        if (arguments.length == 1) {
+
+            iString = iType.match(/^data:([^;]+);base64,(.+)/);
+
+            iType = iString[1];    iString = iString[2];
         }
 
-        var _Event_ = new CrossPageEvent(iType,  ($_Source || { })[0]);
+        iString = BOM.atob( iString );
 
-        if (typeof iCallback === 'function')
-            $_BOM.on('message',  function onMessage(iEvent) {
+        var iBuffer = new ArrayBuffer( iString.length );
 
-                iEvent = iEvent.originalEvent || iEvent;
+        var uBuffer = new Uint8Array( iBuffer );
 
-                var iReturn = new CrossPageEvent(
-                        (typeof iEvent.data === 'string')  ?
-                            $.parseJSON( iEvent.data )  :  iEvent.data
-                    );
-                if (
-                    (iEvent.source === iTarget)  &&
-                    (iReturn.type === iType)  &&
-                    $.isEqual(iReturn, _Event_)
-                ) {
-                    iCallback.call($_Source ? $_Source[0] : this,  iReturn);
+        for (var i = 0;  iString[i];  i++)
+            uBuffer[i] = iString.charCodeAt(i);
 
-                    $_BOM.off('message', onMessage);
-                }
-            });
+        var BlobBuilder = BOM.WebKitBlobBuilder || BOM.MozBlobBuilder;
 
-        iData = $.extend({data: iData},  _Event_.valueOf());
+        if (! BlobBuilder)
+            return  new BOM.Blob([iBuffer],  {type: iType});
 
-        iTarget.postMessage(
-            ($.browser.msie < 10)  ?  JSON.stringify( iData )  :  iData,  '*'
-        );
+        var iBuilder = new BlobBuilder();    iBuilder.append( iBuffer );
+
+        return  iBuilder.getBlob( iType );
     };
+
+/* ---------- CRC-32  v0.1 ---------- */
+
+//  Thanks "Bakasen" for http://blog.csdn.net/bakasen/article/details/6043797
+
+    var CRC_32_Table = (function () {
+
+            var iTable = new Array(256);
+
+            for (var i = 0, iCell;  i < 256;  i++) {
+                iCell = i;
+
+                for (var j = 0;  j < 8;  j++)
+                    if (iCell & 1)
+                        iCell = ((iCell >> 1) & 0x7FFFFFFF)  ^  0xEDB88320;
+                    else
+                        iCell = (iCell >> 1)  &  0x7FFFFFFF;
+
+                iTable[i] = iCell;
+            }
+
+            return iTable;
+        })();
+
+    function CRC_32(iRAW) {
+
+        iRAW = '' + iRAW;
+
+        var iValue = 0xFFFFFFFF;
+
+        for (var i = 0;  iRAW[i];  i++)
+            iValue = ((iValue >> 8) & 0x00FFFFFF)  ^  CRC_32_Table[
+                (iValue & 0xFF)  ^  iRAW.charCodeAt(i)
+            ];
+
+        return  iValue ^ 0xFFFFFFFF;
+    }
+
+/* ---------- Hash Algorithm (Crypto API Wrapper)  v0.1 ---------- */
+
+//  Thanks "emu" --- http://blog.csdn.net/emu/article/details/39618297
+
+    if ( BOM.msCrypto )
+        $.each((BOM.crypto = BOM.msCrypto).subtle,  function (key, _This_) {
+
+            if (! (_This_ instanceof Function))  return;
+
+            BOM.crypto.subtle[ key ] = function () {
+
+                var iObserver = _This_.apply(this, arguments);
+
+                return  new Promise(function (iResolve) {
+
+                    iObserver.oncomplete = function () {
+
+                        iResolve( arguments[0].target.result );
+                    };
+
+                    iObserver.onabort = iObserver.onerror = arguments[1];
+                });
+            };
+        });
+
+    if (! BOM.crypto)  return;
+
+    BOM.crypto.subtle = BOM.crypto.subtle || BOM.crypto.webkitSubtle;
+
+
+    function BufferToString(iBuffer){
+
+        var iDataView = new DataView(iBuffer),  iResult = '';
+
+        for (var i = 0, iTemp;  i < iBuffer.byteLength;  i += 4) {
+
+            iTemp = iDataView.getUint32(i).toString(16);
+
+            iResult += ((iTemp.length == 8) ? '' : 0)  +  iTemp;
+        }
+
+        return iResult;
+    }
+
+    $.dataHash = function (iAlgorithm, iData) {
+
+        if (arguments.length < 2) {
+
+            iData = iAlgorithm;  iAlgorithm = 'CRC-32';
+        }
+
+        return  (iAlgorithm === 'CRC-32')  ?
+            Promise.resolve( CRC_32( iData ) )  :
+            BOM.crypto.subtle.digest(
+                {name:  iAlgorithm},
+                new Uint8Array(Array.from(iData,  function () {
+
+                    return arguments[0].charCodeAt(0);
+                }))
+            ).then( BufferToString );
+    };
+
 })(jquery);
 });
