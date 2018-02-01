@@ -8,32 +8,47 @@ define(['../../iQuery', '../../object/ext/Class'],  function ($) {
      * @param {string}   raw
      * @param {Array}    [nameList] Name list of the Local variable
      * @param {function} [onChange] Call with New & Old value
+     * @param {Array}    [bindData] The parameter bound to `onChange`
+     *
+     * @example  // 局部变量成员名
+     *
+     *     $.Template('[ ${new Date()} ]  Hello, ${this.name} !')[0]    // 'name'
      */
-    function Template(raw, nameList, onChange) {
+
+    function Template(raw, nameList, onChange, bindData) {
 
         if (! (this instanceof Template))
-            return  new Template(raw, nameList, onChange);
+            return  new Template(raw, nameList, onChange, bindData);
 
-        this.setPrivate('raw', raw);
-
-        this.setPrivate('name',  nameList || [ ]);
-
-        this.setPrivate('value', '');
+        this.setPrivate({
+            raw:           raw,
+            name:          nameList || [ ],
+            expression:    [ ],
+            value:         '',
+            data:          bindData || [ ]
+        }).setPrivate(
+            'scope',  $.makeSet.apply($,  this.__name__.concat('this'))
+        );
 
         onChange = (nameList instanceof Array)  ?  onChange  :  nameList;
 
         this.onChange = (onChange instanceof Function)  ?  onChange  :  null;
 
-        return this.parse();
+        this.parse().evaluate.apply(
+            this,  Array.from(Object.keys(this.__scope__),  function () {
+
+                return  { };
+            })
+        );
     }
 
-    try {  eval('``');  } catch (error) {  var Classic = true;  }
-
-
-    return  $.Template = $.Class.extend.call(Array, Template, null, {
+    return  $.Template = $.Class.extend.call(Array, Template, {
+        Expression:    /\$\{([\s\S]+?)\}/g,
+        Reference:     /(\w+)(?:\.(\w+)|\[(?:'([^']+)|"([^"]+)))/g
+    }, {
         compile:     function (expression) {
 
-            return  this.push(
+            return  this.__expression__.push(
                 new (Function.prototype.bind.apply(
                     Function,
                     [ null ].concat(this.__name__,  'return ' + expression.trim())
@@ -44,15 +59,20 @@ define(['../../iQuery', '../../object/ext/Class'],  function ($) {
 
             var _this_ = this;
 
-            if ( Classic )
-                this.__raw__ = this.__raw__.replace(
-                    /\$\{([\s\S]+?)\}/g,  function (_, expression) {
+            function addReference(match, scope, key1, key2, key3) {
 
-                        return  '${' + (_this_.compile( expression ) - 1) + '}';
-                    }
-                );
-            else
-                this.compile('`' + this.__raw__ + '`');
+                if (scope  in  _this_.__scope__)
+                    _this_.push(key1 || key2 || key3);
+            }
+
+            this.__raw__ = this.__raw__.replace(
+                Template.Expression,  function (_, expression) {
+
+                    expression.replace(Template.Reference, addReference);
+
+                    return  '${' + (_this_.compile( expression ) - 1) + '}';
+                }
+            );
 
             return this;
         },
@@ -81,20 +101,23 @@ define(['../../iQuery', '../../object/ext/Class'],  function ($) {
          */
         evaluate:    function (context, parameter) {
 
-            var _this_ = this;
+            var expression = this.__expression__;
 
             parameter = Array.from( arguments ).slice(1);
 
-            var value = Classic ?
-                    this.__raw__.replace(/\$\{(\d+)\}/g,  function (_, index) {
+            var value = this.__raw__.replace(
+                    /\$\{(\d+)\}/g,  function (_, index) {
 
-                        return  _this_[index].apply(context, parameter);
-                    }) :
-                    this[0].apply(context, parameter);
+                        return  expression[ index ].apply(context, parameter);
+                    }
+                );
 
             if (value !== this.__value__) {
 
-                if ( this.onChange )  this.onChange(value,  this.__value__);
+                if ( this.onChange )
+                    this.onChange.apply(
+                        this,  this.__data__.concat(value,  this.__value__)
+                    );
 
                 this.__value__ = value;
             }

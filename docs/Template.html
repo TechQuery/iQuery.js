@@ -42,7 +42,7 @@
 <article>
     <div class="container-overview">
 
-    <h4 class="name" id="Template"><span class="type-signature"></span>new Template<span class="signature">(raw, nameList<span class="signature-attributes">opt</span>, onChange<span class="signature-attributes">opt</span>)</span><span class="type-signature"></span></h4>
+    <h4 class="name" id="Template"><span class="type-signature"></span>new Template<span class="signature">(raw, nameList<span class="signature-attributes">opt</span>, onChange<span class="signature-attributes">opt</span>, bindData<span class="signature-attributes">opt</span>)</span><span class="type-signature"></span></h4>
 
 <dl class="details">
 
@@ -56,6 +56,12 @@
 <div class="description">
     <p>字符串模板</p>
 </div>
+
+    <h5>Example</h5>
+
+    <pre class="prettyprint"><code>// 局部变量成员名
+
+    $.Template('[ ${new Date()} ]  Hello, ${this.name} !')[0]    // 'name'</code></pre>
 
     <h5>Parameters:</h5>
 
@@ -130,6 +136,25 @@
             <td class="description last"><p>Call with New &amp; Old value</p></td>
         </tr>
 
+        <tr>
+
+                <td class="name"><code>bindData</code></td>
+
+            <td class="type">
+
+<span class="param-type">Array</span>
+
+            </td>
+
+                <td class="attributes">
+
+                    &lt;optional><br>
+
+                </td>
+
+            <td class="description last"><p>The parameter bound to <code>onChange</code></p></td>
+        </tr>
+
     </tbody>
 </table>
 
@@ -143,7 +168,7 @@
 
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="utility_ext_Template.js.html">utility/ext/Template.js</a>, <a href="utility_ext_Template.js.html#line82">line 82</a>
+        <a href="utility_ext_Template.js.html">utility/ext/Template.js</a>, <a href="utility_ext_Template.js.html#line102">line 102</a>
     </li></ul></dd>
 
 </dl>

@@ -21,6 +21,21 @@ describe('utility/ext/Template.js', function() {
     before(TestKit.pageLoad.bind(null, 'utility/ext/Template'));
 
 
+    describe('Template', function() {
+
+
+
+        it('局部变量成员名', function() {
+
+            return TestKit.chrome.evaluate(function() {
+
+                return $.Template('[ ${new Date()} ]  Hello, ${this.name} !')[0];
+
+            }).should.be.fulfilledWith('name');
+        });
+
+    });
+
     describe('Template#evaluate', function() {
 
 

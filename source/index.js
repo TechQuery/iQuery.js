@@ -2,7 +2,7 @@
  * iQuery.js - A Light-weight jQuery Compatible API with IE 8+ compatibility
  *
  * @module    {function} iQuery
- * @version   3.0 (2018-01-29) stable
+ * @version   3.0 (2018-02-01) stable
  *
  * @copyright TechQuery <shiy2008@gmail.com> 2015-2018
  * @license   GPL-2.0-or-later
