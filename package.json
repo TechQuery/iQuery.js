@@ -3,15 +3,12 @@
   "version": "3.0.0",
   "description": "A jQuery compatible API based on built-in ECMA / W3C polyfill",
   "main": "iQuery.js",
-  "directories": {
-    "doc": "doc"
-  },
   "engines": {
     "node": "^7.6.0"
   },
   "devDependencies": {
     "amd-bundle": "^0.4.2",
-    "chromy": "^0.5.8",
+    "chromy": "^0.5.9",
     "docdash": "^0.4.0",
     "html-pages": "^2.0.8",
     "husky": "^0.14.3",
@@ -44,6 +41,5 @@
     "polyfill"
   ],
   "author": "shiy007@qq.com",
-  "license": "GPL-2.0",
-  "dependencies": {}
+  "license": "GPL-2.0"
 }

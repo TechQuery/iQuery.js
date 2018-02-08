@@ -1,5 +1,6 @@
 define([
-    '../iQuery', '../utility/ext/browser', '../object/ext/Class', '../DOM/utility'
+    '../iQuery', '../utility/ext/browser', '../object/ext/Class',
+    '../DOM/insert', '../DOM/utility'
 ],  function ($) {
 
 /* ---------- Form Data Object ---------- */

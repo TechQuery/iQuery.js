@@ -181,11 +181,7 @@
 
     <h5>Example</h5>
 
-    <pre class="prettyprint"><code>// 按位或
-
-    $.bitOperate('|', '10'.repeat(16), '01'.repeat(16))
-
-    // '1'.repeat(32)</code></pre>
+    <pre class="prettyprint"><code>// 按位或    $.bitOperate('|', '10'.repeat(16), '01'.repeat(16))    // '1'.repeat(32)</code></pre>
 
     <h5>Parameters:</h5>
 
@@ -521,11 +517,7 @@
 
     <h5>Example</h5>
 
-    <pre class="prettyprint"><code>// 多种参数
-
-    $.extendURL('path/to/model?a=0',  'a=1&amp;b=1',  {b: 2, c: 3})
-
-    // 'path/to/model?a=1&amp;b=2&amp;c=3'</code></pre>
+    <pre class="prettyprint"><code>// 多种参数    $.extendURL('path/to/model?a=0',  'a=1&amp;b=1',  {b: 2, c: 3})    // 'path/to/model?a=1&amp;b=2&amp;c=3'</code></pre>
 
     <h5>Parameters:</h5>
 
@@ -701,19 +693,11 @@
 
     <h5>Examples</h5>
 
-    <pre class="prettyprint"><code>// 符号间隔
+    <pre class="prettyprint"><code>// 符号间隔    $.hyphenCase('UPPER_CASE')    // 'upper-case'</code></pre>
 
-    $.hyphenCase('UPPER_CASE')    // 'upper-case'</code></pre>
+    <pre class="prettyprint"><code>// 驼峰法    $.hyphenCase('camelCase')    // 'camel-case'</code></pre>
 
-    <pre class="prettyprint"><code>// 驼峰法
-
-    $.hyphenCase('camelCase')    // 'camel-case'</code></pre>
-
-    <pre class="prettyprint"><code>// 混杂写法
-
-    $.hyphenCase('UPPER_CASEMix -camelCase')
-
-    // 'upper-case-mix-camel-case'</code></pre>
+    <pre class="prettyprint"><code>// 混杂写法    $.hyphenCase('UPPER_CASEMix -camelCase')    // 'upper-case-mix-camel-case'</code></pre>
 
     <h5>Parameters:</h5>
 
@@ -1565,17 +1549,11 @@
 
     <h5>Examples</h5>
 
-    <pre class="prettyprint"><code>// 原型方法等效
+    <pre class="prettyprint"><code>// 原型方法等效    $.split('abc', '')    // ['a', 'b', 'c']</code></pre>
 
-    $.split('abc', '')    // ['a', 'b', 'c']</code></pre>
+    <pre class="prettyprint"><code>// PHP str_split() 等效    $.split('abc', '', 2)    // ['a', 'bc']</code></pre>
 
-    <pre class="prettyprint"><code>// PHP str_split() 等效
-
-    $.split('abc', '', 2)    // ['a', 'bc']</code></pre>
-
-    <pre class="prettyprint"><code>// 连接字符串
-
-    $.split("a  b\tc",  /\s+/,  2,  ' ')    // ['a', 'b c']</code></pre>
+    <pre class="prettyprint"><code>// 连接字符串    $.split("a  b\tc",  /\s+/,  2,  ' ')    // ['a', 'b c']</code></pre>
 
     <h5>Parameters:</h5>
 
@@ -2300,7 +2278,7 @@
     </dd>
 </dl>
 
-    <h4 class="name" id="insertTo"><span class="type-signature"></span>insertTo<span class="signature">($_Target, Index<span class="signature-attributes">opt</span>)</span><span class="type-signature"> &rarr; {<a href="$.html">$</a>}</span></h4>
+    <h4 class="name" id="insertTo"><span class="type-signature"></span>insertTo<span class="signature">($_Target, index<span class="signature-attributes">opt</span>)</span><span class="type-signature"> &rarr; {<a href="$.html">$</a>}</span></h4>
 
 <dl class="details">
 
@@ -2324,21 +2302,9 @@
 
     <h5>Examples</h5>
 
-    <pre class="prettyprint"><code>// 插入到最前
+    <pre class="prettyprint"><code>// 插入到最前    $('&lt;a>insert&lt;/a>').insertTo('body')  &amp;&amp;  (        $('body > :first-child')[0].textContent    )    // 'insert'</code></pre>
 
-    $('&lt;a>insert&lt;/a>').insertTo('body')  &amp;&amp;  (
-        $('body > :first-child')[0].textContent
-    )
-
-    // 'insert'</code></pre>
-
-    <pre class="prettyprint"><code>// 插入到最后
-
-    $('&lt;a>insert&lt;/a>').insertTo('body', Infinity)  &amp;&amp;  (
-        $('body > :last-child')[0].textContent
-    )
-
-    // 'insert'</code></pre>
+    <pre class="prettyprint"><code>// 插入到最后    $('&lt;a>insert&lt;/a>').insertTo('body', Infinity)  &amp;&amp;  (        $('body > :last-child')[0].textContent    )    // 'insert'</code></pre>
 
     <h5>Parameters:</h5>
 
@@ -2383,7 +2349,7 @@
 
         <tr>
 
-                <td class="name"><code>Index</code></td>
+                <td class="name"><code>index</code></td>
 
             <td class="type">
 

@@ -3,7 +3,7 @@ define([
     '../insert'
 ],  function ($) {
 
-    var iOperator = {
+    var operator = {
             '+':    function () {
                 return  arguments[0] + arguments[1];
             },
@@ -19,45 +19,45 @@ define([
     }
 
     $.fn.extend({
-        reduce:           function (iMethod, iKey, iCallback) {
+        reduce:           function (method, key, callback) {
 
-            if (arguments.length < 3)    iCallback = iKey,  iKey = '';
+            if (arguments.length < 3)  callback = key, key = '';
 
-            if (typeof iCallback === 'string')
-                iCallback = iOperator[ iCallback ];
+            if (typeof callback === 'string')
+                callback = operator[ callback ];
 
             return  $.map(this,  function () {
 
-                return  $.fn[ iMethod ].apply(
-                    $( arguments[0] ),  iKey ? [iKey] : []
+                return  $.fn[ method ].apply(
+                    $( arguments[0] ),  key ? [key] : []
                 );
-            }).reduce( iCallback );
+            }).reduce( callback );
         },
-        sameParents:      function () {
+        sameParents:      function (filter) {
 
             if (this.length < 2)  return this.parents();
 
-            var iMin = $.trace(this[0], 'parentNode').slice(0, -1),  iPrev;
+            var min = $.trace(this[0], 'parentNode').slice(0, -1),  previous;
 
-            for (var i = 1, iLast;  this[i];  i++) {
+            for (var i = 1, last;  this[i];  i++) {
 
-                iLast = $.trace(this[i], 'parentNode').slice(0, -1);
+                last = $.trace(this[i], 'parentNode').slice(0, -1);
 
-                if (iLast.length < iMin.length)    iPrev = iMin,  iMin = iLast;
+                if (last.length < min.length)    previous = min,  min = last;
             }
 
-            iPrev = iPrev || iLast;
+            previous = previous || last;
 
-            var iDiff = iPrev.length - iMin.length,  $_Result = [ ];
+            var diff = previous.length - min.length,  $_Result = [ ];
 
-            for (var i = 0;  iMin[i];  i++)
-                if (iMin[i]  ===  iPrev[i + iDiff]) {
-                    $_Result = iMin.slice(i);
-                    break;
+            for (var i = 0;  min[i];  i++)
+                if (min[i]  ===  previous[i + diff]) {
+
+                    $_Result = min.slice(i);    break;
                 }
 
             return Array_Reverse.call(this.pushStack(
-                arguments[0]  ?  $( $_Result ).filter( arguments[0] )  :  $_Result
+                filter  ?  $( $_Result ).filter( filter )  :  $_Result
             ));
         },
         scrollParents:    function () {
@@ -76,16 +76,16 @@ define([
 
                 var $_Scroll = $_This.has( this );
 
-                var iCoord = $( this ).offset(),  _Coord_ = $_Scroll.offset();
+                var coord = $( this ).offset(),  _Coord_ = $_Scroll.offset();
 
                 if (! $_Scroll.length)  return;
 
                 $_Scroll.animate({
-                    scrollTop:     (! _Coord_.top)  ?  iCoord.top  :  (
-                        $_Scroll.scrollTop()  +  (iCoord.top - _Coord_.top)
+                    scrollTop:     (! _Coord_.top)  ?  coord.top  :  (
+                        $_Scroll.scrollTop()  +  (coord.top - _Coord_.top)
                     ),
-                    scrollLeft:    (! _Coord_.left)  ?  iCoord.left  :  (
-                        $_Scroll.scrollLeft()  +  (iCoord.left - _Coord_.left)
+                    scrollLeft:    (! _Coord_.left)  ?  coord.left  :  (
+                        $_Scroll.scrollLeft()  +  (coord.left - _Coord_.left)
                     )
                 });
             });
@@ -107,59 +107,4 @@ define([
             });
         }
     });
-
-/* ---------- HTML DOM SandBox ---------- */
-
-    $.fn.sandBox = function () {
-
-        var iArgs = $.makeArray( arguments );
-
-        var iCallback = (typeof iArgs.slice(-1)[0] == 'function')  &&  iArgs.pop();
-
-        var iHTML = $.isSelector( iArgs[0] )  ?  ''  :  iArgs.shift();
-
-        var iSelector = iArgs[0];
-
-        var $_iFrame = this.filter('iframe').eq(0);
-
-        if (! $_iFrame.length)
-            $_iFrame = $('<iframe style="display: none"></iframe>');
-
-        $_iFrame.one('load',  function () {
-
-            var _DOM_ = this.contentWindow.document;
-
-            function Frame_Ready() {
-
-                if (! (_DOM_.body && _DOM_.body.childNodes.length))
-                    return;
-
-                var $_Content = $(iSelector || 'body > *',  _DOM_);
-
-                if (iCallback  &&  (false === iCallback.call(
-                    $_iFrame[0],  $($.merge(
-                        $.makeArray($('head style, head script',  _DOM_)),
-                        $_Content[0] ? $_Content : _DOM_.body.childNodes
-                    ))
-                )))
-                    $_iFrame.remove();
-
-                if ( $.browser.msie )  self.CollectGarbage();
-
-                return false;
-            }
-
-            if (! iHTML)  Frame_Ready();
-
-            $.every(0.04, Frame_Ready);
-
-            _DOM_.write(iHTML);    _DOM_.close();
-
-        }).attr(
-            'src',  ((! iHTML.match(/<.+?>/)) && iHTML.trim())  ||  'about:blank'
-        );
-
-        return  $_iFrame[0].parentElement ? this : $_iFrame.appendTo('body');
-    };
-
 });

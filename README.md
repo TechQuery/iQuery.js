@@ -8,7 +8,7 @@
   <img alt='Sponsor' width='888' height='68' src='https://app.codesponsor.io/embed/terHRJgDULkGjswWhddcBSDJ/TechQuery/iQuery.js.svg' />
 </a>
 
-在 API 形态上尽力兼容 jQuery 的同时，iQuery 在内部实现上采取 **“面向未来，向前兼容”的 Polyfill 策略** —— 核心逻辑（4300+ 行）尽力基于 **W3C、ECMA 最新标准中的优秀 API**，老旧浏览器兼容代码（部分基于 jQuery API，1200+ 行）尽力包装成与新 API 相同的形式（原型拓展），并独立为外部模块。这样做不但能复用 jQuery API 来高效实现，还方便开发人员自行裁剪。
+在 API 形态上尽力兼容 jQuery 的同时，iQuery 在内部实现上采取 **“面向未来，向前兼容”的 Polyfill 策略** —— jQuery 标准 API（2500 行）、iQuery 扩展 API（1800 行）尽力基于 **W3C、ECMA 最新标准中的优秀 API**，老旧浏览器兼容代码（部分基于 jQuery API，1200+ 行）尽力包装成与新 API 相同的形式（原型拓展），并独立为外部模块。这样做不但能复用 jQuery API 来高效实现，还方便开发人员自行裁剪。
 
 【注】对 IE 的兼容仅限其“标准模式”，而非“兼容性视图”。
 
@@ -158,6 +158,7 @@
  - 新增 **HTMLHttpRequest 对象**，封装了 **JSONP Get**、 **iframe Post**
  - 自带 `HTMLDocument.prototype.currentScript` 属性
  - 自带 `HTMLDocument.prototype.scrollingElement` 属性
+ - 自带 **ChildNode 接口**的 `remove()`、`replaceWith()` 实例方法
  - 自带 `Element.prototype.textContent` 属性
  - 自带 `Element.prototype.innerHTML` 的 IE 8 补丁
  - 自带 **HTMLCollection 对象**，修复 IE 10- `Element.prototype.children` 属性在其元素有 name 属性时的“数字键值缺失”Bug

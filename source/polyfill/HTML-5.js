@@ -1,6 +1,11 @@
-define(['../utility/index', '../utility/ext/browser'],  function ($) {
+define([
+    '../object/ext/advanced', '../utility/ext/browser',
+    '../utility/index'
+],  function ($) {
 
-    var BOM = self,  DOM = self.document,  enumerable = $.browser.modern;
+    var BOM = self,  DOM = self.document;
+
+    var enumerable = $.browser.modern, Trident = ($.browser.msie < 12);
 
 /* ---------- Document Current Script ---------- */
 
@@ -98,21 +103,39 @@ define(['../utility/index', '../utility/ext/browser'],  function ($) {
             enumerable:    enumerable
         });
 
-/* ---------- Selected Options ---------- */
+/* ---------- DOM manipulation ---------- */
 
-    if ($.browser.msie < 12)
-        Object.defineProperty(HTMLSelectElement.prototype, 'selectedOptions', {
-            get:           function () {
+    var DOM_method = {
+            remove:         enumerable ?
+                function () {
 
-                return  new HTMLCollection(
-                    $.map(this.options,  function (option) {
+                    if ( this.parentNode )  this.parentNode.removeChild( this );
+                } :
+                $.proxy(Element.prototype.removeNode, null, true),
+            replaceWith:    function () {
 
-                        return  option.selected ? option : null;
-                    })
-                );
-            },
-            enumerable:    enumerable
-        });
+                if ( this.parentNode )
+                    this.parentNode.replaceChild(
+                        $.buildFragment($.map(arguments,  function (node) {
+
+                            switch ($.Type( node )) {
+                                case 'String':
+                                    return  document.createTextNode( node );
+                                case 'Text':           ;
+                                case 'HTMLElement':    ;
+                                case 'Comment':
+                                    return  node;
+                            }
+                        })),
+                        this
+                    );
+            }
+        };
+
+    $.each([Element, Text, Comment],  function () {
+
+        $.patch(this.prototype,  DOM_method);
+    });
 
 /* ---------- Element CSS Selector Match ---------- */
 
@@ -125,6 +148,22 @@ define(['../utility/index', '../utility/ext/browser'],  function ($) {
                 this,  this.parentNode.querySelectorAll( arguments[0] )
             ) > -1);
         };
+
+/* ---------- Selected Options ---------- */
+
+    if ( Trident )
+        Object.defineProperty(HTMLSelectElement.prototype, 'selectedOptions', {
+            get:           function () {
+
+                return  new HTMLCollection(
+                    $.map(this.options,  function (option) {
+
+                        return  option.selected ? option : null;
+                    })
+                );
+            },
+            enumerable:    enumerable
+        });
 
 /* ---------- DOM Token List ---------- */
 
@@ -222,18 +261,16 @@ define(['../utility/index', '../utility/ext/browser'],  function ($) {
         });
     });
 
-    if (BOM.DOMTokenList  &&  ($.browser.msie < 12))
+    if (BOM.DOMTokenList && Trident)
         BOM.DOMTokenList.prototype.toggle = DOMTokenList.prototype.toggle;
 
 
 /* ---------- Document Parse ---------- */
 
-    function DOMParser() { }
-
-    var createXML = ($.browser.msie < 12)  ?
+    var createXML = Trident ?
             function (code) {
 
-                var document = DOM.implementation.createDocument(null, null);
+                var document = DOM.implementation.createDocument(null, null, null);
 
                 document.async = false;
 
@@ -255,16 +292,24 @@ define(['../utility/index', '../utility/ext/browser'],  function ($) {
 
                 return XHR.responseXML;
             },
-        _parse_ = DOMParser.prototype.parseFromString;
+        _parse_ = BOM.DOMParser && BOM.DOMParser.prototype.parseFromString;
+
+    function DOMParser() { }
 
     function parse(type, code) {
         try {
-            return  _parse_.call(new DOMParser(),  code || '',  type);
+            return  _parse_.call(new BOM.DOMParser(),  code || '',  type);
         } catch (error) { }
     }
 
-    if (! parse('image/svg+xml'))
-        DOMParser.prototype.parseFromString = _parse_ = function (code, type) {
+    if (! BOM.DOMParser)
+        Object.defineProperty(BOM, 'DOMParser', {
+            value:         DOMParser,
+            enumerable:    true
+        });
+
+    if (! parse('text/html'))
+        BOM.DOMParser.prototype.parseFromString = _parse_ = function (code, type) {
 
             var document;
 
@@ -273,12 +318,15 @@ define(['../utility/index', '../utility/ext/browser'],  function ($) {
                 case 'image/svg+xml':
                     document = createXML(code, type);    break;
                 case 'text/html':          {
-                    document = DOM.implementation.createHTMLDocument();
+                    document = DOM.implementation.createHTMLDocument('');
 
-                    document.write( code );
+                    document.createElement('html');
+
+                    document.write( code );    document.close();
+                    break;
                 }
                 default:
-                    throw  TypeError(type + "isn't supported");
+                    throw  TypeError(type + " isn't supported");
             }
 
             if ((document.parseError || '').errorCode)
@@ -291,12 +339,6 @@ define(['../utility/index', '../utility/ext/browser'],  function ($) {
 
             return document;
         };
-
-    if (! BOM.DOMParser)
-        Object.defineProperty(BOM, 'DOMParser', {
-            value:         DOMParser,
-            enumerable:    true
-        });
 
     if (! ($.browser.msie < 11))  return;
 
@@ -355,7 +397,7 @@ define(['../utility/index', '../utility/ext/browser'],  function ($) {
 
             child[0].nodeValue = child[0].nodeValue.slice(8);
 
-            if (! child[0].nodeValue[0])  this.removeChild( child[0] );
+            if (! child[0].nodeValue[0])  child[0].remove();
         },
         enumerable:    enumerable
     });

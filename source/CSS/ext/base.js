@@ -12,97 +12,90 @@ define(['../../object/ext/advanced', '../../event/wrapper'],  function ($) {
             'only-child', 'only-of-type', 'empty'
         ].join(' :').split(' '));
 
-    $.selectorPriority = function (iSelector) {
+    $.selectorPriority = function (selector) {
 
-        var iPriority = [0, 0, 0];
+        var priority = [0, 0, 0];
 
-        if (iSelector.match( /\#[^\s>\+~]+/ ))  iPriority[0]++ ;
+        if (selector.match( /\#[^\s>\+~]+/ ))  priority[0]++ ;
 
-        var iPseudo = iSelector.match( /:[^\s>\+~]+/g )  ||  [ ];
+        var pseudo = selector.match( /:[^\s>\+~]+/g )  ||  [ ];
 
-        var pClass = $.map(iPseudo,  function () {
+        var pClass = $.map(pseudo,  function () {
 
                 if (arguments[0] in Pseudo_Class)  return arguments[0];
             });
 
-        iPriority[1] += (
-            iSelector.match( /\.[^\s>\+~]+/g )  ||  [ ]
+        priority[1] += (
+            selector.match( /\.[^\s>\+~]+/g )  ||  [ ]
         ).concat(
-            iSelector.match( /\[[^\]]+\]/g )  ||  [ ]
+            selector.match( /\[[^\]]+\]/g )  ||  [ ]
         ).concat( pClass ).length;
 
-        iPriority[2] += ((
-            iSelector.match( /[^\#\.\[:]?[^\s>\+~]+/g )  ||  [ ]
+        priority[2] += ((
+            selector.match( /[^\#\.\[:]?[^\s>\+~]+/g )  ||  [ ]
         ).length + (
-            iPseudo.length - pClass.length
+            pseudo.length - pClass.length
         ));
 
-        return iPriority;
+        return priority;
     };
 
 /* ---------- CSS Prefix ---------- */
 
-    var CSS_Prefix = (function (iHash) {
+    var CSS_Prefix = (function (hash) {
 
-            for (var iKey in iHash)
-                if ($.browser[ iKey ])  return iHash[iKey];
+            for (var key in hash)
+                if ($.browser[ key ])  return hash[key];
         })({
             mozilla:    'moz',
             webkit:     'webkit',
             msie:       'ms'
         });
 
-    $.cssName = $.curry(function (Test_Type, iName) {
+    $.cssName = $.curry(function (Test_Type, name) {
 
-        return  BOM[ Test_Type ]  ?  iName  :  ('-' + CSS_Prefix + '-' + iName);
+        return  BOM[ Test_Type ]  ?  name  :  ('-' + CSS_Prefix + '-' + name);
     });
 
 /* ---------- CSS Rule (Default) ---------- */
 
-    var Tag_Style = { },  _BOM_;
-
-    $( document ).ready(function () {
-
-        _BOM_ = $('<iframe />', {
-            id:     '_CSS_SandBox_',
-            src:    'about:blank',
-            css:    {display:  'none'}
-        }).appendTo( this.body )[0].contentWindow;
-    });
+    var Tag_Style = { },  _DOM_ = document.implementation.createHTMLDocument('');
 
     if (typeof BOM.getDefaultComputedStyle != 'function')
-        BOM.getDefaultComputedStyle = function (iTagName, pseudo) {
+        BOM.getDefaultComputedStyle = function (tagName, pseudo) {
 
-            if (! Tag_Style[ iTagName ]) {
+            if (! Tag_Style[ tagName ]) {
 
-                var $_Default = $('<' + iTagName + ' />').appendTo(
-                        _BOM_.document.body
+                var Default = _DOM_.body.appendChild(
+                        _DOM_.createElement( tagName )
                     );
-                Tag_Style[ iTagName ] = $.extend(
-                    { },  self.getComputedStyle($_Default[0], pseudo)
+
+                Tag_Style[ tagName ] = $.extend(
+                    { },  self.getComputedStyle(Default, pseudo)
                 );
-                $_Default.remove();
+
+                Default.remove();
             }
 
-            return  Tag_Style[ iTagName ];
+            return  Tag_Style[ tagName ];
         };
 
 /* ---------- CSS Rule (Matched) ---------- */
 
-    $.searchCSS = function (iStyleSheet, iFilter) {
+    $.searchCSS = function (styleSheet, filter) {
 
-        if (iStyleSheet instanceof Function)
-            iFilter = iStyleSheet,  iStyleSheet = '';
+        if (styleSheet instanceof Function)
+            filter = styleSheet,  styleSheet = '';
 
-        return  $.map(iStyleSheet || document.styleSheets,  function _Self_() {
+        return  $.map(styleSheet || document.styleSheets,  function _Self_() {
 
-            var iRule = arguments[0].cssRules;
+            var rule = arguments[0].cssRules;
 
-            if (! iRule)  return;
+            if (! rule)  return;
 
-            return  $.map(iRule,  function (_Rule_) {
+            return  $.map(rule,  function (_Rule_) {
 
-                return  (_Rule_.cssRules ? _Self_ : iFilter)(_Rule_);
+                return  (_Rule_.cssRules ? _Self_ : filter)(_Rule_);
             });
         });
     };
@@ -115,32 +108,32 @@ define(['../../object/ext/advanced', '../../event/wrapper'],  function ($) {
     }
 
     if (typeof BOM.getMatchedCSSRules != 'function')
-        BOM.getMatchedCSSRules = function (iElement, iPseudo) {
+        BOM.getMatchedCSSRules = function (element, pseudo) {
 
-            if (! (iElement instanceof Element))  return null;
+            if (! (element instanceof Element))  return null;
 
-            if (typeof iPseudo === 'string') {
+            if (typeof pseudo === 'string') {
 
-                iPseudo = (iPseudo.match(/^\s*:{1,2}([\w\-]+)\s*$/) || [ ])[1];
+                pseudo = (pseudo.match(/^\s*:{1,2}([\w\-]+)\s*$/) || [ ])[1];
 
-                if (! iPseudo)  return null;
+                if (! pseudo)  return null;
 
-            } else if ( iPseudo )  iPseudo = null;
+            } else if ( pseudo )  pseudo = null;
 
-            return  new CSSRuleList($.searchCSS(function (iRule) {
+            return  new CSSRuleList($.searchCSS(function (rule) {
 
-                var iSelector = iRule.selectorText;
+                var selector = rule.selectorText;
 
-                if ( iPseudo ) {
-                    iSelector = iSelector.replace(/:{1,2}([\w\-]+)$/,  function () {
+                if ( pseudo ) {
+                    selector = selector.replace(/:{1,2}([\w\-]+)$/,  function () {
 
-                        return  (arguments[1] === iPseudo)  ?  ''  :  arguments[0];
+                        return  (arguments[1] === pseudo)  ?  ''  :  arguments[0];
                     });
 
-                    if (iSelector === iRule.selectorText)  return;
+                    if (selector === rule.selectorText)  return;
                 }
 
-                if (iElement.matches( iSelector ))  return iRule;
+                if (element.matches( selector ))  return rule;
             }));
         };
 });

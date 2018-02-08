@@ -1,41 +1,43 @@
 define(['../iQuery', '../CSS/ext/pseudo'],  function ($) {
 
-    function DOM_Size(iName) {
-        iName = {
-            scroll:    'scroll' + iName,
-            inner:     'inner' + iName,
-            client:    'client' + iName,
-            css:       iName.toLowerCase()
+    function DOM_Size(name) {
+        name = {
+            scroll:    'scroll' + name,
+            inner:     'inner' + name,
+            client:    'client' + name,
+            css:       name.toLowerCase()
         };
 
-        return  function (iValue) {
+        return  function (value) {
+
             if (! this[0])  return  arguments.length ? this : 0;
 
             switch ( $.Type(this[0]) ) {
                 case 'Document':
                     return  Math.max(
-                        this[0].documentElement[iName.scroll],
-                        this[0].body[iName.scroll]
+                        this[0].documentElement[ name.scroll ],
+                        this[0].body[ name.scroll ]
                     );
                 case 'Window':
-                    return  this[0][iName.inner] || Math.max(
-                        this[0].document.documentElement[iName.client],
-                        this[0].document.body[iName.client]
+                    return  this[0][ name.inner ]  ||  Math.max(
+                        this[0].document.documentElement[ name.client ],
+                        this[0].document.body[ name.client ]
                     );
             }
 
-            if (! $.isNumeric(iValue))
-                return  this[0][iName.client] + (
-                    (this[0].tagName == 'TABLE')  ?  4  :  0
+            if (! $.isNumeric( value ))
+                return  this[0][ name.client ]  +  (
+                    (this[0].tagName.toLowerCase === 'table')  ?  4  :  0
                 );
 
             for (var i = 0, $_This, _Size_;  this[i];  i++) {
+
                 $_This = $( this[i] );
 
-                _Size_ = $_This.css(iName.css, iValue).css(iName.css);
+                _Size_ = $_This.css(name.css, value).css( name.css );
 
-                if (this[i].tagName == 'TABLE')
-                    $_This.css(iName.css,  _Size_ + 4);
+                if (this[i].tagName.toLowerCase() === 'table')
+                    $_This.css(name.css,  _Size_ + 4);
             }
 
             return this;
@@ -50,34 +52,34 @@ define(['../iQuery', '../CSS/ext/pseudo'],  function ($) {
             document.scrollingElement  :  this;
     }
 
-    function DOM_Scroll(iName) {
-        iName = {
-            scroll:    'scroll' + iName,
-            offset:    (iName == 'Top') ? 'pageYOffset' : 'pageXOffset'
+    function DOM_Scroll(name) {
+        name = {
+            scroll:    'scroll' + name,
+            offset:    (name === 'Top')  ?  'pageYOffset'  :  'pageXOffset'
         };
 
-        return  function (iPX) {
-            iPX = parseFloat(iPX);
+        return  function (pixel) {
 
-            if ( isNaN(iPX) ) {
-                iPX = Scroll_DOM.call(this[0])[iName.scroll];
+            pixel = parseFloat( pixel );
 
-                return  (iPX != null)  ?  iPX  :  (
-                    this[0].documentElement[iName.scroll] ||
-                    this[0].defaultView[iName.offset] ||
-                    this[0].body[iName.scroll]
+            if (isNaN( pixel )) {
+
+                pixel = Scroll_DOM.call( this[0] )[ name.scroll ];
+
+                return  (pixel != null)  ?  pixel  :  (
+                    this[0].documentElement[ name.scroll ]  ||
+                    this[0].defaultView[ name.offset ]  ||
+                    this[0].body[ name.scroll ]
                 );
             }
 
-            for (var i = 0;  this[i];  i++) {
-                if (this[i][iName.scroll] !== undefined) {
-                    Scroll_DOM.call(this[i])[iName.scroll] = iPX;
-                    continue;
-                }
-                this[i].documentElement[iName.scroll] =
-                    this[i].defaultView[iName.offset] =
-                    this[i].body[iName.scroll] = iPX;
-            }
+            for (var i = 0;  this[i];  i++)
+                if (this[i][ name.scroll ]  !==  undefined)
+                    Scroll_DOM.call( this[i] )[ name.scroll ] = pixel;
+                else
+                    this[i].documentElement[ name.scroll ] =
+                        this[i].defaultView[ name.offset ] =
+                        this[i].body[ name.scroll ] = pixel;
 
             return this;
         };
@@ -87,18 +89,14 @@ define(['../iQuery', '../CSS/ext/pseudo'],  function ($) {
         slice:             function () {
             return  this.pushStack( [ ].slice.apply(this, arguments) );
         },
-        eq:                function (Index) {
+        eq:                function (index) {
             return  this.pushStack(
-                [ ].slice.call(this,  Index,  (Index + 1) || undefined)
+                [ ].slice.call(this,  index,  (index + 1) || undefined)
             );
         },
         detach:            function () {
 
-            for (var i = 0;  this[i];  i++)
-                if ( this[i].parentNode )
-                    this[i].parentNode.removeChild( this[i] );
-
-            return this;
+            return  this.each(function () {  this.remove();  });
         },
         remove:            function () {
 
@@ -106,37 +104,29 @@ define(['../iQuery', '../CSS/ext/pseudo'],  function ($) {
         },
         empty:             function () {
 
-            this.children().remove()
-
-            return  this.each(function () {
-
-                iChild = this.childNodes;
-
-                for (var i = 0;  iChild[i];  i++)
-                    this.removeChild( iChild[i] );
-            });
+            return  this.contents().remove() && this;
         },
-        text:              function (iText) {
+        text:              function (text) {
 
-            var iSetter = arguments.length,  iResult = [ ];
+            var setter = arguments.length,  result = [ ];
 
-            if ( iSetter )  this.empty();
+            if ( setter )  this.empty();
 
             for (var i = 0, j = 0;  this[i];  i++)
-                if ( iSetter )
-                    this[i].textContent = iText;
+                if ( setter )
+                    this[i].textContent = text;
                 else
-                    iResult[j++] = this[i].textContent;
+                    result[j++] = this[i].textContent;
 
-            return  iSetter ? this : iResult.join('');
+            return  setter ? this : result.join('');
         },
-        html:              function (iHTML) {
+        html:              function (HTML) {
 
             if (! arguments.length)  return this[0].innerHTML;
 
             this.empty();
 
-            for (var i = 0;  this[i];  i++)  this[i].innerHTML = iHTML;
+            for (var i = 0;  this[i];  i++)  this[i].innerHTML = HTML;
 
             return  this;
         },
@@ -150,10 +140,10 @@ define(['../iQuery', '../CSS/ext/pseudo'],  function ($) {
                 top:     this[0].offsetTop
             };
         },
-        offset:            function (iCoordinate) {
+        offset:            function (coordinate) {
 
-            if ($.isPlainObject( iCoordinate ))
-                return  this.css( $.extend({position: 'fixed'},  iCoordinate) );
+            if ($.isPlainObject( coordinate ))
+                return  this.css( $.extend({position: 'fixed'},  coordinate) );
 
             var _DOM_ = (this[0] || { }).ownerDocument;
 
@@ -162,29 +152,29 @@ define(['../iQuery', '../CSS/ext/pseudo'],  function ($) {
             if (!  (_DOM_  &&  _Body_  &&  $.contains(_Body_, this[0])))
                 return  {left: 0,  top: 0};
 
-            var $_DOM_ = $(_DOM_),  iBCR = this[0].getBoundingClientRect();
+            var $_DOM_ = $(_DOM_),  BCR = this[0].getBoundingClientRect();
 
             return {
                 left:    parseFloat(
-                    ($_DOM_.scrollLeft() + iBCR.left).toFixed(4)
+                    ($_DOM_.scrollLeft() + BCR.left).toFixed(4)
                 ),
                 top:     parseFloat(
-                    ($_DOM_.scrollTop() + iBCR.top).toFixed(4)
+                    ($_DOM_.scrollTop() + BCR.top).toFixed(4)
                 )
             };
         },
-        val:               function (iValue) {
+        val:               function (value) {
             if ( arguments.length ) {
 
-                if (iValue instanceof Array)
+                if (value instanceof Array)
                     this.filter('select[multiple]').each(function () {
 
                         for (var i = 0;  this.options[i];  i++)
-                            if ($.inArray(this.options[i].value, iValue))
+                            if ($.inArray(this.options[i].value, value))
                                 this.options[i].selected = true;
                     });
-                else if (iValue != null)
-                    this.not('input[type="file"]').prop('value', iValue);
+                else if (value != null)
+                    this.not('input[type="file"]').prop('value', value);
 
                 return this;
 
@@ -193,26 +183,26 @@ define(['../iQuery', '../CSS/ext/pseudo'],  function ($) {
                 if (this[0].tagName.toLowerCase() != 'select')
                     return this[0].value;
 
-                iValue = $.map(this[0].selectedOptions,  function () {
+                value = $.map(this[0].selectedOptions,  function () {
 
                     return arguments[0].value;
                 });
 
-                return  (iValue.length < 2)  ?  iValue[0]  :  iValue;
+                return  (value.length < 2)  ?  value[0]  :  value;
             }
         },
         serializeArray:    function () {
 
-            var $_Value = this.find('*:field'),  iValue = [ ];
+            var $_Value = this.find('*:field'),  value = [ ];
 
             for (var i = 0, j = 0;  $_Value[i];  i++)
                 if (
                     (! $_Value[i].type.match(/radio|checkbox/i))  ||
                     $_Value[i].checked
                 )
-                    iValue[j++] = $( $_Value[i] ).prop(['name', 'value']);
+                    value[j++] = $( $_Value[i] ).prop(['name', 'value']);
 
-            return iValue;
+            return value;
         },
         serialize:         function () {
             return  $.param( this.serializeArray() );

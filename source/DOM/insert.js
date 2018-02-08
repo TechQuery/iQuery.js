@@ -29,15 +29,11 @@ define(['../iQuery', './ext/base'],  function ($) {
         },
         replaceWith:     function ($_New) {
 
-            $_New = $.buildFragment( $( $_New ) );
+            $_New = $( $_New );
 
-            return  this.each(function () {
+            return  this.each(function (index) {
 
-                if ( this.parentNode )
-                    this.parentNode.replaceChild(
-                        arguments[0]  ?  $_New.cloneNode( true )  :  $_New,
-                        this
-                    );
+                this.replaceWith.apply(this,  index  ?  $_New.clone()  :  $_New);
             });
         }
     });
@@ -50,11 +46,11 @@ define(['../iQuery', './ext/base'],  function ($) {
             insertAfter:     'after',
             replaceWith:     'replaceAll'
         },
-        function (iMethod) {
+        function (method) {
 
-            $.fn[ arguments[1] ] = function () {
+            $.fn[ this ] = function () {
 
-                $( arguments[0] )[ iMethod ]( this );
+                $( arguments[0] )[ method ]( this );
 
                 return this;
             };

@@ -20,35 +20,35 @@ define(['../object/index'],  function ($) {
         DOM = self.document;
 
 
-    return  function (iHTML) {
+    return  function (HTML) {
 
-        var iTag = iHTML.match(
+        var tag = HTML.match(
                 /^\s*<([^\s\/\>]+)\s*([^<]*?)\s*(\/?)>([^<]*)((<\/\1>)?)([\s\S]*)/
             ) || [ ];
 
-        if (iTag[5] === undefined)  iTag[5] = '';
+        if (tag[5] === undefined)  tag[5] = '';
 
         if (
-            (iTag[5]  &&  (! (iTag.slice(2, 5).join('') + iTag[6])))  ||
-            (iTag[3]  &&  (! (iTag[2] + iTag.slice(4).join(''))))
+            (tag[5]  &&  (! (tag.slice(2, 5).join('') + tag[6])))  ||
+            (tag[3]  &&  (! (tag[2] + tag.slice(4).join(''))))
         )
-            return  [DOM.createElement( iTag[1] )];
+            return  [DOM.createElement( tag[1] )];
 
-        var iWrapper = TagWrapper[ iTag[1] ],  iNew = DOM.createElement('div');
+        var wrapper = TagWrapper[ tag[1] ],  box = DOM.createElement('div');
 
-        if (! iWrapper)
-            iNew.innerHTML = iHTML;
+        if (! wrapper)
+            box.innerHTML = HTML;
         else {
-            iNew.innerHTML =
-                iWrapper.before  +  iHTML  +  (iWrapper.after || '');
+            box.innerHTML =
+                wrapper.before  +  HTML  +  (wrapper.after || '');
 
-            iNew = $.trace(iNew,  'firstChild',  iWrapper.depth || 1)
+            box = $.trace(box,  'firstChild',  wrapper.depth || 1)
                 .slice(-1)[0];
         }
 
-        return  $.each($.makeArray( iNew.childNodes ),  function () {
+        return  $.each($.makeArray( box.childNodes ),  function () {
 
-            return  this.parentNode.removeChild( this );
+            return this.remove();
         });
     };
 });

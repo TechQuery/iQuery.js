@@ -1,6 +1,5 @@
 define([
-    './URL', '../../event/wrapper', '../../DOM/ext/utility',
-    '../../polyfill/HTML-5_Form'
+    './URL', '../../event/wrapper', '../../polyfill/HTML-5_Form'
 ],  function ($) {
 
     function HTMLHttpRequest() {
@@ -29,67 +28,71 @@ define([
 
     function iFrame_Send() {
 
-        var iHHR = this,
-            iTarget = this.$_Transport.submit(
+        var HHR = this,
+            target = this.$_Transport.submit(
                 $.proxy(Allow_Send, this)
             ).attr('target');
 
-        if ((! iTarget)  ||  iTarget.match( /^_(top|parent|self|blank)$/i )) {
+        if ((! target)  ||  target.match( /^_(top|parent|self|blank)$/i )) {
 
-            iTarget = $.uuid('HHR');
+            target = $.uuid('HHR');
 
-            this.$_Transport.attr('target', iTarget);
+            this.$_Transport.attr('target', target);
         }
 
-        $('iframe[name="' + iTarget + '"]').sandBox(function () {
+        var $_Target = $('iframe[name="' + target + '"]');
+
+        if (! $_Target[0])
+            $_Target = $('<iframe />',  {
+                name:     target,
+                style:    'display: none'
+            }).appendTo('body');
+
+        $_Target.on('load',  function () {
 
             var _DOM_ = this.contentWindow.document;
 
-            $.extend(iHHR, Success_State, {
+            $.extend(HHR, Success_State, {
                 responseHeader:    {
                     'Set-Cookie':      _DOM_.cookie,
                     'Content-Type':
                         _DOM_.contentType + '; charset=' + _DOM_.charset
                 },
                 responseType:      'text',
-                response:          iHHR.responseText =
-                    $( this ).contents().find('body').text()
+                response:          HHR.responseText = $(_DOM_.body).text()
             });
 
-            iHHR.onload();
-
-            return false;
-
-        }).attr('name', iTarget);
+            HHR.onload();
+        });
 
         this.$_Transport.submit();
     }
 
     var JSONP_Map = { };
 
-    HTMLHttpRequest.JSONP = function (iData) {
+    HTMLHttpRequest.JSONP = function (data) {
 
         var _This_ = document.currentScript;
 
-        iData = $.extend({
+        data = $.extend({
             responseHeader:    {
                 'Content-Type':    _This_.type + '; charset=' + _This_.charset
             },
             responseType:      'json',
-            response:          iData,
-            responseText:      JSON.stringify( iData )
+            response:          data,
+            responseText:      JSON.stringify( data )
         }, Success_State);
 
-        var iHHR = JSONP_Map[ _This_.src ];
+        var HHR = JSONP_Map[ _This_.src ];
 
-        for (var i = 0;  iHHR[i];  i++)  if ( iHHR[i].$_Transport ) {
+        for (var i = 0;  HHR[i];  i++)  if ( HHR[i].$_Transport ) {
 
-            $.extend(iHHR[i], iData).onload();
+            $.extend(HHR[i], data).onload();
 
-            iHHR[i].$_Transport.remove();
+            HHR[i].$_Transport.remove();
         }
 
-        iHHR.length = 0;
+        HHR.length = 0;
     };
 
     function Script_Send() {
@@ -109,9 +112,9 @@ define([
             responseText:    ''
         }))).appendTo('head');
 
-        var iURL = this.$_Transport[0].src;
+        var URI = this.$_Transport[0].src;
 
-        (JSONP_Map[iURL] = JSONP_Map[iURL]  ||  [ ]).push( this );
+        (JSONP_Map[ URI ] = JSONP_Map[ URI ]  ||  [ ]).push( this );
     }
 
     $.extend(HTMLHttpRequest.prototype, {
@@ -120,19 +123,19 @@ define([
 
             this.readyState = 1;
         },
-        send:                     function (iData) {
+        send:                     function (data) {
 
             if (! Allow_Send.call( this ))  return;
 
             this.$_Transport =
-                (iData instanceof self.FormData)  &&  $( iData.__owner__ );
+                (data instanceof self.FormData)  &&  $( data.__owner__ );
 
             if (this.$_Transport && (
-                iData.__owner__.method.toUpperCase() === 'POST'
+                data.__owner__.method.toUpperCase() === 'POST'
             ))
                 iFrame_Send.call( this );
             else
-                Script_Send.call(this, iData);
+                Script_Send.call(this, data);
 
             this.readyState = 2;
         },

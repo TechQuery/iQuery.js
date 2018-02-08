@@ -19,15 +19,15 @@ define(['../../iQuery', '../utility'],  function ($) {
      * @return   {DocumentFragment}
      */
 
-    $.buildFragment = $.buildFragment  ||  function (iNode) {
+    $.buildFragment = $.buildFragment  ||  function (node) {
 
-        iNode = $.makeArray( iNode );
+        node = $.makeArray( node );
 
-        var iFragment = (arguments[1] || document).createDocumentFragment();
+        var fragment = (arguments[1] || document).createDocumentFragment();
 
-        for (var i = 0;  iNode[i];  i++)  iFragment.appendChild( iNode[i] );
+        for (var i = 0;  node[i];  i++)  fragment.appendChild( node[i] );
 
-        return iFragment;
+        return fragment;
     };
 
     /**
@@ -39,7 +39,7 @@ define(['../../iQuery', '../utility'],  function ($) {
      * @function insertTo
      *
      * @param {jQueryAcceptable} $_Target
-     * @param {number}           [Index=0] Position index of `$_Target`'s
+     * @param {number}           [index=0] Position index of `$_Target`'s
      *                                     child Elements
      *
      * @return {$}               All the Elements inserted
@@ -61,7 +61,7 @@ define(['../../iQuery', '../utility'],  function ($) {
      *     // 'insert'
      */
 
-    $.fn.insertTo = function ($_Target, Index) {
+    $.fn.insertTo = function ($_Target, index) {
 
         var DOM_Set = $.buildFragment(this, document),  $_This = [ ];
 
@@ -71,7 +71,7 @@ define(['../../iQuery', '../utility'],  function ($) {
 
             $.merge($_This, DOM_Set.children);
 
-            this.insertBefore(DOM_Set,  this.children[Index || 0]);
+            this.insertBefore(DOM_Set,  this.children[index || 0]);
         });
 
         return  this.pushStack( $_This );
