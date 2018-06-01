@@ -1,6 +1,6 @@
 define([
-    '../object/ext/advanced', '../utility/ext/browser',
-    '../utility/index'
+    '../../iQuery', '../../object/ext/advanced', '../../utility/ext/browser',
+    '../../utility/index'
 ],  function ($) {
 
     var BOM = self,  DOM = self.document;

@@ -1,4 +1,4 @@
-define(['./base'],  function ($) {
+define(['../../iQuery', './base'],  function ($) {
 
 /* ---------- Single Finger Touch ---------- */
 

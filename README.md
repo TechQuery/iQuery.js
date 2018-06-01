@@ -4,10 +4,6 @@
 
 [![Join the chat at https://gitter.im/iQuery-js/Lobby](https://badges.gitter.im/iQuery-js/Lobby.svg)](https://gitter.im/iQuery-js/Lobby?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 
-<a target='_blank' rel='nofollow' href='https://app.codesponsor.io/link/terHRJgDULkGjswWhddcBSDJ/TechQuery/iQuery.js'>
-  <img alt='Sponsor' width='888' height='68' src='https://app.codesponsor.io/embed/terHRJgDULkGjswWhddcBSDJ/TechQuery/iQuery.js.svg' />
-</a>
-
 在 API 形态上尽力兼容 jQuery 的同时，iQuery 在内部实现上采取 **“面向未来，向前兼容”的 Polyfill 策略** —— jQuery 标准 API（2500 行）、iQuery 扩展 API（1800 行）尽力基于 **W3C、ECMA 最新标准中的优秀 API**，老旧浏览器兼容代码（部分基于 jQuery API，1200+ 行）尽力包装成与新 API 相同的形式（原型拓展），并独立为外部模块。这样做不但能复用 jQuery API 来高效实现，还方便开发人员自行裁剪。
 
 【注】对 IE 的兼容仅限其“标准模式”，而非“兼容性视图”。

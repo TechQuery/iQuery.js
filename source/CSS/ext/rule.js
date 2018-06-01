@@ -1,4 +1,4 @@
-define(['../../iQuery', './base', '../../DOM/info'],  function ($) {
+define(['../../iQuery', './var', './base', '../../DOM/info'],  function ($) {
 
 /* ----------  JSON to <style />  ---------- */
 

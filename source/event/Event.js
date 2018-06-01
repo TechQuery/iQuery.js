@@ -1,4 +1,4 @@
-define(['../iQuery', '../polyfill/IE-8'],  function ($) {
+define(['../iQuery', '../polyfill/DOM/IE-8'],  function ($) {
 
     function Event(type, property) {
 

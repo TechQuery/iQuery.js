@@ -1,4 +1,4 @@
-define(['../iQuery', './index', '../polyfill/Promise_A+'],  function ($) {
+define(['../iQuery', './index', '../polyfill/ES/Promise_A+'],  function ($) {
 
 /* ---------- Event ShortCut ---------- */
 

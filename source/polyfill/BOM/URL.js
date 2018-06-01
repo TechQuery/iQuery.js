@@ -1,5 +1,5 @@
 define([
-    '../iQuery', '../object/ext/Class', '../utility/ext/browser'
+    '../../iQuery', '../../object/ext/Class', '../../utility/ext/browser'
 ],  function ($, Class) {
 
     var BOM = self;

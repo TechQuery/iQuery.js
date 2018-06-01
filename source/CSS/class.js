@@ -1,4 +1,4 @@
-define(['../iQuery', '../polyfill/HTML-5'],  function ($) {
+define(['../iQuery', '../polyfill/DOM/HTML-5'],  function ($) {
 
     $.fn.hasClass = function (iName) {
 

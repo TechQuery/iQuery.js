@@ -1,4 +1,4 @@
-define(['./string', '../../polyfill/Promise_A+'],  function ($) {
+define(['../../iQuery', './string', '../../polyfill/ES/Promise_A+'],  function ($) {
 
     var BOM = self;
 

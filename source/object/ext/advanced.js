@@ -1,4 +1,4 @@
-define(['../../iQuery'],  function ($) {
+define(['../../iQuery', './base'],  function ($) {
 
     return $.extend({
         formatJSON:    function () {

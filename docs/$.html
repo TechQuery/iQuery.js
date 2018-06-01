@@ -181,7 +181,11 @@
 
     <h5>Example</h5>
 
-    <pre class="prettyprint"><code>// 按位或    $.bitOperate('|', '10'.repeat(16), '01'.repeat(16))    // '1'.repeat(32)</code></pre>
+    <pre class="prettyprint"><code>// 按位或
+
+    $.bitOperate('|', '10'.repeat(16), '01'.repeat(16))
+
+    // '1'.repeat(32)</code></pre>
 
     <h5>Parameters:</h5>
 
@@ -499,7 +503,7 @@
 
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="AJAX_ext_URL.js.html">AJAX/ext/URL.js</a>, <a href="AJAX_ext_URL.js.html#line117">line 117</a>
+        <a href="AJAX_ext_URL.js.html">AJAX/ext/URL.js</a>, <a href="AJAX_ext_URL.js.html#line121">line 121</a>
     </li></ul></dd>
 
     <dt class="tag-author">Author:</dt>
@@ -517,7 +521,11 @@
 
     <h5>Example</h5>
 
-    <pre class="prettyprint"><code>// 多种参数    $.extendURL('path/to/model?a=0',  'a=1&amp;b=1',  {b: 2, c: 3})    // 'path/to/model?a=1&amp;b=2&amp;c=3'</code></pre>
+    <pre class="prettyprint"><code>// 多种参数
+
+    $.extendURL('path/to/model?a=0',  'a=1&amp;b=1',  {b: 2, c: 3})
+
+    // 'path/to/model?a=1&amp;b=2&amp;c=3'</code></pre>
 
     <h5>Parameters:</h5>
 
@@ -590,7 +598,7 @@
 
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="AJAX_ext_URL.js.html">AJAX/ext/URL.js</a>, <a href="AJAX_ext_URL.js.html#line172">line 172</a>
+        <a href="AJAX_ext_URL.js.html">AJAX/ext/URL.js</a>, <a href="AJAX_ext_URL.js.html#line176">line 176</a>
     </li></ul></dd>
 
     <dt class="tag-author">Author:</dt>
@@ -608,13 +616,25 @@
 
     <h5>Examples</h5>
 
-    <pre class="prettyprint"><code>// 传 相对路径 时返回其目录    $.filePath('/test/unit.html')  // '/test/'</code></pre>
+    <pre class="prettyprint"><code>// 传 相对路径 时返回其目录
 
-    <pre class="prettyprint"><code>// 传 查询字符串 时返回空字符串    $.filePath('?query=string')  // ''</code></pre>
+    $.filePath('/test/unit.html')  // '/test/'</code></pre>
 
-    <pre class="prettyprint"><code>// 传 URL（字符串）时返回其目录    $.filePath('http://localhost:8084/test/unit.html')    // 'http://localhost:8084/test/'</code></pre>
+    <pre class="prettyprint"><code>// 传 查询字符串 时返回空字符串
 
-    <pre class="prettyprint"><code>// 传 URL（对象）时返回其目录    $.filePath(new URL('http://localhost:8084/test/unit.html'))    // 'http://localhost:8084/test/'</code></pre>
+    $.filePath('?query=string')  // ''</code></pre>
+
+    <pre class="prettyprint"><code>// 传 URL（字符串）时返回其目录
+
+    $.filePath('http://localhost:8084/test/unit.html')
+
+    // 'http://localhost:8084/test/'</code></pre>
+
+    <pre class="prettyprint"><code>// 传 URL（对象）时返回其目录
+
+    $.filePath(new URL('http://localhost:8084/test/unit.html'))
+
+    // 'http://localhost:8084/test/'</code></pre>
 
     <h5>Parameters:</h5>
 
@@ -845,11 +865,17 @@
 
     <h5>Examples</h5>
 
-    <pre class="prettyprint"><code>// 基本类型比较    $.isEqual(1, 1)    //  true</code></pre>
+    <pre class="prettyprint"><code>// 基本类型比较
 
-    <pre class="prettyprint"><code>// 引用类型（浅）    $.isEqual({a: 1},  {a: 1})    // true</code></pre>
+    $.isEqual(1, 1)    //  true</code></pre>
 
-    <pre class="prettyprint"><code>// 引用类型（深）    $.isEqual({a: 1, b: {c: 2}},  {a: 1, b: {c: 2}},  2)    // true</code></pre>
+    <pre class="prettyprint"><code>// 引用类型（浅）
+
+    $.isEqual({a: 1},  {a: 1})    // true</code></pre>
+
+    <pre class="prettyprint"><code>// 引用类型（深）
+
+    $.isEqual({a: 1, b: {c: 2}},  {a: 1, b: {c: 2}},  2)    // true</code></pre>
 
     <h5>Parameters:</h5>
 
@@ -960,7 +986,7 @@
 
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="AJAX_ext_URL.js.html">AJAX/ext/URL.js</a>, <a href="AJAX_ext_URL.js.html#line220">line 220</a>
+        <a href="AJAX_ext_URL.js.html">AJAX/ext/URL.js</a>, <a href="AJAX_ext_URL.js.html#line224">line 224</a>
     </li></ul></dd>
 
     <dt class="tag-author">Author:</dt>
@@ -978,9 +1004,13 @@
 
     <h5>Examples</h5>
 
-    <pre class="prettyprint"><code>// 跨域 绝对路径    $.isXDomain('http://localhost/iQuery')  // true</code></pre>
+    <pre class="prettyprint"><code>// 跨域 绝对路径
 
-    <pre class="prettyprint"><code>// 同域 相对路径    $.isXDomain('/iQuery')  // false</code></pre>
+    $.isXDomain('http://localhost/iQuery')  // true</code></pre>
+
+    <pre class="prettyprint"><code>// 同域 相对路径
+
+    $.isXDomain('/iQuery')  // false</code></pre>
 
     <h5>Parameters:</h5>
 
@@ -1051,13 +1081,21 @@
 
     <h5>Examples</h5>
 
-    <pre class="prettyprint"><code>// 字符串元素不可变，故不是类数组    $.likeArray(new String(''))    //  false</code></pre>
+    <pre class="prettyprint"><code>// 字符串元素不可变，故不是类数组
 
-    <pre class="prettyprint"><code>// 有 length 属性、但没有对应数量元素的，不是类数组    $.likeArray({0: 'a', length: 2})    //  false</code></pre>
+    $.likeArray(new String(''))    //  false</code></pre>
 
-    <pre class="prettyprint"><code>// NodeList、HTMLCollection、jQuery 等是类数组    $.likeArray( document.head.childNodes )    //  true</code></pre>
+    <pre class="prettyprint"><code>// 有 length 属性、但没有对应数量元素的，不是类数组
 
-    <pre class="prettyprint"><code>// Node 及其子类不是类数组    $.likeArray( document.createTextNode('') )    //  false</code></pre>
+    $.likeArray({0: 'a', length: 2})    //  false</code></pre>
+
+    <pre class="prettyprint"><code>// NodeList、HTMLCollection、jQuery 等是类数组
+
+    $.likeArray( document.head.childNodes )    //  true</code></pre>
+
+    <pre class="prettyprint"><code>// Node 及其子类不是类数组
+
+    $.likeArray( document.createTextNode('') )    //  false</code></pre>
 
     <h5>Parameters:</h5>
 
@@ -1294,7 +1332,19 @@
 
     <h5>Example</h5>
 
-    <pre class="prettyprint"><code>// DOM 树遍历    $.mapTree(        $('&lt;a>A&lt;b>B&lt;!--C-->&lt;/b>&lt;/a>')[0],        'childNodes',        function (node, index, depth) {            return  depth + (                (node.nodeType === 3)  ?  node.nodeValue  :  ''            );        }    ).join('')    //  '1A12B2'</code></pre>
+    <pre class="prettyprint"><code>// DOM 树遍历
+
+    $.mapTree(
+        $('&lt;a>A&lt;b>B&lt;!--C-->&lt;/b>&lt;/a>')[0],
+        'childNodes',
+        function (node, index, depth) {
+            return  depth + (
+                (node.nodeType === 3)  ?  node.nodeValue  :  ''
+            );
+        }
+    ).join('')
+
+    //  '1A12B2'</code></pre>
 
     <h5>Parameters:</h5>
 
@@ -1377,7 +1427,7 @@
 
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="AJAX_ext_URL.js.html">AJAX/ext/URL.js</a>, <a href="AJAX_ext_URL.js.html#line27">line 27</a>
+        <a href="AJAX_ext_URL.js.html">AJAX/ext/URL.js</a>, <a href="AJAX_ext_URL.js.html#line31">line 31</a>
     </li></ul></dd>
 
     <dt class="tag-author">Author:</dt>
@@ -1395,7 +1445,14 @@
 
     <h5>Example</h5>
 
-    <pre class="prettyprint"><code>// URL 查询字符串    $.paramJSON('?a=1&amp;b=two&amp;b=true')    //  {            a:    1,            b:    ['two', true]        }</code></pre>
+    <pre class="prettyprint"><code>// URL 查询字符串
+
+    $.paramJSON('?a=1&amp;b=two&amp;b=true')
+
+    //  {
+            a:    1,
+            b:    ['two', true]
+        }</code></pre>
 
     <h5>Parameters:</h5>
 
@@ -1938,7 +1995,7 @@
 
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="AJAX_ext_URL.js.html">AJAX/ext/URL.js</a>, <a href="AJAX_ext_URL.js.html#line196">line 196</a>
+        <a href="AJAX_ext_URL.js.html">AJAX/ext/URL.js</a>, <a href="AJAX_ext_URL.js.html#line200">line 200</a>
     </li></ul></dd>
 
     <dt class="tag-author">Author:</dt>
@@ -1956,7 +2013,11 @@
 
     <h5>Example</h5>
 
-    <pre class="prettyprint"><code>// 给定 URL    $.urlDomain('http://localhost:8080/path?query=string')    // 'http://localhost:8080'</code></pre>
+    <pre class="prettyprint"><code>// 给定 URL
+
+    $.urlDomain('http://localhost:8080/path?query=string')
+
+    // 'http://localhost:8080'</code></pre>
 
     <h5>Parameters:</h5>
 

@@ -1,6 +1,6 @@
 define([
-    '../../utility/ext/string', '../traversing', '../../polyfill/Promise_A+',
-    '../insert'
+    '../../iQuery', '../../utility/ext/string', '../traversing',
+    '../../polyfill/ES/Promise_A+', '../insert'
 ],  function ($) {
 
     var operator = {

@@ -1,4 +1,6 @@
-define(['../utility/ext/string'],  function ($) {
+define([
+    '../../iQuery', '../../utility/ext/browser', '../../utility/ext/string'
+],  function ($) {
 
     var BOM = self,  DOM = self.document;
 

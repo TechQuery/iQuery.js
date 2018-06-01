@@ -1,4 +1,4 @@
-define(['../iQuery', '../polyfill/IE-8', '../polyfill/URL'],  function ($) {
+define(['../iQuery', '../polyfill/DOM/IE-8', '../polyfill/BOM/URL'],  function ($) {
 
     return $.extend({
         now:              Date.now,

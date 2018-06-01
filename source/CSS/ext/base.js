@@ -1,4 +1,6 @@
-define(['../../object/ext/advanced', '../../event/wrapper'],  function ($) {
+define([
+    '../../iQuery', '../../object/ext/advanced', '../../event/wrapper'
+],  function ($) {
 
     var BOM = self;
 

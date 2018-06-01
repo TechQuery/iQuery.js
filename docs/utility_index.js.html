@@ -31,7 +31,7 @@
 
     <section>
         <article>
-            <pre class="prettyprint source linenums"><code>define(['../iQuery', '../polyfill/IE-8', '../polyfill/URL'],  function ($) {
+            <pre class="prettyprint source linenums"><code>define(['../iQuery', '../polyfill/DOM/IE-8', '../polyfill/BOM/URL'],  function ($) {
 
     return $.extend({
         now:              Date.now,
@@ -120,7 +120,8 @@
                 ((iParent !== iChild)  &amp;&amp;  iParent.contains( iChild ));
         }
     });
-});</code></pre>
+});
+</code></pre>
         </article>
     </section>
 

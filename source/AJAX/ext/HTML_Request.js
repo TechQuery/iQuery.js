@@ -1,5 +1,5 @@
 define([
-    './URL', '../../event/wrapper', '../../polyfill/HTML-5_Form'
+    '../../iQuery', './URL', '../../event/wrapper', '../../polyfill/BOM/HTML-5_Form'
 ],  function ($) {
 
     function HTMLHttpRequest() {

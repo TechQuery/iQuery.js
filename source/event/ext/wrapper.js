@@ -1,4 +1,4 @@
-define(['../../iQuery', '../wrapper'],  function ($) {
+define(['../../iQuery', '../wrapper', '../../CSS/ext/pseudo'],  function ($) {
 
 /* ---------- Focus AnyWhere ---------- */
 

@@ -1,6 +1,6 @@
 define([
-    './ext/base', './Event',
-    '../DOM/traversing', '../polyfill/HTML-5', '../DOM/info'
+    '../iQuery', './Event', './ext/base',
+    '../DOM/traversing', '../polyfill/DOM/HTML-5', '../DOM/info'
 ],  function ($, Event) {
 
 /* ---------- Event Core ---------- */

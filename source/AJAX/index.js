@@ -1,6 +1,6 @@
 define([
-    './ext/URL', './ext/header', '../DOM/ext/base', '../polyfill/Promise_A+',
-    './ext/transport'
+    '../iQuery', './ext/URL', './ext/header', '../DOM/ext/base',
+    '../polyfill/ES/Promise_A+', './ext/transport'
 ],  function ($) {
 
 /* ---------- Response Data ---------- */

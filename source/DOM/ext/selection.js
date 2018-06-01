@@ -1,4 +1,4 @@
-define(['../../utility/index'],  function ($) {
+define(['../../iQuery', '../../utility/index'],  function ($) {
 
     var W3C_Selection = (typeof document.getSelection === 'function');
 

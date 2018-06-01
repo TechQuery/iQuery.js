@@ -31,7 +31,11 @@
 
     <section>
         <article>
-            <pre class="prettyprint source linenums"><code>define(['../../utility/ext/string', '../../utility/index'],  function ($) {
+            <pre class="prettyprint source linenums"><code>define([
+    '../../iQuery',
+    '../../polyfill/BOM/URL', '../../object/ext/base',
+    '../../utility/ext/string', '../../utility/index'
+],  function ($) {
 
     var BOM = self;
 

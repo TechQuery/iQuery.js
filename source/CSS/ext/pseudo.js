@@ -1,5 +1,5 @@
 define([
-    '../../iQuery', '../../DOM/info', '../../polyfill/HTML-5',
+    '../../iQuery', '../../DOM/info', '../../polyfill/DOM/HTML-5',
     '../../DOM/traversing'
 ],  function ($) {
 

@@ -1,4 +1,4 @@
-define(['../utility/index'],  function ($) {
+define(['../iQuery', '../utility/index', '../object/ext/base'],  function ($) {
 
 /* ---------- DOM Data ---------- */
 

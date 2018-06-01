@@ -2,7 +2,7 @@
  * iQuery.js - A Light-weight jQuery Compatible API with IE 8+ compatibility
  *
  * @module    {function} iQuery
- * @version   3.1 (2018-02-08) stable
+ * @version   3.1 (2018-06-01) stable
  *
  * @copyright TechQuery <shiy2008@gmail.com> 2015-2018
  * @license   GPL-2.0-or-later
@@ -12,10 +12,11 @@
 
 
 define([
-    './iQuery',
+    './iQuery', './polyfill/DOM/IE-8',
     './DOM/ext/utility', './DOM/ext/selection',
     './CSS/ext/rule', './CSS/ext/utility',
     './event/ext/shim', './event/ext/wrapper',
+    './AJAX/ext/header', './AJAX/ext/transport',
     './AJAX/ext/wrapper', './AJAX/ext/form',
     './utility/ext/Template', './utility/ext/binary',
     './animate/effect'

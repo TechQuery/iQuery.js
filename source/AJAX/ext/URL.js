@@ -1,4 +1,8 @@
-define(['../../utility/ext/string', '../../utility/index'],  function ($) {
+define([
+    '../../iQuery',
+    '../../polyfill/BOM/URL', '../../object/ext/base',
+    '../../utility/ext/string', '../../utility/index'
+],  function ($) {
 
     var BOM = self;
 

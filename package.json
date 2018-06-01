@@ -1,16 +1,33 @@
 {
   "name": "iquery-js",
-  "version": "3.0.0",
+  "version": "3.1.0",
   "description": "A jQuery compatible API based on built-in ECMA / W3C polyfill",
-  "main": "iQuery.js",
+  "main": "dist/iQuery.js",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/TechQuery/iQuery.js.git"
+  },
+  "bugs": {
+    "url": "https://github.com/TechQuery/iQuery.js/issues"
+  },
+  "homepage": "https://techquery.github.io/iQuery.js/",
+  "keywords": [
+    "jquery",
+    "w3c-api",
+    "dom",
+    "ecma",
+    "polyfill"
+  ],
+  "author": "shiy007@qq.com",
+  "license": "GPL-2.0",
   "engines": {
     "node": "^7.6.0"
   },
   "devDependencies": {
-    "amd-bundle": "^0.4.2",
+    "amd-bundle": "^1.2.1",
     "chromy": "^0.5.9",
     "docdash": "^0.4.0",
-    "html-pages": "^2.0.8",
+    "html-pages": "^2.1.2",
     "husky": "^0.14.3",
     "jsdoc": "^3.5.5",
     "mocha": "^4.1.0",
@@ -20,26 +37,15 @@
     "uglify-js": "3.0.28"
   },
   "scripts": {
-    "bundle": "cd source  &&  amd-bundle ../iQuery.js",
-    "compress": "uglifyjs iQuery.js -o build/iQuery.min.js --config-file build/compress.json",
-    "patch": "cd source  &&  amd-bundle ../jQueryKit.js -e jquery -f ../build/extension",
+    "bundle": "amd-bundle source/index dist/iQuery",
+    "compress": "cd dist/  &&  uglifyjs iQuery.js -o iQuery.min.js --config-file ../build/compress.json",
+    "patch": "amd-bundle source/index dist/jQueryKit -m \"/^\\.(\\/\\w+){1,2}$/:jquery\"",
     "document": "jsdoc -c ./build/document.json  &&  reduce-blank ./docs/",
     "build": "npm run bundle  &&  npm run compress  &&  npm run patch  &&  npm run document",
-    "start": "html-pages",
-    "test": "mocha --recursive --no-timeouts -c --inline-diffs --exit",
+    "start": "html-pages docs/ -o",
+    "check": "mocha --recursive --no-timeouts -c --inline-diffs",
+    "test": "npm run check -- --exit",
+    "debug": "npm run check -- --inspect-brk",
     "precommit": "npm test"
-  },
-  "repository": {
-    "type": "git",
-    "url": "https://git.oschina.net/Tech_Query/iQuery.git"
-  },
-  "keywords": [
-    "jquery",
-    "w3c-api",
-    "dom",
-    "ecma",
-    "polyfill"
-  ],
-  "author": "shiy007@qq.com",
-  "license": "GPL-2.0"
+  }
 }
