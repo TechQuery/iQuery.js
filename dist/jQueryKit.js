@@ -8,16 +8,18 @@
     else if (typeof module === 'object')
         return  module.exports = factory(require('jquery'));
     else
-        return  this.jQueryKit = factory(this.jquery);
+        return  this['jQueryKit'] = factory(this['jquery']);
 
 })(function (jquery) {
 
 function merge(base, path) {
+  return (base + '/' + path).replace(/\/\//g, '/').replace(/[^/.]+\/\.\.\//g, '').replace(/\.\//g, function (match, index, input) {
+    return input[index - 1] === '.' ? match : '';
+  });
+}
 
-    return (base + '/' + path).replace(/\/\//g, '/').replace(/[^/.]+\/\.\.\//g, '').replace(/\.\//g, function (match, index, input) {
-
-        return input[index - 1] === '.' ? match : '';
-    });
+function outPackage(name) {
+  return /^[^./]/.test(name);
 }
 
     var require = _require_.bind(null, './');
@@ -25,7 +27,7 @@ function merge(base, path) {
     function _require_(base, path) {
 
         var module = _module_[
-                /^\w/.test( path )  ?  path  :  ('./' + merge(base, path))
+                outPackage( path )  ?  path  :  ('./' + merge(base, path))
             ],
             exports;
 
@@ -52,327 +54,254 @@ function merge(base, path) {
         return module.exports;
     }
 
-    var _module_ = {
-                './utility/ext/binary':  {
-            base:        './utility/ext',
-            dependency:  ["./utility/ext/string","./polyfill/ES/Promise_A+"],
-            factory:     function (_utility_ext_string, _polyfill_ES_Promise_A_, require, exports, module) {
-    var BOM = self;
+var _module_ = {
+  './utility/ext/binary': {
+    base: './utility/ext',
+    dependency: ["./utility/ext/string", "./polyfill/ES/Promise_A+"],
+    factory: function (_utility_ext_string, _polyfill_ES_Promise_A_, require, exports, module) {
+      var BOM = self;
 
-
-    function Bit_Calculate(type, left, right) {
-
-        left = parseInt(left, 2);    right = parseInt(right, 2);
+      function Bit_Calculate(type, left, right) {
+        left = parseInt(left, 2);
+        right = parseInt(right, 2);
 
         switch (type) {
-            case '&':    return  left & right;
-            case '|':    return  left | right;
-            case '^':    return  left ^ right;
-            case '~':    return  ~left;
+          case '&':
+            return left & right;
+
+          case '|':
+            return left | right;
+
+          case '^':
+            return left ^ right;
+
+          case '~':
+            return ~left;
         }
-    }
+      }
+      /**
+       * 大数位操作
+       *
+       * @author  TechQuery
+       * @version 0.1
+       *
+       * @memberof $
+       *
+       * @param {string}          type    `&`, `|`, `^` or `~`
+       * @param {(number|string)} left    Number may be big
+       * @param {(number|string)} [right] Number may be big
+       *
+       * @return {(number|string)}
+       *
+       * @example  // 按位或
+       *
+       *     $.bitOperate('|', '10'.repeat(16), '01'.repeat(16))
+       *
+       *     // '1'.repeat(32)
+       */
 
-    /**
-     * 大数位操作
-     *
-     * @author  TechQuery
-     * @version 0.1
-     *
-     * @memberof $
-     *
-     * @param {string}          type    `&`, `|`, `^` or `~`
-     * @param {(number|string)} left    Number may be big
-     * @param {(number|string)} [right] Number may be big
-     *
-     * @return {(number|string)}
-     *
-     * @example  // 按位或
-     *
-     *     $.bitOperate('|', '10'.repeat(16), '01'.repeat(16))
-     *
-     *     // '1'.repeat(32)
-     */
 
-    $.bitOperate = function (type, left, right) {
-
-        left = (typeof left === 'string')  ?  left  :  left.toString(2);
-
-        right = (typeof right === 'string')  ?  right  :  right.toString(2);
-
+      $.bitOperate = function (type, left, right) {
+        left = typeof left === 'string' ? left : left.toString(2);
+        right = typeof right === 'string' ? right : right.toString(2);
         var iLength = Math.max(left.length, right.length);
-
-        if (iLength < 32)
-            return  Bit_Calculate(type, left, right).toString(2);
-
+        if (iLength < 32) return Bit_Calculate(type, left, right).toString(2);
         left = left.padStart(iLength, 0);
-
         right = right.padStart(iLength, 0);
-
         var result = '';
 
-        for (var i = 0;  i < iLength;  i += 31)
-            result += Bit_Calculate(
-                type,  left.slice(i, i + 31),  right.slice(i, i + 31)
-            ).toString(2).padStart(
-                Math.min(31,  iLength - i),  0
-            );
+        for (var i = 0; i < iLength; i += 31) result += Bit_Calculate(type, left.slice(i, i + 31), right.slice(i, i + 31)).toString(2).padStart(Math.min(31, iLength - i), 0);
 
         return result;
-    };
+      };
 
+      var LS_Key = [];
+      /**
+       * 本地存储 存取器
+       *
+       * @author   TechQuery
+       * @version  0.1
+       *
+       * @memberof $
+       *
+       * @param    {string} name
+       * @param    {*}      data
+       *
+       * @returns  {*}      Same as `data`
+       */
 
-    var LS_Key = [ ];
+      $.storage = function (name, data) {
+        if (!(data != null)) return JSON.parse(BOM.localStorage[name]);
+        var iLast = 0,
+            iLength = Math.min(LS_Key.length, BOM.localStorage.length);
 
-    /**
-     * 本地存储 存取器
-     *
-     * @author   TechQuery
-     * @version  0.1
-     *
-     * @memberof $
-     *
-     * @param    {string} name
-     * @param    {*}      data
-     *
-     * @returns  {*}      Same as `data`
-     */
-
-    $.storage = function (name, data) {
-
-        if (! (data != null))  return  JSON.parse(BOM.localStorage[ name ]);
-
-        var iLast = 0,  iLength = Math.min(LS_Key.length, BOM.localStorage.length);
-
-        do  try {
-            BOM.localStorage[ name ] = JSON.stringify( data );
-
-            if (LS_Key.indexOf( name )  ===  -1)  LS_Key.push( name );
-            break;
+        do try {
+          BOM.localStorage[name] = JSON.stringify(data);
+          if (LS_Key.indexOf(name) === -1) LS_Key.push(name);
+          break;
         } catch (iError) {
-            if (LS_Key[ iLast ]) {
-                delete  BOM.localStorage[ LS_Key[iLast] ];
-
-                LS_Key.splice(iLast, 1);
-            } else
-                iLast++ ;
+          if (LS_Key[iLast]) {
+            delete BOM.localStorage[LS_Key[iLast]];
+            LS_Key.splice(iLast, 1);
+          } else iLast++;
         } while (iLast < iLength);
 
         return data;
-    };
+      };
+      /* ---------- Base64 to Blob  v0.1 ---------- */
+      //  Thanks "axes" --- http://www.cnblogs.com/axes/p/4603984.html
 
-/* ---------- Base64 to Blob  v0.1 ---------- */
 
-//  Thanks "axes" --- http://www.cnblogs.com/axes/p/4603984.html
-
-    $.toBlob = function (iType, iString) {
-
+      $.toBlob = function (iType, iString) {
         if (arguments.length == 1) {
-
-            iString = iType.match(/^data:([^;]+);base64,(.+)/);
-
-            iType = iString[1];    iString = iString[2];
+          iString = iType.match(/^data:([^;]+);base64,(.+)/);
+          iType = iString[1];
+          iString = iString[2];
         }
 
-        iString = BOM.atob( iString );
+        iString = BOM.atob(iString);
+        var iBuffer = new ArrayBuffer(iString.length);
+        var uBuffer = new Uint8Array(iBuffer);
 
-        var iBuffer = new ArrayBuffer( iString.length );
-
-        var uBuffer = new Uint8Array( iBuffer );
-
-        for (var i = 0;  iString[i];  i++)
-            uBuffer[i] = iString.charCodeAt(i);
+        for (var i = 0; iString[i]; i++) uBuffer[i] = iString.charCodeAt(i);
 
         var BlobBuilder = BOM.WebKitBlobBuilder || BOM.MozBlobBuilder;
+        if (!BlobBuilder) return new BOM.Blob([iBuffer], {
+          type: iType
+        });
+        var iBuilder = new BlobBuilder();
+        iBuilder.append(iBuffer);
+        return iBuilder.getBlob(iType);
+      };
+      /* ---------- CRC-32  v0.1 ---------- */
+      //  Thanks "Bakasen" for http://blog.csdn.net/bakasen/article/details/6043797
 
-        if (! BlobBuilder)
-            return  new BOM.Blob([iBuffer],  {type: iType});
 
-        var iBuilder = new BlobBuilder();    iBuilder.append( iBuffer );
+      var CRC_32_Table = function () {
+        var iTable = new Array(256);
 
-        return  iBuilder.getBlob( iType );
-    };
+        for (var i = 0, iCell; i < 256; i++) {
+          iCell = i;
 
-/* ---------- CRC-32  v0.1 ---------- */
+          for (var j = 0; j < 8; j++) if (iCell & 1) iCell = iCell >> 1 & 0x7FFFFFFF ^ 0xEDB88320;else iCell = iCell >> 1 & 0x7FFFFFFF;
 
-//  Thanks "Bakasen" for http://blog.csdn.net/bakasen/article/details/6043797
+          iTable[i] = iCell;
+        }
 
-    var CRC_32_Table = (function () {
+        return iTable;
+      }();
 
-            var iTable = new Array(256);
-
-            for (var i = 0, iCell;  i < 256;  i++) {
-                iCell = i;
-
-                for (var j = 0;  j < 8;  j++)
-                    if (iCell & 1)
-                        iCell = ((iCell >> 1) & 0x7FFFFFFF)  ^  0xEDB88320;
-                    else
-                        iCell = (iCell >> 1)  &  0x7FFFFFFF;
-
-                iTable[i] = iCell;
-            }
-
-            return iTable;
-        })();
-
-    function CRC_32(iRAW) {
-
+      function CRC_32(iRAW) {
         iRAW = '' + iRAW;
-
         var iValue = 0xFFFFFFFF;
 
-        for (var i = 0;  iRAW[i];  i++)
-            iValue = ((iValue >> 8) & 0x00FFFFFF)  ^  CRC_32_Table[
-                (iValue & 0xFF)  ^  iRAW.charCodeAt(i)
-            ];
+        for (var i = 0; iRAW[i]; i++) iValue = iValue >> 8 & 0x00FFFFFF ^ CRC_32_Table[iValue & 0xFF ^ iRAW.charCodeAt(i)];
 
-        return  iValue ^ 0xFFFFFFFF;
-    }
+        return iValue ^ 0xFFFFFFFF;
+      }
+      /* ---------- Hash Algorithm (Crypto API Wrapper)  v0.1 ---------- */
+      //  Thanks "emu" --- http://blog.csdn.net/emu/article/details/39618297
 
-/* ---------- Hash Algorithm (Crypto API Wrapper)  v0.1 ---------- */
 
-//  Thanks "emu" --- http://blog.csdn.net/emu/article/details/39618297
+      if (BOM.msCrypto) $.each((BOM.crypto = BOM.msCrypto).subtle, function (key, _This_) {
+        if (!(_This_ instanceof Function)) return;
 
-    if ( BOM.msCrypto )
-        $.each((BOM.crypto = BOM.msCrypto).subtle,  function (key, _This_) {
+        BOM.crypto.subtle[key] = function () {
+          var iObserver = _This_.apply(this, arguments);
 
-            if (! (_This_ instanceof Function))  return;
-
-            BOM.crypto.subtle[ key ] = function () {
-
-                var iObserver = _This_.apply(this, arguments);
-
-                return  new Promise(function (iResolve) {
-
-                    iObserver.oncomplete = function () {
-
-                        iResolve( arguments[0].target.result );
-                    };
-
-                    iObserver.onabort = iObserver.onerror = arguments[1];
-                });
+          return new Promise(function (iResolve) {
+            iObserver.oncomplete = function () {
+              iResolve(arguments[0].target.result);
             };
-        });
 
-    if (! BOM.crypto)  return;
+            iObserver.onabort = iObserver.onerror = arguments[1];
+          });
+        };
+      });
+      if (!BOM.crypto) return;
+      BOM.crypto.subtle = BOM.crypto.subtle || BOM.crypto.webkitSubtle;
 
-    BOM.crypto.subtle = BOM.crypto.subtle || BOM.crypto.webkitSubtle;
+      function BufferToString(iBuffer) {
+        var iDataView = new DataView(iBuffer),
+            iResult = '';
 
-
-    function BufferToString(iBuffer){
-
-        var iDataView = new DataView(iBuffer),  iResult = '';
-
-        for (var i = 0, iTemp;  i < iBuffer.byteLength;  i += 4) {
-
-            iTemp = iDataView.getUint32(i).toString(16);
-
-            iResult += ((iTemp.length == 8) ? '' : 0)  +  iTemp;
+        for (var i = 0, iTemp; i < iBuffer.byteLength; i += 4) {
+          iTemp = iDataView.getUint32(i).toString(16);
+          iResult += (iTemp.length == 8 ? '' : 0) + iTemp;
         }
 
         return iResult;
-    }
+      }
 
-    $.dataHash = function (iAlgorithm, iData) {
-
+      $.dataHash = function (iAlgorithm, iData) {
         if (arguments.length < 2) {
-
-            iData = iAlgorithm;  iAlgorithm = 'CRC-32';
+          iData = iAlgorithm;
+          iAlgorithm = 'CRC-32';
         }
 
-        return  (iAlgorithm === 'CRC-32')  ?
-            Promise.resolve( CRC_32( iData ) )  :
-            BOM.crypto.subtle.digest(
-                {name:  iAlgorithm},
-                new Uint8Array(Array.from(iData,  function () {
-
-                    return arguments[0].charCodeAt(0);
-                }))
-            ).then( BufferToString );
-    };
-
-}
-        },
-        './utility/ext/Template':  {
-            base:        './utility/ext',
-            dependency:  ["./object/ext/Class"],
-            factory:     function (_object_ext_Class, require, exports, module) {
-    /**
-     * 字符串模板
-     *
-     * @class Template
-     *
-     * @param {string}   raw
-     * @param {Array}    [nameList] Name list of the Local variable
-     * @param {function} [onChange] Call with New & Old value
-     * @param {Array}    [bindData] The parameter bound to `onChange`
-     *
-     * @example  // 局部变量成员名
-     *
-     *     $.Template('[ ${new Date()} ]  Hello, ${this.name} !')[0]    // 'name'
-     */
-
-    function Template(raw, nameList, onChange, bindData) {
-
-        if (! (this instanceof Template))
-            return  new Template(raw, nameList, onChange, bindData);
-
-        this.setPrivate({
-            raw:           raw,
-            name:          nameList || [ ],
-            expression:    [ ],
-            value:         '',
-            data:          bindData || [ ]
-        }).setPrivate(
-            'scope',  $.makeSet.apply($,  this.__name__.concat('this'))
-        );
-
-        onChange = (nameList instanceof Array)  ?  onChange  :  nameList;
-
-        this.onChange = (onChange instanceof Function)  ?  onChange  :  null;
-
-        this.parse().evaluate.apply(
-            this,  Array.from(Object.keys(this.__scope__),  function () {
-
-                return  { };
-            })
-        );
+        return iAlgorithm === 'CRC-32' ? Promise.resolve(CRC_32(iData)) : BOM.crypto.subtle.digest({
+          name: iAlgorithm
+        }, new Uint8Array(Array.from(iData, function () {
+          return arguments[0].charCodeAt(0);
+        }))).then(BufferToString);
+      };
     }
+  },
+  './utility/ext/Template': {
+    base: './utility/ext',
+    dependency: ["./object/ext/Class"],
+    factory: function (_object_ext_Class, require, exports, module) {
+      /**
+       * 字符串模板
+       *
+       * @class Template
+       *
+       * @param {string}   raw
+       * @param {Array}    [nameList] Name list of the Local variable
+       * @param {function} [onChange] Call with New & Old value
+       * @param {Array}    [bindData] The parameter bound to `onChange`
+       *
+       * @example  // 局部变量成员名
+       *
+       *     $.Template('[ ${new Date()} ]  Hello, ${this.name} !')[0]    // 'name'
+       */
+      function Template(raw, nameList, onChange, bindData) {
+        if (!(this instanceof Template)) return new Template(raw, nameList, onChange, bindData);
+        this.setPrivate({
+          raw: raw,
+          name: nameList || [],
+          expression: [],
+          value: '',
+          data: bindData || []
+        }).setPrivate('scope', $.makeSet.apply($, this.__name__.concat('this')));
+        onChange = nameList instanceof Array ? onChange : nameList;
+        this.onChange = onChange instanceof Function ? onChange : null;
+        this.parse().evaluate.apply(this, Array.from(Object.keys(this.__scope__), function () {
+          return {};
+        }));
+      }
 
-    return  $.Template = $.Class.extend.call(Array, Template, {
-        Expression:    /\$\{([\s\S]+?)\}/g,
-        Reference:     /(\w+)(?:\.(\w+)|\[(?:'([^']+)|"([^"]+)))/g
-    }, {
-        compile:     function (expression) {
-
-            return  this.__expression__.push(
-                new (Function.prototype.bind.apply(
-                    Function,
-                    [ null ].concat(this.__name__,  'return ' + expression.trim())
-                ))()
-            );
+      return $.Template = $.Class.extend.call(Array, Template, {
+        Expression: /\$\{([\s\S]+?)\}/g,
+        Reference: /(\w+)(?:\.(\w+)|\[(?:'([^']+)|"([^"]+)))/g
+      }, {
+        compile: function (expression) {
+          return this.__expression__.push(new (Function.prototype.bind.apply(Function, [null].concat(this.__name__, 'return ' + expression.trim())))());
         },
-        parse:       function () {
+        parse: function () {
+          var _this_ = this;
 
-            var _this_ = this;
+          function addReference(match, scope, key1, key2, key3) {
+            if (scope in _this_.__scope__) _this_.push(key1 || key2 || key3);
+          }
 
-            function addReference(match, scope, key1, key2, key3) {
-
-                if (scope  in  _this_.__scope__)
-                    _this_.push(key1 || key2 || key3);
-            }
-
-            this.__raw__ = this.__raw__.replace(
-                Template.Expression,  function (_, expression) {
-
-                    expression.replace(Template.Reference, addReference);
-
-                    return  '${' + (_this_.compile( expression ) - 1) + '}';
-                }
-            );
-
-            return this;
+          this.__raw__ = this.__raw__.replace(Template.Expression, function (_, expression) {
+            expression.replace(Template.Reference, addReference);
+            return '${' + (_this_.compile(expression) - 1) + '}';
+          });
+          return this;
         },
+
         /**
          * 表达式求值
          *
@@ -396,724 +325,515 @@ function merge(base, path) {
          *
          *     // "[ 2015-04-30 ]  Hello, TechQuery's iQuery.js !"
          */
-        evaluate:    function (context, parameter) {
+        evaluate: function (context, parameter) {
+          var expression = this.__expression__;
+          parameter = Array.from(arguments).slice(1);
 
-            var expression = this.__expression__;
+          var value = this.__raw__.replace(/\$\{(\d+)\}/g, function (_, index) {
+            return expression[index].apply(context, parameter);
+          });
 
-            parameter = Array.from( arguments ).slice(1);
+          if (value !== this.__value__) {
+            if (this.onChange) this.onChange.apply(this, this.__data__.concat(value, this.__value__));
+            this.__value__ = value;
+          }
 
-            var value = this.__raw__.replace(
-                    /\$\{(\d+)\}/g,  function (_, index) {
-
-                        return  expression[ index ].apply(context, parameter);
-                    }
-                );
-
-            if (value !== this.__value__) {
-
-                if ( this.onChange )
-                    this.onChange.apply(
-                        this,  this.__data__.concat(value,  this.__value__)
-                    );
-
-                this.__value__ = value;
-            }
-
-            return value;
+          return value;
         },
-        toString:    function () {
-
-            return  this.__value__;
+        toString: function () {
+          return this.__value__;
         }
-    });
-}
-        },
-        './AJAX/ext/form':  {
-            base:        './AJAX/ext',
-            dependency:  ["./CSS/ext/pseudo"],
-            factory:     function (_CSS_ext_pseudo, require, exports, module) {
-/* ---------- Form Field Validation ---------- */
-
-    function Value_Check() {
-
+      });
+    }
+  },
+  './AJAX/ext/form': {
+    base: './AJAX/ext',
+    dependency: ["./CSS/ext/pseudo"],
+    factory: function (_CSS_ext_pseudo, require, exports, module) {
+      /* ---------- Form Field Validation ---------- */
+      function Value_Check() {
         var value = this.value || this.textContent;
-
-        if ((! value)  &&  (this.getAttribute('required') != null))
-            return false;
-
+        if (!value && this.getAttribute('required') != null) return false;
         var regexp = this.getAttribute('pattern');
+        if (regexp) try {
+          return RegExp(regexp).test(value);
+        } catch (iError) {}
 
-        if (regexp)  try {
-
-            return  RegExp( regexp ).test( value );
-
-        } catch (iError) { }
-
-        if (
-            (this.tagName.toLowerCase() === 'input')  &&
-            (this.getAttribute('type') === 'number')
-        ) {
-            var number = +value,  min = +( this.getAttribute('min') );
-
-            if (
-                isNaN( number )  ||
-                (number < min)  ||
-                (number > +(this.getAttribute('max') || Infinity))  ||
-                ((number - min)  %  this.getAttribute('step'))
-            )
-                return false;
+        if (this.tagName.toLowerCase() === 'input' && this.getAttribute('type') === 'number') {
+          var number = +value,
+              min = +this.getAttribute('min');
+          if (isNaN(number) || number < min || number > +(this.getAttribute('max') || Infinity) || (number - min) % this.getAttribute('step')) return false;
         }
 
         return true;
-    }
+      }
+      /**
+       * 表单（项）校验
+       *
+       * @author   TechQuery
+       *
+       * @memberof $.prototype
+       * @function validate
+       *
+       * @returns  {boolean}
+       *
+       * @see {@link https://developer.mozilla.org/en-US/docs/Learn/HTML/Forms/Form_validation|Form Validation}
+       */
 
-    /**
-     * 表单（项）校验
-     *
-     * @author   TechQuery
-     *
-     * @memberof $.prototype
-     * @function validate
-     *
-     * @returns  {boolean}
-     *
-     * @see {@link https://developer.mozilla.org/en-US/docs/Learn/HTML/Forms/Form_validation|Form Validation}
-     */
 
-    $.fn.validate = function () {
-
+      $.fn.validate = function () {
         var $_Field = this.find(':field').addBack(':field').removeClass('invalid');
 
-        for (var i = 0;  $_Field[i];  i++)
-            if ((
-                (typeof $_Field[i].checkValidity === 'function')  &&
-                (! $_Field[i].checkValidity())
-            )  ||  (
-                ! Value_Check.call( $_Field[i] )
-            )) {
-                $_Field = $( $_Field[i] ).addClass('invalid');
-
-                $_Field.scrollParents().eq(0).scrollTo( $_Field.focus() );
-
-                return false;
-            }
+        for (var i = 0; $_Field[i]; i++) if (typeof $_Field[i].checkValidity === 'function' && !$_Field[i].checkValidity() || !Value_Check.call($_Field[i])) {
+          $_Field = $($_Field[i]).addClass('invalid');
+          $_Field.scrollParents().eq(0).scrollTo($_Field.focus());
+          return false;
+        }
 
         return true;
-    };
+      };
+      /* ---------- Form Element AJAX Submit ---------- */
 
-/* ---------- Form Element AJAX Submit ---------- */
 
-    function AJAX_Submit(DataType, iCallback) {
-
-        var $_Form = $( this );
-
-        if ((! $_Form.validate())  ||  $_Form.data('_AJAX_Submitting_'))
-            return false;
-
+      function AJAX_Submit(DataType, iCallback) {
+        var $_Form = $(this);
+        if (!$_Form.validate() || $_Form.data('_AJAX_Submitting_')) return false;
         $_Form.data('_AJAX_Submitting_', 1);
-
         var iMethod = ($_Form.attr('method') || 'Get').toLowerCase();
-
         arguments[0].preventDefault();
-
         var iOption = {
-                type:        iMethod,
-                dataType:    DataType || 'json'
-            };
-
-        if (! $_Form.find('input[type="file"]')[0])
-            iOption.data = $_Form.serialize();
-        else {
-            iOption.data = new self.FormData( $_Form[0] );
-
-            iOption.contentType = iOption.processData = false;
+          type: iMethod,
+          dataType: DataType || 'json'
+        };
+        if (!$_Form.find('input[type="file"]')[0]) iOption.data = $_Form.serialize();else {
+          iOption.data = new self.FormData($_Form[0]);
+          iOption.contentType = iOption.processData = false;
         }
-
         $.ajax(this.action, iOption).then(function () {
-
-            $_Form.data('_AJAX_Submitting_', 0);
-
-            if (typeof iCallback === 'function')
-                iCallback.call($_Form[0], arguments[0]);
+          $_Form.data('_AJAX_Submitting_', 0);
+          if (typeof iCallback === 'function') iCallback.call($_Form[0], arguments[0]);
         });
-    }
+      }
 
-    $.fn.ajaxSubmit = function (DataType, iCallback) {
-
-        if (! this[0])  return this;
-
-        if (typeof DataType === 'function')
-            iCallback = DataType,  DataType = '';
-
+      $.fn.ajaxSubmit = function (DataType, iCallback) {
+        if (!this[0]) return this;
+        if (typeof DataType === 'function') iCallback = DataType, DataType = '';
         iCallback = $.proxy(AJAX_Submit, null, DataType, iCallback);
-
-        var $_This = (this.length < 2)  ?  this  :  this.sameParents().eq(0);
-
-        if ($_This[0].tagName.toLowerCase() === 'form')
-            $_This.submit( iCallback );
-        else
-            $_This.on('submit', 'form', iCallback);
-
+        var $_This = this.length < 2 ? this : this.sameParents().eq(0);
+        if ($_This[0].tagName.toLowerCase() === 'form') $_This.submit(iCallback);else $_This.on('submit', 'form', iCallback);
         return this;
-    };
+      };
+    }
+  },
+  './DOM/ext/base': {
+    base: './DOM/ext',
+    dependency: [],
+    factory: function (require, exports, module) {
+      /**
+       * HTML 文档片段类
+       *
+       * @typedef {DocumentFragment} DocumentFragment
+       *
+       * @see     {@link https://developer.mozilla.org/en-US/docs/Web/API/DocumentFragment|Document Fragment}
+       */
 
-}
-        },
-        './DOM/ext/base':  {
-            base:        './DOM/ext',
-            dependency:  [],
-            factory:     function (require, exports, module) {
-    /**
-     * HTML 文档片段类
-     *
-     * @typedef {DocumentFragment} DocumentFragment
-     *
-     * @see     {@link https://developer.mozilla.org/en-US/docs/Web/API/DocumentFragment|Document Fragment}
-     */
-
-    /**
-     * 构造文档片段
-     *
-     * @memberof $
-     * @function buildFragment
-     *
-     * @param    {Node|ArrayLike}   node - Child Nodes
-     *
-     * @return   {DocumentFragment}
-     */
-
-    $.buildFragment = $.buildFragment  ||  function (node) {
-
-        node = $.makeArray( node );
-
+      /**
+       * 构造文档片段
+       *
+       * @memberof $
+       * @function buildFragment
+       *
+       * @param    {Node|ArrayLike}   node - Child Nodes
+       *
+       * @return   {DocumentFragment}
+       */
+      $.buildFragment = $.buildFragment || function (node) {
+        node = $.makeArray(node);
         var fragment = (arguments[1] || document).createDocumentFragment();
 
-        for (var i = 0;  node[i];  i++)  fragment.appendChild( node[i] );
+        for (var i = 0; node[i]; i++) fragment.appendChild(node[i]);
 
         return fragment;
-    };
+      };
+      /**
+       * 任意索引位置 插入子节点
+       *
+       * @author TechQuery
+       *
+       * @memberof $.prototype
+       * @function insertTo
+       *
+       * @param {jQueryAcceptable} $_Target
+       * @param {number}           [index=0] Position index of `$_Target`'s
+       *                                     child Elements
+       *
+       * @return {$}               All the Elements inserted
+       *
+       * @example  // 插入到最前
+       *
+       *     $('<a>insert</a>').insertTo('body')  &&  (
+       *         $('body > :first-child')[0].textContent
+       *     )
+       *
+       *     // 'insert'
+       *
+       * @example  // 插入到最后
+       *
+       *     $('<a>insert</a>').insertTo('body', Infinity)  &&  (
+       *         $('body > :last-child')[0].textContent
+       *     )
+       *
+       *     // 'insert'
+       */
 
-    /**
-     * 任意索引位置 插入子节点
-     *
-     * @author TechQuery
-     *
-     * @memberof $.prototype
-     * @function insertTo
-     *
-     * @param {jQueryAcceptable} $_Target
-     * @param {number}           [index=0] Position index of `$_Target`'s
-     *                                     child Elements
-     *
-     * @return {$}               All the Elements inserted
-     *
-     * @example  // 插入到最前
-     *
-     *     $('<a>insert</a>').insertTo('body')  &&  (
-     *         $('body > :first-child')[0].textContent
-     *     )
-     *
-     *     // 'insert'
-     *
-     * @example  // 插入到最后
-     *
-     *     $('<a>insert</a>').insertTo('body', Infinity)  &&  (
-     *         $('body > :last-child')[0].textContent
-     *     )
-     *
-     *     // 'insert'
-     */
 
-    $.fn.insertTo = function ($_Target, index) {
-
-        var DOM_Set = $.buildFragment(this, document),  $_This = [ ];
-
-        $( $_Target ).each(function () {
-
-            DOM_Set = arguments[0]  ?  DOM_Set.cloneNode( true )  :  DOM_Set;
-
-            $.merge($_This, DOM_Set.children);
-
-            this.insertBefore(DOM_Set,  this.children[index || 0]);
+      $.fn.insertTo = function ($_Target, index) {
+        var DOM_Set = $.buildFragment(this, document),
+            $_This = [];
+        $($_Target).each(function () {
+          DOM_Set = arguments[0] ? DOM_Set.cloneNode(true) : DOM_Set;
+          $.merge($_This, DOM_Set.children);
+          this.insertBefore(DOM_Set, this.children[index || 0]);
         });
+        return this.pushStack($_This);
+      };
+      /**
+       * HTML 执行器
+       *
+       * @author TechQuery <shiy007@qq.com>
+       *
+       * @memberof $.prototype
+       * @function htmlExec
+       *
+       * @param {string} HTML       HTML source code with scripts executable
+       * @param {string} [selector] CSS selector to filter
+       *                            without scripts executable
+       *
+       * @return {$}     Element set of HTML source code
+       *
+       * @example  // 同步执行脚本
+       *
+       *     $('body').htmlExec(
+       *         "<script>self.test = $('body')[0].lastChild.tagName;</script>xxx"
+       *     ) && self.test
+       *
+       *     // 'SCRIPT'
+       *
+       * @example  // CSS 选择符不执行脚本
+       *
+       *     $('body').htmlExec(
+       *         "<script>self.name = 'xxx';</script><a /><b />",  'script, a'
+       *     ) && (
+       *         self.name + $('body')[0].children.length
+       *     )
+       *
+       *     // '2'
+       */
 
-        return  this.pushStack( $_This );
-    };
 
-    /**
-     * HTML 执行器
-     *
-     * @author TechQuery <shiy007@qq.com>
-     *
-     * @memberof $.prototype
-     * @function htmlExec
-     *
-     * @param {string} HTML       HTML source code with scripts executable
-     * @param {string} [selector] CSS selector to filter
-     *                            without scripts executable
-     *
-     * @return {$}     Element set of HTML source code
-     *
-     * @example  // 同步执行脚本
-     *
-     *     $('body').htmlExec(
-     *         "<script>self.test = $('body')[0].lastChild.tagName;</script>xxx"
-     *     ) && self.test
-     *
-     *     // 'SCRIPT'
-     *
-     * @example  // CSS 选择符不执行脚本
-     *
-     *     $('body').htmlExec(
-     *         "<script>self.name = 'xxx';</script><a /><b />",  'script, a'
-     *     ) && (
-     *         self.name + $('body')[0].children.length
-     *     )
-     *
-     *     // '2'
-     */
-
-    $.fn.htmlExec = function (HTML, selector) {
-
+      $.fn.htmlExec = function (HTML, selector) {
         this.empty();
-
         var $_Box = $('<div />').prop('innerHTML', HTML);
-
-        return  (! selector)  ?
-            this.each(function () {
-
-                $_Box = $( $_Box[0].cloneNode( true ) );
-
-                $.mapTree($_Box[0],  'childNodes',  function (child) {
-
-                    if (child.nodeName.toLowerCase() !== 'script')
-                        return child;
-
-                    var attribute = { };
-
-                    $.each(child.attributes,  function () {
-
-                        attribute[ this.nodeName ] = this.nodeValue;
-                    });
-
-                    $('<script />',  attribute).prop('text', child.text)
-                        .replaceAll( child );
-                });
-
-                $_Box.children().insertTo( this );
-            })  :
-            $_Box.find( selector ).insertTo( this );
-    };
-
-}
-        },
-        './AJAX/ext/wrapper':  {
-            base:        './AJAX/ext',
-            dependency:  ["./DOM/ext/base"],
-            factory:     function (_DOM_ext_base, require, exports, module) {
-/* ---------- RESTful API ---------- */
-
-    $.map(['get', 'post', 'put', 'delete'],  function (method) {
-
-        $[ method ] = $[ method ]  ||  function (URL, data, callback, DataType) {
-
-            if (typeof data === 'function')
-                DataType = callback,  callback = data,  data = null;
-
-            return $.ajax($.extend(
-                {
-                    type:           method,
-                    url:            URL,
-                    crossDomain:    true,
-                    data:           data,
-                    dataType:       DataType,
-                    success:        callback
-                },
-                $.isPlainObject( URL )  ?  URL  :  { }
-            ));
-        };
-    });
-
-    $.getJSON = $.getJSON || $.get;
-
-
-/* ---------- Smart Load ---------- */
-
-    $.fn.load = function (iURL, iData, iCallback) {
-
-        if (! this[0])  return this;
-
-        if (typeof iData == 'function')
-            iCallback = iData,  iData = null;
-
-        var $_This = this;
-
-        iURL = iURL.trim().split(/\s+/);
-
-        $[iData ? 'post' : 'get'](iURL[0],  iData,  function (iHTML, _, iXHR) {
-
-            $_This.htmlExec(
-                (typeof iHTML === 'string')  ?  iHTML  :  iXHR.responseText,
-                iURL[1]
-            );
-
-            if (typeof iCallback === 'function')
-                $_This.each( $.proxy(iCallback, null, iHTML, _, iXHR) );
-        },  'html');
-
-        return this;
-    };
-}
-        },
-        './polyfill/BOM/HTML-5_Form':  {
-            base:        './polyfill/BOM',
-            dependency:  ["./utility/ext/browser","./object/ext/Class","./CSS/ext/pseudo"],
-            factory:     function (_utility_ext_browser, _object_ext_Class, _CSS_ext_pseudo, require, exports, module) {
-/* ---------- Form Data Object ---------- */
-
-    if (! ($.browser.msie < 10))  return;
-
-    function FormData() {
-
-        this.setPrivate(
-            'owner',
-            arguments[0] ||
-                $('<form style="display: none" />').appendTo( document.body )[0]
-        );
-    }
-
-    function itemOf() {
-
-        return  $('[name="' + arguments[0] + '"]:field',  this.__owner__);
-    }
-
-    $.Class.extend(FormData, null, {
-        append:      function (name, value) {
-
-            $('<input />', {
-                type:     'hidden',
-                name:     name,
-                value:    value
-            }).appendTo( this.__owner__ );
-        },
-        'delete':    function (name) {
-
-            itemOf.call(this, name).remove();
-        },
-        set:         function (name, value) {
-
-            this['delete']( name );    this.append(name, value);
-        },
-        get:         function (name) {
-
-            return  itemOf.call(this, name).val();
-        },
-        getAll:      function (name) {
-
-            return  $.map(itemOf.call(this, name),  function () {
-
-                return arguments[0].value;
+        return !selector ? this.each(function () {
+          $_Box = $($_Box[0].cloneNode(true));
+          $.mapTree($_Box[0], 'childNodes', function (child) {
+            if (child.nodeName.toLowerCase() !== 'script') return child;
+            var attribute = {};
+            $.each(child.attributes, function () {
+              attribute[this.nodeName] = this.nodeValue;
             });
+            $('<script />', attribute).prop('text', child.text).replaceAll(child);
+          });
+          $_Box.children().insertTo(this);
+        }) : $_Box.find(selector).insertTo(this);
+      };
+    }
+  },
+  './AJAX/ext/wrapper': {
+    base: './AJAX/ext',
+    dependency: ["./DOM/ext/base"],
+    factory: function (_DOM_ext_base, require, exports, module) {
+      /* ---------- RESTful API ---------- */
+      $.map(['get', 'post', 'put', 'delete'], function (method) {
+        $[method] = $[method] || function (URL, data, callback, DataType) {
+          if (typeof data === 'function') DataType = callback, callback = data, data = null;
+          return $.ajax($.extend({
+            type: method,
+            url: URL,
+            crossDomain: true,
+            data: data,
+            dataType: DataType,
+            success: callback
+          }, $.isPlainObject(URL) ? URL : {}));
+        };
+      });
+      $.getJSON = $.getJSON || $.get;
+      /* ---------- Smart Load ---------- */
+
+      $.fn.load = function (iURL, iData, iCallback) {
+        if (!this[0]) return this;
+        if (typeof iData == 'function') iCallback = iData, iData = null;
+        var $_This = this;
+        iURL = iURL.trim().split(/\s+/);
+        $[iData ? 'post' : 'get'](iURL[0], iData, function (iHTML, _, iXHR) {
+          $_This.htmlExec(typeof iHTML === 'string' ? iHTML : iXHR.responseText, iURL[1]);
+          if (typeof iCallback === 'function') $_This.each($.proxy(iCallback, null, iHTML, _, iXHR));
+        }, 'html');
+        return this;
+      };
+    }
+  },
+  './polyfill/BOM/HTML-5_Form': {
+    base: './polyfill/BOM',
+    dependency: ["./utility/ext/browser", "./object/ext/Class", "./CSS/ext/pseudo"],
+    factory: function (_utility_ext_browser, _object_ext_Class, _CSS_ext_pseudo, require, exports, module) {
+      /* ---------- Form Data Object ---------- */
+      if (!($.browser.msie < 10)) return;
+
+      function FormData() {
+        this.setPrivate('owner', arguments[0] || $('<form style="display: none" />').appendTo(document.body)[0]);
+      }
+
+      function itemOf() {
+        return $('[name="' + arguments[0] + '"]:field', this.__owner__);
+      }
+
+      $.Class.extend(FormData, null, {
+        append: function (name, value) {
+          $('<input />', {
+            type: 'hidden',
+            name: name,
+            value: value
+          }).appendTo(this.__owner__);
         },
-        toString:    function () {
-
-            return  $( this.__owner__ ).serialize();
+        'delete': function (name) {
+          itemOf.call(this, name).remove();
         },
-        entries:     function () {
-
-            return $.makeIterator(Array.from(
-                $( this.__owner__ ).serializeArray(),  function (_This_) {
-
-                    return  [_This_.name, _This_.value];
-                }
-            ));
+        set: function (name, value) {
+          this['delete'](name);
+          this.append(name, value);
+        },
+        get: function (name) {
+          return itemOf.call(this, name).val();
+        },
+        getAll: function (name) {
+          return $.map(itemOf.call(this, name), function () {
+            return arguments[0].value;
+          });
+        },
+        toString: function () {
+          return $(this.__owner__).serialize();
+        },
+        entries: function () {
+          return $.makeIterator(Array.from($(this.__owner__).serializeArray(), function (_This_) {
+            return [_This_.name, _This_.value];
+          }));
         }
-    });
+      });
+      self.FormData = FormData;
+    }
+  },
+  './polyfill/BOM/URL': {
+    base: './polyfill/BOM',
+    dependency: ["./object/ext/Class", "./utility/ext/browser"],
+    factory: function (Class, _utility_ext_browser, require, exports, module) {
+      var BOM = self;
+      /* ---------- URL Search Parameter ---------- */
 
-    self.FormData = FormData;
-
-}
-        },
-        './polyfill/BOM/URL':  {
-            base:        './polyfill/BOM',
-            dependency:  ["./object/ext/Class","./utility/ext/browser"],
-            factory:     function (Class, _utility_ext_browser, require, exports, module) {
-    var BOM = self;
-
-/* ---------- URL Search Parameter ---------- */
-
-    function URLSearchParams() {
-
+      function URLSearchParams() {
         this.setPrivate('length', 0);
-
         var search = arguments[0] || '';
 
         if (search instanceof Array) {
+          for (var i = 0; arguments[i]; i++) this.append.apply(this, arguments[i]);
 
-            for (var i = 0;  arguments[i];  i++)
-                this.append.apply(this, arguments[i]);
-
-            return;
+          return;
         }
 
         var _This_ = this;
 
-        search.replace(/([^\?&=]+)=([^&]+)/g,  function (_, key, value) {
+        search.replace(/([^\?&=]+)=([^&]+)/g, function (_, key, value) {
+          try {
+            value = decodeURIComponent(value);
+          } catch (error) {}
 
-            try {  value = decodeURIComponent( value );  } catch (error) { }
-
-            _This_.append(key, value);
+          _This_.append(key, value);
         });
-    }
+      }
 
-    Class.extend(URLSearchParams, null, {
-        append:      function (key, value) {
-
-            this.setPrivate(this.length++,  [key,  value + '']);
+      Class.extend(URLSearchParams, null, {
+        append: function (key, value) {
+          this.setPrivate(this.length++, [key, value + '']);
         },
-        get:         function (key) {
-
-            for (var i = 0;  this[i];  i++)
-                if (this[i][0] === key)  return this[i][1];
+        get: function (key) {
+          for (var i = 0; this[i]; i++) if (this[i][0] === key) return this[i][1];
         },
-        getAll:      function (key) {
-
-            return  $.map(this,  function (_This_) {
-
-                if (_This_[0] === key)  return _This_[1];
-            });
+        getAll: function (key) {
+          return $.map(this, function (_This_) {
+            if (_This_[0] === key) return _This_[1];
+          });
         },
-        'delete':    function (key) {
-
-            for (var i = 0;  this[i];  i++)
-                if (this[i][0] === key)  Array.prototype.splice.call(this, i, 1);
+        'delete': function (key) {
+          for (var i = 0; this[i]; i++) if (this[i][0] === key) Array.prototype.splice.call(this, i, 1);
         },
-        set:         function (key, value) {
-
-            if (this.get( key )  != null)  this['delete']( key );
-
-            this.append(key, value);
+        set: function (key, value) {
+          if (this.get(key) != null) this['delete'](key);
+          this.append(key, value);
         },
-        toString:    function () {
-
-            return  encodeURIComponent(Array.from(this,  function (_This_) {
-
-                return  _This_[0] + '=' + _This_[1];
-
-            }).join('&'));
+        toString: function () {
+          return encodeURIComponent(Array.from(this, function (_This_) {
+            return _This_[0] + '=' + _This_[1];
+          }).join('&'));
         },
-        entries:     function () {
-
-            return  $.makeIterator( this );
+        entries: function () {
+          return $.makeIterator(this);
         }
-    });
+      });
+      BOM.URLSearchParams = BOM.URLSearchParams || URLSearchParams;
 
-    BOM.URLSearchParams = BOM.URLSearchParams || URLSearchParams;
+      BOM.URLSearchParams.prototype.sort = BOM.URLSearchParams.prototype.sort || function () {
+        var entry = Array.from(this.entries()).sort(function (A, B) {
+          return A[0].localeCompare(B[0]) || A[1].localeCompare(B[1]);
+        });
 
-    BOM.URLSearchParams.prototype.sort =
-        BOM.URLSearchParams.prototype.sort  ||  function () {
+        for (var i = 0; entry[i]; i++) this['delete'](entry[i][0]);
 
-            var entry = Array.from( this.entries() ).sort(function (A, B) {
-
-                    return  A[0].localeCompare( B[0] )  ||
-                        A[1].localeCompare( B[1] );
-                });
-
-            for (var i = 0;  entry[i];  i++)  this['delete']( entry[i][0] );
-
-            for (var i = 0;  entry[i];  i++)
-                this.append(entry[i][0], entry[i][1]);
-        };
-
-/* ---------- URL Constructor ---------- */
-
-    BOM.URL = BOM.URL || BOM.webkitURL;
-
-    if (typeof BOM.URL === 'function')  return;
+        for (var i = 0; entry[i]; i++) this.append(entry[i][0], entry[i][1]);
+      };
+      /* ---------- URL Constructor ---------- */
 
 
-    var Origin_RE = /^\w+:\/\/.{2,}/;
+      BOM.URL = BOM.URL || BOM.webkitURL;
+      if (typeof BOM.URL === 'function') return;
+      var Origin_RE = /^\w+:\/\/.{2,}/;
 
+      function URL(path, base) {
+        var link = this.setPrivate('data', $('<div><a /></div>')[0].firstChild);
+        link.href = Origin_RE.test(path) ? path : base;
+        if (!Origin_RE.test(link.href)) throw new TypeError("Failed to construct 'URL': Invalid " + (base ? 'base' : '') + ' URL');
+        if (link.href == base) link.href = link.origin + (path[0] === '/' ? path : link.pathname.replace(/[^\/]*$/, path));
+        return $.browser.modern ? this : link;
+      }
 
-    function URL(path, base) {
-
-        var link = this.setPrivate('data',  $('<div><a /></div>')[0].firstChild);
-
-        link.href = Origin_RE.test( path )  ?  path  :  base;
-
-        if (! Origin_RE.test( link.href ))
-            throw  new TypeError(
-                "Failed to construct 'URL': Invalid " +
-                (base ? 'base' : '')  +  ' URL'
-            );
-
-        if (link.href == base)
-            link.href = link.origin + (
-                (path[0] === '/')  ?
-                    path  :  link.pathname.replace(/[^\/]*$/, path)
-            );
-
-        return  $.browser.modern ? this : link;
-    }
-
-    Class.extend(URL, null, {
-        toString:    function () {  return this.href;  }
-    });
-
-    $.each([
-        BOM.Location, BOM.HTMLAnchorElement, BOM.HTMLAreaElement
-    ],  function () {
-
+      Class.extend(URL, null, {
+        toString: function () {
+          return this.href;
+        }
+      });
+      $.each([BOM.Location, BOM.HTMLAnchorElement, BOM.HTMLAreaElement], function () {
         Object.defineProperty(this.prototype, 'origin', {
-            get:           function () {
-
-                return  this.protocol + '//' + this.hostname + (
-                    ((! this.port) || (this.port == 80))  ?
-                        ''  :  (':' + this.port)
-                );
-            },
-            enumerable:    $.browser.modern
+          get: function () {
+            return this.protocol + '//' + this.hostname + (!this.port || this.port == 80 ? '' : ':' + this.port);
+          },
+          enumerable: $.browser.modern
         });
-
         Object.defineProperty(this.prototype, 'searchParams', {
-            get:           function () {
-
-                return  new URLSearchParams( this.search );
-            },
-            enumerable:    $.browser.modern
+          get: function () {
+            return new URLSearchParams(this.search);
+          },
+          enumerable: $.browser.modern
         });
-    });
-
-    if ( $.browser.modern )
-        $.each(BOM.location,  function (key) {
-
-            if (typeof this !== 'function')
-                Object.defineProperty(URL.prototype, key, {
-                    get:             function () {
-
-                        return  this.__data__[key];
-                    },
-                    set:             (key === 'origin')  ?
-                        undefined  :  function () {
-
-                            this.__data__[key] = arguments[0];
-                        },
-                    enumerable:      true,
-                    configurable:    true
-                });
+      });
+      if ($.browser.modern) $.each(BOM.location, function (key) {
+        if (typeof this !== 'function') Object.defineProperty(URL.prototype, key, {
+          get: function () {
+            return this.__data__[key];
+          },
+          set: key === 'origin' ? undefined : function () {
+            this.__data__[key] = arguments[0];
+          },
+          enumerable: true,
+          configurable: true
         });
+      });
 
-    if ( BOM.URL ) {
-
+      if (BOM.URL) {
         URL.createObjectURL = BOM.URL.createObjectURL;
-
         URL.revokeObjectURL = BOM.URL.revokeObjectURL;
+      }
+
+      BOM.URL = URL;
     }
+  },
+  './AJAX/ext/URL': {
+    base: './AJAX/ext',
+    dependency: ["./polyfill/BOM/URL", "./object/ext/base", "./utility/ext/string"],
+    factory: function (_polyfill_BOM_URL, _object_ext_base, _utility_ext_string, require, exports, module) {
+      var BOM = self;
+      /**
+       * URL 查询参数对象化
+       *
+       * @author   TechQuery
+       *
+       * @memberof $
+       *
+       * @param    {string} [search] - Same format as `location.search` at least or
+       *                               just use its value while the parameter is
+       *                               empty
+       * @returns  {object} Plain Object for the Query String
+       *
+       * @example  // URL 查询字符串
+       *
+       *     $.paramJSON('?a=1&b=two&b=true')
+       *
+       *     //  {
+       *             a:    1,
+       *             b:    ['two', true]
+       *         }
+       */
 
-    BOM.URL = URL;
-
-}
-        },
-        './AJAX/ext/URL':  {
-            base:        './AJAX/ext',
-            dependency:  ["./polyfill/BOM/URL","./object/ext/base","./utility/ext/string"],
-            factory:     function (_polyfill_BOM_URL, _object_ext_base, _utility_ext_string, require, exports, module) {
-    var BOM = self;
-
-    /**
-     * URL 查询参数对象化
-     *
-     * @author   TechQuery
-     *
-     * @memberof $
-     *
-     * @param    {string} [search] - Same format as `location.search` at least or
-     *                               just use its value while the parameter is
-     *                               empty
-     * @returns  {object} Plain Object for the Query String
-     *
-     * @example  // URL 查询字符串
-     *
-     *     $.paramJSON('?a=1&b=two&b=true')
-     *
-     *     //  {
-     *             a:    1,
-     *             b:    ['two', true]
-     *         }
-     */
-
-    $.paramJSON = function (search) {
-
-        var _Args_ = { };
-
-        $.each(
-            Array.from(
-                (new BOM.URLSearchParams(
-                    (search || BOM.location.search).split('?')[1]
-                )).entries()
-            ),
-            function () {
-                if (
-                    (! $.isNumeric(this[1]))  ||
-                    Number.isSafeInteger( +this[1] )
-                )  try {
-                    this[1] = JSON.parse( this[1] );
-                } catch (iError) { }
-
-                if (this[0] in _Args_)
-                    _Args_[this[0]] = [ ].concat(_Args_[this[0]], this[1]);
-                else
-                    _Args_[this[0]] = this[1];
-            }
-        );
-
+      $.paramJSON = function (search) {
+        var _Args_ = {};
+        $.each(Array.from(new BOM.URLSearchParams((search || BOM.location.search).split('?')[1]).entries()), function () {
+          if (!$.isNumeric(this[1]) || Number.isSafeInteger(+this[1])) try {
+            this[1] = JSON.parse(this[1]);
+          } catch (iError) {}
+          if (this[0] in _Args_) _Args_[this[0]] = [].concat(_Args_[this[0]], this[1]);else _Args_[this[0]] = this[1];
+        });
         return _Args_;
-    };
+      };
+      /* ---------- URL Parameter Signature  v0.1 ---------- */
 
-/* ---------- URL Parameter Signature  v0.1 ---------- */
 
-    function JSON_Sign(iData) {
+      function JSON_Sign(iData) {
+        return '{' + $.map(Object.keys(iData).sort(), function (iKey) {
+          return '"' + iKey + '":' + JSON.stringify(iData[iKey]);
+        }).join() + '}';
+      }
 
-        return  '{'  +  $.map(Object.keys( iData ).sort(),  function (iKey) {
-
-            return  '"'  +  iKey  +  '":'  +  JSON.stringify( iData[iKey] );
-
-        }).join()  +  '}';
-    }
-
-    $.paramSign = function (iData) {
-
+      $.paramSign = function (iData) {
         iData = iData.valueOf();
-
-        if (typeof iData === 'string')  iData = this.paramJSON( iData );
+        if (typeof iData === 'string') iData = this.paramJSON(iData);
 
         var _Data_ = new BOM.URLSearchParams();
 
-        $.each(iData,  function (name, value) {
+        $.each(iData, function (name, value) {
+          switch (true) {
+            case this === BOM:
+              value = '';
+              break;
 
-            switch ( true ) {
-                case  (this === BOM):
-                    value = '';
-                    break;
-                case  (typeof value === 'object'):
-                    value = JSON_Sign( this );
-                    break;
-                case  $.likeArray( this ):
-                    value = '['  +  $.map(this, JSON_Sign).join()  +  ']';
-                    break;
-                case (this instanceof Function):
-                    return;
-            }
+            case typeof value === 'object':
+              value = JSON_Sign(this);
+              break;
 
-            _Data_.append(name, value);
+            case $.likeArray(this):
+              value = '[' + $.map(this, JSON_Sign).join() + ']';
+              break;
+
+            case this instanceof Function:
+              return;
+          }
+
+          _Data_.append(name, value);
         });
 
         _Data_.sort();
 
-        return  _Data_ + '';
-    };
+        return _Data_ + '';
+      };
 
-    return $.extend({
+      return $.extend({
         /**
          * 更新 URL 查询参数
          *
@@ -1132,29 +852,20 @@ function merge(base, path) {
          *
          *     // 'path/to/model?a=1&b=2&c=3'
          */
-        extendURL:    function (URL, param) {
-
-            if (! param)  return URL;
-
-            var URL = $.split(URL, '?', 2);
-
-            var path = URL[0];    arguments[0] = URL[1];
-
-            return  path  +  '?'  +  $.param($.extend.apply($,  Array.from(
-                arguments,  function (_This_) {
-
-                    _This_ = _This_.valueOf();
-
-                    return  (typeof _This_ != 'string')  ?
-                        _This_  :  $.paramJSON('?' + _This_);
-                }
-            )));
+        extendURL: function (URL, param) {
+          if (!param) return URL;
+          var URL = $.split(URL, '?', 2);
+          var path = URL[0];
+          arguments[0] = URL[1];
+          return path + '?' + $.param($.extend.apply($, Array.from(arguments, function (_This_) {
+            _This_ = _This_.valueOf();
+            return typeof _This_ != 'string' ? _This_ : $.paramJSON('?' + _This_);
+          })));
         },
-        fileName:     function () {
-            return (
-                arguments[0] || BOM.location.pathname
-            ).match(/([^\?\#]+)(\?|\#)?/)[1].split('/').slice(-1)[0];
+        fileName: function () {
+          return (arguments[0] || BOM.location.pathname).match(/([^\?\#]+)(\?|\#)?/)[1].split('/').slice(-1)[0];
         },
+
         /**
          * 获取文件路径
          *
@@ -1187,12 +898,10 @@ function merge(base, path) {
          *
          *     // 'http://localhost:8084/test/'
          */
-        filePath:     function (URL) {
-
-            return  (arguments.length ? URL : BOM.location).toString()
-                .split(/\?|\#/)[0]
-                .replace(/[^\/\\]*$/, '');
+        filePath: function (URL) {
+          return (arguments.length ? URL : BOM.location).toString().split(/\?|\#/)[0].replace(/[^\/\\]*$/, '');
         },
+
         /**
          * 获取 URL 的域（源）
          *
@@ -1211,11 +920,10 @@ function merge(base, path) {
          *
          *     // 'http://localhost:8080'
          */
-        urlDomain:    function (URL) {
-
-            return  (! URL)  ?  BOM.location.origin  :
-                (URL.match( /^(\w+:)?\/\/[^\/]+/ )  ||  '')[0];
+        urlDomain: function (URL) {
+          return !URL ? BOM.location.origin : (URL.match(/^(\w+:)?\/\/[^\/]+/) || '')[0];
         },
+
         /**
          * URL 跨域判断
          *
@@ -1235,1146 +943,801 @@ function merge(base, path) {
          *
          *     $.isXDomain('/iQuery')  // false
          */
-        isXDomain:    function (URL) {
-            return (
-                BOM.location.origin !==
-                (new BOM.URL(URL, this.filePath())).origin
-            );
+        isXDomain: function (URL) {
+          return BOM.location.origin !== new BOM.URL(URL, this.filePath()).origin;
         }
-    });
-}
-        },
-        './AJAX/ext/HTML_Request':  {
-            base:        './AJAX/ext',
-            dependency:  ["./AJAX/ext/URL","./polyfill/BOM/HTML-5_Form"],
-            factory:     function (_AJAX_ext_URL, _polyfill_BOM_HTML_5_Form, require, exports, module) {
-    function HTMLHttpRequest() {
-
+      });
+    }
+  },
+  './AJAX/ext/HTML_Request': {
+    base: './AJAX/ext',
+    dependency: ["./AJAX/ext/URL", "./polyfill/BOM/HTML-5_Form"],
+    factory: function (_AJAX_ext_URL, _polyfill_BOM_HTML_5_Form, require, exports, module) {
+      function HTMLHttpRequest() {
         this.status = 0;
-
         this.readyState = 0;
-
         this.responseType = 'text';
-    }
+      }
 
-    var Success_State = {
-            readyState:    4,
-            status:        200,
-            statusText:    'OK'
-        },
-        Fail_State = {
-            readyState:    4,
-            status:        500,
-            statusText:    'Internal Server Error'
-        };
+      var Success_State = {
+        readyState: 4,
+        status: 200,
+        statusText: 'OK'
+      },
+          Fail_State = {
+        readyState: 4,
+        status: 500,
+        statusText: 'Internal Server Error'
+      };
 
-    function Allow_Send() {
-        return  (this.readyState == 1)  ||  (this.readyState == 4);
-    }
+      function Allow_Send() {
+        return this.readyState == 1 || this.readyState == 4;
+      }
 
-    function iFrame_Send() {
-
+      function iFrame_Send() {
         var HHR = this,
-            target = this.$_Transport.submit(
-                $.proxy(Allow_Send, this)
-            ).attr('target');
+            target = this.$_Transport.submit($.proxy(Allow_Send, this)).attr('target');
 
-        if ((! target)  ||  target.match( /^_(top|parent|self|blank)$/i )) {
-
-            target = $.uuid('HHR');
-
-            this.$_Transport.attr('target', target);
+        if (!target || target.match(/^_(top|parent|self|blank)$/i)) {
+          target = $.uuid('HHR');
+          this.$_Transport.attr('target', target);
         }
 
         var $_Target = $('iframe[name="' + target + '"]');
-
-        if (! $_Target[0])
-            $_Target = $('<iframe />',  {
-                name:     target,
-                style:    'display: none'
-            }).appendTo('body');
-
-        $_Target.on('load',  function () {
-
-            var _DOM_ = this.contentWindow.document;
-
-            $.extend(HHR, Success_State, {
-                responseHeader:    {
-                    'Set-Cookie':      _DOM_.cookie,
-                    'Content-Type':
-                        _DOM_.contentType + '; charset=' + _DOM_.charset
-                },
-                responseType:      'text',
-                response:          HHR.responseText = $(_DOM_.body).text()
-            });
-
-            HHR.onload();
-        });
-
-        this.$_Transport.submit();
-    }
-
-    var JSONP_Map = { };
-
-    HTMLHttpRequest.JSONP = function (data) {
-
-        var _This_ = document.currentScript;
-
-        data = $.extend({
-            responseHeader:    {
-                'Content-Type':    _This_.type + '; charset=' + _This_.charset
+        if (!$_Target[0]) $_Target = $('<iframe />', {
+          name: target,
+          style: 'display: none'
+        }).appendTo('body');
+        $_Target.on('load', function () {
+          var _DOM_ = this.contentWindow.document;
+          $.extend(HHR, Success_State, {
+            responseHeader: {
+              'Set-Cookie': _DOM_.cookie,
+              'Content-Type': _DOM_.contentType + '; charset=' + _DOM_.charset
             },
-            responseType:      'json',
-            response:          data,
-            responseText:      JSON.stringify( data )
+            responseType: 'text',
+            response: HHR.responseText = $(_DOM_.body).text()
+          });
+          HHR.onload();
+        });
+        this.$_Transport.submit();
+      }
+
+      var JSONP_Map = {};
+
+      HTMLHttpRequest.JSONP = function (data) {
+        var _This_ = document.currentScript;
+        data = $.extend({
+          responseHeader: {
+            'Content-Type': _This_.type + '; charset=' + _This_.charset
+          },
+          responseType: 'json',
+          response: data,
+          responseText: JSON.stringify(data)
         }, Success_State);
+        var HHR = JSONP_Map[_This_.src];
 
-        var HHR = JSONP_Map[ _This_.src ];
-
-        for (var i = 0;  HHR[i];  i++)  if ( HHR[i].$_Transport ) {
-
-            $.extend(HHR[i], data).onload();
-
-            HHR[i].$_Transport.remove();
+        for (var i = 0; HHR[i]; i++) if (HHR[i].$_Transport) {
+          $.extend(HHR[i], data).onload();
+          HHR[i].$_Transport.remove();
         }
 
         HHR.length = 0;
-    };
+      };
 
-    function Script_Send() {
-
-        this.responseURL = $.extendURL(
-            this.responseURL.replace(/(\w+)=\?/, '$1=HTMLHttpRequest.JSONP'),
-            arguments[0]
-        );
-
+      function Script_Send() {
+        this.responseURL = $.extendURL(this.responseURL.replace(/(\w+)=\?/, '$1=HTMLHttpRequest.JSONP'), arguments[0]);
         this.$_Transport = $('<script />', {
-            type:       'text/javascript',
-            charset:    'UTF-8',
-            src:        this.responseURL
-        }).on('error',  $.proxy(this.onerror, $.extend(this, Fail_State, {
-            responseType:    'text',
-            response:        '',
-            responseText:    ''
+          type: 'text/javascript',
+          charset: 'UTF-8',
+          src: this.responseURL
+        }).on('error', $.proxy(this.onerror, $.extend(this, Fail_State, {
+          responseType: 'text',
+          response: '',
+          responseText: ''
         }))).appendTo('head');
-
         var URI = this.$_Transport[0].src;
+        (JSONP_Map[URI] = JSONP_Map[URI] || []).push(this);
+      }
 
-        (JSONP_Map[ URI ] = JSONP_Map[ URI ]  ||  [ ]).push( this );
-    }
-
-    $.extend(HTMLHttpRequest.prototype, {
-        open:                     function () {
-            this.responseURL = arguments[1];
-
-            this.readyState = 1;
+      $.extend(HTMLHttpRequest.prototype, {
+        open: function () {
+          this.responseURL = arguments[1];
+          this.readyState = 1;
         },
-        send:                     function (data) {
-
-            if (! Allow_Send.call( this ))  return;
-
-            this.$_Transport =
-                (data instanceof self.FormData)  &&  $( data.__owner__ );
-
-            if (this.$_Transport && (
-                data.__owner__.method.toUpperCase() === 'POST'
-            ))
-                iFrame_Send.call( this );
-            else
-                Script_Send.call(this, data);
-
-            this.readyState = 2;
+        send: function (data) {
+          if (!Allow_Send.call(this)) return;
+          this.$_Transport = data instanceof self.FormData && $(data.__owner__);
+          if (this.$_Transport && data.__owner__.method.toUpperCase() === 'POST') iFrame_Send.call(this);else Script_Send.call(this, data);
+          this.readyState = 2;
         },
-        abort:                    function () {
-            this.$_Transport.remove();
-
-            this.$_Transport = null;
-
-            this.readyState = 0;
+        abort: function () {
+          this.$_Transport.remove();
+          this.$_Transport = null;
+          this.readyState = 0;
         },
-        setRequestHeader:         function () {
-
-            console.warn("JSONP/iframe doesn't support Changing HTTP Headers...");
+        setRequestHeader: function () {
+          console.warn("JSONP/iframe doesn't support Changing HTTP Headers...");
         },
-        getResponseHeader:        function () {
-
-            return  this.responseHeader[ arguments[0] ]  ||  null;
+        getResponseHeader: function () {
+          return this.responseHeader[arguments[0]] || null;
         },
-        getAllResponseHeaders:    function () {
-
-            return Array.from(
-                Object.keys( this.responseHeader ),
-                function (key) {
-
-                    return  key.toLowerCase()  +  ': '  +  this[ key ];
-                },
-                this.responseHeader
-            ).join("\r\n");
+        getAllResponseHeaders: function () {
+          return Array.from(Object.keys(this.responseHeader), function (key) {
+            return key.toLowerCase() + ': ' + this[key];
+          }, this.responseHeader).join("\r\n");
         }
-    });
+      });
+      return self.HTMLHttpRequest = HTMLHttpRequest;
+    }
+  },
+  './AJAX/ext/transport': {
+    base: './AJAX/ext',
+    dependency: ["./AJAX/ext/HTML_Request"],
+    factory: function (HTMLHttpRequest, require, exports, module) {
+      var BOM = self;
+      /* ---------- Cacheable JSONP ---------- */
 
-    return  self.HTMLHttpRequest = HTMLHttpRequest;
+      function HHR_Transport(iOption, iOrigin) {
+        if (iOption.dataType != 'jsonp') return;
+        iOption.cache = 'cache' in iOrigin ? iOrigin.cache : true;
+        if (iOption.cache) iOption.url = iOption.url.replace(/&?_=\d+/, '');
 
-}
-        },
-        './AJAX/ext/transport':  {
-            base:        './AJAX/ext',
-            dependency:  ["./AJAX/ext/HTML_Request"],
-            factory:     function (HTMLHttpRequest, require, exports, module) {
-    var BOM = self;
-
-/* ---------- Cacheable JSONP ---------- */
-
-    function HHR_Transport(iOption, iOrigin) {
-
-        if (iOption.dataType != 'jsonp')  return;
-
-        iOption.cache = ('cache' in iOrigin)  ?  iOrigin.cache  :  true;
-
-        if ( iOption.cache )  iOption.url = iOption.url.replace(/&?_=\d+/, '');
-
-        if ($.Type( this )  !=  'iQuery') {
-
-            iOption.url = iOption.url.replace(
-                RegExp('&?' + iOption.jsonp + '=\\w+'),  ''
-            ).trim('?');
-
-            iOption.dataTypes.shift();
+        if ($.Type(this) != 'iQuery') {
+          iOption.url = iOption.url.replace(RegExp('&?' + iOption.jsonp + '=\\w+'), '').trim('?');
+          iOption.dataTypes.shift();
         }
 
         var iXHR;
-
         return {
-            send:     function (iHeader, iComplete) {
+          send: function (iHeader, iComplete) {
+            iOption.url += (iOption.url.split('?')[1] ? '&' : '?') + iOption.jsonp + '=?';
+            iXHR = new HTMLHttpRequest();
+            iXHR.open(iOption.method, iOption.url);
 
-                iOption.url += (iOption.url.split('?')[1] ? '&' : '?')  +
-                    iOption.jsonp + '=?';
+            iXHR.onload = iXHR.onerror = function () {
+              var iResponse = {
+                text: this.responseText
+              };
+              iResponse[this.responseType] = this.response;
+              iComplete(this.status, this.statusText, iResponse);
+            };
 
-                iXHR = new HTMLHttpRequest();
-
-                iXHR.open(iOption.method, iOption.url);
-
-                iXHR.onload = iXHR.onerror = function () {
-
-                    var iResponse = {text:  this.responseText};
-
-                    iResponse[ this.responseType ] = this.response;
-
-                    iComplete(this.status, this.statusText, iResponse);
-                };
-
-                iXHR.send( iOption.data );
-            },
-            abort:    function () {
-
-                iXHR.abort();
-            }
+            iXHR.send(iOption.data);
+          },
+          abort: function () {
+            iXHR.abort();
+          }
         };
-    }
-/* ---------- Cross Domain XHR (IE 10-) ---------- */
-
-    $.ajaxTransport('+script',  $.proxy(HHR_Transport, $));
-
-    if (! ($.browser.msie < 10))  return;
+      }
+      /* ---------- Cross Domain XHR (IE 10-) ---------- */
 
 
-    $.ajaxTransport('+*',  function (iOption) {
-
-        var iXHR,  iForm = (iOption.data || '').__owner__;
-
-        if (
-            (iOption.data instanceof BOM.FormData)  &&
-            $( iForm ).is('form')  &&
-            $('input[type="file"]', iForm)[0]
-        )
-            return  HHR_Transport.call($, iOption);
-
-        return  iOption.crossDomain && {
-            send:     function (iHeader, iComplete) {
-
-                iXHR = new BOM.XDomainRequest();
-
-                iXHR.open(iOption.method, iOption.url, true);
-
-                $.extend(iXHR, {
-                    timeout:      iOption.timeout || 0,
-                    onload:       function () {
-                        iComplete(
-                            200,
-                            'OK',
-                            {text:  iXHR.responseText},
-                            'Content-Type: ' + iXHR.contentType
-                        );
-                    },
-                    onerror:      function () {
-
-                        iComplete(500, 'Internal Server Error', {
-                            text:    iXHR.responseText
-                        });
-                    },
-                    ontimeout:    $.proxy(
-                        iComplete,  null,  504,  'Gateway Timeout'
-                    )
+      $.ajaxTransport('+script', $.proxy(HHR_Transport, $));
+      if (!($.browser.msie < 10)) return;
+      $.ajaxTransport('+*', function (iOption) {
+        var iXHR,
+            iForm = (iOption.data || '').__owner__;
+        if (iOption.data instanceof BOM.FormData && $(iForm).is('form') && $('input[type="file"]', iForm)[0]) return HHR_Transport.call($, iOption);
+        return iOption.crossDomain && {
+          send: function (iHeader, iComplete) {
+            iXHR = new BOM.XDomainRequest();
+            iXHR.open(iOption.method, iOption.url, true);
+            $.extend(iXHR, {
+              timeout: iOption.timeout || 0,
+              onload: function () {
+                iComplete(200, 'OK', {
+                  text: iXHR.responseText
+                }, 'Content-Type: ' + iXHR.contentType);
+              },
+              onerror: function () {
+                iComplete(500, 'Internal Server Error', {
+                  text: iXHR.responseText
                 });
-
-                iXHR.send( iOption.data );
-            },
-            abort:    function () {
-
-                iXHR.abort();    iXHR = null;
-            }
+              },
+              ontimeout: $.proxy(iComplete, null, 504, 'Gateway Timeout')
+            });
+            iXHR.send(iOption.data);
+          },
+          abort: function () {
+            iXHR.abort();
+            iXHR = null;
+          }
         };
-    });}
-        },
-        './AJAX/ext/header':  {
-            base:        './AJAX/ext',
-            dependency:  [],
-            factory:     function (require, exports, module) {
-    var parser = {
-            link:    function (raw) {
-
-                var link = { };
-
-                raw.replace(
-                    /\<(\S+?)\>; rel="(\w+)"(?:; title="(.*?)")?/g,
-                    function (_, URI, rel, title) {
-
-                        link[ rel ] = {
-                            uri:      URI,
-                            rel:      rel,
-                            title:    title
-                        };
-                    }
-                );
-
-                return link;
-            }
-        };
-
-    /**
-     * HTTP 报文头解析
-     *
-     * @author   TechQuery
-     *
-     * @memberof $
-     *
-     * @param    {string} raw - Raw Text of HTTP Headers
-     *
-     * @returns  {object} Object of HTTP Headers
-     */
-
-    $.parseHeader = function (raw) {
-
-        var header = { };
-
-        raw.replace(/^([\w\-]+):\s*(.*)$/mg,  function (_, key, value) {
-
-            if (parser[ key ])  value = parser[ key ]( value );
-
-            if (typeof header[ key ]  ===  'string')
-                header[ key ] = [header[ key ]];
-
-            if (header[ key ]  instanceof  Array)
-                header[ key ].push( value );
-            else
-                header[ key ] = value;
-        });
-
-        return header;
-    };}
-        },
-        './polyfill/DOM/HTML-5':  {
-            base:        './polyfill/DOM',
-            dependency:  ["./object/ext/advanced","./utility/ext/browser"],
-            factory:     function (_object_ext_advanced, _utility_ext_browser, require, exports, module) {
-    var BOM = self,  DOM = self.document;
-
-    var enumerable = $.browser.modern, Trident = ($.browser.msie < 12);
-
-/* ---------- Document Current Script ---------- */
-
-    var Stack_Prefix = {
-            webkit:     'at ',
-            mozilla:    '@',
-            msie:       'at Global code \\('
-        };
-
-    function Script_URL() {
-
-        try {  throw  new Error('AMD_Loader');  } catch (error) {
-
-            var URI;
-
-            for (var core in Stack_Prefix)
-                if ($.browser[ core ]) {
-
-                    URI = error.stack.match(RegExp(
-                        "\\s+"  +  Stack_Prefix[ core ]  +
-                            "(http(s)?:\\/\\/[^:]+)"
-                    ));
-
-                    return  URI && URI[1];
-                }
-        }
+      });
     }
+  },
+  './AJAX/ext/header': {
+    base: './AJAX/ext',
+    dependency: [],
+    factory: function (require, exports, module) {
+      var parser = {
+        link: function (raw) {
+          var link = {};
+          raw.replace(/\<(\S+?)\>; rel="(\w+)"(?:; title="(.*?)")?/g, function (_, URI, rel, title) {
+            link[rel] = {
+              uri: URI,
+              rel: rel,
+              title: title
+            };
+          });
+          return link;
+        }
+      };
+      /**
+       * HTTP 报文头解析
+       *
+       * @author   TechQuery
+       *
+       * @memberof $
+       *
+       * @param    {string} raw - Raw Text of HTTP Headers
+       *
+       * @returns  {object} Object of HTTP Headers
+       */
 
-    if (! ('currentScript' in DOM))
-        Object.defineProperty(Document.prototype,  'currentScript',  {
-            get:           function () {
-
-                var scripts = this.scripts,
-                    URI = ($.browser.msie < 10)  ||  Script_URL();
-
-                for (var i = 0;  script[i];  i++)
-                    if ((URI === true)  ?
-                        (scripts[i].readyState === 'interactive')  :
-                        (scripts[i].src === URI)
-                    )
-                        return scripts[i];
-            },
-            enumerable:    enumerable
+      $.parseHeader = function (raw) {
+        var header = {};
+        raw.replace(/^([\w\-]+):\s*(.*)$/mg, function (_, key, value) {
+          if (parser[key]) value = parser[key](value);
+          if (typeof header[key] === 'string') header[key] = [header[key]];
+          if (header[key] instanceof Array) header[key].push(value);else header[key] = value;
         });
+        return header;
+      };
+    }
+  },
+  './polyfill/DOM/HTML-5': {
+    base: './polyfill/DOM',
+    dependency: ["./object/ext/advanced", "./utility/ext/browser"],
+    factory: function (_object_ext_advanced, _utility_ext_browser, require, exports, module) {
+      var BOM = self,
+          DOM = self.document;
+      var enumerable = $.browser.modern,
+          Trident = $.browser.msie < 12;
+      /* ---------- Document Current Script ---------- */
 
-/* ---------- ParentNode Children ---------- */
+      var Stack_Prefix = {
+        webkit: 'at ',
+        mozilla: '@',
+        msie: 'at Global code \\('
+      };
 
-    function HTMLCollection(DOM_Array) {
+      function Script_URL() {
+        try {
+          throw new Error('AMD_Loader');
+        } catch (error) {
+          var URI;
 
-        for (var i = 0, j = 0;  DOM_Array[i];  i++)
-            if (DOM_Array[i].nodeType === 1) {
+          for (var core in Stack_Prefix) if ($.browser[core]) {
+            URI = error.stack.match(RegExp("\\s+" + Stack_Prefix[core] + "(http(s)?:\\/\\/[^:]+)"));
+            return URI && URI[1];
+          }
+        }
+      }
 
-                this[j] = DOM_Array[i];
+      if (!('currentScript' in DOM)) Object.defineProperty(Document.prototype, 'currentScript', {
+        get: function () {
+          var scripts = this.scripts,
+              URI = $.browser.msie < 10 || Script_URL();
 
-                if ( this[j++].name )  this[this[j - 1].name] = this[j - 1];
-            }
+          for (var i = 0; script[i]; i++) if (URI === true ? scripts[i].readyState === 'interactive' : scripts[i].src === URI) return scripts[i];
+        },
+        enumerable: enumerable
+      });
+      /* ---------- ParentNode Children ---------- */
+
+      function HTMLCollection(DOM_Array) {
+        for (var i = 0, j = 0; DOM_Array[i]; i++) if (DOM_Array[i].nodeType === 1) {
+          this[j] = DOM_Array[i];
+          if (this[j++].name) this[this[j - 1].name] = this[j - 1];
+        }
 
         this.length = j;
-    }
+      }
 
-    HTMLCollection.prototype.item = HTMLCollection.prototype.namedItem =
-        function () {
-            return  this[ arguments[0] ]  ||  null;
-        };
+      HTMLCollection.prototype.item = HTMLCollection.prototype.namedItem = function () {
+        return this[arguments[0]] || null;
+      };
 
-    var Children_Define = {
-            get:           function () {
-
-                return  new HTMLCollection( this.childNodes );
-            },
-            enumerable:    enumerable
+      var Children_Define = {
+        get: function () {
+          return new HTMLCollection(this.childNodes);
         },
-        DOM_Proto = Element.prototype;
+        enumerable: enumerable
+      },
+          DOM_Proto = Element.prototype;
+      if (!DOM.createDocumentFragment().children) Object.defineProperty(($.browser.modern ? DocumentFragment : Document).prototype, 'children', Children_Define);
+      if (!DOM.head.children[0]) Object.defineProperty(DOM_Proto, 'children', Children_Define);
+      /* ---------- Scrolling Element ---------- */
 
-    if (! DOM.createDocumentFragment().children)
-        Object.defineProperty(
-            ($.browser.modern ? DocumentFragment : Document).prototype,
-            'children',
-            Children_Define
-        );
+      if (!('scrollingElement' in DOM)) Object.defineProperty(Document.prototype, 'scrollingElement', {
+        get: function () {
+          return $.browser.webkit || DOM.compatMode == 'BackCompat' ? DOM.body : DOM.documentElement;
+        },
+        enumerable: enumerable
+      });
+      /* ---------- DOM manipulation ---------- */
 
-    if (! DOM.head.children[0])
-        Object.defineProperty(DOM_Proto, 'children', Children_Define);
+      var DOM_method = {
+        remove: enumerable ? function () {
+          if (this.parentNode) this.parentNode.removeChild(this);
+        } : $.proxy(Element.prototype.removeNode, null, true),
+        replaceWith: function () {
+          if (this.parentNode) this.parentNode.replaceChild($.buildFragment($.map(arguments, function (node) {
+            switch ($.Type(node)) {
+              case 'String':
+                return document.createTextNode(node);
 
+              case 'Text':
+                ;
 
-/* ---------- Scrolling Element ---------- */
+              case 'HTMLElement':
+                ;
 
-    if (! ('scrollingElement' in DOM))
-        Object.defineProperty(Document.prototype, 'scrollingElement', {
-            get:           function () {
-
-                return  ($.browser.webkit || (DOM.compatMode == 'BackCompat'))  ?
-                    DOM.body  :  DOM.documentElement;
-            },
-            enumerable:    enumerable
-        });
-
-/* ---------- DOM manipulation ---------- */
-
-    var DOM_method = {
-            remove:         enumerable ?
-                function () {
-
-                    if ( this.parentNode )  this.parentNode.removeChild( this );
-                } :
-                $.proxy(Element.prototype.removeNode, null, true),
-            replaceWith:    function () {
-
-                if ( this.parentNode )
-                    this.parentNode.replaceChild(
-                        $.buildFragment($.map(arguments,  function (node) {
-
-                            switch ($.Type( node )) {
-                                case 'String':
-                                    return  document.createTextNode( node );
-                                case 'Text':           ;
-                                case 'HTMLElement':    ;
-                                case 'Comment':
-                                    return  node;
-                            }
-                        })),
-                        this
-                    );
+              case 'Comment':
+                return node;
             }
-        };
+          })), this);
+        }
+      };
+      $.each([Element, Text, Comment], function () {
+        $.patch(this.prototype, DOM_method);
+      });
+      /* ---------- Element CSS Selector Match ---------- */
 
-    $.each([Element, Text, Comment],  function () {
+      DOM_Proto.matches = DOM_Proto.matches || DOM_Proto.webkitMatchesSelector || DOM_Proto.msMatchesSelector || DOM_Proto.mozMatchesSelector || function () {
+        if (!this.parentNode) $('<div />')[0].appendChild(this);
+        return $.inArray(this, this.parentNode.querySelectorAll(arguments[0])) > -1;
+      };
+      /* ---------- Selected Options ---------- */
 
-        $.patch(this.prototype,  DOM_method);
-    });
 
-/* ---------- Element CSS Selector Match ---------- */
+      if (Trident) Object.defineProperty(HTMLSelectElement.prototype, 'selectedOptions', {
+        get: function () {
+          return new HTMLCollection($.map(this.options, function (option) {
+            return option.selected ? option : null;
+          }));
+        },
+        enumerable: enumerable
+      });
+      /* ---------- DOM Token List ---------- */
 
-    DOM_Proto.matches = DOM_Proto.matches || DOM_Proto.webkitMatchesSelector ||
-        DOM_Proto.msMatchesSelector || DOM_Proto.mozMatchesSelector ||
-        function () {
-            if (! this.parentNode)  $('<div />')[0].appendChild(this);
-
-            return  ($.inArray(
-                this,  this.parentNode.querySelectorAll( arguments[0] )
-            ) > -1);
-        };
-
-/* ---------- Selected Options ---------- */
-
-    if ( Trident )
-        Object.defineProperty(HTMLSelectElement.prototype, 'selectedOptions', {
-            get:           function () {
-
-                return  new HTMLCollection(
-                    $.map(this.options,  function (option) {
-
-                        return  option.selected ? option : null;
-                    })
-                );
-            },
-            enumerable:    enumerable
-        });
-
-/* ---------- DOM Token List ---------- */
-
-    function DOMTokenList(element, name) {
-
+      function DOMTokenList(element, name) {
         this.length = 0;
-
-        this.__Node__ = element.attributes.getNamedItem( name );
-
-        this.value = (this.__Node__.nodeValue  ||  '').trim();
-
+        this.__Node__ = element.attributes.getNamedItem(name);
+        this.value = (this.__Node__.nodeValue || '').trim();
         $.merge(this, this.value.split(/\s+/));
-    }
+      }
 
-    var ArrayProto = Array.prototype;
-
-    $.each({
-        contains:    function () {
-
-            return  ($.inArray(arguments[0], this)  >  -1);
+      var ArrayProto = Array.prototype;
+      $.each({
+        contains: function () {
+          return $.inArray(arguments[0], this) > -1;
         },
-        add:         function (token) {
-
-            if (this.contains( token ))  return;
-
-            ArrayProto.push.call(this, token);
-
-            updateToken.call( this );
+        add: function (token) {
+          if (this.contains(token)) return;
+          ArrayProto.push.call(this, token);
+          updateToken.call(this);
         },
-        remove:      function (token) {
-
-            var index = $.inArray(token, this);
-
-            if (index > -1)  ArrayProto.splice.call(this, index, 1);
+        remove: function (token) {
+          var index = $.inArray(token, this);
+          if (index > -1) ArrayProto.splice.call(this, index, 1);
         },
-        toggle:      function (token, force) {
-
-            var has = (typeof force === 'boolean')  ?
-                    (! force)  :  this.contains( token );
-
-            this[has ? 'remove' : 'add']( token );
-
-            return  (! has);
+        toggle: function (token, force) {
+          var has = typeof force === 'boolean' ? !force : this.contains(token);
+          this[has ? 'remove' : 'add'](token);
+          return !has;
         }
-    },  function (key, method) {
-
-        DOMTokenList.prototype[ key ]  =  function (token) {
-
-            if ( token.match(/\s+/) )
-                throw  (self.DOMException || Error)(
-                    [
-                        "Failed to execute '" + key + "' on 'DOMTokenList':",
-                        "The token provided ('" + token + "') contains",
-                        "HTML space characters, which are not valid in tokens."
-                    ].join(" "),
-                    'InvalidCharacterError'
-                );
-
-            token = method.call(this, token);
-
-            if ( method.length )
-                this.__Node__.nodeValue = this.value =
-                    ArrayProto.join.call(this, ' ');
-
-            return token;
+      }, function (key, method) {
+        DOMTokenList.prototype[key] = function (token) {
+          if (token.match(/\s+/)) throw (self.DOMException || Error)(["Failed to execute '" + key + "' on 'DOMTokenList':", "The token provided ('" + token + "') contains", "HTML space characters, which are not valid in tokens."].join(" "), 'InvalidCharacterError');
+          token = method.call(this, token);
+          if (method.length) this.__Node__.nodeValue = this.value = ArrayProto.join.call(this, ' ');
+          return token;
         };
-    });
+      });
 
-    DOMTokenList.prototype.values = function () {
+      DOMTokenList.prototype.values = function () {
+        return $.makeIterator(this);
+      };
 
-        return  $.makeIterator( this );
-    };
-
-    $.each(['', 'SVG', 'Link', 'Anchor', 'Area'],  function (key, proto) {
-
+      $.each(['', 'SVG', 'Link', 'Anchor', 'Area'], function (key, proto) {
         proto += 'Element';
-
-        if (key < 2)
-            key = 'class';
-        else {
-            key = 'rel';    proto = 'HTML' + proto;
+        if (key < 2) key = 'class';else {
+          key = 'rel';
+          proto = 'HTML' + proto;
         }
-
-        proto = (BOM[ proto ]  ||  '').prototype;
-
-        if ((! proto)  ||  ((key + 'List')  in  proto))
-            return;
-
-        Object.defineProperty(proto,  key + 'List',  {
-            get:           function () {
-
-                return  new DOMTokenList(this, key);
-            },
-            enumerable:    enumerable
+        proto = (BOM[proto] || '').prototype;
+        if (!proto || key + 'List' in proto) return;
+        Object.defineProperty(proto, key + 'List', {
+          get: function () {
+            return new DOMTokenList(this, key);
+          },
+          enumerable: enumerable
         });
-    });
+      });
+      if (BOM.DOMTokenList && Trident) BOM.DOMTokenList.prototype.toggle = DOMTokenList.prototype.toggle;
+      /* ---------- Document Parse ---------- */
 
-    if (BOM.DOMTokenList && Trident)
-        BOM.DOMTokenList.prototype.toggle = DOMTokenList.prototype.toggle;
+      var createXML = Trident ? function (code) {
+        var document = DOM.implementation.createDocument(null, null, null);
+        document.async = false;
+        document.loadXML(code);
+        return document;
+      } : function (code, type) {
+        var XHR = new XMLHttpRequest();
+        XHR.open('GET', 'data:' + (type || 'application/xml') + ',' + code, false);
+        XHR.send();
+        return XHR.responseXML;
+      },
+          _parse_ = BOM.DOMParser && BOM.DOMParser.prototype.parseFromString;
 
+      function DOMParser() {}
 
-/* ---------- Document Parse ---------- */
-
-    var createXML = Trident ?
-            function (code) {
-
-                var document = DOM.implementation.createDocument(null, null, null);
-
-                document.async = false;
-
-                document.loadXML( code );
-
-                return document;
-            }  :
-            function (code, type) {
-
-                var XHR = new XMLHttpRequest();
-
-                XHR.open(
-                    'GET',
-                    'data:'  +  (type || 'application/xml')  +  ','  +  code,
-                    false
-                );
-
-                XHR.send();
-
-                return XHR.responseXML;
-            },
-        _parse_ = BOM.DOMParser && BOM.DOMParser.prototype.parseFromString;
-
-    function DOMParser() { }
-
-    function parse(type, code) {
+      function parse(type, code) {
         try {
-            return  _parse_.call(new BOM.DOMParser(),  code || '',  type);
-        } catch (error) { }
-    }
+          return _parse_.call(new BOM.DOMParser(), code || '', type);
+        } catch (error) {}
+      }
 
-    if (! BOM.DOMParser)
-        Object.defineProperty(BOM, 'DOMParser', {
-            value:         DOMParser,
-            enumerable:    true
-        });
+      if (!BOM.DOMParser) Object.defineProperty(BOM, 'DOMParser', {
+        value: DOMParser,
+        enumerable: true
+      });
+      if (!parse('text/html')) BOM.DOMParser.prototype.parseFromString = _parse_ = function (code, type) {
+        var document;
 
-    if (! parse('text/html'))
-        BOM.DOMParser.prototype.parseFromString = _parse_ = function (code, type) {
+        switch (type) {
+          case 'application/xml':
+            ;
 
-            var document;
+          case 'image/svg+xml':
+            document = createXML(code, type);
+            break;
 
-            switch ( type ) {
-                case 'application/xml':    ;
-                case 'image/svg+xml':
-                    document = createXML(code, type);    break;
-                case 'text/html':          {
-                    document = DOM.implementation.createHTMLDocument('');
-
-                    document.createElement('html');
-
-                    document.write( code );    document.close();
-                    break;
-                }
-                default:
-                    throw  TypeError(type + " isn't supported");
+          case 'text/html':
+            {
+              document = DOM.implementation.createHTMLDocument('');
+              document.createElement('html');
+              document.write(code);
+              document.close();
+              break;
             }
 
-            if ((document.parseError || '').errorCode)
-                document = createXML(
-                    '<xml><parsererror>' +
-                        '<h3>This page contains the following errors:</h3><div>' +
-                            document.parseError.reason +
-                    '</div></parsererror></xml>'
-                );
+          default:
+            throw TypeError(type + " isn't supported");
+        }
 
-            return document;
-        };
+        if ((document.parseError || '').errorCode) document = createXML('<xml><parsererror>' + '<h3>This page contains the following errors:</h3><div>' + document.parseError.reason + '</div></parsererror></xml>');
+        return document;
+      };
+      if (!($.browser.msie < 11)) return;
+      /* ---------- Element Data Set ---------- */
 
-    if (! ($.browser.msie < 11))  return;
-
-/* ---------- Element Data Set ---------- */
-
-    function DOMStringMap() {
-
+      function DOMStringMap() {
         var map = this;
-
-        $.each(arguments[0].attributes,  function () {
-
-            if (! this.nodeName.indexOf('data-'))
-                map[$.camelCase( this.nodeName.slice(5) )] = this.nodeValue;
+        $.each(arguments[0].attributes, function () {
+          if (!this.nodeName.indexOf('data-')) map[$.camelCase(this.nodeName.slice(5))] = this.nodeValue;
         });
+      }
+
+      Object.defineProperty(DOM_Proto, 'dataset', {
+        get: function () {
+          return new DOMStringMap(this);
+        },
+        enumerable: enumerable
+      });
+      if (!($.browser.msie < 10)) return;
+      /* ---------- Error Useful Information ---------- */
+      //  Thanks "Kevin Yang" ---
+      //
+      //      http://www.imkevinyang.com/2010/01/%E8%A7%A3%E6%9E%90ie%E4%B8%AD%E7%9A%84javascript-error%E5%AF%B9%E8%B1%A1.html
+
+      Error.prototype.valueOf = function () {
+        return $.extend(this, {
+          code: this.number & 0x0FFFF,
+          helpURL: 'https://msdn.microsoft.com/en-us/library/1dk3k160(VS.85).aspx'
+        });
+      };
+      /* ---------- DOM InnerHTML ---------- */
+
+
+      var InnerHTML = Object.getOwnPropertyDescriptor(DOM_Proto, 'innerHTML');
+      Object.defineProperty(DOM_Proto, 'innerHTML', {
+        set: function (HTML) {
+          if (!(HTML + '').match(/^[^<]*<\s*(head|meta|title|link|style|script|noscript|(!--[^>]*--))[^>]*>/i)) return InnerHTML.set.call(this, HTML);
+          InnerHTML.set.call(this, 'IE_Scope' + HTML);
+          var child = this.childNodes;
+          child[0].nodeValue = child[0].nodeValue.slice(8);
+          if (!child[0].nodeValue[0]) child[0].remove();
+        },
+        enumerable: enumerable
+      });
     }
+  },
+  './CSS/ext/pseudo': {
+    base: './CSS/ext',
+    dependency: ["./polyfill/DOM/HTML-5"],
+    factory: function (_polyfill_DOM_HTML_5, require, exports, module) {
+      /* ---------- Enhance jQuery Pseudo ---------- */
 
-    Object.defineProperty(DOM_Proto, 'dataset', {
-        get:           function () {
-
-            return  new DOMStringMap( this );
+      /* ----- :image ----- */
+      var pImage = $.extend($.makeSet('img', 'svg', 'canvas'), {
+        input: {
+          type: 'image'
         },
-        enumerable:    enumerable
-    });
-
-    if (! ($.browser.msie < 10))  return;
-
-/* ---------- Error Useful Information ---------- */
-
-    //  Thanks "Kevin Yang" ---
-    //
-    //      http://www.imkevinyang.com/2010/01/%E8%A7%A3%E6%9E%90ie%E4%B8%AD%E7%9A%84javascript-error%E5%AF%B9%E8%B1%A1.html
-
-    Error.prototype.valueOf = function () {
-
-        return  $.extend(this, {
-            code:       this.number & 0x0FFFF,
-            helpURL:    'https://msdn.microsoft.com/en-us/library/1dk3k160(VS.85).aspx'
-        });
-    };
-
-/* ---------- DOM InnerHTML ---------- */
-
-    var InnerHTML = Object.getOwnPropertyDescriptor(DOM_Proto, 'innerHTML');
-
-    Object.defineProperty(DOM_Proto, 'innerHTML', {
-        set:           function (HTML) {
-
-            if (! (HTML + '').match(
-                /^[^<]*<\s*(head|meta|title|link|style|script|noscript|(!--[^>]*--))[^>]*>/i
-            ))
-                return  InnerHTML.set.call(this, HTML);
-
-            InnerHTML.set.call(this,  'IE_Scope' + HTML);
-
-            var child = this.childNodes;
-
-            child[0].nodeValue = child[0].nodeValue.slice(8);
-
-            if (! child[0].nodeValue[0])  child[0].remove();
-        },
-        enumerable:    enumerable
-    });
-}
-        },
-        './CSS/ext/pseudo':  {
-            base:        './CSS/ext',
-            dependency:  ["./polyfill/DOM/HTML-5"],
-            factory:     function (_polyfill_DOM_HTML_5, require, exports, module) {
-/* ---------- Enhance jQuery Pseudo ---------- */
-
-    /* ----- :image ----- */
-
-    var pImage = $.extend($.makeSet('img', 'svg', 'canvas'), {
-            input:    {type:  'image'},
-            link:     {type:  'image/x-icon'}
-        });
-
-    $.expr[':'].image = function (iDOM) {
-
-        var iName = iDOM.tagName.toLowerCase();
-
-        return  (iName in pImage)  ?
-            (
-                (pImage[ iName ]  ===  true)  ||
-                (pImage[ iName ].type  ===  iDOM.type.toLowerCase())
-            )  :  !(
-                $( iDOM ).css('background-image').indexOf('url(')
-            );
-    };
-
-    /* ----- :button ----- */
-
-    var pButton = $.makeSet('button', 'image', 'submit', 'reset');
-
-    $.expr[':'].button = function (iDOM) {
-
-        var iName = iDOM.tagName.toLowerCase();
-
-        return  (iName == 'button')  ||  (
-            (iName == 'input')  &&  (iDOM.type.toLowerCase() in pButton)
-        );
-    };
-
-    /* ----- :input ----- */
-
-    var pInput = $.makeSet('input', 'textarea', 'button', 'select');
-
-    $.expr[':'].input = function (iDOM) {
-
-        return  (iDOM.tagName.toLowerCase() in pInput)  ||
-            (typeof iDOM.getAttribute('contentEditable') === 'string')  ||
-            iDOM.designMode;
-    };
-
-/* ---------- iQuery Extended Pseudo ---------- */
-
-    /* ----- :indeterminate ----- */
-
-    var Check_Type = $.makeSet('radio', 'checkbox');
-
-    $.expr[':'].indeterminate = function (iDOM) {
-
-        switch ( iDOM.tagName.toLowerCase() ) {
-            case 'input':
-                if (! (iDOM.type in Check_Type))  break;
-            case 'progress':
-                return  (iDOM.indeterminate === true);
+        link: {
+          type: 'image/x-icon'
         }
-    };
+      });
 
-    /* ----- :list, :data ----- */
+      $.expr[':'].image = function (iDOM) {
+        var iName = iDOM.tagName.toLowerCase();
+        return iName in pImage ? pImage[iName] === true || pImage[iName].type === iDOM.type.toLowerCase() : !$(iDOM).css('background-image').indexOf('url(');
+      };
+      /* ----- :button ----- */
 
-    var pList = $.makeSet('ul', 'ol', 'dl', 'tbody', 'select', 'datalist');
 
-    $.extend($.expr[':'], {
-        list:    function () {
+      var pButton = $.makeSet('button', 'image', 'submit', 'reset');
 
-            return  (arguments[0].tagName.toLowerCase() in pList);
-        },
-        data:    function (iDOM, Index, iMatch) {
+      $.expr[':'].button = function (iDOM) {
+        var iName = iDOM.tagName.toLowerCase();
+        return iName == 'button' || iName == 'input' && iDOM.type.toLowerCase() in pButton;
+      };
+      /* ----- :input ----- */
 
-            return  Boolean($( iDOM ).data( iMatch[3] ));
+
+      var pInput = $.makeSet('input', 'textarea', 'button', 'select');
+
+      $.expr[':'].input = function (iDOM) {
+        return iDOM.tagName.toLowerCase() in pInput || typeof iDOM.getAttribute('contentEditable') === 'string' || iDOM.designMode;
+      };
+      /* ---------- iQuery Extended Pseudo ---------- */
+
+      /* ----- :indeterminate ----- */
+
+
+      var Check_Type = $.makeSet('radio', 'checkbox');
+
+      $.expr[':'].indeterminate = function (iDOM) {
+        switch (iDOM.tagName.toLowerCase()) {
+          case 'input':
+            if (!(iDOM.type in Check_Type)) break;
+
+          case 'progress':
+            return iDOM.indeterminate === true;
         }
-    });
+      };
+      /* ----- :list, :data ----- */
 
-    /* ----- :focusable ----- */
 
-    var pFocusable = [
-            'a[href],  map[name] area[href]',
-            'label, input, textarea, button, select, option, object',
-            '*[tabIndex], *[contentEditable]'
-        ].join(', ');
-
-    $.expr[':'].focusable = function () {
-
-        return  arguments[0].matches( pFocusable );
-    };
-
-    /* ----- :field ----- */
-
-    $.expr[':'].field = function (iDOM) {
-        return (
-            iDOM.getAttribute('name')  &&  $.expr[':'].input( iDOM )
-        )  &&  !(
-            iDOM.disabled  ||
-            $.expr[':'].button( iDOM )  ||
-            $( iDOM ).parents('fieldset[disabled]')[0]
-        )
-    };
-
-    /* ----- :scrollable ----- */
-
-    var Rolling_Style = $.makeSet('auto', 'scroll');
-
-    $.expr[':'].scrollable = function (iDOM) {
-
-        if (iDOM === iDOM.ownerDocument.scrollingElement)  return true;
-
-        var iCSS = $( iDOM ).css([
-                'width',       'height',
-                'max-width',   'max-height',
-                'overflow-x',  'overflow-y'
-            ]);
-
-        return (
-            (
-                (parseFloat( iCSS.width )  ||  parseFloat( iCSS['max-width'] ))  &&
-                (iCSS['overflow-x'] in Rolling_Style)
-            )  ||
-            (
-                (parseFloat( iCSS.height )  ||  parseFloat( iCSS['max-height'] ))  &&
-                (iCSS['overflow-y'] in Rolling_Style)
-            )
-        );
-    };
-
-    /* ----- :media ----- */
-
-    var pMedia = $.makeSet('iframe', 'object', 'embed', 'audio', 'video');
-
-    $.expr[':'].media = function (iDOM) {
-
-        return  (iDOM.tagName in pMedia)  ||  $.expr[':'].image( iDOM );
-    };
-
-    /* ----- :loaded ----- */
-
-    $.expr[':'].loaded = function (iDOM) {
-
-        return  iDOM.complete ||                    //  <img />
-            (iDOM.readyState === 'complete')  ||    //  document
-            (iDOM.readyState > 0);                  //  <audio />  &  <video />
-    };
-}
+      var pList = $.makeSet('ul', 'ol', 'dl', 'tbody', 'select', 'datalist');
+      $.extend($.expr[':'], {
+        list: function () {
+          return arguments[0].tagName.toLowerCase() in pList;
         },
-        './event/ext/wrapper':  {
-            base:        './event/ext',
-            dependency:  ["./CSS/ext/pseudo"],
-            factory:     function (_CSS_ext_pseudo, require, exports, module) {
-/* ---------- Focus AnyWhere ---------- */
+        data: function (iDOM, Index, iMatch) {
+          return Boolean($(iDOM).data(iMatch[3]));
+        }
+      });
+      /* ----- :focusable ----- */
 
-    var DOM_Focus = $.fn.focus;
+      var pFocusable = ['a[href],  map[name] area[href]', 'label, input, textarea, button, select, option, object', '*[tabIndex], *[contentEditable]'].join(', ');
 
-    $.fn.focus = function () {
+      $.expr[':'].focusable = function () {
+        return arguments[0].matches(pFocusable);
+      };
+      /* ----- :field ----- */
 
+
+      $.expr[':'].field = function (iDOM) {
+        return iDOM.getAttribute('name') && $.expr[':'].input(iDOM) && !(iDOM.disabled || $.expr[':'].button(iDOM) || $(iDOM).parents('fieldset[disabled]')[0]);
+      };
+      /* ----- :scrollable ----- */
+
+
+      var Rolling_Style = $.makeSet('auto', 'scroll');
+
+      $.expr[':'].scrollable = function (iDOM) {
+        if (iDOM === iDOM.ownerDocument.scrollingElement) return true;
+        var iCSS = $(iDOM).css(['width', 'height', 'max-width', 'max-height', 'overflow-x', 'overflow-y']);
+        return (parseFloat(iCSS.width) || parseFloat(iCSS['max-width'])) && iCSS['overflow-x'] in Rolling_Style || (parseFloat(iCSS.height) || parseFloat(iCSS['max-height'])) && iCSS['overflow-y'] in Rolling_Style;
+      };
+      /* ----- :media ----- */
+
+
+      var pMedia = $.makeSet('iframe', 'object', 'embed', 'audio', 'video');
+
+      $.expr[':'].media = function (iDOM) {
+        return iDOM.tagName in pMedia || $.expr[':'].image(iDOM);
+      };
+      /* ----- :loaded ----- */
+
+
+      $.expr[':'].loaded = function (iDOM) {
+        return iDOM.complete || //  <img />
+        iDOM.readyState === 'complete' || //  document
+        iDOM.readyState > 0; //  <audio />  &  <video />
+      };
+    }
+  },
+  './event/ext/wrapper': {
+    base: './event/ext',
+    dependency: ["./CSS/ext/pseudo"],
+    factory: function (_CSS_ext_pseudo, require, exports, module) {
+      /* ---------- Focus AnyWhere ---------- */
+      var DOM_Focus = $.fn.focus;
+
+      $.fn.focus = function () {
         this.not(':focusable').attr('tabIndex', -1).css('outline', 'none');
+        return DOM_Focus.apply(this, arguments);
+      };
+      /* ---------- User Idle Event ---------- */
 
-        return  DOM_Focus.apply(this, arguments);
-    };
 
-/* ---------- User Idle Event ---------- */
+      var End_Event = 'keydown mousedown scroll';
 
-    var End_Event = 'keydown mousedown scroll';
+      $.fn.onIdleFor = function (iSecond, iCallback) {
+        return this.each(function _Self_() {
+          var iNO,
+              $_This = $(this);
 
-    $.fn.onIdleFor = function (iSecond, iCallback) {
+          function iCancel() {
+            clearTimeout(iNO);
 
-        return  this.each(function _Self_() {
+            _Self_.call($_This.off(End_Event, iCancel)[0]);
+          }
 
-            var iNO,  $_This = $( this );
+          iNO = $.wait(iSecond, function () {
+            iCallback.call($_This.off(End_Event, iCancel)[0], $.Event({
+              type: 'idle',
+              target: $_This[0]
+            }));
 
-            function iCancel() {
-
-                clearTimeout( iNO );
-
-                _Self_.call( $_This.off(End_Event, iCancel)[0] );
-            }
-
-            iNO = $.wait(iSecond,  function () {
-
-                iCallback.call(
-                    $_This.off(End_Event, iCancel)[0],
-                    $.Event({
-                        type:      'idle',
-                        target:    $_This[0]
-                    })
-                );
-
-                _Self_.call( $_This[0] );
-            });
-
-            $_This.one(End_Event, iCancel);
+            _Self_.call($_This[0]);
+          });
+          $_This.one(End_Event, iCancel);
         });
-    };
+      };
+      /* ---------- Cross Page Event ---------- */
 
-/* ---------- Cross Page Event ---------- */
 
-    function CrossPageEvent(iType, iSource) {
-
+      function CrossPageEvent(iType, iSource) {
         if (typeof iType === 'string') {
+          this.type = iType;
+          this.target = iSource;
+        } else $.extend(this, iType);
 
-            this.type = iType;  this.target = iSource;
-        } else
-            $.extend(this, iType);
-
-        if (! (iSource && (iSource instanceof Element)))  return;
-
-        $.extend(this,  $.map(iSource.dataset,  function (iValue) {
-
-            if (typeof iValue === 'string')  try {
-
-                return  $.parseJSON( iValue );
-
-            } catch (iError) { }
-
-            return iValue;
+        if (!(iSource && iSource instanceof Element)) return;
+        $.extend(this, $.map(iSource.dataset, function (iValue) {
+          if (typeof iValue === 'string') try {
+            return $.parseJSON(iValue);
+          } catch (iError) {}
+          return iValue;
         }));
-    }
+      }
 
-    CrossPageEvent.prototype.valueOf = function () {
-
-        var iValue = $.extend({ }, this);
-
-        delete iValue.data;  delete iValue.target;  delete iValue.valueOf;
-
+      CrossPageEvent.prototype.valueOf = function () {
+        var iValue = $.extend({}, this);
+        delete iValue.data;
+        delete iValue.target;
+        delete iValue.valueOf;
         return iValue;
-    };
+      };
 
-    var $_BOM = $( self );
+      var $_BOM = $(self);
 
-    $.fn.onReply = function (iType, iData, iCallback) {
-
-        var iTarget = this[0],  $_Source;
-
-        if (typeof iTarget.postMessage != 'function')  return this;
+      $.fn.onReply = function (iType, iData, iCallback) {
+        var iTarget = this[0],
+            $_Source;
+        if (typeof iTarget.postMessage != 'function') return this;
 
         if (arguments.length === 4) {
-
-            $_Source = $( iData );  iData = iCallback;  iCallback = arguments[3];
+          $_Source = $(iData);
+          iData = iCallback;
+          iCallback = arguments[3];
         }
 
-        var _Event_ = new CrossPageEvent(iType,  ($_Source || { })[0]);
+        var _Event_ = new CrossPageEvent(iType, ($_Source || {})[0]);
 
-        if (typeof iCallback === 'function')
-            $_BOM.on('message',  function onMessage(iEvent) {
+        if (typeof iCallback === 'function') $_BOM.on('message', function onMessage(iEvent) {
+          iEvent = iEvent.originalEvent || iEvent;
+          var iReturn = new CrossPageEvent(typeof iEvent.data === 'string' ? $.parseJSON(iEvent.data) : iEvent.data);
 
-                iEvent = iEvent.originalEvent || iEvent;
-
-                var iReturn = new CrossPageEvent(
-                        (typeof iEvent.data === 'string')  ?
-                            $.parseJSON( iEvent.data )  :  iEvent.data
-                    );
-                if (
-                    (iEvent.source === iTarget)  &&
-                    (iReturn.type === iType)  &&
-                    $.isEqual(iReturn, _Event_)
-                ) {
-                    iCallback.call($_Source ? $_Source[0] : this,  iReturn);
-
-                    $_BOM.off('message', onMessage);
-                }
-            });
-
-        iData = $.extend({data: iData},  _Event_.valueOf());
-
-        iTarget.postMessage(
-            ($.browser.msie < 10)  ?  JSON.stringify( iData )  :  iData,  '*'
-        );
-    };
-}
-        },
-        './object/ext/Class':  {
-            base:        './object/ext',
-            dependency:  [],
-            factory:     function (require, exports, module) {
-    /**
-     * 类式继承抽象类
-     *
-     * @author  TechQuery
-     *
-     * @class   Class
-     *
-     * @param   {object}   [abstract=Class] - Constructor of Abstract Class
-     * @param   {string[]} [method]         - Names of Abstract Methods
-     *
-     * @returns {Class}
-     */
-
-    function Class(abstract, method) {
-
+          if (iEvent.source === iTarget && iReturn.type === iType && $.isEqual(iReturn, _Event_)) {
+            iCallback.call($_Source ? $_Source[0] : this, iReturn);
+            $_BOM.off('message', onMessage);
+          }
+        });
+        iData = $.extend({
+          data: iData
+        }, _Event_.valueOf());
+        iTarget.postMessage($.browser.msie < 10 ? JSON.stringify(iData) : iData, '*');
+      };
+    }
+  },
+  './object/ext/Class': {
+    base: './object/ext',
+    dependency: [],
+    factory: function (require, exports, module) {
+      /**
+       * 类式继承抽象类
+       *
+       * @author  TechQuery
+       *
+       * @class   Class
+       *
+       * @param   {object}   [abstract=Class] - Constructor of Abstract Class
+       * @param   {string[]} [method]         - Names of Abstract Methods
+       *
+       * @returns {Class}
+       */
+      function Class(abstract, method) {
         abstract = abstract || Class;
 
-        var _class_ = (Class.name instanceof Function)  ?
-                abstract.name()  :  abstract.name;
+        var _class_ = Class.name instanceof Function ? abstract.name() : abstract.name;
 
-        if (abstract.prototype  ===  Object.getPrototypeOf( this ))
-            throw TypeError(
-                'Abstract class ' + _class_ + " can't be instantiated"
-            );
-
-        if (abstract !== Class)
-            Array.from(method,  function (name) {
-
-                this[ name ] = this[ name ]  ||  function () {
-
-                    throw TypeError(
-                        'Abstract method ' +
-                        _class_ + '.prototype.' + name +
-                        " isn't implemented"
-                    );
-                };
-            },  this);
-
+        if (abstract.prototype === Object.getPrototypeOf(this)) throw TypeError('Abstract class ' + _class_ + " can't be instantiated");
+        if (abstract !== Class) Array.from(method, function (name) {
+          this[name] = this[name] || function () {
+            throw TypeError('Abstract method ' + _class_ + '.prototype.' + name + " isn't implemented");
+          };
+        }, this);
         return this;
-    }
+      }
+      /**
+       * 继承出一个子类
+       *
+       * @memberof Class
+       *
+       * @param {function} sub     Constructor of Sub Class
+       * @param {?object}  Static  Static properties
+       * @param {object}   [proto] Instance properties
+       *
+       * @return {function} The Sub Class
+       */
 
-    /**
-     * 继承出一个子类
-     *
-     * @memberof Class
-     *
-     * @param {function} sub     Constructor of Sub Class
-     * @param {?object}  Static  Static properties
-     * @param {object}   [proto] Instance properties
-     *
-     * @return {function} The Sub Class
-     */
-    Class.extend = function (sub, Static, proto) {
 
-        for (var key in this)
-            if (this.hasOwnProperty( key ))  sub[ key ] = this[ key ];
+      Class.extend = function (sub, Static, proto) {
+        for (var key in this) if (this.hasOwnProperty(key)) sub[key] = this[key];
 
         $.extend(sub, Static);
-
-        sub.prototype = $.extend(
-            Object.create( this.prototype ),  sub.prototype,  proto
-        );
+        sub.prototype = $.extend(Object.create(this.prototype), sub.prototype, proto);
         sub.prototype.constructor = sub;
 
-        if (! (Object.create( this.prototype )  instanceof  Class)) {
+        if (!(Object.create(this.prototype) instanceof Class)) {
+          for (var key in Class) if (Class.hasOwnProperty(key)) sub[key] = Class[key];
 
-            for (var key in Class)
-                if (Class.hasOwnProperty( key ))  sub[ key ] = Class[ key ];
-
-            $.extend(sub.prototype, Class.prototype);
+          $.extend(sub.prototype, Class.prototype);
         }
 
         return sub;
-    };
+      };
 
-    function safeWrap(method, failback) {
-
+      function safeWrap(method, failback) {
         var _method_ = function (key, value) {
-                try {
-                    method.apply(this, arguments);
+          try {
+            method.apply(this, arguments);
+          } catch (error) {
+            if (error.message.split('.')[0] === 'Invalid property descriptor') throw error;
+            if (failback !== false) this[error.key || key] = value;
+          }
 
-                } catch (error) {
-                    if (
-                        error.message.split('.')[0] ===
-                            'Invalid property descriptor'
-                    )
-                        throw error;
-
-                    if (failback !== false)  this[error.key || key] = value;
-                }
-
-                return value;
-            };
-
-        return  function (key) {
-
-            key = key.valueOf();
-
-            if (! $.isPlainObject( key ))
-                return  _method_.apply(this, arguments);
-
-            for (var name in key)  _method_.call(this,  name,  key[ name ]);
-
-            return this;
+          return value;
         };
-    }
 
-    $.extend(Class.prototype, {
+        return function (key) {
+          key = key.valueOf();
+          if (!$.isPlainObject(key)) return _method_.apply(this, arguments);
+
+          for (var name in key) _method_.call(this, name, key[name]);
+
+          return this;
+        };
+      }
+
+      $.extend(Class.prototype, {
         /**
          * 设置私有成员
          *
@@ -2388,28 +1751,20 @@ function merge(base, path) {
          * @return   {*}             Value while set one or
          *                           This object when set Key-Value
          */
-        setPrivate:    safeWrap(function (key, value, config) {
+        setPrivate: safeWrap(function (key, value, config) {
+          key = key === 'length' || Number.isInteger(+key) || typeof value === 'function' && this.hasOwnProperty('constructor') ? key : '__' + key + '__';
 
-            key = (
-                (key === 'length')  ||  Number.isInteger( +key )  ||  (
-                    (typeof value === 'function')  &&
-                    this.hasOwnProperty('constructor')
-                )
-            )  ?  key  :  ('__' + key + '__');
-
-            try {
-                Object.defineProperty(this, key, $.extend(
-                    {
-                        value:       value,
-                        writable:    true
-                    },
-                    config || { }
-                ));
-            } catch (error) {
-
-                error.key = key;    throw error;
-            }
+          try {
+            Object.defineProperty(this, key, $.extend({
+              value: value,
+              writable: true
+            }, config || {}));
+          } catch (error) {
+            error.key = key;
+            throw error;
+          }
         }),
+
         /**
          * 设置公开成员
          *
@@ -2423,956 +1778,705 @@ function merge(base, path) {
          * @return {object} Get_Set while set one or
          *                  This object when set Key-Value
          */
-        setPublic:    safeWrap(function (key, Get_Set, config) {
-
-            Object.defineProperty(this, key, $.extend(
-                {
-                    enumerable:      true,
-                    configurable:    true
-                },
-                config,
-                Get_Set
-            ));
+        setPublic: safeWrap(function (key, Get_Set, config) {
+          Object.defineProperty(this, key, $.extend({
+            enumerable: true,
+            configurable: true
+          }, config, Get_Set));
         })
-    });
-
-    return  $.Class = Class;
-
-}
-        },
-        './event/ext/Observer':  {
-            base:        './event/ext',
-            dependency:  ["./object/ext/Class"],
-            factory:     function (_object_ext_Class, require, exports, module) {
-    function Observer(connect) {
-
-        if (! (this instanceof Observer))  return  new Observer( connect );
-
+      });
+      return $.Class = Class;
+    }
+  },
+  './event/ext/Observer': {
+    base: './event/ext',
+    dependency: ["./object/ext/Class"],
+    factory: function (_object_ext_Class, require, exports, module) {
+      function Observer(connect) {
+        if (!(this instanceof Observer)) return new Observer(connect);
         this.setPrivate({
-            connect:    connect,
-            handle:     [ ],
-            'break':    null
+          connect: connect,
+          handle: [],
+          'break': null
         });
-    }
+      }
 
-    function next() {
+      function next() {
+        for (var i = 0; this.__handle__[i]; i++) this.__handle__[i](arguments[0]);
+      }
 
-        for (var i = 0;  this.__handle__[i];  i++)
-            this.__handle__[i]( arguments[0] );
-    }
+      return $.Observer = $.Class.extend(Observer, null, {
+        listen: function (callback) {
+          if (this.__handle__.indexOf(callback) < 0) {
+            this.__handle__.push(callback);
 
-    return  $.Observer = $.Class.extend(Observer, null, {
-        listen:    function (callback) {
+            if (!this.__handle__[1]) this.__break__ = this.__connect__($.proxy(next, this));
+          }
 
-            if (this.__handle__.indexOf( callback )  <  0) {
-
-                this.__handle__.push( callback );
-
-                if (! this.__handle__[1])
-                    this.__break__ = this.__connect__( $.proxy(next, this) );
-            }
-
-            return this;
+          return this;
         },
-        cancel:    function (callback) {
+        cancel: function (callback) {
+          this.__handle__.splice(this.__handle__.indexOf(callback), 1);
 
-            this.__handle__.splice(
-                this.__handle__.indexOf( callback ),  1
-            );
-
-            if (! this.__handle__[0])  this.__break__();
-
-            return this;
+          if (!this.__handle__[0]) this.__break__();
+          return this;
         },
-        clear:     function () {
+        clear: function () {
+          this.__handle__.length = 0;
 
-            this.__handle__.length = 0;
+          this.__break__();
 
-            this.__break__();
-
-            return this;
+          return this;
         }
-    });}
-        },
-        './event/ext/base':  {
-            base:        './event/ext',
-            dependency:  ["./event/ext/Observer"],
-            factory:     function (Observer, require, exports, module) {
-/* ---------- Event from Pseudo ---------- */
-
-    $.Event.prototype.isPseudo = function () {
-
-        var $_This = $( this.currentTarget );
-
+      });
+    }
+  },
+  './event/ext/base': {
+    base: './event/ext',
+    dependency: ["./event/ext/Observer"],
+    factory: function (Observer, require, exports, module) {
+      /* ---------- Event from Pseudo ---------- */
+      $.Event.prototype.isPseudo = function () {
+        var $_This = $(this.currentTarget);
         var iOffset = $_This.offset();
+        return Boolean(this.pageX && (this.pageX < iOffset.left || this.pageX > iOffset.left + parseFloat($_This.css('width'))) || this.pageY && (this.pageY < iOffset.top || this.pageY > iOffset.top + parseFloat($_This.css('height'))));
+      };
+      /* ---------- Event extension API ---------- */
 
-        return Boolean(
-            (this.pageX  &&  (
-                (this.pageX < iOffset.left)  ||
-                (this.pageX  >  (iOffset.left + parseFloat($_This.css('width'))))
-            ))  ||
-            (this.pageY  &&  (
-                (this.pageY < iOffset.top)  ||
-                (this.pageY  >  (iOffset.top + parseFloat($_This.css('height'))))
-            ))
-        );
-    };
-/* ---------- Event extension API ---------- */
 
-    var Event_Map = { };
+      var Event_Map = {};
 
-    $.customEvent = function (type, factory) {
-
+      $.customEvent = function (type, factory) {
         if (typeof factory === 'function') {
-
-            $.each(type.split(/\s+/),  function () {
-                (
-                    Event_Map[ this ] = Event_Map[ this ]  ||  [ ]
-                ).unshift( factory );
-            });
-        } else if (Event_Map[ type ])
-            for (var i = 0, observer;  Event_Map[ type ][i];  i++) {
-
-                observer = Event_Map[ type ][i](factory, type);
-
-                if ((observer != null)  &&  (observer instanceof Observer))
-                    return observer;
-            }
-    };
-
-/* ---------- Original supported Event ---------- */
-
-    var Mutation_Event = $.makeSet(
-            'DOMContentLoaded',
-            'DOMAttrModified', 'DOMAttributeNameChanged',
-            'DOMCharacterDataModified',
-            'DOMElementNameChanged',
-            'DOMNodeInserted', 'DOMNodeInsertedIntoDocument',
-            'DOMNodeRemoved',  'DOMNodeRemovedFromDocument',
-            'DOMSubtreeModified'
-        );
-
-    function originOf(type) {
-        return (
-            ('on' + type)  in
-            Object.getPrototypeOf(this || document.documentElement)
-        ) || (
-            $.browser.modern  &&  (type in Mutation_Event)
-        );
-    }
-
-    return $.extend({
-        addEvent:       function (type, handler, cache) {
-
-            var observer = cache.observer  ||  $.customEvent(type, this);
-
-            if ( observer ) {
-
-                if (typeof observer != 'string')
-                    return (
-                        cache.observer = observer
-                    ).listen(
-                        cache.proxyDispatch = $.proxy(handler, this)
-                    );
-                else
-                    type = observer;
-            }
-
-            if (! originOf.call(this, type))  return;
-
-            if (typeof this.addEventListener === 'function')
-                this.addEventListener(type, handler);
-            else {
-                cache.proxyDispatch = $.proxy(handler, this);
-
-                this.attachEvent('on' + type,  cache.proxyDispatch);
-            }
-        },
-        removeEvent:    $.removeEvent  ||  function (type, handler, cache) {
-
-            if ( cache.observer ) {
-
-                cache.observer.clear();
-
-                delete cache.observer;    delete cache.proxyDispatch;
-
-            } else if (originOf.call(this, type)) {
-
-                if (typeof this.removeEventListener === 'function')
-                    this.removeEventListener(type, handler);
-                else {
-                    this.detachEvent('on' + type,  cache.proxyDispatch);
-
-                    delete cache.proxyDispatch;
-                }
-            }
-
-            return cache;
+          $.each(type.split(/\s+/), function () {
+            (Event_Map[this] = Event_Map[this] || []).unshift(factory);
+          });
+        } else if (Event_Map[type]) for (var i = 0, observer; Event_Map[type][i]; i++) {
+          observer = Event_Map[type][i](factory, type);
+          if (observer != null && observer instanceof Observer) return observer;
         }
-    });}
+      };
+      /* ---------- Original supported Event ---------- */
+
+
+      var Mutation_Event = $.makeSet('DOMContentLoaded', 'DOMAttrModified', 'DOMAttributeNameChanged', 'DOMCharacterDataModified', 'DOMElementNameChanged', 'DOMNodeInserted', 'DOMNodeInsertedIntoDocument', 'DOMNodeRemoved', 'DOMNodeRemovedFromDocument', 'DOMSubtreeModified');
+
+      function originOf(type) {
+        return 'on' + type in Object.getPrototypeOf(this || document.documentElement) || $.browser.modern && type in Mutation_Event;
+      }
+
+      return $.extend({
+        addEvent: function (type, handler, cache) {
+          var observer = cache.observer || $.customEvent(type, this);
+
+          if (observer) {
+            if (typeof observer != 'string') return (cache.observer = observer).listen(cache.proxyDispatch = $.proxy(handler, this));else type = observer;
+          }
+
+          if (!originOf.call(this, type)) return;
+          if (typeof this.addEventListener === 'function') this.addEventListener(type, handler);else {
+            cache.proxyDispatch = $.proxy(handler, this);
+            this.attachEvent('on' + type, cache.proxyDispatch);
+          }
         },
-        './event/ext/shim':  {
-            base:        './event/ext',
-            dependency:  ["./event/ext/base"],
-            factory:     function (_event_ext_base, require, exports, module) {
-/* ---------- Single Finger Touch ---------- */
+        removeEvent: $.removeEvent || function (type, handler, cache) {
+          if (cache.observer) {
+            cache.observer.clear();
+            delete cache.observer;
+            delete cache.proxyDispatch;
+          } else if (originOf.call(this, type)) {
+            if (typeof this.removeEventListener === 'function') this.removeEventListener(type, handler);else {
+              this.detachEvent('on' + type, cache.proxyDispatch);
+              delete cache.proxyDispatch;
+            }
+          }
 
-    function get_Touch(iEvent) {
-
+          return cache;
+        }
+      });
+    }
+  },
+  './event/ext/shim': {
+    base: './event/ext',
+    dependency: ["./event/ext/base"],
+    factory: function (_event_ext_base, require, exports, module) {
+      /* ---------- Single Finger Touch ---------- */
+      function get_Touch(iEvent) {
         var iTouch = iEvent;
-
-        if ($.browser.mobile)  try {
-
-            iTouch = iEvent.changedTouches[0];
-
+        if ($.browser.mobile) try {
+          iTouch = iEvent.changedTouches[0];
         } catch (iError) {
-
-            iTouch = iEvent.touches[0];
+          iTouch = iEvent.touches[0];
         }
-
         iTouch.timeStamp = iEvent.timeStamp || $.now();
-
         return iTouch;
-    }
+      }
 
-    var sType = $.browser.mobile ? 'touchstart MSPointerDown' : 'mousedown',
-        eType = $.browser.mobile ? 'touchend touchcancel MSPointerUp' : 'mouseup';
-
-    $.customEvent('tap press swipe',  function (DOM, type) {
-
+      var sType = $.browser.mobile ? 'touchstart MSPointerDown' : 'mousedown',
+          eType = $.browser.mobile ? 'touchend touchcancel MSPointerUp' : 'mouseup';
+      $.customEvent('tap press swipe', function (DOM, type) {
         var iStart;
+        return $.Observer(function (next) {
+          function sTouch() {
+            iStart = get_Touch(arguments[0].originalEvent);
+          }
 
-        return  $.Observer(function (next) {
-
-            function sTouch() {
-
-                iStart = get_Touch( arguments[0].originalEvent );
-            }
-
-            function eTouch(iEvent) {
-
-                var iEnd = get_Touch( iEvent.originalEvent );
-
-                iEvent = {
-                    target:    iEvent.target,
-                    detail:    iEnd.timeStamp - iStart.timeStamp,
-                    deltaX:    iStart.pageX - iEnd.pageX,
-                    deltaY:    iStart.pageY - iEnd.pageY
-                };
-
-                var iShift = Math.sqrt(
-                        Math.pow(iEvent.deltaX, 2)  +  Math.pow(iEvent.deltaY, 2)
-                    );
-
-                if (iEvent.detail > 300)
-                    iEvent.type = 'press';
-                else if (iShift < 22)
-                    iEvent.type = 'tap';
-                else
-                    iEvent.type = 'swipe',  iEvent.detail = iShift;
-
-                if (iEvent.type === type)  next( iEvent );
-            }
-
-            $( DOM ).on(sType, sTouch).on(eType, eTouch);
-
-            return  function () {
-
-                $( DOM ).off(sType, sTouch).off(eType, eTouch);
+          function eTouch(iEvent) {
+            var iEnd = get_Touch(iEvent.originalEvent);
+            iEvent = {
+              target: iEvent.target,
+              detail: iEnd.timeStamp - iStart.timeStamp,
+              deltaX: iStart.pageX - iEnd.pageX,
+              deltaY: iStart.pageY - iEnd.pageY
             };
+            var iShift = Math.sqrt(Math.pow(iEvent.deltaX, 2) + Math.pow(iEvent.deltaY, 2));
+            if (iEvent.detail > 300) iEvent.type = 'press';else if (iShift < 22) iEvent.type = 'tap';else iEvent.type = 'swipe', iEvent.detail = iShift;
+            if (iEvent.type === type) next(iEvent);
+          }
+
+          $(DOM).on(sType, sTouch).on(eType, eTouch);
+          return function () {
+            $(DOM).off(sType, sTouch).off(eType, eTouch);
+          };
         });
-    });
+      });
+      /* ---------- Text Input Event ---------- */
 
-/* ---------- Text Input Event ---------- */
+      if ($.browser.modern) return;
 
-    if ( $.browser.modern )  return;
+      function from_Input() {
+        switch (self.event.srcElement.tagName.toLowerCase()) {
+          case 'input':
+            ;
 
-    function from_Input() {
-
-        switch ( self.event.srcElement.tagName.toLowerCase() ) {
-            case 'input':       ;
-            case 'textarea':    return true;
+          case 'textarea':
+            return true;
         }
-    }
+      }
 
-    $.customEvent('input',  function (DOM) {
-
-        if ('oninput'  in  Object.getPrototypeOf( DOM ))  return;
-
-        return  new Observer(function (next) {
-
-            var handler = {
-                    propertychange:    function () {
-
-                        if (self.event.propertyName === 'value')
-                            next( arguments[0] );
-                    },
-                    paste:             function () {
-
-                        if (! from_Input())  next( arguments[0] );
-                    },
-                    keyup:             function (iEvent) {
-
-                        var iKey = iEvent.keyCode;
-
-                        if (
-                            from_Input()  ||
-                            (iKey < 48)  ||  (iKey > 105)  ||
-                            ((iKey > 90)  &&  (iKey < 96))  ||
-                            iEvent.ctrlKey  ||  iEvent.shiftKey  ||  iEvent.altKey
-                        )
-                            return;
-
-                        next( iEvent );
-                    }
-                };
-
-            for (var type in handler)
-                DOM.attachEvent('on' + type,  handler[ type ]);
-
-            return  function () {
-
-                for (var type in handler)
-                    DOM.detachEvent('on' + type,  handler[ type ]);
-            };
-        });
-    });
-}
-        },
-        './CSS/ext/utility':  {
-            base:        './CSS/ext',
-            dependency:  [],
-            factory:     function (require, exports, module) {
-/* ---------- Smart zIndex ---------- */
-
-    function Get_zIndex() {
-        for (
-            var $_This = $( this ),  zIndex;
-            $_This[0];
-            $_This = $( $_This[0].offsetParent )
-        )
-            if ($_This.css('position') != 'static') {
-
-                zIndex = parseInt( $_This.css('z-index') );
-
-                if (zIndex > 0)  return zIndex;
+      $.customEvent('input', function (DOM) {
+        if ('oninput' in Object.getPrototypeOf(DOM)) return;
+        return new Observer(function (next) {
+          var handler = {
+            propertychange: function () {
+              if (self.event.propertyName === 'value') next(arguments[0]);
+            },
+            paste: function () {
+              if (!from_Input()) next(arguments[0]);
+            },
+            keyup: function (iEvent) {
+              var iKey = iEvent.keyCode;
+              if (from_Input() || iKey < 48 || iKey > 105 || iKey > 90 && iKey < 96 || iEvent.ctrlKey || iEvent.shiftKey || iEvent.altKey) return;
+              next(iEvent);
             }
+          };
+
+          for (var type in handler) DOM.attachEvent('on' + type, handler[type]);
+
+          return function () {
+            for (var type in handler) DOM.detachEvent('on' + type, handler[type]);
+          };
+        });
+      });
+    }
+  },
+  './CSS/ext/utility': {
+    base: './CSS/ext',
+    dependency: [],
+    factory: function (require, exports, module) {
+      /* ---------- Smart zIndex ---------- */
+      function Get_zIndex() {
+        for (var $_This = $(this), zIndex; $_This[0]; $_This = $($_This[0].offsetParent)) if ($_This.css('position') != 'static') {
+          zIndex = parseInt($_This.css('z-index'));
+          if (zIndex > 0) return zIndex;
+        }
 
         return 0;
-    }
+      }
 
-    function Set_zIndex() {
-
-        var $_This = $( this ),  _Index_ = 0;
-
+      function Set_zIndex() {
+        var $_This = $(this),
+            _Index_ = 0;
         $_This.siblings().addBack().filter(':visible').each(function () {
-
-            _Index_ = Math.max(_Index_,  Get_zIndex.call( this ));
+          _Index_ = Math.max(_Index_, Get_zIndex.call(this));
         });
-
         $_This.css('z-index', ++_Index_);
+      }
+
+      $.fn.zIndex = function (new_Index) {
+        if (!arguments.length) return Get_zIndex.call(this[0]);
+        if (new_Index === '+') return this.each(Set_zIndex);
+        return this.css('z-index', parseInt(new_Index) || 'auto');
+      };
     }
+  },
+  './polyfill/ES/API': {
+    base: './polyfill/ES',
+    dependency: [],
+    factory: function (require, exports, module) {
+      /* ----- Object Patch ----- */
+      if (!Object.keys) Object.keys = function (iObject) {
+        var iKey = [];
 
-    $.fn.zIndex = function (new_Index) {
+        for (var _Key_ in iObject) if (this.prototype.hasOwnProperty.call(iObject, _Key_)) iKey.push(_Key_);
 
-        if (! arguments.length)  return  Get_zIndex.call( this[0] );
+        return iKey;
+      };
 
-        if (new_Index === '+')  return  this.each( Set_zIndex );
-
-        return  this.css('z-index',  parseInt( new_Index ) || 'auto');
-    };
-}
-        },
-        './polyfill/ES/API':  {
-            base:        './polyfill/ES',
-            dependency:  [],
-            factory:     function (require, exports, module) {
-    /* ----- Object Patch ----- */
-
-    if (! Object.keys)
-        Object.keys = function (iObject) {
-            var iKey = [ ];
-
-            for (var _Key_ in iObject)
-                if ( this.prototype.hasOwnProperty.call(iObject, _Key_) )
-                    iKey.push(_Key_);
-
-            return iKey;
-        };
-
-    Object.getPrototypeOf = Object.getPrototypeOf  ||  function (object) {
-
-        if (! (object != null))
-            throw TypeError('Cannot convert undefined or null to object');
-
-        if ( object.__proto__ )  return object.__proto__;
-
-        if (! Object.prototype.hasOwnProperty.call(object, 'constructor'))
-            return object.constructor.prototype;
-
+      Object.getPrototypeOf = Object.getPrototypeOf || function (object) {
+        if (!(object != null)) throw TypeError('Cannot convert undefined or null to object');
+        if (object.__proto__) return object.__proto__;
+        if (!Object.prototype.hasOwnProperty.call(object, 'constructor')) return object.constructor.prototype;
         var constructor = object.constructor;
 
-        try {  delete object.constructor;  } catch (error) { }
+        try {
+          delete object.constructor;
+        } catch (error) {}
 
         var prototype = object.constructor.prototype;
 
-        try {  object.constructor = constructor;  } catch (error) { }
+        try {
+          object.constructor = constructor;
+        } catch (error) {}
 
         return prototype;
-    };
+      };
 
-    Object.create = Object.create  ||  function (iProto, iProperty) {
+      Object.create = Object.create || function (iProto, iProperty) {
+        if (typeof iProto != 'object') throw TypeError('Object prototype may only be an Object or null');
 
-        if (typeof iProto != 'object')
-            throw TypeError('Object prototype may only be an Object or null');
-
-        function iTemp() { }
+        function iTemp() {}
 
         iTemp.prototype = iProto;
-
         var iObject = new iTemp();
-
         iObject.__proto__ = iProto;
 
-        for (var iKey in iProperty)
-            if (
-                this.prototype.hasOwnProperty.call(iProperty, iKey)  &&
-                (iProperty[iKey].value !== undefined)
-            )
-                iObject[iKey] = iProperty[iKey].value;
+        for (var iKey in iProperty) if (this.prototype.hasOwnProperty.call(iProperty, iKey) && iProperty[iKey].value !== undefined) iObject[iKey] = iProperty[iKey].value;
 
         return iObject;
-    };
+      };
+      /* ----- Number Patch ----- */
 
-    /* ----- Number Patch ----- */
 
-    Number.isInteger = Number.isInteger  ||  function (value) {
+      Number.isInteger = Number.isInteger || function (value) {
+        return typeof value === 'number' && isFinite(value) && Math.floor(value) === value;
+      };
 
-        return  (typeof value === 'number')  &&  isFinite( value )  &&
-            (Math.floor(value) === value);
-    };
+      Number.MAX_SAFE_INTEGER = Math.pow(2, 53) - 1;
+      Number.MIN_SAFE_INTEGER = -Number.MAX_SAFE_INTEGER;
 
-    Number.MAX_SAFE_INTEGER = Math.pow(2, 53) - 1;
+      Number.isSafeInteger = Number.isSafeInteger || function (value) {
+        return this.isInteger(value) && Math.abs(value) <= this.MAX_SAFE_INTEGER;
+      };
+      /* ----- String Extension ----- */
 
-    Number.MIN_SAFE_INTEGER = -Number.MAX_SAFE_INTEGER;
 
-    Number.isSafeInteger = Number.isSafeInteger  ||  function (value) {
+      var _Trim_ = ''.trim;
+      var Blank_Char = !_Trim_ && /(^\s*)|(\s*$)/g;
 
-       return  this.isInteger( value )  &&  (
-           Math.abs( value )  <=  this.MAX_SAFE_INTEGER
-       );
-    };
+      String.prototype.trim = function (iChar) {
+        if (!iChar) return _Trim_ ? _Trim_.call(this) : this.replace(Blank_Char, '');
+        var iFrom = 0,
+            iTo;
 
-    /* ----- String Extension ----- */
-
-    var _Trim_ = ''.trim;
-
-    var Blank_Char = (! _Trim_)  &&  /(^\s*)|(\s*$)/g;
-
-    String.prototype.trim = function (iChar) {
-        if (! iChar)
-            return  _Trim_  ?  _Trim_.call(this)  :  this.replace(Blank_Char, '');
-
-        var iFrom = 0,  iTo;
-
-        for (var i = 0;  iChar[i];  i++) {
-            if ((! iFrom)  &&  (this[0] == iChar[i]))
-                iFrom = 1;
-
-            if ((! iTo)  &&  (this[this.length - 1] == iChar[i]))
-                iTo = -1;
-
-            if (iFrom && iTo)  break;
+        for (var i = 0; iChar[i]; i++) {
+          if (!iFrom && this[0] == iChar[i]) iFrom = 1;
+          if (!iTo && this[this.length - 1] == iChar[i]) iTo = -1;
+          if (iFrom && iTo) break;
         }
 
-        return  this.slice(iFrom, iTo);
-    };
+        return this.slice(iFrom, iTo);
+      };
 
-    String.prototype.repeat = String.prototype.repeat  ||  function (Times) {
+      String.prototype.repeat = String.prototype.repeat || function (Times) {
+        return new Array(Times + 1).join(this);
+      };
 
-        return  (new Array(Times + 1)).join(this);
-    };
+      'padStart:0,padEnd:1'.replace(/(\w+):(\d)/g, function (_, key, index) {
+        String.prototype[key] = String.prototype[key] || function (length, pad) {
+          length = length >> 0;
+          pad = pad ? pad + '' : ' ';
+          if (this.length >= length) return this + '';
+          pad = pad.repeat(Math.ceil((length -= this.length) / pad.length)).slice(length);
+          return +index ? this + pad : pad + this;
+        };
+      });
+      /* ----- Array Patch ----- */
 
-    'padStart:0,padEnd:1'.replace(/(\w+):(\d)/g,  function (_, key, index) {
+      var ArrayProto = Array.prototype;
 
-        String.prototype[ key ] =
-            String.prototype[ key ]  ||  function (length, pad) {
+      function Array_push(value, mapCall, mapContext) {
+        return ArrayProto.push.call(this, mapCall instanceof Function ? mapCall.call(mapContext, value, this.length) : value);
+      }
 
-                length = length >> 0;    pad = pad  ?  (pad + '')  :  ' ';
-
-                if (this.length >= length)  return this + '';
-
-                pad = pad.repeat(
-                    Math.ceil((length -= this.length)  /  pad.length)
-                ).slice( length );
-
-                return  +index  ?  (this + pad)  :  (pad + this);
-            };
-    });
-
-    /* ----- Array Patch ----- */
-
-    var ArrayProto = Array.prototype;
-
-    function Array_push(value, mapCall, mapContext) {
-
-        return  ArrayProto.push.call(
-            this,
-            (mapCall instanceof Function)  ?
-                mapCall.call(mapContext, value, this.length)  :  value
-        );
-    }
-
-    Array.from = Array.from  ||  function (iterator) {
-
+      Array.from = Array.from || function (iterator) {
         var array, _This_;
 
         try {
-            array = new this();
+          array = new this();
         } catch (error) {
-            array = Object.create( this.prototype );
+          array = Object.create(this.prototype);
         }
 
-        if (Number.isInteger( iterator.length )) {
+        if (Number.isInteger(iterator.length)) {
+          for (var i = 0, length = iterator.length; i < length; i++) Array_push.call(array, iterator[i], arguments[1], arguments[2]);
 
-            for (var i = 0, length = iterator.length;  i < length;  i++)
-                Array_push.call(array, iterator[i], arguments[1], arguments[2]);
-
-            return array;
+          return array;
         }
 
         if (iterator.next instanceof Function) {
+          while ((_This_ = iterator.next()).done === false) Array_push.call(array, _This_.value, arguments[1], arguments[2]);
 
-            while ((_This_ = iterator.next()).done  ===  false)
-                Array_push.call(array, _This_.value, arguments[1], arguments[2]);
-
-            return array;
+          return array;
         }
 
-        throw  TypeError('Cannot convert undefined or null to object');
-    };
+        throw TypeError('Cannot convert undefined or null to object');
+      };
 
-    ArrayProto.indexOf = ArrayProto.indexOf  ||  function () {
-
-        for (var i = 0;  i < this.length;  i++)
-            if (arguments[0] === this[i])
-                return i;
+      ArrayProto.indexOf = ArrayProto.indexOf || function () {
+        for (var i = 0; i < this.length; i++) if (arguments[0] === this[i]) return i;
 
         return -1;
-    };
+      };
 
-    ArrayProto.reduce = ArrayProto.reduce  ||  function (callback, value) {
-
-        for (var i = 1, length = this.length;  i < length;  i++) {
-
-            if (i == 1)  value = this[0];
-
-            value = callback(value, this[i], i, this);
+      ArrayProto.reduce = ArrayProto.reduce || function (callback, value) {
+        for (var i = 1, length = this.length; i < length; i++) {
+          if (i == 1) value = this[0];
+          value = callback(value, this[i], i, this);
         }
 
         return value;
-    };
+      };
+      /* ----- Function Patch ----- */
 
-    /* ----- Function Patch ----- */
 
-    function FuncName() {
-        return  (this.toString().trim().match(/^function\s+([^\(\s]*)/) || '')[1];
+      function FuncName() {
+        return (this.toString().trim().match(/^function\s+([^\(\s]*)/) || '')[1];
+      }
+
+      if (!('name' in Function.prototype)) {
+        if (document.documentMode > 8) Object.defineProperty(Function.prototype, 'name', {
+          get: FuncName
+        });else Function.prototype.name = FuncName;
+      }
+      /* ----- Date Patch ----- */
+
+
+      Date.now = Date.now || function () {
+        return +new Date();
+      };
     }
+  },
+  './object/ext/base': {
+    base: './object/ext',
+    dependency: ["./polyfill/ES/API"],
+    factory: function ($, require, exports, module) {
+      $ = $ || {};
+      /**
+       * 类数组对象
+       *
+       * @typedef {Array|NodeList|HTMLCollection|jQuery|$} ArrayLike
+       */
 
-    if (! ('name' in Function.prototype)) {
+      /**
+       * 类数组对象 检测
+       *
+       * @author   TechQuery
+       *
+       * @memberof $
+       *
+       * @param    {object}  object
+       *
+       * @returns  {boolean}
+       *
+       * @example  // 字符串元素不可变，故不是类数组
+       *
+       *     $.likeArray(new String(''))    //  false
+       *
+       * @example  // 有 length 属性、但没有对应数量元素的，不是类数组
+       *
+       *     $.likeArray({0: 'a', length: 2})    //  false
+       *
+       * @example  // NodeList、HTMLCollection、jQuery 等是类数组
+       *
+       *     $.likeArray( document.head.childNodes )    //  true
+       *
+       * @example  // Node 及其子类不是类数组
+       *
+       *     $.likeArray( document.createTextNode('') )    //  false
+       */
 
-        if (document.documentMode > 8)
-            Object.defineProperty(Function.prototype,  'name',  {get: FuncName});
-        else
-            Function.prototype.name = FuncName;
-    }
+      $.likeArray = function (object) {
+        if (!object || typeof object !== 'object') return false;
+        object = typeof object.valueOf === 'function' ? object.valueOf() : object;
+        return Boolean(object && typeof object !== 'string' && typeof object.length === 'number' && (object.length ? object.length - 1 in object : !(object instanceof Node)));
+      };
+      /**
+       * 生成集合对象
+       *
+       * @author   TechQuery
+       *
+       * @memberof $
+       *
+       * @param    {(...string|string[])} array      - Keys of Set
+       * @param    {function}             [callback] - Callback for items
+       *
+       * @returns  {object}               Set object (Not the one in ES 6)
+       */
 
-    /* ----- Date Patch ----- */
 
-    Date.now = Date.now  ||  function () { return  +(new Date()); };
-}
-        },
-        './object/ext/base':  {
-            base:        './object/ext',
-            dependency:  ["./polyfill/ES/API"],
-            factory:     function ($, require, exports, module) {
-    $ = $ || { };
+      $.makeSet = function (array, callback) {
+        var iArgs = arguments,
+            iValue = true,
+            iSet = {};
 
-    /**
-     * 类数组对象
-     *
-     * @typedef {Array|NodeList|HTMLCollection|jQuery|$} ArrayLike
-     */
-
-    /**
-     * 类数组对象 检测
-     *
-     * @author   TechQuery
-     *
-     * @memberof $
-     *
-     * @param    {object}  object
-     *
-     * @returns  {boolean}
-     *
-     * @example  // 字符串元素不可变，故不是类数组
-     *
-     *     $.likeArray(new String(''))    //  false
-     *
-     * @example  // 有 length 属性、但没有对应数量元素的，不是类数组
-     *
-     *     $.likeArray({0: 'a', length: 2})    //  false
-     *
-     * @example  // NodeList、HTMLCollection、jQuery 等是类数组
-     *
-     *     $.likeArray( document.head.childNodes )    //  true
-     *
-     * @example  // Node 及其子类不是类数组
-     *
-     *     $.likeArray( document.createTextNode('') )    //  false
-     */
-
-    $.likeArray = function (object) {
-
-        if ((! object)  ||  (typeof object !== 'object'))
-            return false;
-
-        object = (typeof object.valueOf === 'function')  ?
-            object.valueOf() : object;
-
-        return Boolean(
-            object  &&
-            (typeof object !== 'string')  &&
-            (typeof object.length === 'number')  &&  (
-                object.length  ?
-                    ((object.length - 1)  in  object)  :
-                    !(object instanceof Node)
-            )
-        );
-    };
-
-    /**
-     * 生成集合对象
-     *
-     * @author   TechQuery
-     *
-     * @memberof $
-     *
-     * @param    {(...string|string[])} array      - Keys of Set
-     * @param    {function}             [callback] - Callback for items
-     *
-     * @returns  {object}               Set object (Not the one in ES 6)
-     */
-
-    $.makeSet = function (array, callback) {
-
-        var iArgs = arguments,  iValue = true,  iSet = { };
-
-        if (this.likeArray( callback )) {
-
-            iValue = array;
-
-            iArgs = callback;
-
-        } else if (this.likeArray( array )) {
-
-            iValue = callback;
-
-            iArgs = array;
+        if (this.likeArray(callback)) {
+          iValue = array;
+          iArgs = callback;
+        } else if (this.likeArray(array)) {
+          iValue = callback;
+          iArgs = array;
         }
 
-        for (var i = 0;  i < iArgs.length;  i++)
-            iSet[ iArgs[i] ] = (typeof iValue != 'function')  ?
-                iValue  :  iValue(iArgs[i], i, iArgs);
+        for (var i = 0; i < iArgs.length; i++) iSet[iArgs[i]] = typeof iValue != 'function' ? iValue : iValue(iArgs[i], i, iArgs);
 
         return iSet;
-    };
+      };
 
-    var WindowType = $.makeSet('Window', 'DOMWindow', 'global');
+      var WindowType = $.makeSet('Window', 'DOMWindow', 'global');
+      /**
+       * 检测对象类名
+       *
+       * @author   TechQuery
+       *
+       * @memberof $
+       *
+       * @param    {*}       object
+       *
+       * @returns  {string}  Class Name of the first argument
+       */
 
-    /**
-     * 检测对象类名
-     *
-     * @author   TechQuery
-     *
-     * @memberof $
-     *
-     * @param    {*}       object
-     *
-     * @returns  {string}  Class Name of the first argument
-     */
-
-    $.Type = function (object) {
+      $.Type = function (object) {
         try {
-            var iType = Object.prototype.toString.call( object ).slice(8, -1);
-
-            var iName = object.constructor.name;
-
-            iName = (typeof iName == 'function')  ?
-                iName.call( object.constructor )  :  iName;
-
-            if ((iType == 'Object')  &&  iName)  iType = iName;
+          var iType = Object.prototype.toString.call(object).slice(8, -1);
+          var iName = object.constructor.name;
+          iName = typeof iName == 'function' ? iName.call(object.constructor) : iName;
+          if (iType == 'Object' && iName) iType = iName;
         } catch (iError) {
-            return 'Window';
+          return 'Window';
         }
 
-        if (! object)
-            return  (isNaN(object)  &&  (object !== object))  ?  'NaN'  :  iType;
+        if (!object) return isNaN(object) && object !== object ? 'NaN' : iType;
+        if (WindowType[iType] || object == object.document && object.document != object //  IE 9- Hack
+        ) return 'Window';
+        if (object.location && object.location === (object.defaultView || object.parentWindow || {}).location) return 'Document';
+        if (iType.match(/HTML\w+?Element$/) || typeof object.tagName == 'string') return 'HTMLElement';
 
-        if (WindowType[iType] || (
-            (object == object.document)  &&  (object.document != object)
-            //  IE 9- Hack
-        ))
-            return 'Window';
+        if (this.likeArray(object)) {
+          iType = 'Array';
 
-        if (object.location  &&  (object.location === (
-            object.defaultView || object.parentWindow || { }
-        ).location))
-            return 'Document';
+          try {
+            object.item();
 
-        if (
-            iType.match(/HTML\w+?Element$/) ||
-            (typeof object.tagName == 'string')
-        )
-            return 'HTMLElement';
-
-        if (this.likeArray( object )) {
-            iType = 'Array';
             try {
-                object.item();
-                try {
-                    object.namedItem();
-
-                    return 'HTMLCollection';
-
-                } catch (iError) {
-
-                    return 'NodeList';
-                }
-            } catch (iError) { }
+              object.namedItem();
+              return 'HTMLCollection';
+            } catch (iError) {
+              return 'NodeList';
+            }
+          } catch (iError) {}
         }
 
         return iType;
-    };
+      };
+      /**
+       * 值相等 检测
+       *
+       * @author TechQuery
+       *
+       * @memberof $
+       *
+       * @param  {*}       left
+       * @param  {*}       right
+       * @param  {number}  [depth=1]
+       *
+       * @return {boolean}
+       *
+       * @example  // 基本类型比较
+       *
+       *     $.isEqual(1, 1)    //  true
+       *
+       * @example  // 引用类型（浅）
+       *
+       *     $.isEqual({a: 1},  {a: 1})    // true
+       *
+       * @example  // 引用类型（深）
+       *
+       *     $.isEqual({a: 1, b: {c: 2}},  {a: 1, b: {c: 2}},  2)    // true
+       */
 
-    /**
-     * 值相等 检测
-     *
-     * @author TechQuery
-     *
-     * @memberof $
-     *
-     * @param  {*}       left
-     * @param  {*}       right
-     * @param  {number}  [depth=1]
-     *
-     * @return {boolean}
-     *
-     * @example  // 基本类型比较
-     *
-     *     $.isEqual(1, 1)    //  true
-     *
-     * @example  // 引用类型（浅）
-     *
-     *     $.isEqual({a: 1},  {a: 1})    // true
-     *
-     * @example  // 引用类型（深）
-     *
-     *     $.isEqual({a: 1, b: {c: 2}},  {a: 1, b: {c: 2}},  2)    // true
-     */
 
-    $.isEqual = function isEqual(left, right, depth) {
-
+      $.isEqual = function isEqual(left, right, depth) {
         depth = depth || 1;
+        if (!(left && right)) return left === right;
+        left = left.valueOf();
+        right = right.valueOf();
+        if (typeof left != 'object' || typeof right != 'object') return left === right;
+        var Left_Key = Object.keys(left),
+            Right_Key = Object.keys(right);
+        if (Left_Key.length != Right_Key.length) return false;
+        Left_Key.sort();
+        Right_Key.sort();
+        --depth;
 
-        if (!  (left && right))
-            return  (left === right);
+        for (var i = 0, _Key_; i < Left_Key.length; i++) {
+          _Key_ = Left_Key[i];
+          if (_Key_ != Right_Key[i]) return false;
 
-        left = left.valueOf();  right = right.valueOf();
-
-        if ((typeof left != 'object')  ||  (typeof right != 'object'))
-            return  (left === right);
-
-        var Left_Key = Object.keys( left ),
-            Right_Key = Object.keys( right );
-
-        if (Left_Key.length != Right_Key.length)  return false;
-
-        Left_Key.sort();  Right_Key.sort();  --depth;
-
-        for (var i = 0, _Key_;  i < Left_Key.length;  i++) {
-
-            _Key_ = Left_Key[i];
-
-            if (_Key_ != Right_Key[i])  return false;
-
-            if (! depth) {
-                if (left[_Key_] !== right[_Key_])  return false;
-            } else {
-                if (! isEqual.call(
-                    this, left[_Key_], right[_Key_], depth
-                ))
-                    return false;
-            }
+          if (!depth) {
+            if (left[_Key_] !== right[_Key_]) return false;
+          } else {
+            if (!isEqual.call(this, left[_Key_], right[_Key_], depth)) return false;
+          }
         }
+
         return true;
-    };
+      };
 
-    $.trace = function (iObject, iName, iCount, iCallback) {
+      $.trace = function (iObject, iName, iCount, iCallback) {
+        if (iCount instanceof Function) iCallback = iCount;
+        iCount = parseInt(iCount);
+        iCount = isNaN(iCount) ? Infinity : iCount;
+        var iResult = [];
 
-        if (iCount instanceof Function)  iCallback = iCount;
-
-        iCount = parseInt( iCount );
-
-        iCount = isNaN( iCount )  ?  Infinity  :  iCount;
-
-        var iResult = [ ];
-
-        for (
-            var _Next_,  i = 0,  j = 0;
-            iObject[iName]  &&  (j < iCount);
-            iObject = _Next_,  i++
-        ) {
-            _Next_ = iObject[iName];
-            if (
-                (typeof iCallback != 'function')  ||
-                (iCallback.call(_Next_, i, _Next_)  !==  false)
-            )
-                iResult[j++] = _Next_;
+        for (var _Next_, i = 0, j = 0; iObject[iName] && j < iCount; iObject = _Next_, i++) {
+          _Next_ = iObject[iName];
+          if (typeof iCallback != 'function' || iCallback.call(_Next_, i, _Next_) !== false) iResult[j++] = _Next_;
         }
 
         return iResult;
-    };
+      };
 
-    var depth = 0;
-    /**
-     * 对象树 递归遍历
-     *
-     * @author TechQuery <shiy007@qq.com>
-     *
-     * @memberof $
-     *
-     * @param {object}        node     - Object tree
-     * @param {string}        fork_key - Key of children list
-     * @param {MapTreeFilter} filter   - Map filter
-     *
-     * @return {Array}  Result list of Map filter
-     *
-     * @example  // DOM 树遍历
-     *
-     *     $.mapTree(
-     *         $('<a>A<b>B<!--C--></b></a>')[0],
-     *         'childNodes',
-     *         function (node, index, depth) {
-     *             return  depth + (
-     *                 (node.nodeType === 3)  ?  node.nodeValue  :  ''
-     *             );
-     *         }
-     *     ).join('')
-     *
-     *     //  '1A12B2'
-     */
-    $.mapTree = function mapTree(node, fork_key, filter) {
+      var depth = 0;
+      /**
+       * 对象树 递归遍历
+       *
+       * @author TechQuery <shiy007@qq.com>
+       *
+       * @memberof $
+       *
+       * @param {object}        node     - Object tree
+       * @param {string}        fork_key - Key of children list
+       * @param {MapTreeFilter} filter   - Map filter
+       *
+       * @return {Array}  Result list of Map filter
+       *
+       * @example  // DOM 树遍历
+       *
+       *     $.mapTree(
+       *         $('<a>A<b>B<!--C--></b></a>')[0],
+       *         'childNodes',
+       *         function (node, index, depth) {
+       *             return  depth + (
+       *                 (node.nodeType === 3)  ?  node.nodeValue  :  ''
+       *             );
+       *         }
+       *     ).join('')
+       *
+       *     //  '1A12B2'
+       */
 
-        var children = node[fork_key], list = [ ];    depth++ ;
+      $.mapTree = function mapTree(node, fork_key, filter) {
+        var children = node[fork_key],
+            list = [];
+        depth++;
 
-        for (var i = 0, value;  i < children.length;  i++) {
-            /**
-             * 对象遍历过滤器
-             *
-             * @callback MapTreeFilter
-             *
-             * @param {object} child
-             * @param {number} index
-             * @param {number} depth
-             *
-             * @return {?object}  `Null` or `Undefined` to **Skip the Sub-Tree**,
-             *                    and Any other Type to Add into the Result Array.
-             */
-            try {
-                value = filter.call(node, children[i], i, depth);
+        for (var i = 0, value; i < children.length; i++) {
+          /**
+           * 对象遍历过滤器
+           *
+           * @callback MapTreeFilter
+           *
+           * @param {object} child
+           * @param {number} index
+           * @param {number} depth
+           *
+           * @return {?object}  `Null` or `Undefined` to **Skip the Sub-Tree**,
+           *                    and Any other Type to Add into the Result Array.
+           */
+          try {
+            value = filter.call(node, children[i], i, depth);
+          } catch (error) {
+            depth = 0;
+            throw error;
+          }
 
-            } catch (error) {
-
-                depth = 0;    throw error;
-            }
-
-            if (! (value != null))  continue;
-
-            list.push( value );
-
-            if ((children[i] != null)  &&  (children[i][fork_key] || '')[0])
-                list.push.apply(
-                    list,  mapTree(children[i], fork_key, filter)
-                );
+          if (!(value != null)) continue;
+          list.push(value);
+          if (children[i] != null && (children[i][fork_key] || '')[0]) list.push.apply(list, mapTree(children[i], fork_key, filter));
         }
 
-        depth-- ;
-
+        depth--;
         return list;
-    };
+      };
+      /**
+       * ES 6 迭代器协议
+       *
+       * @interface Iterator
+       *
+       * @see {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Iteration_protocols#The_iterator_protocol|Iterator Protocol}
+       */
 
-    /**
-     * ES 6 迭代器协议
-     *
-     * @interface Iterator
-     *
-     * @see {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Iteration_protocols#The_iterator_protocol|Iterator Protocol}
-     */
-    /**
-     * @memberof Iterator
-     * @instance
-     * @function next
-     */
+      /**
+       * @memberof Iterator
+       * @instance
+       * @function next
+       */
 
-    /**
-     * 生成迭代器
-     *
-     * @author   TechQuery
-     *
-     * @memberof $
-     *
-     * @param    {Array}    array
-     *
-     * @returns  {Iterator}
-     */
+      /**
+       * 生成迭代器
+       *
+       * @author   TechQuery
+       *
+       * @memberof $
+       *
+       * @param    {Array}    array
+       *
+       * @returns  {Iterator}
+       */
 
-    $.makeIterator = function (array) {
 
+      $.makeIterator = function (array) {
         var nextIndex = 0;
-
         return {
-            next:    function () {
-
-                return  (nextIndex >= array.length)  ?
-                    {done: true}  :  {done: false,  value: array[nextIndex++]};
-            }
-        };
-    };
-
-    return $;
-
-}
-        },
-        './object/ext/advanced':  {
-            base:        './object/ext',
-            dependency:  ["./object/ext/base"],
-            factory:     function (_object_ext_base, require, exports, module) {
-    return $.extend({
-        formatJSON:    function () {
-
-            return  JSON.stringify(arguments[0], null, 4)
-                .replace(/(\s+"[^"]+":) ([^\s]+)/g, '$1    $2');
-        },
-        curry:         function (iOrigin) {
-
-            return  function iProxy() {
-
-                return  (arguments.length >= iOrigin.length)  ?
-                    iOrigin.apply(this, arguments)  :
-                    $.proxy.apply($,  $.merge([iProxy, this], arguments));
+          next: function () {
+            return nextIndex >= array.length ? {
+              done: true
+            } : {
+              done: false,
+              value: array[nextIndex++]
             };
+          }
+        };
+      };
+
+      return $;
+    }
+  },
+  './object/ext/advanced': {
+    base: './object/ext',
+    dependency: ["./object/ext/base"],
+    factory: function (_object_ext_base, require, exports, module) {
+      return $.extend({
+        formatJSON: function () {
+          return JSON.stringify(arguments[0], null, 4).replace(/(\s+"[^"]+":) ([^\s]+)/g, '$1    $2');
         },
+        curry: function (iOrigin) {
+          return function iProxy() {
+            return arguments.length >= iOrigin.length ? iOrigin.apply(this, arguments) : $.proxy.apply($, $.merge([iProxy, this], arguments));
+          };
+        },
+
         /**
          * 对象交集
          *
@@ -3384,228 +2488,147 @@ function merge(base, path) {
          *
          * @returns  {(object|array)} Intersect of parameters
          */
-        intersect:    function intersect(set) {
-
-            if (arguments.length < 2)  return set;
-
-            var isArray = $.likeArray( set );
-
-            set = Array.from( arguments );
-
-            set[0] = $.map(set.shift(),  function (value, key) {
-                if ( isArray ) {
-                    if (set.indexOf.call(set[0], value)  >  -1)
-                        return value;
-                } else if (
-                    (set[0][key] !== undefined)  &&  (set[0][key] === value)
-                )
-                    return value;
-            });
-
-            return  intersect.apply(this, set);
+        intersect: function intersect(set) {
+          if (arguments.length < 2) return set;
+          var isArray = $.likeArray(set);
+          set = Array.from(arguments);
+          set[0] = $.map(set.shift(), function (value, key) {
+            if (isArray) {
+              if (set.indexOf.call(set[0], value) > -1) return value;
+            } else if (set[0][key] !== undefined && set[0][key] === value) return value;
+          });
+          return intersect.apply(this, set);
         },
-        patch:        function patch(target, source) {
+        patch: function patch(target, source) {
+          if (target === source) return target;
 
-            if (target === source)  return target;
+          for (var key in source) if (source[key] != null) {
+            if ($.likeArray(source[key])) target[key] = $.merge(target[key] || [], source[key]);else if (typeof source[key] === 'object') target[key] = patch(target[key] || {}, source[key]);else if (!(target[key] != null)) target[key] = source[key];
+          }
 
-            for (var key in source)  if (source[key] != null) {
-
-                if ($.likeArray( source[key] ))
-                    target[key] = $.merge(target[key] || [ ],  source[key]);
-                else if (typeof source[key] === 'object')
-                    target[key] = patch(target[key] || { },  source[key]);
-                else if (! (target[key] != null))
-                    target[key] = source[key];
-            }
-
-            if (typeof target === 'function')
-                patch(target.prototype,  (source || '').prototype);
-
-            return target;
+          if (typeof target === 'function') patch(target.prototype, (source || '').prototype);
+          return target;
         }
-    });
-}
-        },
-        './CSS/ext/base':  {
-            base:        './CSS/ext',
-            dependency:  ["./object/ext/advanced"],
-            factory:     function (_object_ext_advanced, require, exports, module) {
-    var BOM = self;
-
-/* ---------- CSS Selector Priority ---------- */
-
-    var Pseudo_Class = $.makeSet([
-            ':link', 'visited', 'hover', 'active', 'focus', 'lang',
-            'enabled', 'disabled', 'checked',
-            'first-child', 'last-child', 'first-of-type', 'last-of-type',
-            'nth-child', 'nth-of-type', 'nth-last-child', 'nth-last-of-type',
-            'only-child', 'only-of-type', 'empty'
-        ].join(' :').split(' '));
-
-    $.selectorPriority = function (selector) {
-
-        var priority = [0, 0, 0];
-
-        if (selector.match( /\#[^\s>\+~]+/ ))  priority[0]++ ;
-
-        var pseudo = selector.match( /:[^\s>\+~]+/g )  ||  [ ];
-
-        var pClass = $.map(pseudo,  function () {
-
-                if (arguments[0] in Pseudo_Class)  return arguments[0];
-            });
-
-        priority[1] += (
-            selector.match( /\.[^\s>\+~]+/g )  ||  [ ]
-        ).concat(
-            selector.match( /\[[^\]]+\]/g )  ||  [ ]
-        ).concat( pClass ).length;
-
-        priority[2] += ((
-            selector.match( /[^\#\.\[:]?[^\s>\+~]+/g )  ||  [ ]
-        ).length + (
-            pseudo.length - pClass.length
-        ));
-
-        return priority;
-    };
-
-/* ---------- CSS Prefix ---------- */
-
-    var CSS_Prefix = (function (hash) {
-
-            for (var key in hash)
-                if ($.browser[ key ])  return hash[key];
-        })({
-            mozilla:    'moz',
-            webkit:     'webkit',
-            msie:       'ms'
-        });
-
-    $.cssName = $.curry(function (Test_Type, name) {
-
-        return  BOM[ Test_Type ]  ?  name  :  ('-' + CSS_Prefix + '-' + name);
-    });
-
-/* ---------- CSS Rule (Default) ---------- */
-
-    var Tag_Style = { },  _DOM_ = document.implementation.createHTMLDocument('');
-
-    if (typeof BOM.getDefaultComputedStyle != 'function')
-        BOM.getDefaultComputedStyle = function (tagName, pseudo) {
-
-            if (! Tag_Style[ tagName ]) {
-
-                var Default = _DOM_.body.appendChild(
-                        _DOM_.createElement( tagName )
-                    );
-
-                Tag_Style[ tagName ] = $.extend(
-                    { },  self.getComputedStyle(Default, pseudo)
-                );
-
-                Default.remove();
-            }
-
-            return  Tag_Style[ tagName ];
-        };
-
-/* ---------- CSS Rule (Matched) ---------- */
-
-    $.searchCSS = function (styleSheet, filter) {
-
-        if (styleSheet instanceof Function)
-            filter = styleSheet,  styleSheet = '';
-
-        return  $.map(styleSheet || document.styleSheets,  function _Self_() {
-
-            var rule = arguments[0].cssRules;
-
-            if (! rule)  return;
-
-            return  $.map(rule,  function (_Rule_) {
-
-                return  (_Rule_.cssRules ? _Self_ : filter)(_Rule_);
-            });
-        });
-    };
-
-    function CSSRuleList() {
-
-        this.length = 0;
-
-        $.merge(this, arguments[0]);
+      });
     }
+  },
+  './CSS/ext/base': {
+    base: './CSS/ext',
+    dependency: ["./object/ext/advanced"],
+    factory: function (_object_ext_advanced, require, exports, module) {
+      var BOM = self;
+      /* ---------- CSS Selector Priority ---------- */
 
-    if (typeof BOM.getMatchedCSSRules != 'function')
-        BOM.getMatchedCSSRules = function (element, pseudo) {
+      var Pseudo_Class = $.makeSet([':link', 'visited', 'hover', 'active', 'focus', 'lang', 'enabled', 'disabled', 'checked', 'first-child', 'last-child', 'first-of-type', 'last-of-type', 'nth-child', 'nth-of-type', 'nth-last-child', 'nth-last-of-type', 'only-child', 'only-of-type', 'empty'].join(' :').split(' '));
 
-            if (! (element instanceof Element))  return null;
+      $.selectorPriority = function (selector) {
+        var priority = [0, 0, 0];
+        if (selector.match(/\#[^\s>\+~]+/)) priority[0]++;
+        var pseudo = selector.match(/:[^\s>\+~]+/g) || [];
+        var pClass = $.map(pseudo, function () {
+          if (arguments[0] in Pseudo_Class) return arguments[0];
+        });
+        priority[1] += (selector.match(/\.[^\s>\+~]+/g) || []).concat(selector.match(/\[[^\]]+\]/g) || []).concat(pClass).length;
+        priority[2] += (selector.match(/[^\#\.\[:]?[^\s>\+~]+/g) || []).length + (pseudo.length - pClass.length);
+        return priority;
+      };
+      /* ---------- CSS Prefix ---------- */
 
-            if (typeof pseudo === 'string') {
 
-                pseudo = (pseudo.match(/^\s*:{1,2}([\w\-]+)\s*$/) || [ ])[1];
+      var CSS_Prefix = function (hash) {
+        for (var key in hash) if ($.browser[key]) return hash[key];
+      }({
+        mozilla: 'moz',
+        webkit: 'webkit',
+        msie: 'ms'
+      });
 
-                if (! pseudo)  return null;
+      $.cssName = $.curry(function (Test_Type, name) {
+        return BOM[Test_Type] ? name : '-' + CSS_Prefix + '-' + name;
+      });
+      /* ---------- CSS Rule (Default) ---------- */
 
-            } else if ( pseudo )  pseudo = null;
+      var Tag_Style = {},
+          _DOM_ = document.implementation.createHTMLDocument('');
 
-            return  new CSSRuleList($.searchCSS(function (rule) {
+      if (typeof BOM.getDefaultComputedStyle != 'function') BOM.getDefaultComputedStyle = function (tagName, pseudo) {
+        if (!Tag_Style[tagName]) {
+          var Default = _DOM_.body.appendChild(_DOM_.createElement(tagName));
 
-                var selector = rule.selectorText;
+          Tag_Style[tagName] = $.extend({}, self.getComputedStyle(Default, pseudo));
+          Default.remove();
+        }
 
-                if ( pseudo ) {
-                    selector = selector.replace(/:{1,2}([\w\-]+)$/,  function () {
+        return Tag_Style[tagName];
+      };
+      /* ---------- CSS Rule (Matched) ---------- */
 
-                        return  (arguments[1] === pseudo)  ?  ''  :  arguments[0];
-                    });
+      $.searchCSS = function (styleSheet, filter) {
+        if (styleSheet instanceof Function) filter = styleSheet, styleSheet = '';
+        return $.map(styleSheet || document.styleSheets, function _Self_() {
+          var rule = arguments[0].cssRules;
+          if (!rule) return;
+          return $.map(rule, function (_Rule_) {
+            return (_Rule_.cssRules ? _Self_ : filter)(_Rule_);
+          });
+        });
+      };
 
-                    if (selector === rule.selectorText)  return;
-                }
+      function CSSRuleList() {
+        this.length = 0;
+        $.merge(this, arguments[0]);
+      }
 
-                if (element.matches( selector ))  return rule;
-            }));
-        };
-}
-        },
-        './utility/ext/timer':  {
-            base:        './utility/ext',
-            dependency:  [],
-            factory:     function (require, exports, module) {
-    var _Timer_ = { };
+      if (typeof BOM.getMatchedCSSRules != 'function') BOM.getMatchedCSSRules = function (element, pseudo) {
+        if (!(element instanceof Element)) return null;
 
-    return $.extend({
-        every:       function (iSecond, iCallback) {
+        if (typeof pseudo === 'string') {
+          pseudo = (pseudo.match(/^\s*:{1,2}([\w\-]+)\s*$/) || [])[1];
+          if (!pseudo) return null;
+        } else if (pseudo) pseudo = null;
 
-            var iTimeOut = (iSecond || 0.01)  *  1000,
-                iStart = Date.now(),
-                Index = 0;
+        return new CSSRuleList($.searchCSS(function (rule) {
+          var selector = rule.selectorText;
 
-            return  setTimeout(function loop() {
-
-                if (false !== iCallback(
-                    ++Index,  (Date.now() - iStart)  /  1000
-                ))
-                    setTimeout(loop, iTimeOut);
-            }, iTimeOut);
-        },
-        wait:        function (iSecond, iCallback) {
-
-            return  this.every(iSecond,  function () {
-
-                iCallback.apply(this, arguments);
-
-                return false;
+          if (pseudo) {
+            selector = selector.replace(/:{1,2}([\w\-]+)$/, function () {
+              return arguments[1] === pseudo ? '' : arguments[0];
             });
-        },
-        start:       function (iName) {
+            if (selector === rule.selectorText) return;
+          }
 
-            return  (_Timer_[iName] = Date.now());
+          if (element.matches(selector)) return rule;
+        }));
+      };
+    }
+  },
+  './utility/ext/timer': {
+    base: './utility/ext',
+    dependency: [],
+    factory: function (require, exports, module) {
+      var _Timer_ = {};
+      return $.extend({
+        every: function (iSecond, iCallback) {
+          var iTimeOut = (iSecond || 0.01) * 1000,
+              iStart = Date.now(),
+              Index = 0;
+          return setTimeout(function loop() {
+            if (false !== iCallback(++Index, (Date.now() - iStart) / 1000)) setTimeout(loop, iTimeOut);
+          }, iTimeOut);
         },
-        end:         function (iName) {
+        wait: function (iSecond, iCallback) {
+          return this.every(iSecond, function () {
+            iCallback.apply(this, arguments);
+            return false;
+          });
+        },
+        start: function (iName) {
+          return _Timer_[iName] = Date.now();
+        },
+        end: function (iName) {
+          return (Date.now() - _Timer_[iName]) / 1000;
+        },
 
-            return  (Date.now() - _Timer_[iName])  /  1000;
-        },
         /**
          * 函数节流
          *
@@ -3618,29 +2641,24 @@ function merge(base, path) {
          *
          * @returns  {function} Wrapped function
          */
-        throttle:    function (second, origin) {
+        throttle: function (second, origin) {
+          if (!$.isNumeric(second)) {
+            origin = second;
+            second = 0;
+          }
 
-            if (! $.isNumeric( second )) {
+          second = (second || 0.25) * 1000;
+          var Last_Exec = 0;
+          return function () {
+            var now = Date.now();
 
-                origin = second;    second = 0;
+            if (Last_Exec + second <= now) {
+              Last_Exec = now;
+              return origin.apply(this, arguments);
             }
-
-            second = (second || 0.25)  *  1000;
-
-            var Last_Exec = 0;
-
-            return  function () {
-
-                var now = Date.now();
-
-                if (Last_Exec + second  <=  now) {
-
-                    Last_Exec = now;
-
-                    return  origin.apply(this, arguments);
-                }
-            };
+          };
         },
+
         /**
          * 唯一标识符生成
          *
@@ -3652,536 +2670,370 @@ function merge(base, path) {
          *
          * @returns  {string}
          */
-        uuid:        function (prefix) {
-
-            return  (prefix || 'uuid')  +  '_'  +
-                (Date.now() + Math.random()).toString(36)
-                    .replace('.', '').toUpperCase();
+        uuid: function (prefix) {
+          return (prefix || 'uuid') + '_' + (Date.now() + Math.random()).toString(36).replace('.', '').toUpperCase();
         }
-    });}
-        },
-        './CSS/ext/var':  {
-            base:        './CSS/ext',
-            dependency:  ["./utility/ext/timer"],
-            factory:     function ($, require, exports, module) {
-    return  $.extend(true, {
-        fn:       {uniqueId:  function () {
-
-            return  $.each(this,  function () {
-
-                if (! this.id)  this.id = $.uuid('iQuery');
-            })
-        }},
-        cssPX:    $.makeSet(
-            'width', 'height', 'padding', 'border-radius', 'margin',
-            'top', 'right', 'bottom',  'left'
-        )
-    });}
-        },
-        './CSS/ext/rule':  {
-            base:        './CSS/ext',
-            dependency:  ["./CSS/ext/var","./CSS/ext/base"],
-            factory:     function (_CSS_ext_var, _CSS_ext_base, require, exports, module) {
-/* ----------  JSON to <style />  ---------- */
-
-    var Code_Indent = $.browser.modern ? '' : ' '.repeat(4);
-
-    function CSS_Attribute(iName, iValue) {
-
-        if ($.isNumeric( iValue )  &&  (iName in $.cssPX))
-            iValue += 'px';
-
-        return  [iName, ':', Code_Indent, iValue].join('');
+      });
     }
-
-    function CSS_Rule2Text(iRule) {
-
-        var Rule_Text = [''];
-
-        $.each(iRule,  function (iSelector) {
-
-            var Rule_Block = [ ];
-
-            for (var iName in this)
-                Rule_Block.push(
-                    CSS_Attribute(iName, this[iName])
-                        .replace(/^(\w)/m,  Code_Indent + '$1')
-                );
-
-            Rule_Text.push(
-                [iSelector + ' {',  Rule_Block.join(";\n"),  '}'].join("\n")
-            );
-        });
-
-        return  Rule_Text.concat('').join("\n");
-    }
-
-    /**
-     * 全局 CSS 设置
-     *
-     * @author TechQuery
-     *
-     * @memberof $
-     *
-     * @param   {string}           At_Wrapper - At Rule
-     * @param   {object}           rule       - Selector as Key, Rule as Value
-     *
-     * @returns {HTMLStyleElement} Generated Style Element
-     */
-
-    $.cssRule = function (At_Wrapper, rule) {
-
-        if (typeof At_Wrapper.valueOf() != 'string')
-            rule = At_Wrapper,  At_Wrapper = null;
-
-        var CSS_Text = CSS_Rule2Text( rule );
-
-        return  $('<style />', {
-            type:       'text/css',
-            'class':    'iQuery_CSS-Rule',
-            text:       (! At_Wrapper)  ?  CSS_Text  :  [
-                At_Wrapper + ' {',
-                CSS_Text.replace(/\n/m,  "\n" + Code_Indent),
-                '}'
-            ].join("\n")
-        })[0];
-    };
-
-/* ---------- CSS Rule (Scoped) ---------- */
-
-    function Scope_Selector(_ID_) {
-
-        return  $.map(arguments[1].split( /\s*,\s*/ ),  function (_This_) {
-
-            return  /[\s>\+~]?#/.test(_This_)  ?
-                _This_  :  ('#'  +  _ID_  +  ' '  +  _This_);
-
-        }).join(',  ');
-    }
-
-    var Global_Style = $.makeSet('#document', 'html', 'body');
-
-    /**
-     * 局部 CSS 读写
-     *
-     * @memberof $.prototype
-     * @function cssRule
-     *
-     * @param    {object}   [rule]     - Selector as Key, Rule as Value
-     * @param    {function} [callback] - Callback for every {@link HTMLElement}
-     *
-     * @return   {object|$} No parameter: CSS Rule Object\n
-     *                      One or two:   iQuery Object
-     */
-
-    $.fn.cssRule = function (rule, callback) {
-
-        if (! $.isPlainObject( rule )) {
-
-            var $_This = this;
-
-            return  $_This[0]  &&  $.searchCSS(function (_Rule_) {
-                if ((
-                    (typeof $_This.selector != 'string')  ||
-                    ($_This.selector != _Rule_.selectorText)
-                )  &&  !(
-                    $_This[0].matches( _Rule_.selectorText )
-                ))
-                    return;
-
-                if ((! rule)  ||  (rule && _Rule_.style[rule]))
-                    return _Rule_;
+  },
+  './CSS/ext/var': {
+    base: './CSS/ext',
+    dependency: ["./utility/ext/timer"],
+    factory: function ($, require, exports, module) {
+      return $.extend(true, {
+        fn: {
+          uniqueId: function () {
+            return $.each(this, function () {
+              if (!this.id) this.id = $.uuid('iQuery');
             });
+          }
+        },
+        cssPX: $.makeSet('width', 'height', 'padding', 'border-radius', 'margin', 'top', 'right', 'bottom', 'left')
+      });
+    }
+  },
+  './CSS/ext/rule': {
+    base: './CSS/ext',
+    dependency: ["./CSS/ext/var", "./CSS/ext/base"],
+    factory: function (_CSS_ext_var, _CSS_ext_base, require, exports, module) {
+      /* ----------  JSON to <style />  ---------- */
+      var Code_Indent = $.browser.modern ? '' : ' '.repeat(4);
+
+      function CSS_Attribute(iName, iValue) {
+        if ($.isNumeric(iValue) && iName in $.cssPX) iValue += 'px';
+        return [iName, ':', Code_Indent, iValue].join('');
+      }
+
+      function CSS_Rule2Text(iRule) {
+        var Rule_Text = [''];
+        $.each(iRule, function (iSelector) {
+          var Rule_Block = [];
+
+          for (var iName in this) Rule_Block.push(CSS_Attribute(iName, this[iName]).replace(/^(\w)/m, Code_Indent + '$1'));
+
+          Rule_Text.push([iSelector + ' {', Rule_Block.join(";\n"), '}'].join("\n"));
+        });
+        return Rule_Text.concat('').join("\n");
+      }
+      /**
+       * 全局 CSS 设置
+       *
+       * @author TechQuery
+       *
+       * @memberof $
+       *
+       * @param   {string}           At_Wrapper - At Rule
+       * @param   {object}           rule       - Selector as Key, Rule as Value
+       *
+       * @returns {HTMLStyleElement} Generated Style Element
+       */
+
+
+      $.cssRule = function (At_Wrapper, rule) {
+        if (typeof At_Wrapper.valueOf() != 'string') rule = At_Wrapper, At_Wrapper = null;
+        var CSS_Text = CSS_Rule2Text(rule);
+        return $('<style />', {
+          type: 'text/css',
+          'class': 'iQuery_CSS-Rule',
+          text: !At_Wrapper ? CSS_Text : [At_Wrapper + ' {', CSS_Text.replace(/\n/m, "\n" + Code_Indent), '}'].join("\n")
+        })[0];
+      };
+      /* ---------- CSS Rule (Scoped) ---------- */
+
+
+      function Scope_Selector(_ID_) {
+        return $.map(arguments[1].split(/\s*,\s*/), function (_This_) {
+          return /[\s>\+~]?#/.test(_This_) ? _This_ : '#' + _ID_ + ' ' + _This_;
+        }).join(',  ');
+      }
+
+      var Global_Style = $.makeSet('#document', 'html', 'body');
+      /**
+       * 局部 CSS 读写
+       *
+       * @memberof $.prototype
+       * @function cssRule
+       *
+       * @param    {object}   [rule]     - Selector as Key, Rule as Value
+       * @param    {function} [callback] - Callback for every {@link HTMLElement}
+       *
+       * @return   {object|$} No parameter: CSS Rule Object\n
+       *                      One or two:   iQuery Object
+       */
+
+      $.fn.cssRule = function (rule, callback) {
+        if (!$.isPlainObject(rule)) {
+          var $_This = this;
+          return $_This[0] && $.searchCSS(function (_Rule_) {
+            if ((typeof $_This.selector != 'string' || $_This.selector != _Rule_.selectorText) && !$_This[0].matches(_Rule_.selectorText)) return;
+            if (!rule || rule && _Rule_.style[rule]) return _Rule_;
+          });
         }
 
         this.not([self, document.head]).uniqueId().each(function () {
+          var _Rule_ = {};
 
-            var _Rule_ = { };
+          for (var iSelector in rule) _Rule_[Scope_Selector(this.id, iSelector)] = rule[iSelector];
 
-            for (var iSelector in rule)
-                _Rule_[Scope_Selector(this.id, iSelector)] = rule[ iSelector ];
-
-            var $_Insert = $(
-                    'style, link[rel="stylesheet"]',
-                    (this.nodeName.toLowerCase() in Global_Style)  ?
-                        document.head  :  this
-                ),
-                end = 'After';
-
-            if ( $_Insert[0] )
-                $_Insert = $_Insert.slice( -1 );
-            else
-                $_Insert = $( this ),  end = 'Before';
-
-            _Rule_ = $( $.cssRule(_Rule_) )['insert' + end]( $_Insert )[0];
-
-            if (typeof callback === 'function')
-                callback.call(this,  _Rule_.sheet || _Rule_.styleSheet);
+          var $_Insert = $('style, link[rel="stylesheet"]', this.nodeName.toLowerCase() in Global_Style ? document.head : this),
+              end = 'After';
+          if ($_Insert[0]) $_Insert = $_Insert.slice(-1);else $_Insert = $(this), end = 'Before';
+          _Rule_ = $($.cssRule(_Rule_))['insert' + end]($_Insert)[0];
+          if (typeof callback === 'function') callback.call(this, _Rule_.sheet || _Rule_.styleSheet);
         });
-
         return this;
-    };
+      };
+    }
+  },
+  './DOM/ext/selection': {
+    base: './DOM/ext',
+    dependency: [],
+    factory: function (require, exports, module) {
+      var W3C_Selection = typeof document.getSelection === 'function';
 
-}
-        },
-        './DOM/ext/selection':  {
-            base:        './DOM/ext',
-            dependency:  [],
-            factory:     function (require, exports, module) {
-    var W3C_Selection = (typeof document.getSelection === 'function');
-
-    function Select_Node(iSelection) {
-
-        var iFocus = W3C_Selection ?
-                iSelection.focusNode : iSelection.createRange().parentElement();
-
+      function Select_Node(iSelection) {
+        var iFocus = W3C_Selection ? iSelection.focusNode : iSelection.createRange().parentElement();
         var iActive = iFocus.ownerDocument.activeElement;
+        return $.contains(iActive, iFocus) ? iFocus : iActive;
+      }
 
-        return  $.contains(iActive, iFocus)  ?  iFocus  :  iActive;
-    }
-
-    function Find_Selection() {
-
+      function Find_Selection() {
         var iDOM = this.document || this.ownerDocument || this;
-
-        if (iDOM.activeElement.tagName.toLowerCase() == 'iframe')  try {
-
-            return  Find_Selection.call( iDOM.activeElement.contentWindow );
-
-        } catch (iError) { }
-
+        if (iDOM.activeElement.tagName.toLowerCase() == 'iframe') try {
+          return Find_Selection.call(iDOM.activeElement.contentWindow);
+        } catch (iError) {}
         var iSelection = W3C_Selection ? iDOM.getSelection() : iDOM.selection;
+        var iNode = Select_Node(iSelection);
+        return $.contains(this instanceof Element ? this : iDOM, iNode) && [iSelection, iNode];
+      }
 
-        var iNode = Select_Node( iSelection );
-
-        return  $.contains(
-            (this instanceof Element)  ?  this  :  iDOM,  iNode
-        ) && [
-            iSelection, iNode
-        ];
-    }
-
-    $.fn.selection = function (iContent) {
-
-        if (! argument.length) {
-
-            var iSelection = Find_Selection.call( this[0] )[0];
-
-            return  W3C_Selection ?
-                (iSelection + '')  :  iSelection.createRange().htmlText;
+      $.fn.selection = function (iContent) {
+        if (!argument.length) {
+          var iSelection = Find_Selection.call(this[0])[0];
+          return W3C_Selection ? iSelection + '' : iSelection.createRange().htmlText;
         }
 
-        return  this.each(function () {
+        return this.each(function () {
+          var iSelection = Find_Selection.call(this);
+          var iNode = iSelection[1];
+          iSelection = iSelection[0];
+          iNode = iNode.nodeType === 1 ? iNode : iNode.parentNode;
 
-            var iSelection = Find_Selection.call( this );
+          if (!W3C_Selection) {
+            iSelection = iSelection.createRange();
+            return iSelection.text = typeof iContent === 'function' ? iContent.call(iNode, iSelection.text) : iContent;
+          }
 
-            var iNode = iSelection[1];    iSelection = iSelection[0];
+          var iProperty, iStart, iEnd;
 
-            iNode = (iNode.nodeType === 1)  ?  iNode  :  iNode.parentNode;
+          if ((iNode.tagName || '').match(/input|textarea/i)) {
+            iProperty = 'value';
+            iStart = Math.min(iNode.selectionStart, iNode.selectionEnd);
+            iEnd = Math.max(iNode.selectionStart, iNode.selectionEnd);
+          } else {
+            iProperty = 'innerHTML';
+            iStart = Math.min(iSelection.anchorOffset, iSelection.focusOffset);
+            iEnd = Math.max(iSelection.anchorOffset, iSelection.focusOffset);
+          }
 
-            if (! W3C_Selection) {
-
-                iSelection = iSelection.createRange();
-
-                return  iSelection.text = (
-                    (typeof iContent === 'function')  ?
-                        iContent.call(iNode, iSelection.text)  :  iContent
-                );
-            }
-            var iProperty, iStart, iEnd;
-
-            if ((iNode.tagName || '').match( /input|textarea/i )) {
-
-                iProperty = 'value';
-
-                iStart = Math.min(iNode.selectionStart, iNode.selectionEnd);
-
-                iEnd = Math.max(iNode.selectionStart, iNode.selectionEnd);
-            } else {
-                iProperty = 'innerHTML';
-
-                iStart = Math.min(iSelection.anchorOffset, iSelection.focusOffset);
-
-                iEnd = Math.max(iSelection.anchorOffset, iSelection.focusOffset);
-            }
-
-            var iValue = iNode[ iProperty ];
-
-            iNode[ iProperty ] = iValue.slice(0, iStart)  +  (
-                (typeof iContent === 'function')  ?
-                    iContent.call(iNode, iValue.slice(iStart, iEnd))  :  iContent
-            )  +  iValue.slice( iEnd );
+          var iValue = iNode[iProperty];
+          iNode[iProperty] = iValue.slice(0, iStart) + (typeof iContent === 'function' ? iContent.call(iNode, iValue.slice(iStart, iEnd)) : iContent) + iValue.slice(iEnd);
         });
-    };
-}
-        },
-        './polyfill/ES/Promise_A+':  {
-            base:        './polyfill/ES',
-            dependency:  [],
-            factory:     function (require, exports, module) {
-    var BOM = self;
+      };
+    }
+  },
+  './polyfill/ES/Promise_A+': {
+    base: './polyfill/ES',
+    dependency: [],
+    factory: function (require, exports, module) {
+      var BOM = self;
+      if (BOM.Promise instanceof Function) return BOM.Promise;
+      /* ---------- Promise/A+ Core ---------- */
 
-    if (BOM.Promise instanceof Function)  return BOM.Promise;
-
-/* ---------- Promise/A+ Core ---------- */
-
-    function Promise() {
-
+      function Promise() {
         this.__value__ = undefined;
-
         this.__state__ = -1;
-
-        this.__callback__ = [ ];
+        this.__callback__ = [];
 
         var _This_ = this;
 
         arguments[0](function () {
-
-            _This_.resolve( arguments[0] );
-
-        },  function () {
-
-            _This_.reject( arguments[0] );
+          _This_.resolve(arguments[0]);
+        }, function () {
+          _This_.reject(arguments[0]);
         });
-    }
+      }
 
-    var __Private__ = { };
+      var __Private__ = {};
 
-    Promise.prototype.reject = function () {
-
+      Promise.prototype.reject = function () {
         __Private__.endBy.call(this, 1, arguments[0]);
-    };
+      };
 
-    Promise.prototype.resolve = function (_Value_) {
-
-        if (_Value_ == this)
-            throw  TypeError("Can't return the same Promise object !");
-
-        if (typeof (_Value_ || '').then != 'function')
-            return  __Private__.endBy.call(this, 0, _Value_);
+      Promise.prototype.resolve = function (_Value_) {
+        if (_Value_ == this) throw TypeError("Can't return the same Promise object !");
+        if (typeof (_Value_ || '').then != 'function') return __Private__.endBy.call(this, 0, _Value_);
 
         var _This_ = this;
 
         _Value_.then(function () {
-
-            _This_.resolve( arguments[0] );
-
-        },  function () {
-
-            _This_.reject( arguments[0] );
+          _This_.resolve(arguments[0]);
+        }, function () {
+          _This_.reject(arguments[0]);
         });
-    };
+      };
 
-    __Private__.endBy = function (iState, iValue) {
-
-        if (this.__state__ > -1)  return;
+      __Private__.endBy = function (iState, iValue) {
+        if (this.__state__ > -1) return;
 
         var _This_ = this;
 
         setTimeout(function () {
+          _This_.__value__ = iValue;
+          _This_.__state__ = iState;
 
-            _This_.__value__ = iValue;
-
-            _This_.__state__ = iState;
-
-            __Private__.exec.call(_This_);
+          __Private__.exec.call(_This_);
         });
-    };
+      };
 
-    __Private__.exec = function () {
-
+      __Private__.exec = function () {
         var _CB_;
 
-        if (this.__state__ > -1)
-            while (_CB_ = this.__callback__.shift())
-                if (typeof _CB_[this.__state__]  ==  'function')  try {
+        if (this.__state__ > -1) while (_CB_ = this.__callback__.shift()) if (typeof _CB_[this.__state__] == 'function') try {
+          _CB_[2](_CB_[this.__state__](this.__value__));
+        } catch (iError) {
+          _CB_[3](iError);
+        }
+      };
 
-                    _CB_[2]( _CB_[this.__state__]( this.__value__ ) );
-
-                } catch (iError) {
-
-                    _CB_[3]( iError );
-                }
-    };
-
-    Promise.prototype.then = function (iResolve, iReject) {
-
+      Promise.prototype.then = function (iResolve, iReject) {
         var _This_ = this;
 
-        return  new Promise(function () {
+        return new Promise(function () {
+          _This_.__callback__.push([iResolve, iReject, arguments[0], arguments[1]]);
 
-            _This_.__callback__.push([
-                iResolve,  iReject,  arguments[0],  arguments[1]
-            ]);
-
-            __Private__.exec.call(_This_);
+          __Private__.exec.call(_This_);
         });
-    };
+      };
+      /* ---------- ES 6  Promise Helper ---------- */
 
-/* ---------- ES 6  Promise Helper ---------- */
 
-    Promise.resolve = function (iValue) {
-
-        return  (iValue instanceof this)  ?  iValue  :  new this(function () {
-
-            arguments[0]( iValue );
+      Promise.resolve = function (iValue) {
+        return iValue instanceof this ? iValue : new this(function () {
+          arguments[0](iValue);
         });
-    };
+      };
 
-    Promise.reject = function (iError) {
-
-        return  new this(function () {
-
-            arguments[1]( iError );
+      Promise.reject = function (iError) {
+        return new this(function () {
+          arguments[1](iError);
         });
-    };
+      };
 
-    Promise.all = function (iQueue) {
+      Promise.all = function (iQueue) {
+        var iValue = [],
+            iSum = iQueue.length;
+        return iSum ? new this(function (iResolve, iReject) {
+          ' '.repeat(iSum).replace(/ /g, function (_, Index) {
+            Promise.resolve(iQueue[Index]).then(function () {
+              iValue[Index] = arguments[0];
+              if (! --iSum) iResolve(iValue);
+            }, iReject);
+          });
+        }) : this.resolve(iQueue);
+      };
 
-        var iValue = [ ],  iSum = iQueue.length;
-
-        return  iSum  ?  (new this(function (iResolve, iReject) {
-
-            ' '.repeat( iSum ).replace(/ /g,  function (_, Index) {
-
-                Promise.resolve( iQueue[Index] ).then(function () {
-
-                    iValue[ Index ] = arguments[0];
-
-                    if (! --iSum)  iResolve( iValue );
-
-                },  iReject);
-            });
-        }))  :  this.resolve( iQueue );
-    };
-
-    Promise.race = function (iQueue) {
-
-        return  new Promise(function () {
-
-            for (var i = 0;  iQueue[i];  i++)
-                Promise.resolve( iQueue[i] ).then(arguments[0], arguments[1]);
+      Promise.race = function (iQueue) {
+        return new Promise(function () {
+          for (var i = 0; iQueue[i]; i++) Promise.resolve(iQueue[i]).then(arguments[0], arguments[1]);
         });
-    };
+      };
 
-    return  BOM.Promise = Promise;
-}
-        },
-        './DOM/ext/utility':  {
-            base:        './DOM/ext',
-            dependency:  ["./utility/ext/string","./polyfill/ES/Promise_A+"],
-            factory:     function (_utility_ext_string, _polyfill_ES_Promise_A_, require, exports, module) {
-    var operator = {
-            '+':    function () {
-                return  arguments[0] + arguments[1];
-            },
-            '-':    function () {
-                return  arguments[0] - arguments[1];
-            }
-        };
-
-    function Array_Reverse() {
-
-        return  ($.Type( this )  !=  'iQuery')  ?
-            this  :  Array.prototype.reverse.call( this );
+      return BOM.Promise = Promise;
     }
-
-    $.fn.extend({
-        reduce:           function (method, key, callback) {
-
-            if (arguments.length < 3)  callback = key, key = '';
-
-            if (typeof callback === 'string')
-                callback = operator[ callback ];
-
-            return  $.map(this,  function () {
-
-                return  $.fn[ method ].apply(
-                    $( arguments[0] ),  key ? [key] : []
-                );
-            }).reduce( callback );
+  },
+  './DOM/ext/utility': {
+    base: './DOM/ext',
+    dependency: ["./utility/ext/string", "./polyfill/ES/Promise_A+"],
+    factory: function (_utility_ext_string, _polyfill_ES_Promise_A_, require, exports, module) {
+      var operator = {
+        '+': function () {
+          return arguments[0] + arguments[1];
         },
-        sameParents:      function (filter) {
-
-            if (this.length < 2)  return this.parents();
-
-            var min = $.trace(this[0], 'parentNode').slice(0, -1),  previous;
-
-            for (var i = 1, last;  this[i];  i++) {
-
-                last = $.trace(this[i], 'parentNode').slice(0, -1);
-
-                if (last.length < min.length)    previous = min,  min = last;
-            }
-
-            previous = previous || last;
-
-            var diff = previous.length - min.length,  $_Result = [ ];
-
-            for (var i = 0;  min[i];  i++)
-                if (min[i]  ===  previous[i + diff]) {
-
-                    $_Result = min.slice(i);    break;
-                }
-
-            return Array_Reverse.call(this.pushStack(
-                filter  ?  $( $_Result ).filter( filter )  :  $_Result
-            ));
-        },
-        scrollParents:    function () {
-
-            return Array_Reverse.call(this.pushStack($.merge(
-                this.eq(0).parents(':scrollable'),  [ document ]
-            )));
-        },
-        scrollTo:         function () {
-
-            if (! this[0])  return this;
-
-            var $_This = this;
-
-            $( arguments[0] ).each(function () {
-
-                var $_Scroll = $_This.has( this );
-
-                var coord = $( this ).offset(),  _Coord_ = $_Scroll.offset();
-
-                if (! $_Scroll.length)  return;
-
-                $_Scroll.animate({
-                    scrollTop:     (! _Coord_.top)  ?  coord.top  :  (
-                        $_Scroll.scrollTop()  +  (coord.top - _Coord_.top)
-                    ),
-                    scrollLeft:    (! _Coord_.left)  ?  coord.left  :  (
-                        $_Scroll.scrollLeft()  +  (coord.left - _Coord_.left)
-                    )
-                });
-            });
-
-            return this;
-        },
-        mediaReady:       function () {
-
-            var $_Media = this.find('img, audio, video')
-                    .addBack('img, audio, video');
-
-            return  new Promise(function (resolve) {
-
-                $.every(0.25,  function () {
-
-                    if (! ($_Media = $_Media.not(':loaded'))[0])
-                        return  (!! resolve());
-                });
-            });
+        '-': function () {
+          return arguments[0] - arguments[1];
         }
-    });
-}
+      };
+
+      function Array_Reverse() {
+        return $.Type(this) != 'iQuery' ? this : Array.prototype.reverse.call(this);
+      }
+
+      $.fn.extend({
+        reduce: function (method, key, callback) {
+          if (arguments.length < 3) callback = key, key = '';
+          if (typeof callback === 'string') callback = operator[callback];
+          return $.map(this, function () {
+            return $.fn[method].apply($(arguments[0]), key ? [key] : []);
+          }).reduce(callback);
         },
-        './utility/ext/string':  {
-            base:        './utility/ext',
-            dependency:  [],
-            factory:     function (require, exports, module) {
-    return $.extend({
+        sameParents: function (filter) {
+          if (this.length < 2) return this.parents();
+          var min = $.trace(this[0], 'parentNode').slice(0, -1),
+              previous;
+
+          for (var i = 1, last; this[i]; i++) {
+            last = $.trace(this[i], 'parentNode').slice(0, -1);
+            if (last.length < min.length) previous = min, min = last;
+          }
+
+          previous = previous || last;
+          var diff = previous.length - min.length,
+              $_Result = [];
+
+          for (var i = 0; min[i]; i++) if (min[i] === previous[i + diff]) {
+            $_Result = min.slice(i);
+            break;
+          }
+
+          return Array_Reverse.call(this.pushStack(filter ? $($_Result).filter(filter) : $_Result));
+        },
+        scrollParents: function () {
+          return Array_Reverse.call(this.pushStack($.merge(this.eq(0).parents(':scrollable'), [document])));
+        },
+        scrollTo: function () {
+          if (!this[0]) return this;
+          var $_This = this;
+          $(arguments[0]).each(function () {
+            var $_Scroll = $_This.has(this);
+
+            var coord = $(this).offset(),
+                _Coord_ = $_Scroll.offset();
+
+            if (!$_Scroll.length) return;
+            $_Scroll.animate({
+              scrollTop: !_Coord_.top ? coord.top : $_Scroll.scrollTop() + (coord.top - _Coord_.top),
+              scrollLeft: !_Coord_.left ? coord.left : $_Scroll.scrollLeft() + (coord.left - _Coord_.left)
+            });
+          });
+          return this;
+        },
+        mediaReady: function () {
+          var $_Media = this.find('img, audio, video').addBack('img, audio, video');
+          return new Promise(function (resolve) {
+            $.every(0.25, function () {
+              if (!($_Media = $_Media.not(':loaded'))[0]) return !!resolve();
+            });
+          });
+        }
+      });
+    }
+  },
+  './utility/ext/string': {
+    base: './utility/ext',
+    dependency: [],
+    factory: function (require, exports, module) {
+      return $.extend({
         /**
          * 定字定数分割字符串
          *
@@ -4209,19 +3061,17 @@ function merge(base, path) {
          *
          *     $.split("a  b\tc",  /\s+/,  2,  ' ')    // ['a', 'b c']
          */
-        split:         function (string, split, max, join) {
+        split: function (string, split, max, join) {
+          string = string.split(split);
 
-            string = string.split( split );
+          if (max) {
+            string[max - 1] = string.slice(max - 1).join(typeof join === 'string' ? join : split);
+            string.length = max;
+          }
 
-            if ( max ) {
-                string[max - 1] = string.slice(max - 1).join(
-                    (typeof join === 'string')  ?  join  :  split
-                );
-                string.length = max;
-            }
-
-            return string;
+          return string;
         },
+
         /**
          * 连字符化字符串
          *
@@ -4247,488 +3097,355 @@ function merge(base, path) {
          *
          *     // 'upper-case-mix-camel-case'
          */
-        hyphenCase:    function (raw) {
-
-            return raw.replace(
-                /[^A-Za-z0-9]+/g, '-'
-            ).replace(
-                /([A-Za-z0-9])([A-Z][a-z])/g, '$1-$2'
-            ).toLowerCase();
+        hyphenCase: function (raw) {
+          return raw.replace(/[^A-Za-z0-9]+/g, '-').replace(/([A-Za-z0-9])([A-Z][a-z])/g, '$1-$2').toLowerCase();
         },
-        byteLength:    function () {
-
-            return arguments[0].replace(
-                /[^\u0021-\u007e\uff61-\uffef]/g,  'xx'
-            ).length;
+        byteLength: function () {
+          return arguments[0].replace(/[^\u0021-\u007e\uff61-\uffef]/g, 'xx').length;
         },
-        isSelector:    function () {
-            try {
-                return  (!! $( arguments[0] ));
-
-            } catch (iError) {  return false;  }
+        isSelector: function () {
+          try {
+            return !!$(arguments[0]);
+          } catch (iError) {
+            return false;
+          }
         }
-    });
-}
-        },
-        './utility/ext/browser':  {
-            base:        './utility/ext',
-            dependency:  [],
-            factory:     function (require, exports, module) {
-    var UA = self.navigator.userAgent;
-
-    var is_Trident = UA.match(
-            /MSIE (\d+)|Trident[^\)]+rv:(\d+)|Edge\/(\d+)\./i
-        ),
-        is_Gecko = UA.match(
-            /; rv:(\d+)[^\/]+Gecko\/\d+/
-        ),
-        is_Webkit = UA.match(
-            /AppleWebkit\/(\d+\.\d+)/i
-        );
-
-    var IE_Ver = is_Trident  ?  Number(is_Trident[1] || is_Trident[2])  :  NaN,
-        FF_Ver = is_Gecko  ?  Number( is_Gecko[1] )  :  NaN,
-        WK_Ver = is_Webkit  ?  parseFloat( is_Webkit[1] )  :  NaN;
-
-    var is_Pad = UA.match(/Tablet|Pad|Book|Android 3/i),
-        is_Phone = UA.match(/Phone|Touch|Android 2|Symbian/i);
-
-    var is_Mobile = (is_Pad || is_Phone || UA.match(/Mobile/i))  &&
-            (UA.indexOf(' PC ') === -1);
-
-    var is_iOS = UA.match(
-            /(iTouch|iPhone|iPad|iWatch);[^\)]+CPU[^\)]+OS (\d+_\d+)/i
-        ),
-        is_Android = UA.match( /(Android |Silk\/)(\d+\.\d+)/i );
-
-    $.browser = {
-        msie:             IE_Ver,
-        mozilla:          FF_Ver,
-        webkit:           WK_Ver,
-        modern:           !  (IE_Ver < 9),
-        mobile:           !! is_Mobile,
-        pad:              !! is_Pad,
-        phone:            (!! is_Phone)  ||  (is_Mobile  &&  (! is_Pad)),
-        ios:              is_iOS  ?  parseFloat( is_iOS[2].replace('_', '.') )  :  NaN,
-        android:          is_Android  ?  parseFloat( is_Android[2] )  :  NaN,
-        versionNumber:    IE_Ver || FF_Ver || WK_Ver
-    };
-}
-        },
-        './polyfill/DOM/IE-8':  {
-            base:        './polyfill/DOM',
-            dependency:  ["./utility/ext/browser","./utility/ext/string"],
-            factory:     function (_utility_ext_browser, _utility_ext_string, require, exports, module) {
-    var BOM = self,  DOM = self.document;
-
-    if ( $.browser.modern )  return;
-
-
-/* ---------- Global property ---------- */
-
-    BOM.Document = DOM.constructor;
-
-    BOM.Text = DOM.createTextNode('').constructor;
-
-    BOM.Comment = DOM.createComment('').constructor;
-
-    $.each({
-        defaultView:    function () {
-
-            return  this.parentWindow;
-        },
-        head:           function () {
-
-            return  this.documentElement ? this.documentElement.firstChild : null;
-        }
-    },  function (key) {
-
-        Object.defineProperty(Document.prototype,  key,  {get: this});
-    });
-
-/* ---------- DOM ShortCut ---------- */
-
-    var DOM_Proto = Element.prototype;
-
-    $.each({
-        firstElementChild:         function () {
-            return this.children[0];
-        },
-        lastElementChild:          function () {
-
-            return  this.children[this.children.length - 1];
-        },
-        previousElementSibling:    function () {
-
-            return  $.trace(this,  'previousSibling',  1,  function () {
-
-                return  (this.nodeType == 1);
-            })[0];
-        },
-        nextElementSibling:        function () {
-
-            return  $.trace(this,  'nextSibling',  function () {
-
-                return  (this.nodeType == 1);
-            })[0];
-        }
-    },  function (key) {
-
-        var config = {get: this};
-
-        Object.defineProperty(DOM_Proto, key, config);
-
-        if (key.indexOf('Sibling') > 0)
-            Object.defineProperty(Text.prototype, key, config);
-    });
-
-/* ---------- DOM Text Content ---------- */
-
-    Object.defineProperty(DOM_Proto, 'textContent', {
-        get:    function () {
-
-            return  $.mapTree(this,  'childNodes',  function (node) {
-
-                return  (node.nodeType === 3)  ?  node.nodeValue  :  '';
-
-            }).join('');
-        },
-        set:    function (text) {
-
-            if (this.tagName.toLowerCase() !== 'style')
-                this.innerText = text;
-            else
-                this.styleSheet.cssText = text;
-        }
-    });
-
-    var textContent = {
-            get:    function () {  return this.nodeValue;  },
-            set:    function (text) {  this.nodeValue = text;  }
-        };
-
-    Object.defineProperty(Text.prototype, 'textContent', textContent);
-
-    Object.defineProperty(Comment.prototype, 'textContent', textContent);
-
-
-/* ---------- DOM Attribute Name ---------- */
-
-    var alias = {
-            'class':    'className',
-            'for':      'htmlFor'
-        },
-        Get_Attribute = DOM_Proto.getAttribute,
-        Set_Attribute = DOM_Proto.setAttribute,
-        Remove_Attribute = DOM_Proto.removeAttribute;
-
-    $.extend(DOM_Proto, {
-        getAttribute:    function (name) {
-
-            return  alias[name] ?
-                this[ alias[name] ]  :  Get_Attribute.call(this, name,  0);
-        },
-        setAttribute:    function (name, value) {
-
-            if (alias[name])
-                this[ alias[name] ] = value;
-            else
-                Set_Attribute.call(this, name, value,  0);
-        },
-        removeAttribute:    function (name) {
-
-            return  Remove_Attribute.call(this,  alias[name] || name,  0);
-        }
-    });
-
-/* ---------- Computed Style ---------- */
-
-    var PX_Attr = $.makeSet('left', 'right', 'top', 'bottom', 'width', 'height'),
-        DX_Filter = 'DXImageTransform.Microsoft.';
-
-    function ValueUnit(value) {
-
-        return  value.slice((parseFloat(value) + '').length);
+      });
     }
+  },
+  './utility/ext/browser': {
+    base: './utility/ext',
+    dependency: [],
+    factory: function (require, exports, module) {
+      var UA = self.navigator.userAgent;
+      var is_Trident = UA.match(/MSIE (\d+)|Trident[^\)]+rv:(\d+)|Edge\/(\d+)\./i),
+          is_Gecko = UA.match(/; rv:(\d+)[^\/]+Gecko\/\d+/),
+          is_Webkit = UA.match(/AppleWebkit\/(\d+\.\d+)/i);
+      var IE_Ver = is_Trident ? Number(is_Trident[1] || is_Trident[2]) : NaN,
+          FF_Ver = is_Gecko ? Number(is_Gecko[1]) : NaN,
+          WK_Ver = is_Webkit ? parseFloat(is_Webkit[1]) : NaN;
+      var is_Pad = UA.match(/Tablet|Pad|Book|Android 3/i),
+          is_Phone = UA.match(/Phone|Touch|Android 2|Symbian/i);
+      var is_Mobile = (is_Pad || is_Phone || UA.match(/Mobile/i)) && UA.indexOf(' PC ') === -1;
+      var is_iOS = UA.match(/(iTouch|iPhone|iPad|iWatch);[^\)]+CPU[^\)]+OS (\d+_\d+)/i),
+          is_Android = UA.match(/(Android |Silk\/)(\d+\.\d+)/i);
+      $.browser = {
+        msie: IE_Ver,
+        mozilla: FF_Ver,
+        webkit: WK_Ver,
+        modern: !(IE_Ver < 9),
+        mobile: !!is_Mobile,
+        pad: !!is_Pad,
+        phone: !!is_Phone || is_Mobile && !is_Pad,
+        ios: is_iOS ? parseFloat(is_iOS[2].replace('_', '.')) : NaN,
+        android: is_Android ? parseFloat(is_Android[2]) : NaN,
+        versionNumber: IE_Ver || FF_Ver || WK_Ver
+      };
+    }
+  },
+  './polyfill/DOM/IE-8': {
+    base: './polyfill/DOM',
+    dependency: ["./utility/ext/browser", "./utility/ext/string"],
+    factory: function (_utility_ext_browser, _utility_ext_string, require, exports, module) {
+      var BOM = self,
+          DOM = self.document;
+      if ($.browser.modern) return;
+      /* ---------- Global property ---------- */
 
-    function toPX(name) {
+      BOM.Document = DOM.constructor;
+      BOM.Text = DOM.createTextNode('').constructor;
+      BOM.Comment = DOM.createComment('').constructor;
+      $.each({
+        defaultView: function () {
+          return this.parentWindow;
+        },
+        head: function () {
+          return this.documentElement ? this.documentElement.firstChild : null;
+        }
+      }, function (key) {
+        Object.defineProperty(Document.prototype, key, {
+          get: this
+        });
+      });
+      /* ---------- DOM ShortCut ---------- */
 
-        var value = this[name];    var number = parseFloat( value );
+      var DOM_Proto = Element.prototype;
+      $.each({
+        firstElementChild: function () {
+          return this.children[0];
+        },
+        lastElementChild: function () {
+          return this.children[this.children.length - 1];
+        },
+        previousElementSibling: function () {
+          return $.trace(this, 'previousSibling', 1, function () {
+            return this.nodeType == 1;
+          })[0];
+        },
+        nextElementSibling: function () {
+          return $.trace(this, 'nextSibling', function () {
+            return this.nodeType == 1;
+          })[0];
+        }
+      }, function (key) {
+        var config = {
+          get: this
+        };
+        Object.defineProperty(DOM_Proto, key, config);
+        if (key.indexOf('Sibling') > 0) Object.defineProperty(Text.prototype, key, config);
+      });
+      /* ---------- DOM Text Content ---------- */
 
-        if (isNaN( number ))  return;
+      Object.defineProperty(DOM_Proto, 'textContent', {
+        get: function () {
+          return $.mapTree(this, 'childNodes', function (node) {
+            return node.nodeType === 3 ? node.nodeValue : '';
+          }).join('');
+        },
+        set: function (text) {
+          if (this.tagName.toLowerCase() !== 'style') this.innerText = text;else this.styleSheet.cssText = text;
+        }
+      });
+      var textContent = {
+        get: function () {
+          return this.nodeValue;
+        },
+        set: function (text) {
+          this.nodeValue = text;
+        }
+      };
+      Object.defineProperty(Text.prototype, 'textContent', textContent);
+      Object.defineProperty(Comment.prototype, 'textContent', textContent);
+      /* ---------- DOM Attribute Name ---------- */
 
-        if ( number )
-            switch (ValueUnit( value )) {
-                case 'em':    {
-                    var Font_Size =
-                        this.ownerNode.parentNode.currentStyle.fontSize;
+      var alias = {
+        'class': 'className',
+        'for': 'htmlFor'
+      },
+          Get_Attribute = DOM_Proto.getAttribute,
+          Set_Attribute = DOM_Proto.setAttribute,
+          Remove_Attribute = DOM_Proto.removeAttribute;
+      $.extend(DOM_Proto, {
+        getAttribute: function (name) {
+          return alias[name] ? this[alias[name]] : Get_Attribute.call(this, name, 0);
+        },
+        setAttribute: function (name, value) {
+          if (alias[name]) this[alias[name]] = value;else Set_Attribute.call(this, name, value, 0);
+        },
+        removeAttribute: function (name) {
+          return Remove_Attribute.call(this, alias[name] || name, 0);
+        }
+      });
+      /* ---------- Computed Style ---------- */
 
-                    number *= parseFloat( Font_Size );
+      var PX_Attr = $.makeSet('left', 'right', 'top', 'bottom', 'width', 'height'),
+          DX_Filter = 'DXImageTransform.Microsoft.';
 
-                    if (ValueUnit( Font_Size )  !=  'pt')  break;
-                }
-                case 'pt':    number *= (BOM.screen.deviceXDPI / 72);    break;
-                default:      return;
+      function ValueUnit(value) {
+        return value.slice((parseFloat(value) + '').length);
+      }
+
+      function toPX(name) {
+        var value = this[name];
+        var number = parseFloat(value);
+        if (isNaN(number)) return;
+        if (number) switch (ValueUnit(value)) {
+          case 'em':
+            {
+              var Font_Size = this.ownerNode.parentNode.currentStyle.fontSize;
+              number *= parseFloat(Font_Size);
+              if (ValueUnit(Font_Size) != 'pt') break;
             }
 
+          case 'pt':
+            number *= BOM.screen.deviceXDPI / 72;
+            break;
+
+          default:
+            return;
+        }
         this[name] = number + 'px';
-    }
+      }
 
-    function CSSStyleDeclaration(element) {
-
+      function CSSStyleDeclaration(element) {
         var style = element.currentStyle;
-
         $.extend(this, {
-            length:       0,
-            cssText:      '',
-            ownerNode:    element
+          length: 0,
+          cssText: '',
+          ownerNode: element
         });
 
         for (var name in style) {
-
-            this[name] = (name in PX_Attr)  &&  style[
-                $.camelCase('pixel-' + name)
-            ];
-
-            this[name] = (typeof this[name] === 'number')  ?
-                (this[name] + 'px')  :  (style[name] + '');
-
-            if (typeof this[name] === 'string')  toPX.call(this, name);
-
-            this.cssText += name  +  ': '  +  this[ name ]  +  '; ';
+          this[name] = name in PX_Attr && style[$.camelCase('pixel-' + name)];
+          this[name] = typeof this[name] === 'number' ? this[name] + 'px' : style[name] + '';
+          if (typeof this[name] === 'string') toPX.call(this, name);
+          this.cssText += name + ': ' + this[name] + '; ';
         }
 
         this.cssText = this.cssText.trim();
+        var alpha = element.filters.Alpha || element.filters[DX_Filter + 'Alpha'];
+        this.opacity = (alpha ? alpha.opacity / 100 : 1) + '';
+      }
 
-        var alpha = element.filters.Alpha ||
-                element.filters[DX_Filter + 'Alpha'];
+      CSSStyleDeclaration.prototype.getPropertyValue = function (name) {
+        return this[$.camelCase(name)];
+      };
 
-        this.opacity = (alpha  ?  (alpha.opacity / 100)  :  1)  +  '';
-    }
+      BOM.CSSStyleDeclaration = CSSStyleDeclaration;
 
-    CSSStyleDeclaration.prototype.getPropertyValue = function (name) {
+      BOM.getComputedStyle = function () {
+        return new CSSStyleDeclaration(arguments[0]);
+      };
+      /* ---------- Set Style ---------- */
 
-        return  this[$.camelCase( name )];
-    };
 
-    BOM.CSSStyleDeclaration = CSSStyleDeclaration;
+      function toHexInt(decimal, length) {
+        return parseInt(Number(decimal).toFixed(0)).toString(16).padStart(length || 2, 0);
+      }
 
-    BOM.getComputedStyle = function () {
+      function RGB_Hex(red, green, blue) {
+        return Array.from(arguments.length > 1 || typeof red !== 'string' ? arguments : red.replace(/rgb\(([^\)]+)\)/i, '$1').replace(/,\s*/g, ',').split(','), toHexInt).join('');
+      }
 
-        return  new CSSStyleDeclaration( arguments[0] );
-    };
-
-/* ---------- Set Style ---------- */
-
-    function toHexInt(decimal, length) {
-
-        return  parseInt( Number( decimal ).toFixed(0) )
-            .toString(16).padStart(length || 2,  0);
-    }
-
-    function RGB_Hex(red, green, blue) {
-
-        return Array.from(
-            ((arguments.length > 1)  ||  (typeof red !== 'string'))  ?
-                arguments  :
-                red.replace(/rgb\(([^\)]+)\)/i, '$1')
-                    .replace(/,\s*/g, ',').split(','),
-            toHexInt
-        ).join('');
-    }
-
-    function setProperty(name, value) {
-
-        var string = '',  wrapper,  scale = 1,  convert;
-
-        var RGBA = (typeof value === 'string')  &&
-                value.match( /\s*rgba\(([^\)]+),\s*(\d\.\d+)\)/i );
+      function setProperty(name, value) {
+        var string = '',
+            wrapper,
+            scale = 1,
+            convert;
+        var RGBA = typeof value === 'string' && value.match(/\s*rgba\(([^\)]+),\s*(\d\.\d+)\)/i);
 
         if (name === 'opacity') {
+          name = 'filter', scale = 100;
+          wrapper = 'progid:' + DX_Filter + 'Alpha(opacity={n})';
+        } else if (RGBA) {
+          string = value.replace(RGBA[0], '');
+          if (string) string += setProperty.call(this, name, string);
+          if (name != 'background') string += setProperty.apply(this, [name.indexOf('-color') > -1 ? name : name + '-color', 'rgb(' + RGBA[1] + ')']);
+          name = 'filter';
+          wrapper = 'progid:' + DX_Filter + 'Gradient(startColorStr=#{n},endColorStr=#{n})';
 
-            name = 'filter',  scale = 100;
-
-            wrapper = 'progid:' + DX_Filter + 'Alpha(opacity={n})';
-
-        } else if ( RGBA ) {
-
-            string = value.replace(RGBA[0], '');
-
-            if ( string )
-                string += setProperty.call(this, name, string);
-
-            if (name != 'background')
-                string += setProperty.apply(this, [
-                    (name.indexOf('-color') > -1) ? name : (name + '-color'),
-                    'rgb(' + RGBA[1] + ')'
-                ]);
-
-            name = 'filter';
-
-            wrapper = 'progid:' + DX_Filter +
-                'Gradient(startColorStr=#{n},endColorStr=#{n})';
-
-            convert = function (alpha, RGB) {
-
-                return  toHexInt(parseFloat(alpha) * 256)  +  RGB_Hex( RGB );
-            };
+          convert = function (alpha, RGB) {
+            return toHexInt(parseFloat(alpha) * 256) + RGB_Hex(RGB);
+          };
         }
 
-        if ( wrapper )
-            value = wrapper.replace(
-                /\{n\}/g,
-                convert  ?  convert(RGBA[2], RGBA[1])  :  (value * scale)
-            );
-
+        if (wrapper) value = wrapper.replace(/\{n\}/g, convert ? convert(RGBA[2], RGBA[1]) : value * scale);
         this.setAttribute(name, value, arguments[2]);
-    }
+      }
 
-    Object.getPrototypeOf( DOM.documentElement.style ).setProperty =
-        CSSStyleDeclaration.prototype.setProperty = setProperty;
+      Object.getPrototypeOf(DOM.documentElement.style).setProperty = CSSStyleDeclaration.prototype.setProperty = setProperty;
+      /* ---------- DOM Event ---------- */
 
+      var KeyMap = {
+        X: 'Left',
+        Y: 'Top'
+      };
 
-/* ---------- DOM Event ---------- */
+      function pageCoord(key) {
+        key = key.slice(-1);
+        var name = 'scroll' + KeyMap[key];
+        return this['client' + key] + Math.max(DOM.documentElement[name], DOM.body[name]);
+      }
 
-    var KeyMap = {X: 'Left',  Y: 'Top'};
-
-    function pageCoord(key) {
-
-        key = key.slice( -1 );
-
-        var name = 'scroll'  +  KeyMap[ key ];
-
-        return  this['client' + key]  +  Math.max(
-            DOM.documentElement[ name ],  DOM.body[ name ]
-        );
-    }
-
-    var Event_Property = {
-            target:    'srcElement',
-            which:     function () {
-
-                return  (this.type.slice(0, 3) === 'key')  ?
-                    this.keyCode  :  [0, 1, 3, 0, 2, 0, 0, 0][ this.button ];
-            },
-            pageX:     pageCoord,
-            pageY:     pageCoord
-        };
-
-    $.extend(Event.prototype, {
-        preventDefault:     function () {
-
-            this.returnValue = false;
+      var Event_Property = {
+        target: 'srcElement',
+        which: function () {
+          return this.type.slice(0, 3) === 'key' ? this.keyCode : [0, 1, 3, 0, 2, 0, 0, 0][this.button];
         },
-        stopPropagation:    function () {
-
-            this.cancelBubble = true;
+        pageX: pageCoord,
+        pageY: pageCoord
+      };
+      $.extend(Event.prototype, {
+        preventDefault: function () {
+          this.returnValue = false;
         },
-        valueOf:            function () {
-            var event = { };
+        stopPropagation: function () {
+          this.cancelBubble = true;
+        },
+        valueOf: function () {
+          var event = {};
 
-            for (var key in this) {
+          for (var key in this) {
+            switch ($.Type(this[key])) {
+              case 'Window':
+                ;
 
-                switch ($.Type( this[key] )) {
-                    case 'Window':         ;
-                    case 'Document':       ;
-                    case 'HTMLElement':    if (Event_Property[ key ])  break;
-                    case 'Function':       ;
-                    default:               if (! Event_Property[ key ])  continue;
-                }
+              case 'Document':
+                ;
 
-                event[ type ] = (Event_Property[ key ]  instanceof  Function)  ?
-                    Event_Property[ key ].call(this, key)  :
-                    this[ Event_Property[ key ] ];
+              case 'HTMLElement':
+                if (Event_Property[key]) break;
+
+              case 'Function':
+                ;
+
+              default:
+                if (!Event_Property[key]) continue;
             }
 
-            return event;
+            event[type] = Event_Property[key] instanceof Function ? Event_Property[key].call(this, key) : this[Event_Property[key]];
+          }
+
+          return event;
         }
-    });
+      });
+      /* ---------- Document Implementation ---------- */
 
-/* ---------- Document Implementation ---------- */
-
-    var Class = {
-            XML:     (function () {
-
-                for (var i = 0;  arguments[i];  i++)  try {
-
-                    if (new BOM.ActiveXObject( arguments[i] ))
-                        return arguments[i];
-
-                } catch (iError) { }
-            })(
-                'MSXML2.DOMDocument.6.0', 'MSXML2.DOMDocument.5.0',
-                'MSXML2.DOMDocument.4.0', 'MSXML2.DOMDocument.3.0',
-                'MSXML2.DOMDocument',     'Microsoft.XMLDOM'
-            ),
-            HTML:    'HTMLFile'
-        };
-
-    BOM.DOMImplementation = DOM.implementation.constructor;
-
-    $.extend(DOMImplementation.prototype, {
-        createDocument:        function (nameSpace, rootName, docType) {
-
-            var document = new BOM.ActiveXObject( Class.XML );
-
-            if ( rootName )
-                document.appendChild(
-                    document.createElementNS(nameSpace, rootName)
-                );
-
-            return document;
+      var Class = {
+        XML: function () {
+          for (var i = 0; arguments[i]; i++) try {
+            if (new BOM.ActiveXObject(arguments[i])) return arguments[i];
+          } catch (iError) {}
+        }('MSXML2.DOMDocument.6.0', 'MSXML2.DOMDocument.5.0', 'MSXML2.DOMDocument.4.0', 'MSXML2.DOMDocument.3.0', 'MSXML2.DOMDocument', 'Microsoft.XMLDOM'),
+        HTML: 'HTMLFile'
+      };
+      BOM.DOMImplementation = DOM.implementation.constructor;
+      $.extend(DOMImplementation.prototype, {
+        createDocument: function (nameSpace, rootName, docType) {
+          var document = new BOM.ActiveXObject(Class.XML);
+          if (rootName) document.appendChild(document.createElementNS(nameSpace, rootName));
+          return document;
         },
-        createHTMLDocument:    function (title) {
-
-            var document = new BOM.ActiveXObject( Class.HTML );
-
-            document.write(
-                '<html><head><title>'  +
-                    (title || '')  +
-                '</title></head><body /></html>'
-            );
-
-            return document;
+        createHTMLDocument: function (title) {
+          var document = new BOM.ActiveXObject(Class.HTML);
+          document.write('<html><head><title>' + (title || '') + '</title></head><body /></html>');
+          return document;
         }
-    });
+      });
+      /* ---------- Document Serialize ---------- */
 
-/* ---------- Document Serialize ---------- */
+      function XMLSerializer() {}
 
-    function XMLSerializer() { }
-
-    XMLSerializer.prototype.serializeToString = function (node) {
-
+      XMLSerializer.prototype.serializeToString = function (node) {
         return node.xml;
-    };
+      };
 
-    BOM.XMLSerializer = XMLSerializer;
-
-}
-        },
-        './index':  {
-            base:        '.',
-            dependency:  ["./polyfill/DOM/IE-8","./DOM/ext/utility","./DOM/ext/selection","./CSS/ext/rule","./CSS/ext/utility","./event/ext/shim","./event/ext/wrapper","./AJAX/ext/header","./AJAX/ext/transport","./AJAX/ext/wrapper","./AJAX/ext/form","./utility/ext/Template","./utility/ext/binary"],
-            factory:     function (_polyfill_DOM_IE_8, _DOM_ext_utility, _DOM_ext_selection, _CSS_ext_rule, _CSS_ext_utility, _event_ext_shim, _event_ext_wrapper, _AJAX_ext_header, _AJAX_ext_transport, _AJAX_ext_wrapper, _AJAX_ext_form, _utility_ext_Template, _utility_ext_binary, require, exports, module) {/**
- * iQuery.js - A Light-weight jQuery Compatible API with IE 8+ compatibility
- *
- * @module    {function} iQuery
- * @version   3.1 (2018-06-01) stable
- *
- * @copyright TechQuery <shiy2008@gmail.com> 2015-2018
- * @license   GPL-2.0-or-later
- *
- * @see       {@link http://jquery.com/ jQuery}
- */
-
-
-
-    if (typeof self.jQuery !== 'function')  self.$ = self.jQuery = $;
-
-    return  self.iQuery = $;
-
-}
-        },
-'jquery':  {exports: jquery}
-    };
+      BOM.XMLSerializer = XMLSerializer;
+    }
+  },
+  './index': {
+    base: '.',
+    dependency: ["./polyfill/DOM/IE-8", "./DOM/ext/utility", "./DOM/ext/selection", "./CSS/ext/rule", "./CSS/ext/utility", "./event/ext/shim", "./event/ext/wrapper", "./AJAX/ext/header", "./AJAX/ext/transport", "./AJAX/ext/wrapper", "./AJAX/ext/form", "./utility/ext/Template", "./utility/ext/binary"],
+    factory: function (_polyfill_DOM_IE_8, _DOM_ext_utility, _DOM_ext_selection, _CSS_ext_rule, _CSS_ext_utility, _event_ext_shim, _event_ext_wrapper, _AJAX_ext_header, _AJAX_ext_transport, _AJAX_ext_wrapper, _AJAX_ext_form, _utility_ext_Template, _utility_ext_binary, require, exports, module) {
+      /**
+      * iQuery.js - A Light-weight jQuery Compatible API with IE 8+ compatibility
+      *
+      * @module    {function} iQuery
+      * @version   3.1 (2018-06-01) stable
+      *
+      * @copyright TechQuery <shiy2008@gmail.com> 2015-2018
+      * @license   GPL-2.0-or-later
+      *
+      * @see       {@link http://jquery.com/ jQuery}
+      */
+      if (typeof self.jQuery !== 'function') self.$ = self.jQuery = $;
+      return self.iQuery = $;
+    }
+  },
+  'jquery': {
+    exports: jquery
+  }
+};
 
     return require('./index');
 });

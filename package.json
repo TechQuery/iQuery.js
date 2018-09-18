@@ -2,7 +2,7 @@
   "name": "iquery-js",
   "version": "3.1.0",
   "description": "A jQuery compatible API based on built-in ECMA / W3C polyfill",
-  "main": "dist/iQuery.js",
+  "browser": "dist/iQuery.js",
   "repository": {
     "type": "git",
     "url": "https://github.com/TechQuery/iQuery.js.git"
@@ -24,28 +24,39 @@
     "node": "^7.6.0"
   },
   "devDependencies": {
-    "amd-bundle": "^1.2.1",
+    "amd-bundle": "^1.5.0",
     "chromy": "^0.5.9",
-    "docdash": "^0.4.0",
-    "html-pages": "^2.1.2",
+    "cross-env": "^5.2.0",
+    "docdash": "^1.0.0",
     "husky": "^0.14.3",
     "jsdoc": "^3.5.5",
-    "mocha": "^4.1.0",
+    "koapache": "^1.0.2",
+    "mocha": "^5.2.0",
     "reduce-blank": "^0.2.0",
-    "should": "^13.2.1",
+    "should": "^13.2.3",
     "test-example": "^0.4.2",
     "uglify-js": "3.0.28"
   },
   "scripts": {
     "bundle": "amd-bundle source/index dist/iQuery",
     "compress": "cd dist/  &&  uglifyjs iQuery.js -o iQuery.min.js --config-file ../build/compress.json",
-    "patch": "amd-bundle source/index dist/jQueryKit -m \"/^\\.(\\/\\w+){1,2}$/:jquery\"",
+    "patch": "cross-env NODE_ENV=patch  amd-bundle source/index dist/jQueryKit",
     "document": "jsdoc -c ./build/document.json  &&  reduce-blank ./docs/",
     "build": "npm run bundle  &&  npm run compress  &&  npm run patch  &&  npm run document",
-    "start": "html-pages docs/ -o",
+    "start": "web-server docs/ -o",
     "check": "mocha --recursive --no-timeouts -c --inline-diffs",
     "test": "npm run check -- --exit",
     "debug": "npm run check -- --inspect-brk",
-    "precommit": "npm test"
+    "prepublishOnly": "npm run build  &&  npm test",
+    "precommit": "npm run prepublishOnly  &&  git add ."
+  },
+  "amd-bundle": {
+    "env": {
+      "patch": {
+        "moduleMap": {
+          "^\\.(\\/[^/]+){1,2}$": "jquery"
+        }
+      }
+    }
   }
 }

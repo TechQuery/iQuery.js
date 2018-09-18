@@ -1,15 +1,8 @@
 'use strict';
 
-const Path = require('path'),
-      HTMLPages = require('html-pages'),
-      Chromy = require('chromy');
+const WebServer = require('koapache').default, Chromy = require('chromy');
 
-
-//  静态文件服务器
-
-const server = HTMLPages(process.cwd(), {
-          'log-level':    'warn'
-      });
+var server;
 
 
 //  退出前清理 服务器、浏览器
@@ -17,8 +10,6 @@ const server = HTMLPages(process.cwd(), {
 async function exit(code) {
 
     await Chromy.cleanup();
-
-    server.stop();
 
     if (code !== 0)  process.exit(code || 1);
 };
@@ -40,7 +31,11 @@ exports.chrome = new Chromy();
 
 exports.pageLoad = async function (sourceURI) {
 
-    await exports.chrome.goto('http://localhost:8084/test/unit.html');
+    server = server  ||  await (new WebServer()).workerHost();
+
+    await exports.chrome.goto(
+        `http://${server.address}:${server.port}/test/unit.html`
+    );
 
     await exports.chrome.evaluate(function () {
 
