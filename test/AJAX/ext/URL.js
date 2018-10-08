@@ -2,144 +2,105 @@
 
 require('should');
 
-
-
 const Path = require('path');
 
-const TestKit = require(Path.relative(
+const {
+    pageLoad
+} = require(Path.relative(
     Path.dirname(module.filename),
-    Path.join(process.cwd(), 'build/TestKit')
+    Path.join(process.cwd(), 'test/TestKit')
 ));
 
-after(TestKit.exit.bind(null, 0));
 
+var page;
 
 describe('AJAX/ext/URL.js', function() {
 
-
-
-    before(TestKit.pageLoad.bind(null, 'AJAX/ext/URL'));
-
+    before(async () => page = await pageLoad())
 
     describe('$.paramJSON', function() {
 
 
 
-        it('URL 查询字符串', function() {
+        it('URL 查询字符串', () => page.evaluate(() => {
 
-            return TestKit.chrome.evaluate(function() {
+            return $.paramJSON('?a=1&b=two&b=true');
 
-                return $.paramJSON('?a=1&b=two&b=true');
-
-            }).should.be.fulfilledWith({
-                a: 1,
-                b: ['two', true]
-            });
-        });
-
+        }).should.be.fulfilledWith({
+            a: 1,
+            b: ['two', true]
+        }));
     });
 
     describe('$.extendURL', function() {
 
 
 
-        it('多种参数', function() {
+        it('多种参数', () => page.evaluate(() => {
 
-            return TestKit.chrome.evaluate(function() {
+            return $.extendURL('path/to/model?a=0', 'a=1&b=1', {
+                b: 2,
+                c: 3
+            });
 
-                return $.extendURL('path/to/model?a=0', 'a=1&b=1', {
-                    b: 2,
-                    c: 3
-                });
-
-            }).should.be.fulfilledWith('path/to/model?a=1&b=2&c=3');
-        });
-
+        }).should.be.fulfilledWith('path/to/model?a=1&b=2&c=3'));
     });
 
     describe('$.filePath', function() {
 
 
 
-        it('传 相对路径 时返回其目录', function() {
+        it('传 相对路径 时返回其目录', () => page.evaluate(() => {
 
-            return TestKit.chrome.evaluate(function() {
+            return $.filePath('/test/unit.html');
 
-                return $.filePath('/test/unit.html');
+        }).should.be.fulfilledWith('/test/'));
 
-            }).should.be.fulfilledWith('/test/');
-        });
+        it('传 查询字符串 时返回空字符串', () => page.evaluate(() => {
 
+            return $.filePath('?query=string');
 
-        it('传 查询字符串 时返回空字符串', function() {
+        }).should.be.fulfilledWith(''));
 
-            return TestKit.chrome.evaluate(function() {
+        it('传 URL（字符串）时返回其目录', () => page.evaluate(() => {
 
-                return $.filePath('?query=string');
+            return $.filePath('http://localhost:8084/test/unit.html');
 
-            }).should.be.fulfilledWith('');
-        });
+        }).should.be.fulfilledWith('http://localhost:8084/test/'));
 
+        it('传 URL（对象）时返回其目录', () => page.evaluate(() => {
 
-        it('传 URL（字符串）时返回其目录', function() {
+            return $.filePath(new URL('http://localhost:8084/test/unit.html'));
 
-            return TestKit.chrome.evaluate(function() {
-
-                return $.filePath('http://localhost:8084/test/unit.html');
-
-            }).should.be.fulfilledWith('http://localhost:8084/test/');
-        });
-
-
-        it('传 URL（对象）时返回其目录', function() {
-
-            return TestKit.chrome.evaluate(function() {
-
-                return $.filePath(new URL('http://localhost:8084/test/unit.html'));
-
-            }).should.be.fulfilledWith('http://localhost:8084/test/');
-        });
-
+        }).should.be.fulfilledWith('http://localhost:8084/test/'));
     });
 
     describe('$.urlDomain', function() {
 
 
 
-        it('给定 URL', function() {
+        it('给定 URL', () => page.evaluate(() => {
 
-            return TestKit.chrome.evaluate(function() {
+            return $.urlDomain('http://localhost:8080/path?query=string');
 
-                return $.urlDomain('http://localhost:8080/path?query=string');
-
-            }).should.be.fulfilledWith('http://localhost:8080');
-        });
-
+        }).should.be.fulfilledWith('http://localhost:8080'));
     });
 
     describe('$.isXDomain', function() {
 
 
 
-        it('跨域 绝对路径', function() {
+        it('跨域 绝对路径', () => page.evaluate(() => {
 
-            return TestKit.chrome.evaluate(function() {
+            return $.isXDomain('http://localhost/iQuery');
 
-                return $.isXDomain('http://localhost/iQuery');
+        }).should.be.fulfilledWith(true));
 
-            }).should.be.fulfilledWith(true);
-        });
+        it('同域 相对路径', () => page.evaluate(() => {
 
+            return $.isXDomain('/iQuery');
 
-        it('同域 相对路径', function() {
-
-            return TestKit.chrome.evaluate(function() {
-
-                return $.isXDomain('/iQuery');
-
-            }).should.be.fulfilledWith(false);
-        });
-
+        }).should.be.fulfilledWith(false));
     });
 
 });

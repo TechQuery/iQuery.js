@@ -2,15 +2,6 @@
   "name": "iquery-js",
   "version": "3.1.0",
   "description": "A jQuery compatible API based on built-in ECMA / W3C polyfill",
-  "browser": "dist/iQuery.js",
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/TechQuery/iQuery.js.git"
-  },
-  "bugs": {
-    "url": "https://github.com/TechQuery/iQuery.js/issues"
-  },
-  "homepage": "https://techquery.github.io/iQuery.js/",
   "keywords": [
     "jquery",
     "w3c-api",
@@ -20,35 +11,48 @@
   ],
   "author": "shiy007@qq.com",
   "license": "GPL-2.0",
+  "homepage": "https://techquery.github.io/iQuery.js/",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/TechQuery/iQuery.js.git"
+  },
+  "bugs": {
+    "url": "https://github.com/TechQuery/iQuery.js/issues"
+  },
+  "browser": "dist/iQuery.js",
   "engines": {
     "node": "^7.6.0"
   },
-  "devDependencies": {
-    "amd-bundle": "^1.5.0",
-    "chromy": "^0.5.9",
-    "cross-env": "^5.2.0",
-    "docdash": "^1.0.0",
-    "husky": "^0.14.3",
-    "jsdoc": "^3.5.5",
-    "koapache": "^1.0.2",
-    "mocha": "^5.2.0",
-    "reduce-blank": "^0.2.0",
-    "should": "^13.2.3",
-    "test-example": "^0.4.2",
-    "uglify-js": "3.0.28"
-  },
   "scripts": {
-    "bundle": "amd-bundle source/index dist/iQuery",
-    "compress": "cd dist/  &&  uglifyjs iQuery.js -o iQuery.min.js --config-file ../build/compress.json",
+    "bundle": "amd-bundle source/index dist/iQuery -m",
     "patch": "cross-env NODE_ENV=patch  amd-bundle source/index dist/jQueryKit",
     "document": "jsdoc -c ./build/document.json  &&  reduce-blank ./docs/",
-    "build": "npm run bundle  &&  npm run compress  &&  npm run patch  &&  npm run document",
+    "build": "npm run bundle  &&  npm run patch  &&  npm test  &&  npm run document",
     "start": "web-server docs/ -o",
     "check": "mocha --recursive --no-timeouts -c --inline-diffs",
     "test": "npm run check -- --exit",
     "debug": "npm run check -- --inspect-brk",
-    "prepublishOnly": "npm run build  &&  npm test",
-    "precommit": "npm run prepublishOnly  &&  git add ."
+    "prepublishOnly": "npm run build"
+  },
+  "husky": {
+    "hook": {
+      "pre-commit": "npm run build  &&  git add ."
+    }
+  },
+  "devDependencies": {
+    "amd-bundle": "^1.7.0",
+    "cross-env": "^5.2.0",
+    "docdash": "^1.0.0",
+    "husky": "^1.1.1",
+    "jquery": "^1.12.4",
+    "jsdoc": "^3.5.5",
+    "koapache": "^1.0.4",
+    "mocha": "^5.2.0",
+    "puppeteer-browser": "^0.3.5",
+    "reduce-blank": "^0.2.0",
+    "requirejs": "^2.3.6",
+    "should": "^13.2.3",
+    "test-example": "^0.4.2"
   },
   "amd-bundle": {
     "env": {

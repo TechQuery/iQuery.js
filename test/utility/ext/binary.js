@@ -2,38 +2,31 @@
 
 require('should');
 
-
-
 const Path = require('path');
 
-const TestKit = require(Path.relative(
+const {
+    pageLoad
+} = require(Path.relative(
     Path.dirname(module.filename),
-    Path.join(process.cwd(), 'build/TestKit')
+    Path.join(process.cwd(), 'test/TestKit')
 ));
 
-after(TestKit.exit.bind(null, 0));
 
+var page;
 
 describe('utility/ext/binary.js', function() {
 
-
-
-    before(TestKit.pageLoad.bind(null, 'utility/ext/binary'));
-
+    before(async () => page = await pageLoad())
 
     describe('$.bitOperate', function() {
 
 
 
-        it('按位或', function() {
+        it('按位或', () => page.evaluate(() => {
 
-            return TestKit.chrome.evaluate(function() {
+            return $.bitOperate('|', '10'.repeat(16), '01'.repeat(16));
 
-                return $.bitOperate('|', '10'.repeat(16), '01'.repeat(16));
-
-            }).should.be.fulfilledWith('1'.repeat(32));
-        });
-
+        }).should.be.fulfilledWith('1'.repeat(32)));
     });
 
 });

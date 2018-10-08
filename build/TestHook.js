@@ -1,42 +1,35 @@
 'use strict';
 
 
-exports.fileWrite = function (header) {
+exports.fileWrite = header => {
 
     header.source = `
 
 const Path = require('path');
 
-const TestKit = require(Path.relative(
+const { pageLoad } = require(Path.relative(
           Path.dirname( module.filename ),
-          Path.join(process.cwd(), 'build/TestKit')
+          Path.join(process.cwd(), 'test/TestKit')
       ));
 
-after( TestKit.exit.bind(null, 0) );
-`;
+
+var page;`.trim();
 };
 
 
-exports.headerWrite = function (header) {
+exports.headerWrite = header => {
 
-    header.source = `
-
-    before( TestKit.pageLoad.bind(null, '${header.URI.replace(/\.\w+$/, '')}') );
-`;
+    header.source = 'before(async () => page = await pageLoad())';
 };
 
 
-exports.itemWrite = function (item) {
+exports.itemWrite = item => {
 
     item.source = `
 
-        it('${item.title}',  function () {
-
-            return  TestKit.chrome.evaluate(function () {
+        it('${item.title}',  () => page.evaluate(() => {
 
                 return  ${item.script};
 
-            }).should.be.fulfilledWith( ${item.expected} );
-        });
-    `;
+        }).should.be.fulfilledWith( ${item.expected} ));`;
 };
