@@ -80,7 +80,7 @@ define(['../../iQuery', '../utility'],  function ($) {
     /**
      * HTML 执行器
      *
-     * @author TechQuery <shiy007@qq.com>
+     * @author TechQuery
      *
      * @memberof $.prototype
      * @function htmlExec

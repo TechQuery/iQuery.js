@@ -6,9 +6,9 @@
     if ((typeof define === 'function')  &&  define.amd)
         define('iQuery', factory);
     else if (typeof module === 'object')
-        return  module.exports = factory();
+        return  module.exports = factory.call(global);
     else
-        return  this['iQuery'] = factory();
+        return  this['iQuery'] = factory.call(self);
 
 })(function () {
 
@@ -21,6 +21,19 @@ function merge(base, path) {
 function outPackage(name) {
   return /^[^./]/.test(name);
 }
+
+    var require = (typeof module === 'object') ?
+        function () {
+
+            return  module.require.apply(module, arguments);
+        } : (
+            this.require  ||  function (name) {
+
+                if (self[name] != null)  return self[name];
+
+                throw ReferenceError('Can\'t find "' + name + '" module');
+            }
+        );
 
     var _include_ = include.bind(null, './');
 
@@ -2814,8 +2827,8 @@ var _module_ = {
                           };
                       })
                     : type === 'blur'
-                        ? 'focusout'
-                        : 'focusin';
+                    ? 'focusout'
+                    : 'focusin';
             });
             if ($.browser.modern) return; //  Change of checked
 
@@ -3885,7 +3898,7 @@ var _module_ = {
             /**
              * HTML 执行器
              *
-             * @author TechQuery <shiy007@qq.com>
+             * @author TechQuery
              *
              * @memberof $.prototype
              * @function htmlExec
@@ -6466,7 +6479,7 @@ var _module_ = {
             /**
              * 对象树 递归遍历
              *
-             * @author TechQuery <shiy007@qq.com>
+             * @author TechQuery
              *
              * @memberof $
              *
@@ -7224,7 +7237,7 @@ var _module_ = {
              * @module    {function} iQuery
              * @version   3.1 (2018-06-01) stable
              *
-             * @copyright TechQuery <shiy2008@gmail.com> 2015-2018
+             * @copyright TechQuery 2015-2018
              * @license   GPL-2.0-or-later
              *
              * @see       {@link http://jquery.com/ jQuery}

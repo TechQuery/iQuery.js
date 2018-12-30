@@ -4,7 +4,7 @@
  * @module    {function} iQuery
  * @version   3.1 (2018-06-01) stable
  *
- * @copyright TechQuery <shiy2008@gmail.com> 2015-2018
+ * @copyright TechQuery 2015-2018
  * @license   GPL-2.0-or-later
  *
  * @see       {@link http://jquery.com/ jQuery}

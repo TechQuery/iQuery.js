@@ -1,5 +1,8 @@
 # iQuery
 
+[![Build Status](https://travis-ci.com/TechQuery/iQuery.js.svg?branch=master)](https://travis-ci.com/TechQuery/iQuery.js)
+
+
 兼容 [jQuery API](http://api.jquery.com/) 的 DOM / AJAX 基础库，基于原创的 ECMA / W3C polyfill 构建，并内置很多常用的 jQuery 扩展 API。
 
 [![Join the chat at https://gitter.im/iQuery-js/Lobby](https://badges.gitter.im/iQuery-js/Lobby.svg)](https://gitter.im/iQuery-js/Lobby?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
@@ -59,7 +62,7 @@
 
 以下扩展已收录在本项目的 [**jQueryKit.js**](/master/jQueryKit.js) 中，方便配合其它 jQuery API 实现 ——
 
-[【API 文档】](https://techquery.github.io/iQuery.js/)及更多变更：
+[【API 文档】](https://tech-query.me/iQuery.js/)及更多变更：
 
  - 内置一个改进且向下兼容的 **$.browser 对象**，能通过 **直接比较版本号**来区分浏览器
  - 新增 **计时相关方法（秒基准）**—— `$.every()`、`$.wait()`、`$.start()`、`$.end()`

@@ -252,7 +252,7 @@ define(['../../polyfill/ES/API'],  function ($) {
     /**
      * 对象树 递归遍历
      *
-     * @author TechQuery <shiy007@qq.com>
+     * @author TechQuery
      *
      * @memberof $
      *

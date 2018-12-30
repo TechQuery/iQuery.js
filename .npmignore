@@ -1,4 +1,6 @@
+Contributing.md
 .editorconfig
 build/
 docs/
 test/
+.travis.yml
