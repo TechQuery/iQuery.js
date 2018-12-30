@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8" />
+        <title>utility/ext/Template.js - Documentation</title>
+
+        <script src="scripts/prettify/prettify.js"></script>
+        <script src="scripts/prettify/lang-css.js"></script>
+        <!--[if lt IE 9]>
+            <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+        <![endif]-->
+        <link type="text/css" rel="stylesheet" href="styles/prettify.css" />
+        <link type="text/css" rel="stylesheet" href="styles/jsdoc.css" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    </head>
+    <body>
+        <input type="checkbox" id="nav-trigger" class="nav-trigger" />
+        <label for="nav-trigger" class="navicon-button x">
+            <div class="navicon"></div>
+        </label>
+
+        <label for="nav-trigger" class="overlay"></label>
+
+        <nav>
+            <h2><a href="index.html">Home</a></h2>
+            <h3>Classes</h3>
+            <ul>
+                <li>
+                    <a href="$.html">$</a>
+                    <ul class="methods">
+                        <li data-type="method">
+                            <a href="$.html#.bitOperate">bitOperate</a>
+                        </li>
+                        <li data-type="method">
+                            <a href="$.html#.buildFragment">buildFragment</a>
+                        </li>
+                        <li data-type="method">
+                            <a href="$.html#.camelCase">camelCase</a>
+                        </li>
+                        <li data-type="method">
+                            <a href="$.html#.cssRule">cssRule</a>
+                        </li>
+                        <li data-type="method">
+                            <a href="$.html#.extendURL">extendURL</a>
+                        </li>
+                        <li data-type="method">
+                            <a href="$.html#.filePath">filePath</a>
+                        </li>
+                        <li data-type="method">
+                            <a href="$.html#.hyphenCase">hyphenCase</a>
+                        </li>
+                        <li data-type="method">
+                            <a href="$.html#.intersect">intersect</a>
+                        </li>
+                        <li data-type="method">
+                            <a href="$.html#.isEqual">isEqual</a>
+                        </li>
+                        <li data-type="method">
+                            <a href="$.html#.isXDomain">isXDomain</a>
+                        </li>
+                        <li data-type="method">
+                            <a href="$.html#.likeArray">likeArray</a>
+                        </li>
+                        <li data-type="method">
+                            <a href="$.html#.makeIterator">makeIterator</a>
+                        </li>
+                        <li data-type="method">
+                            <a href="$.html#.makeSet">makeSet</a>
+                        </li>
+                        <li data-type="method">
+                            <a href="$.html#.mapTree">mapTree</a>
+                        </li>
+                        <li data-type="method">
+                            <a href="$.html#.paramJSON">paramJSON</a>
+                        </li>
+                        <li data-type="method">
+                            <a href="$.html#.parseHeader">parseHeader</a>
+                        </li>
+                        <li data-type="method">
+                            <a href="$.html#.split">split</a>
+                        </li>
+                        <li data-type="method">
+                            <a href="$.html#.storage">storage</a>
+                        </li>
+                        <li data-type="method">
+                            <a href="$.html#.throttle">throttle</a>
+                        </li>
+                        <li data-type="method">
+                            <a href="$.html#.Type">Type</a>
+                        </li>
+                        <li data-type="method">
+                            <a href="$.html#.urlDomain">urlDomain</a>
+                        </li>
+                        <li data-type="method">
+                            <a href="$.html#.uuid">uuid</a>
+                        </li>
+                        <li data-type="method">
+                            <a href="$.html#cssRule">cssRule</a>
+                        </li>
+                        <li data-type="method">
+                            <a href="$.html#htmlExec">htmlExec</a>
+                        </li>
+                        <li data-type="method">
+                            <a href="$.html#insertTo">insertTo</a>
+                        </li>
+                        <li data-type="method">
+                            <a href="$.html#validate">validate</a>
+                        </li>
+                    </ul>
+                </li>
+                <li>
+                    <a href="Class.html">Class</a>
+                    <ul class="methods">
+                        <li data-type="method">
+                            <a href="Class.html#.extend">extend</a>
+                        </li>
+                        <li data-type="method">
+                            <a href="Class.html#setPrivate">setPrivate</a>
+                        </li>
+                        <li data-type="method">
+                            <a href="Class.html#setPublic">setPublic</a>
+                        </li>
+                    </ul>
+                </li>
+                <li>
+                    <a href="Template.html">Template</a>
+                    <ul class="methods">
+                        <li data-type="method">
+                            <a href="Template.html#evaluate">evaluate</a>
+                        </li>
+                    </ul>
+                </li>
+            </ul>
+            <h3>Modules</h3>
+            <ul>
+                <li><a href="module-iQuery.html">iQuery</a></li>
+            </ul>
+            <h3>Interfaces</h3>
+            <ul>
+                <li>
+                    <a href="Iterator.html">Iterator</a>
+                    <ul class="methods">
+                        <li data-type="method">
+                            <a href="Iterator.html#next">next</a>
+                        </li>
+                    </ul>
+                </li>
+            </ul>
+            <h3><a href="global.html">Global</a></h3>
+        </nav>
+
+        <div id="main">
+            <h1 class="page-title">utility/ext/Template.js</h1>
+
+            <section>
+                <article>
+                    <pre
+                        class="prettyprint source linenums"
+                    ><code>define(['../../iQuery', '../../object/ext/Class'],  function ($) {
+
+    /**
+     * 字符串模板
+     *
+     * @class Template
+     *
+     * @param {string}   raw
+     * @param {Array}    [nameList] Name list of the Local variable
+     * @param {function} [onChange] Call with New &amp; Old value
+     * @param {Array}    [bindData] The parameter bound to `onChange`
+     *
+     * @example  // 局部变量成员名
+     *
+     *     $.Template('[ ${new Date()} ]  Hello, ${this.name} !')[0]    // 'name'
+     */
+
+    function Template(raw, nameList, onChange, bindData) {
+
+        if (! (this instanceof Template))
+            return  new Template(raw, nameList, onChange, bindData);
+
+        this.setPrivate({
+            raw:           raw,
+            name:          nameList || [ ],
+            expression:    [ ],
+            value:         '',
+            data:          bindData || [ ]
+        }).setPrivate(
+            'scope',  $.makeSet.apply($,  this.__name__.concat('this'))
+        );
+
+        onChange = (nameList instanceof Array)  ?  onChange  :  nameList;
+
+        this.onChange = (onChange instanceof Function)  ?  onChange  :  null;
+
+        this.parse().evaluate.apply(
+            this,  Array.from(Object.keys(this.__scope__),  function () {
+
+                return  { };
+            })
+        );
+    }
+
+    return  $.Template = $.Class.extend.call(Array, Template, {
+        Expression:    /\$\{([\s\S]+?)\}/g,
+        Reference:     /(\w+)(?:\.(\w+)|\[(?:'([^']+)|"([^"]+)))/g
+    }, {
+        compile:     function (expression) {
+
+            return  this.__expression__.push(
+                new (Function.prototype.bind.apply(
+                    Function,
+                    [ null ].concat(this.__name__,  'return ' + expression.trim())
+                ))()
+            );
+        },
+        parse:       function () {
+
+            var _this_ = this;
+
+            function addReference(match, scope, key1, key2, key3) {
+
+                if (scope  in  _this_.__scope__)
+                    _this_.push(key1 || key2 || key3);
+            }
+
+            this.__raw__ = this.__raw__.replace(
+                Template.Expression,  function (_, expression) {
+
+                    expression.replace(Template.Reference, addReference);
+
+                    return  '${' + (_this_.compile( expression ) - 1) + '}';
+                }
+            );
+
+            return this;
+        },
+        /**
+         * 表达式求值
+         *
+         * @memberof Template.prototype
+         *
+         * @param {?object} context     Value of `this` in the expression
+         * @param {*}       [parameter] One or more value of the Local variable
+         *
+         * @return {string}
+         *
+         * @example  // 模板求值
+         *
+         *     $.Template(
+         *         "[ ${this.time} ]  Hello, ${scope.creator}'s ${view.name} !",
+         *         ['view', 'scope']
+         *     ).evaluate(
+         *         {time: '2015-04-30'},
+         *         {name: 'iQuery.js'},
+         *         {creator: 'TechQuery'}
+         *     )
+         *
+         *     // "[ 2015-04-30 ]  Hello, TechQuery's iQuery.js !"
+         */
+        evaluate:    function (context, parameter) {
+
+            var expression = this.__expression__;
+
+            parameter = Array.from( arguments ).slice(1);
+
+            var value = this.__raw__.replace(
+                    /\$\{(\d+)\}/g,  function (_, index) {
+
+                        return  expression[ index ].apply(context, parameter);
+                    }
+                );
+
+            if (value !== this.__value__) {
+
+                if ( this.onChange )
+                    this.onChange.apply(
+                        this,  this.__data__.concat(value,  this.__value__)
+                    );
+
+                this.__value__ = value;
+            }
+
+            return value;
+        },
+        toString:    function () {
+
+            return  this.__value__;
+        }
+    });
+});
+</code></pre>
+                </article>
+            </section>
+        </div>
+
+        <br class="clear" />
+
+        <footer>
+            Documentation generated by
+            <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.5.5</a> using the
+            <a href="https://github.com/clenemt/docdash">docdash</a> theme.
+        </footer>
+
+        <script>
+            prettyPrint();
+        </script>
+        <script src="scripts/linenumber.js"></script>
+    </body>
+</html>

@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8" />
+        <title>object/ext/Class.js - Documentation</title>
+
+        <script src="scripts/prettify/prettify.js"></script>
+        <script src="scripts/prettify/lang-css.js"></script>
+        <!--[if lt IE 9]>
+            <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+        <![endif]-->
+        <link type="text/css" rel="stylesheet" href="styles/prettify.css" />
+        <link type="text/css" rel="stylesheet" href="styles/jsdoc.css" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    </head>
+    <body>
+        <input type="checkbox" id="nav-trigger" class="nav-trigger" />
+        <label for="nav-trigger" class="navicon-button x">
+            <div class="navicon"></div>
+        </label>
+
+        <label for="nav-trigger" class="overlay"></label>
+
+        <nav>
+            <h2><a href="index.html">Home</a></h2>
+            <h3>Classes</h3>
+            <ul>
+                <li>
+                    <a href="$.html">$</a>
+                    <ul class="methods">
+                        <li data-type="method">
+                            <a href="$.html#.bitOperate">bitOperate</a>
+                        </li>
+                        <li data-type="method">
+                            <a href="$.html#.buildFragment">buildFragment</a>
+                        </li>
+                        <li data-type="method">
+                            <a href="$.html#.camelCase">camelCase</a>
+                        </li>
+                        <li data-type="method">
+                            <a href="$.html#.cssRule">cssRule</a>
+                        </li>
+                        <li data-type="method">
+                            <a href="$.html#.extendURL">extendURL</a>
+                        </li>
+                        <li data-type="method">
+                            <a href="$.html#.filePath">filePath</a>
+                        </li>
+                        <li data-type="method">
+                            <a href="$.html#.hyphenCase">hyphenCase</a>
+                        </li>
+                        <li data-type="method">
+                            <a href="$.html#.intersect">intersect</a>
+                        </li>
+                        <li data-type="method">
+                            <a href="$.html#.isEqual">isEqual</a>
+                        </li>
+                        <li data-type="method">
+                            <a href="$.html#.isXDomain">isXDomain</a>
+                        </li>
+                        <li data-type="method">
+                            <a href="$.html#.likeArray">likeArray</a>
+                        </li>
+                        <li data-type="method">
+                            <a href="$.html#.makeIterator">makeIterator</a>
+                        </li>
+                        <li data-type="method">
+                            <a href="$.html#.makeSet">makeSet</a>
+                        </li>
+                        <li data-type="method">
+                            <a href="$.html#.mapTree">mapTree</a>
+                        </li>
+                        <li data-type="method">
+                            <a href="$.html#.paramJSON">paramJSON</a>
+                        </li>
+                        <li data-type="method">
+                            <a href="$.html#.parseHeader">parseHeader</a>
+                        </li>
+                        <li data-type="method">
+                            <a href="$.html#.split">split</a>
+                        </li>
+                        <li data-type="method">
+                            <a href="$.html#.storage">storage</a>
+                        </li>
+                        <li data-type="method">
+                            <a href="$.html#.throttle">throttle</a>
+                        </li>
+                        <li data-type="method">
+                            <a href="$.html#.Type">Type</a>
+                        </li>
+                        <li data-type="method">
+                            <a href="$.html#.urlDomain">urlDomain</a>
+                        </li>
+                        <li data-type="method">
+                            <a href="$.html#.uuid">uuid</a>
+                        </li>
+                        <li data-type="method">
+                            <a href="$.html#cssRule">cssRule</a>
+                        </li>
+                        <li data-type="method">
+                            <a href="$.html#htmlExec">htmlExec</a>
+                        </li>
+                        <li data-type="method">
+                            <a href="$.html#insertTo">insertTo</a>
+                        </li>
+                        <li data-type="method">
+                            <a href="$.html#validate">validate</a>
+                        </li>
+                    </ul>
+                </li>
+                <li>
+                    <a href="Class.html">Class</a>
+                    <ul class="methods">
+                        <li data-type="method">
+                            <a href="Class.html#.extend">extend</a>
+                        </li>
+                        <li data-type="method">
+                            <a href="Class.html#setPrivate">setPrivate</a>
+                        </li>
+                        <li data-type="method">
+                            <a href="Class.html#setPublic">setPublic</a>
+                        </li>
+                    </ul>
+                </li>
+                <li>
+                    <a href="Template.html">Template</a>
+                    <ul class="methods">
+                        <li data-type="method">
+                            <a href="Template.html#evaluate">evaluate</a>
+                        </li>
+                    </ul>
+                </li>
+            </ul>
+            <h3>Modules</h3>
+            <ul>
+                <li><a href="module-iQuery.html">iQuery</a></li>
+            </ul>
+            <h3>Interfaces</h3>
+            <ul>
+                <li>
+                    <a href="Iterator.html">Iterator</a>
+                    <ul class="methods">
+                        <li data-type="method">
+                            <a href="Iterator.html#next">next</a>
+                        </li>
+                    </ul>
+                </li>
+            </ul>
+            <h3><a href="global.html">Global</a></h3>
+        </nav>
+
+        <div id="main">
+            <h1 class="page-title">object/ext/Class.js</h1>
+
+            <section>
+                <article>
+                    <pre
+                        class="prettyprint source linenums"
+                    ><code>define(['../../iQuery'],  function ($) {
+
+    /**
+     * 类式继承抽象类
+     *
+     * @author  TechQuery
+     *
+     * @class   Class
+     *
+     * @param   {object}   [abstract=Class] - Constructor of Abstract Class
+     * @param   {string[]} [method]         - Names of Abstract Methods
+     *
+     * @returns {Class}
+     */
+
+    function Class(abstract, method) {
+
+        abstract = abstract || Class;
+
+        var _class_ = (Class.name instanceof Function)  ?
+                abstract.name()  :  abstract.name;
+
+        if (abstract.prototype  ===  Object.getPrototypeOf( this ))
+            throw TypeError(
+                'Abstract class ' + _class_ + " can't be instantiated"
+            );
+
+        if (abstract !== Class)
+            Array.from(method,  function (name) {
+
+                this[ name ] = this[ name ]  ||  function () {
+
+                    throw TypeError(
+                        'Abstract method ' +
+                        _class_ + '.prototype.' + name +
+                        " isn't implemented"
+                    );
+                };
+            },  this);
+
+        return this;
+    }
+
+    /**
+     * 继承出一个子类
+     *
+     * @memberof Class
+     *
+     * @param {function} sub     Constructor of Sub Class
+     * @param {?object}  Static  Static properties
+     * @param {object}   [proto] Instance properties
+     *
+     * @return {function} The Sub Class
+     */
+    Class.extend = function (sub, Static, proto) {
+
+        for (var key in this)
+            if (this.hasOwnProperty( key ))  sub[ key ] = this[ key ];
+
+        $.extend(sub, Static);
+
+        sub.prototype = $.extend(
+            Object.create( this.prototype ),  sub.prototype,  proto
+        );
+        sub.prototype.constructor = sub;
+
+        if (! (Object.create( this.prototype )  instanceof  Class)) {
+
+            for (var key in Class)
+                if (Class.hasOwnProperty( key ))  sub[ key ] = Class[ key ];
+
+            $.extend(sub.prototype, Class.prototype);
+        }
+
+        return sub;
+    };
+
+    function safeWrap(method, failback) {
+
+        var _method_ = function (key, value) {
+                try {
+                    method.apply(this, arguments);
+
+                } catch (error) {
+                    if (
+                        error.message.split('.')[0] ===
+                            'Invalid property descriptor'
+                    )
+                        throw error;
+
+                    if (failback !== false)  this[error.key || key] = value;
+                }
+
+                return value;
+            };
+
+        return  function (key) {
+
+            key = key.valueOf();
+
+            if (! $.isPlainObject( key ))
+                return  _method_.apply(this, arguments);
+
+            for (var name in key)  _method_.call(this,  name,  key[ name ]);
+
+            return this;
+        };
+    }
+
+    $.extend(Class.prototype, {
+        /**
+         * 设置私有成员
+         *
+         * @memberof Class.prototype
+         * @function setPrivate
+         *
+         * @param    {string|object} key      Key or Key-Value
+         * @param    {*}             [value]
+         * @param    {object}        [config] More config
+         *
+         * @return   {*}             Value while set one or
+         *                           This object when set Key-Value
+         */
+        setPrivate:    safeWrap(function (key, value, config) {
+
+            key = (
+                (key === 'length')  ||  Number.isInteger( +key )  ||  (
+                    (typeof value === 'function')  &amp;&amp;
+                    this.hasOwnProperty('constructor')
+                )
+            )  ?  key  :  ('__' + key + '__');
+
+            try {
+                Object.defineProperty(this, key, $.extend(
+                    {
+                        value:       value,
+                        writable:    true
+                    },
+                    config || { }
+                ));
+            } catch (error) {
+
+                error.key = key;    throw error;
+            }
+        }),
+        /**
+         * 设置公开成员
+         *
+         * @memberof Class.prototype
+         * @function setPublic
+         *
+         * @param {string|object} key       Key or Key-Value
+         * @param {object}        [Get_Set] Getter &amp; Setter
+         * @param {object}        [config]  More config
+         *
+         * @return {object} Get_Set while set one or
+         *                  This object when set Key-Value
+         */
+        setPublic:    safeWrap(function (key, Get_Set, config) {
+
+            Object.defineProperty(this, key, $.extend(
+                {
+                    enumerable:      true,
+                    configurable:    true
+                },
+                config,
+                Get_Set
+            ));
+        })
+    });
+
+    return  $.Class = Class;
+
+});
+</code></pre>
+                </article>
+            </section>
+        </div>
+
+        <br class="clear" />
+
+        <footer>
+            Documentation generated by
+            <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.5.5</a> using the
+            <a href="https://github.com/clenemt/docdash">docdash</a> theme.
+        </footer>
+
+        <script>
+            prettyPrint();
+        </script>
+        <script src="scripts/linenumber.js"></script>
+    </body>
+</html>

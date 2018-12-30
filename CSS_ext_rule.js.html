@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8" />
+        <title>CSS/ext/rule.js - Documentation</title>
+
+        <script src="scripts/prettify/prettify.js"></script>
+        <script src="scripts/prettify/lang-css.js"></script>
+        <!--[if lt IE 9]>
+            <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+        <![endif]-->
+        <link type="text/css" rel="stylesheet" href="styles/prettify.css" />
+        <link type="text/css" rel="stylesheet" href="styles/jsdoc.css" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    </head>
+    <body>
+        <input type="checkbox" id="nav-trigger" class="nav-trigger" />
+        <label for="nav-trigger" class="navicon-button x">
+            <div class="navicon"></div>
+        </label>
+
+        <label for="nav-trigger" class="overlay"></label>
+
+        <nav>
+            <h2><a href="index.html">Home</a></h2>
+            <h3>Classes</h3>
+            <ul>
+                <li>
+                    <a href="$.html">$</a>
+                    <ul class="methods">
+                        <li data-type="method">
+                            <a href="$.html#.bitOperate">bitOperate</a>
+                        </li>
+                        <li data-type="method">
+                            <a href="$.html#.buildFragment">buildFragment</a>
+                        </li>
+                        <li data-type="method">
+                            <a href="$.html#.camelCase">camelCase</a>
+                        </li>
+                        <li data-type="method">
+                            <a href="$.html#.cssRule">cssRule</a>
+                        </li>
+                        <li data-type="method">
+                            <a href="$.html#.extendURL">extendURL</a>
+                        </li>
+                        <li data-type="method">
+                            <a href="$.html#.filePath">filePath</a>
+                        </li>
+                        <li data-type="method">
+                            <a href="$.html#.hyphenCase">hyphenCase</a>
+                        </li>
+                        <li data-type="method">
+                            <a href="$.html#.intersect">intersect</a>
+                        </li>
+                        <li data-type="method">
+                            <a href="$.html#.isEqual">isEqual</a>
+                        </li>
+                        <li data-type="method">
+                            <a href="$.html#.isXDomain">isXDomain</a>
+                        </li>
+                        <li data-type="method">
+                            <a href="$.html#.likeArray">likeArray</a>
+                        </li>
+                        <li data-type="method">
+                            <a href="$.html#.makeIterator">makeIterator</a>
+                        </li>
+                        <li data-type="method">
+                            <a href="$.html#.makeSet">makeSet</a>
+                        </li>
+                        <li data-type="method">
+                            <a href="$.html#.mapTree">mapTree</a>
+                        </li>
+                        <li data-type="method">
+                            <a href="$.html#.paramJSON">paramJSON</a>
+                        </li>
+                        <li data-type="method">
+                            <a href="$.html#.parseHeader">parseHeader</a>
+                        </li>
+                        <li data-type="method">
+                            <a href="$.html#.split">split</a>
+                        </li>
+                        <li data-type="method">
+                            <a href="$.html#.storage">storage</a>
+                        </li>
+                        <li data-type="method">
+                            <a href="$.html#.throttle">throttle</a>
+                        </li>
+                        <li data-type="method">
+                            <a href="$.html#.Type">Type</a>
+                        </li>
+                        <li data-type="method">
+                            <a href="$.html#.urlDomain">urlDomain</a>
+                        </li>
+                        <li data-type="method">
+                            <a href="$.html#.uuid">uuid</a>
+                        </li>
+                        <li data-type="method">
+                            <a href="$.html#cssRule">cssRule</a>
+                        </li>
+                        <li data-type="method">
+                            <a href="$.html#htmlExec">htmlExec</a>
+                        </li>
+                        <li data-type="method">
+                            <a href="$.html#insertTo">insertTo</a>
+                        </li>
+                        <li data-type="method">
+                            <a href="$.html#validate">validate</a>
+                        </li>
+                    </ul>
+                </li>
+                <li>
+                    <a href="Class.html">Class</a>
+                    <ul class="methods">
+                        <li data-type="method">
+                            <a href="Class.html#.extend">extend</a>
+                        </li>
+                        <li data-type="method">
+                            <a href="Class.html#setPrivate">setPrivate</a>
+                        </li>
+                        <li data-type="method">
+                            <a href="Class.html#setPublic">setPublic</a>
+                        </li>
+                    </ul>
+                </li>
+                <li>
+                    <a href="Template.html">Template</a>
+                    <ul class="methods">
+                        <li data-type="method">
+                            <a href="Template.html#evaluate">evaluate</a>
+                        </li>
+                    </ul>
+                </li>
+            </ul>
+            <h3>Modules</h3>
+            <ul>
+                <li><a href="module-iQuery.html">iQuery</a></li>
+            </ul>
+            <h3>Interfaces</h3>
+            <ul>
+                <li>
+                    <a href="Iterator.html">Iterator</a>
+                    <ul class="methods">
+                        <li data-type="method">
+                            <a href="Iterator.html#next">next</a>
+                        </li>
+                    </ul>
+                </li>
+            </ul>
+            <h3><a href="global.html">Global</a></h3>
+        </nav>
+
+        <div id="main">
+            <h1 class="page-title">CSS/ext/rule.js</h1>
+
+            <section>
+                <article>
+                    <pre
+                        class="prettyprint source linenums"
+                    ><code>define(['../../iQuery', './var', './base', '../../DOM/info'],  function ($) {
+
+/* ----------  JSON to &lt;style />  ---------- */
+
+    var Code_Indent = $.browser.modern ? '' : ' '.repeat(4);
+
+    function CSS_Attribute(iName, iValue) {
+
+        if ($.isNumeric( iValue )  &amp;&amp;  (iName in $.cssPX))
+            iValue += 'px';
+
+        return  [iName, ':', Code_Indent, iValue].join('');
+    }
+
+    function CSS_Rule2Text(iRule) {
+
+        var Rule_Text = [''];
+
+        $.each(iRule,  function (iSelector) {
+
+            var Rule_Block = [ ];
+
+            for (var iName in this)
+                Rule_Block.push(
+                    CSS_Attribute(iName, this[iName])
+                        .replace(/^(\w)/m,  Code_Indent + '$1')
+                );
+
+            Rule_Text.push(
+                [iSelector + ' {',  Rule_Block.join(";\n"),  '}'].join("\n")
+            );
+        });
+
+        return  Rule_Text.concat('').join("\n");
+    }
+
+    /**
+     * 全局 CSS 设置
+     *
+     * @author TechQuery
+     *
+     * @memberof $
+     *
+     * @param   {string}           At_Wrapper - At Rule
+     * @param   {object}           rule       - Selector as Key, Rule as Value
+     *
+     * @returns {HTMLStyleElement} Generated Style Element
+     */
+
+    $.cssRule = function (At_Wrapper, rule) {
+
+        if (typeof At_Wrapper.valueOf() != 'string')
+            rule = At_Wrapper,  At_Wrapper = null;
+
+        var CSS_Text = CSS_Rule2Text( rule );
+
+        return  $('&lt;style />', {
+            type:       'text/css',
+            'class':    'iQuery_CSS-Rule',
+            text:       (! At_Wrapper)  ?  CSS_Text  :  [
+                At_Wrapper + ' {',
+                CSS_Text.replace(/\n/m,  "\n" + Code_Indent),
+                '}'
+            ].join("\n")
+        })[0];
+    };
+
+/* ---------- CSS Rule (Scoped) ---------- */
+
+    function Scope_Selector(_ID_) {
+
+        return  $.map(arguments[1].split( /\s*,\s*/ ),  function (_This_) {
+
+            return  /[\s>\+~]?#/.test(_This_)  ?
+                _This_  :  ('#'  +  _ID_  +  ' '  +  _This_);
+
+        }).join(',  ');
+    }
+
+    var Global_Style = $.makeSet('#document', 'html', 'body');
+
+    /**
+     * 局部 CSS 读写
+     *
+     * @memberof $.prototype
+     * @function cssRule
+     *
+     * @param    {object}   [rule]     - Selector as Key, Rule as Value
+     * @param    {function} [callback] - Callback for every {@link HTMLElement}
+     *
+     * @return   {object|$} No parameter: CSS Rule Object\n
+     *                      One or two:   iQuery Object
+     */
+
+    $.fn.cssRule = function (rule, callback) {
+
+        if (! $.isPlainObject( rule )) {
+
+            var $_This = this;
+
+            return  $_This[0]  &amp;&amp;  $.searchCSS(function (_Rule_) {
+                if ((
+                    (typeof $_This.selector != 'string')  ||
+                    ($_This.selector != _Rule_.selectorText)
+                )  &amp;&amp;  !(
+                    $_This[0].matches( _Rule_.selectorText )
+                ))
+                    return;
+
+                if ((! rule)  ||  (rule &amp;&amp; _Rule_.style[rule]))
+                    return _Rule_;
+            });
+        }
+
+        this.not([self, document.head]).uniqueId().each(function () {
+
+            var _Rule_ = { };
+
+            for (var iSelector in rule)
+                _Rule_[Scope_Selector(this.id, iSelector)] = rule[ iSelector ];
+
+            var $_Insert = $(
+                    'style, link[rel="stylesheet"]',
+                    (this.nodeName.toLowerCase() in Global_Style)  ?
+                        document.head  :  this
+                ),
+                end = 'After';
+
+            if ( $_Insert[0] )
+                $_Insert = $_Insert.slice( -1 );
+            else
+                $_Insert = $( this ),  end = 'Before';
+
+            _Rule_ = $( $.cssRule(_Rule_) )['insert' + end]( $_Insert )[0];
+
+            if (typeof callback === 'function')
+                callback.call(this,  _Rule_.sheet || _Rule_.styleSheet);
+        });
+
+        return this;
+    };
+
+});
+</code></pre>
+                </article>
+            </section>
+        </div>
+
+        <br class="clear" />
+
+        <footer>
+            Documentation generated by
+            <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.5.5</a> using the
+            <a href="https://github.com/clenemt/docdash">docdash</a> theme.
+        </footer>
+
+        <script>
+            prettyPrint();
+        </script>
+        <script src="scripts/linenumber.js"></script>
+    </body>
+</html>

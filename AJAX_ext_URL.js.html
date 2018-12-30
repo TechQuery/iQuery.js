@@ -1,0 +1,406 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8" />
+        <title>AJAX/ext/URL.js - Documentation</title>
+
+        <script src="scripts/prettify/prettify.js"></script>
+        <script src="scripts/prettify/lang-css.js"></script>
+        <!--[if lt IE 9]>
+            <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+        <![endif]-->
+        <link type="text/css" rel="stylesheet" href="styles/prettify.css" />
+        <link type="text/css" rel="stylesheet" href="styles/jsdoc.css" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    </head>
+    <body>
+        <input type="checkbox" id="nav-trigger" class="nav-trigger" />
+        <label for="nav-trigger" class="navicon-button x">
+            <div class="navicon"></div>
+        </label>
+
+        <label for="nav-trigger" class="overlay"></label>
+
+        <nav>
+            <h2><a href="index.html">Home</a></h2>
+            <h3>Classes</h3>
+            <ul>
+                <li>
+                    <a href="$.html">$</a>
+                    <ul class="methods">
+                        <li data-type="method">
+                            <a href="$.html#.bitOperate">bitOperate</a>
+                        </li>
+                        <li data-type="method">
+                            <a href="$.html#.buildFragment">buildFragment</a>
+                        </li>
+                        <li data-type="method">
+                            <a href="$.html#.camelCase">camelCase</a>
+                        </li>
+                        <li data-type="method">
+                            <a href="$.html#.cssRule">cssRule</a>
+                        </li>
+                        <li data-type="method">
+                            <a href="$.html#.extendURL">extendURL</a>
+                        </li>
+                        <li data-type="method">
+                            <a href="$.html#.filePath">filePath</a>
+                        </li>
+                        <li data-type="method">
+                            <a href="$.html#.hyphenCase">hyphenCase</a>
+                        </li>
+                        <li data-type="method">
+                            <a href="$.html#.intersect">intersect</a>
+                        </li>
+                        <li data-type="method">
+                            <a href="$.html#.isEqual">isEqual</a>
+                        </li>
+                        <li data-type="method">
+                            <a href="$.html#.isXDomain">isXDomain</a>
+                        </li>
+                        <li data-type="method">
+                            <a href="$.html#.likeArray">likeArray</a>
+                        </li>
+                        <li data-type="method">
+                            <a href="$.html#.makeIterator">makeIterator</a>
+                        </li>
+                        <li data-type="method">
+                            <a href="$.html#.makeSet">makeSet</a>
+                        </li>
+                        <li data-type="method">
+                            <a href="$.html#.mapTree">mapTree</a>
+                        </li>
+                        <li data-type="method">
+                            <a href="$.html#.paramJSON">paramJSON</a>
+                        </li>
+                        <li data-type="method">
+                            <a href="$.html#.parseHeader">parseHeader</a>
+                        </li>
+                        <li data-type="method">
+                            <a href="$.html#.split">split</a>
+                        </li>
+                        <li data-type="method">
+                            <a href="$.html#.storage">storage</a>
+                        </li>
+                        <li data-type="method">
+                            <a href="$.html#.throttle">throttle</a>
+                        </li>
+                        <li data-type="method">
+                            <a href="$.html#.Type">Type</a>
+                        </li>
+                        <li data-type="method">
+                            <a href="$.html#.urlDomain">urlDomain</a>
+                        </li>
+                        <li data-type="method">
+                            <a href="$.html#.uuid">uuid</a>
+                        </li>
+                        <li data-type="method">
+                            <a href="$.html#cssRule">cssRule</a>
+                        </li>
+                        <li data-type="method">
+                            <a href="$.html#htmlExec">htmlExec</a>
+                        </li>
+                        <li data-type="method">
+                            <a href="$.html#insertTo">insertTo</a>
+                        </li>
+                        <li data-type="method">
+                            <a href="$.html#validate">validate</a>
+                        </li>
+                    </ul>
+                </li>
+                <li>
+                    <a href="Class.html">Class</a>
+                    <ul class="methods">
+                        <li data-type="method">
+                            <a href="Class.html#.extend">extend</a>
+                        </li>
+                        <li data-type="method">
+                            <a href="Class.html#setPrivate">setPrivate</a>
+                        </li>
+                        <li data-type="method">
+                            <a href="Class.html#setPublic">setPublic</a>
+                        </li>
+                    </ul>
+                </li>
+                <li>
+                    <a href="Template.html">Template</a>
+                    <ul class="methods">
+                        <li data-type="method">
+                            <a href="Template.html#evaluate">evaluate</a>
+                        </li>
+                    </ul>
+                </li>
+            </ul>
+            <h3>Modules</h3>
+            <ul>
+                <li><a href="module-iQuery.html">iQuery</a></li>
+            </ul>
+            <h3>Interfaces</h3>
+            <ul>
+                <li>
+                    <a href="Iterator.html">Iterator</a>
+                    <ul class="methods">
+                        <li data-type="method">
+                            <a href="Iterator.html#next">next</a>
+                        </li>
+                    </ul>
+                </li>
+            </ul>
+            <h3><a href="global.html">Global</a></h3>
+        </nav>
+
+        <div id="main">
+            <h1 class="page-title">AJAX/ext/URL.js</h1>
+
+            <section>
+                <article>
+                    <pre class="prettyprint source linenums"><code>define([
+    '../../iQuery',
+    '../../polyfill/BOM/URL', '../../object/ext/base',
+    '../../utility/ext/string', '../../utility/index'
+],  function ($) {
+
+    var BOM = self;
+
+    /**
+     * URL 查询参数对象化
+     *
+     * @author   TechQuery
+     *
+     * @memberof $
+     *
+     * @param    {string} [search] - Same format as `location.search` at least or
+     *                               just use its value while the parameter is
+     *                               empty
+     * @returns  {object} Plain Object for the Query String
+     *
+     * @example  // URL 查询字符串
+     *
+     *     $.paramJSON('?a=1&amp;b=two&amp;b=true')
+     *
+     *     //  {
+     *             a:    1,
+     *             b:    ['two', true]
+     *         }
+     */
+
+    $.paramJSON = function (search) {
+
+        var _Args_ = { };
+
+        $.each(
+            Array.from(
+                (new BOM.URLSearchParams(
+                    (search || BOM.location.search).split('?')[1]
+                )).entries()
+            ),
+            function () {
+                if (
+                    (! $.isNumeric(this[1]))  ||
+                    Number.isSafeInteger( +this[1] )
+                )  try {
+                    this[1] = JSON.parse( this[1] );
+                } catch (iError) { }
+
+                if (this[0] in _Args_)
+                    _Args_[this[0]] = [ ].concat(_Args_[this[0]], this[1]);
+                else
+                    _Args_[this[0]] = this[1];
+            }
+        );
+
+        return _Args_;
+    };
+
+/* ---------- URL Parameter Signature  v0.1 ---------- */
+
+    function JSON_Sign(iData) {
+
+        return  '{'  +  $.map(Object.keys( iData ).sort(),  function (iKey) {
+
+            return  '"'  +  iKey  +  '":'  +  JSON.stringify( iData[iKey] );
+
+        }).join()  +  '}';
+    }
+
+    $.paramSign = function (iData) {
+
+        iData = iData.valueOf();
+
+        if (typeof iData === 'string')  iData = this.paramJSON( iData );
+
+        var _Data_ = new BOM.URLSearchParams();
+
+        $.each(iData,  function (name, value) {
+
+            switch ( true ) {
+                case  (this === BOM):
+                    value = '';
+                    break;
+                case  (typeof value === 'object'):
+                    value = JSON_Sign( this );
+                    break;
+                case  $.likeArray( this ):
+                    value = '['  +  $.map(this, JSON_Sign).join()  +  ']';
+                    break;
+                case (this instanceof Function):
+                    return;
+            }
+
+            _Data_.append(name, value);
+        });
+
+        _Data_.sort();
+
+        return  _Data_ + '';
+    };
+
+    return $.extend({
+        /**
+         * 更新 URL 查询参数
+         *
+         * @author TechQuery
+         *
+         * @memberof $
+         *
+         * @param {string}        URL   - the URL needs to be updated
+         * @param {string|object} param - One or more **Query String** or Object
+         *
+         * @return {string}       the Updated URL
+         *
+         * @example  // 多种参数
+         *
+         *     $.extendURL('path/to/model?a=0',  'a=1&amp;b=1',  {b: 2, c: 3})
+         *
+         *     // 'path/to/model?a=1&amp;b=2&amp;c=3'
+         */
+        extendURL:    function (URL, param) {
+
+            if (! param)  return URL;
+
+            var URL = $.split(URL, '?', 2);
+
+            var path = URL[0];    arguments[0] = URL[1];
+
+            return  path  +  '?'  +  $.param($.extend.apply($,  Array.from(
+                arguments,  function (_This_) {
+
+                    _This_ = _This_.valueOf();
+
+                    return  (typeof _This_ != 'string')  ?
+                        _This_  :  $.paramJSON('?' + _This_);
+                }
+            )));
+        },
+        fileName:     function () {
+            return (
+                arguments[0] || BOM.location.pathname
+            ).match(/([^\?\#]+)(\?|\#)?/)[1].split('/').slice(-1)[0];
+        },
+        /**
+         * 获取文件路径
+         *
+         * @author   TechQuery
+         *
+         * @memberof $
+         *
+         * @param    {string} [URL] - Relative or Absolute URL
+         *                            (Use `location.href` while the parameter is
+         *                            empty)
+         * @returns  {string}
+         *
+         * @example  // 传 相对路径 时返回其目录
+         *
+         *     $.filePath('/test/unit.html')  // '/test/'
+         *
+         * @example  // 传 查询字符串 时返回空字符串
+         *
+         *     $.filePath('?query=string')  // ''
+         *
+         * @example  // 传 URL（字符串）时返回其目录
+         *
+         *     $.filePath('http://localhost:8084/test/unit.html')
+         *
+         *     // 'http://localhost:8084/test/'
+         *
+         * @example  // 传 URL（对象）时返回其目录
+         *
+         *     $.filePath(new URL('http://localhost:8084/test/unit.html'))
+         *
+         *     // 'http://localhost:8084/test/'
+         */
+        filePath:     function (URL) {
+
+            return  (arguments.length ? URL : BOM.location).toString()
+                .split(/\?|\#/)[0]
+                .replace(/[^\/\\]*$/, '');
+        },
+        /**
+         * 获取 URL 的域（源）
+         *
+         * @author   TechQuery
+         *
+         * @memberof $
+         *
+         * @param    {string} [URL] - Absolute URL
+         *                            (Use `location.origin` while the parameter
+         *                            is empty)
+         * @returns  {string} Origin of the URL
+         *
+         * @example  // 给定 URL
+         *
+         *     $.urlDomain('http://localhost:8080/path?query=string')
+         *
+         *     // 'http://localhost:8080'
+         */
+        urlDomain:    function (URL) {
+
+            return  (! URL)  ?  BOM.location.origin  :
+                (URL.match( /^(\w+:)?\/\/[^\/]+/ )  ||  '')[0];
+        },
+        /**
+         * URL 跨域判断
+         *
+         * @author   TechQuery
+         *
+         * @memberof $
+         *
+         * @param    {string}  URL
+         *
+         * @returns  {boolean}
+         *
+         * @example  // 跨域 绝对路径
+         *
+         *     $.isXDomain('http://localhost/iQuery')  // true
+         *
+         * @example  // 同域 相对路径
+         *
+         *     $.isXDomain('/iQuery')  // false
+         */
+        isXDomain:    function (URL) {
+            return (
+                BOM.location.origin !==
+                (new BOM.URL(URL, this.filePath())).origin
+            );
+        }
+    });
+});
+</code></pre>
+                </article>
+            </section>
+        </div>
+
+        <br class="clear" />
+
+        <footer>
+            Documentation generated by
+            <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.5.5</a> using the
+            <a href="https://github.com/clenemt/docdash">docdash</a> theme.
+        </footer>
+
+        <script>
+            prettyPrint();
+        </script>
+        <script src="scripts/linenumber.js"></script>
+    </body>
+</html>
