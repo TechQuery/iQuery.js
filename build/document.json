@@ -4,7 +4,7 @@
     },
     "opts":            {
         "recurse":        true,
-        "readme":         "ReadMe.md",
+        "readme":         "README.md",
         "template":       "node_modules/docdash",
         "destination":    "docs/",
         "verbose":        true
